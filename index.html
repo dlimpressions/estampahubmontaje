@@ -334,6 +334,24 @@
             border-radius: 4px;
         }
         
+        .upload-status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
         @media (max-width: 1024px) {
             .main-content {
                 flex-wrap: wrap;
@@ -359,6 +377,8 @@
                     <input type="file" id="file-input" accept="image/*" style="display: none;" multiple>
                     <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
                     <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
+                    
+                    <div id="upload-status" class="upload-status" style="display: none;"></div>
                     
                     <div class="designs-list" id="designs-list">
                         <div class="no-designs">No hay diseños cargados</div>
@@ -506,6 +526,7 @@
             const applySizeBtn = document.getElementById('apply-size');
             const lockProportion = document.getElementById('lock-proportion');
             const qualitySelect = document.getElementById('quality-select');
+            const uploadStatus = document.getElementById('upload-status');
             
             // Constantes para la conversión de píxeles a centímetros
             const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
@@ -558,6 +579,18 @@
             }
             
             initCanvas();
+            
+            // Mostrar mensaje de estado
+            function showStatus(message, isError = false) {
+                uploadStatus.textContent = message;
+                uploadStatus.className = isError ? 'upload-status status-error' : 'upload-status status-success';
+                uploadStatus.style.display = 'block';
+                
+                // Ocultar después de 3 segundos
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                }, 3000);
+            }
             
             // Clase para manejar los diseños
             class Design {
@@ -824,7 +857,16 @@
             
             fileInput.addEventListener('change', function(e) {
                 if (e.target.files && e.target.files.length > 0) {
-                    Array.from(e.target.files).forEach(file => {
+                    const files = Array.from(e.target.files);
+                    let loadedCount = 0;
+                    
+                    files.forEach(file => {
+                        // Verificar que sea una imagen
+                        if (!file.type.match('image.*')) {
+                            showStatus('Error: Solo se permiten archivos de imagen', true);
+                            return;
+                        }
+                        
                         const reader = new FileReader();
                         
                         reader.onload = function(event) {
@@ -835,11 +877,25 @@
                                 designs.push(newDesign);
                                 selectedDesignId = id;
                                 
+                                loadedCount++;
+                                if (loadedCount === files.length) {
+                                    showStatus(`${files.length} diseño(s) cargado(s) correctamente`);
+                                }
+                                
                                 updateDesignsList();
                                 updateControls();
                                 drawCanvas();
                             };
+                            img.onerror = function() {
+                                showStatus('Error al cargar la imagen: ' + file.name, true);
+                                loadedCount++;
+                            };
                             img.src = event.target.result;
+                        };
+                        
+                        reader.onerror = function() {
+                            showStatus('Error al leer el archivo: ' + file.name, true);
+                            loadedCount++;
                         };
                         
                         reader.readAsDataURL(file);
@@ -1041,7 +1097,7 @@
                 canvasContainer.scrollTop = (canvas.height * canvasZoom - canvasContainer.clientHeight) / 2;
             });
             
-            // Agregar texto
+            // Agregar texto - CORREGIDO: Error de sintaxis
             addTextBtn.addEventListener('click', function() {
                 const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
                 if (text) {
@@ -1073,10 +1129,15 @@
                     };
                     img.src = tempCanvas.toDataURL('image/png');
                 }
-            };
+            });
             
             // Descargar como PNG (con dimensiones correctas)
             downloadPngBtn.addEventListener('click', function() {
+                if (designs.length === 0) {
+                    showStatus('No hay diseños para exportar', true);
+                    return;
+                }
+                
                 const exportCanvas = createHighQualityCanvas();
                 
                 // Crear enlace de descarga
@@ -1097,6 +1158,11 @@
             
             // Descargar como PDF (con dimensiones correctas)
             downloadPdfBtn.addEventListener('click', function() {
+                if (designs.length === 0) {
+                    showStatus('No hay diseños para exportar', true);
+                    return;
+                }
+                
                 const exportCanvas = createHighQualityCanvas();
                 
                 // Convertir a blob primero para mantener la calidad
