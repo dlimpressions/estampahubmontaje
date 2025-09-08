@@ -200,6 +200,19 @@
             width: 100%;
         }
         
+        .size-info {
+            background: #edf2f7;
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .size-info h4 {
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+        
         .help-section {
             margin-top: 2rem;
             padding: 1rem;
@@ -320,8 +333,8 @@
                     <ol>
                         <li>Sube tus diseños con el botón "Subir Diseño"</li>
                         <li>Selecciona un diseño de la lista para editarlo</li>
-                        <li>Arrastra y suelta para posicionar los elementos</li>
-                        <li>Ajusta el tamaño y rotación con los controles</li>
+                        <li>Arrastra para mover, usa los controles para redimensionar y rotar</li>
+                        <li>Las dimensiones se muestran en centímetros</li>
                         <li>Descarga tu montaje en PNG o PDF</li>
                     </ol>
                 </div>
@@ -342,14 +355,6 @@
                     <h3>Controles de Diseño</h3>
                     
                     <div class="control-group">
-                        <h4>Tamaño</h4>
-                        <div class="slider-container">
-                            <span id="width-value">100%</span>
-                            <input type="range" id="width-slider" min="10" max="200" value="100">
-                        </div>
-                    </div>
-                    
-                    <div class="control-group">
                         <h4>Rotación</h4>
                         <div class="slider-container">
                             <span id="rotation-value">0°</span>
@@ -365,6 +370,11 @@
                         </div>
                     </div>
                     
+                    <div class="size-info">
+                        <h4>Dimensiones del diseño</h4>
+                        <div id="size-info">0cm × 0cm</div>
+                    </div>
+                    
                     <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
                 </div>
                 
@@ -377,9 +387,10 @@
                 </div>
                 
                 <div class="help-section">
-                    <h4>Consejos</h4>
-                    <p>Mantén la proporción de tus diseños para una mejor calidad de impresión.</p>
-                    <p>Arrastra los diseños para posicionarlos donde desees.</p>
+                    <h4>Controles directos en el lienzo</h4>
+                    <p>• Arrastra el centro para mover</p>
+                    <p>• Usa el control ⬌ para redimensionar</p>
+                    <p>• Usa el control ⭮ para rotar</p>
                 </div>
             </div>
         </div>
@@ -403,8 +414,6 @@
             const clearBtn = document.getElementById('clear-btn');
             const downloadPngBtn = document.getElementById('download-png');
             const downloadPdfBtn = document.getElementById('download-pdf');
-            const widthSlider = document.getElementById('width-slider');
-            const widthValue = document.getElementById('width-value');
             const rotationSlider = document.getElementById('rotation-slider');
             const rotationValue = document.getElementById('rotation-value');
             const opacitySlider = document.getElementById('opacity-slider');
@@ -415,13 +424,20 @@
             const addTextBtn = document.getElementById('add-text-btn');
             const designsList = document.getElementById('designs-list');
             const removeBtn = document.getElementById('remove-btn');
+            const sizeInfo = document.getElementById('size-info');
+            
+            // Constantes para la conversión de píxeles a centímetros
+            const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
             
             // Estado de la aplicación
             let designs = [];
             let selectedDesignId = null;
             let isDragging = false;
+            let isResizing = false;
+            let isRotating = false;
             let dragOffsetX, dragOffsetY;
             let canvasZoom = 1.0;
+            let lastMouseX, lastMouseY;
             
             // Inicializar el lienzo
             function initCanvas() {
@@ -459,6 +475,7 @@
                     this.opacity = 1.0;
                     this.width = image.width;
                     this.height = image.height;
+                    this.aspectRatio = image.width / image.height;
                 }
                 
                 draw() {
@@ -473,20 +490,43 @@
                     const height = this.height * 0.5;
                     ctx.drawImage(this.image, -width / 2, -height / 2, width, height);
                     
-                    // Dibujar borde de selección si está seleccionado
+                    // Dibujar controles si está seleccionado
                     if (this.id === selectedDesignId) {
+                        // Borde de selección
                         ctx.strokeStyle = '#4299e1';
                         ctx.lineWidth = 2;
                         ctx.strokeRect(-width / 2, -height / 2, width, height);
                         
-                        // Dibujar punto central
+                        // Punto central
                         ctx.fillStyle = '#4299e1';
                         ctx.beginPath();
                         ctx.arc(0, 0, 4, 0, Math.PI * 2);
                         ctx.fill();
+                        
+                        // Control de rotación (parte superior)
+                        ctx.fillStyle = '#48bb78';
+                        ctx.beginPath();
+                        ctx.arc(0, -height / 2 - 15, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Control de escala (esquina inferior derecha)
+                        ctx.fillStyle = '#f56565';
+                        ctx.beginPath();
+                        ctx.arc(width / 2 + 5, height / 2 + 5, 6, 0, Math.PI * 2);
+                        ctx.fill();
                     }
                     
                     ctx.restore();
+                }
+                
+                // Obtener dimensiones en centímetros
+                getDimensionsInCm() {
+                    const widthCm = (this.width * 0.5 * this.scale) / PIXELS_PER_CM;
+                    const heightCm = (this.height * 0.5 * this.scale) / PIXELS_PER_CM;
+                    return {
+                        width: widthCm.toFixed(1),
+                        height: heightCm.toFixed(1)
+                    };
                 }
                 
                 isPointInside(x, y) {
@@ -505,6 +545,50 @@
                     
                     return Math.abs(rotatedX) <= width / 2 && Math.abs(rotatedY) <= height / 2;
                 }
+                
+                // Comprobar si el punto está en el control de rotación
+                isRotationHandle(x, y) {
+                    const width = this.width * 0.5 * this.scale;
+                    const height = this.height * 0.5 * this.scale;
+                    
+                    // Coordenadas relativas al centro del diseño
+                    const relX = x - this.x;
+                    const relY = y - this.y;
+                    
+                    // Rotación inversa
+                    const angle = -this.rotation * Math.PI / 180;
+                    const rotatedX = relX * Math.cos(angle) - relY * Math.sin(angle);
+                    const rotatedY = relX * Math.sin(angle) + relY * Math.cos(angle);
+                    
+                    // Comprobar si está cerca del control de rotación (parte superior)
+                    const handleX = 0;
+                    const handleY = -height / 2 - 15;
+                    const distance = Math.sqrt(Math.pow(rotatedX - handleX, 2) + Math.pow(rotatedY - handleY, 2));
+                    
+                    return distance <= 10;
+                }
+                
+                // Comprobar si el punto está en el control de escala
+                isScaleHandle(x, y) {
+                    const width = this.width * 0.5 * this.scale;
+                    const height = this.height * 0.5 * this.scale;
+                    
+                    // Coordenadas relativas al centro del diseño
+                    const relX = x - this.x;
+                    const relY = y - this.y;
+                    
+                    // Rotación inversa
+                    const angle = -this.rotation * Math.PI / 180;
+                    const rotatedX = relX * Math.cos(angle) - relY * Math.sin(angle);
+                    const rotatedY = relX * Math.sin(angle) + relY * Math.cos(angle);
+                    
+                    // Comprobar si está cerca del control de escala (esquina inferior derecha)
+                    const handleX = width / 2 + 5;
+                    const handleY = height / 2 + 5;
+                    const distance = Math.sqrt(Math.pow(rotatedX - handleX, 2) + Math.pow(rotatedY - handleY, 2));
+                    
+                    return distance <= 10;
+                }
             }
             
             // Dibujar todos los diseños en el canvas
@@ -515,6 +599,20 @@
                 designs.forEach(design => {
                     design.draw();
                 });
+                
+                // Actualizar información de tamaño
+                updateSizeInfo();
+            }
+            
+            // Actualizar la información de tamaño
+            function updateSizeInfo() {
+                const design = getSelectedDesign();
+                if (design) {
+                    const dimensions = design.getDimensionsInCm();
+                    sizeInfo.textContent = `${dimensions.width}cm × ${dimensions.height}cm`;
+                } else {
+                    sizeInfo.textContent = '0cm × 0cm';
+                }
             }
             
             // Manejar la subida de archivos
@@ -601,9 +699,6 @@
                 const design = getSelectedDesign();
                 
                 if (design) {
-                    widthSlider.value = design.scale * 100;
-                    widthValue.textContent = Math.round(design.scale * 100) + '%';
-                    
                     rotationSlider.value = design.rotation;
                     rotationValue.textContent = design.rotation + '°';
                     
@@ -611,16 +706,20 @@
                     opacityValue.textContent = Math.round(design.opacity * 100) + '%';
                     
                     // Habilitar controles
-                    widthSlider.disabled = false;
                     rotationSlider.disabled = false;
                     opacitySlider.disabled = false;
                     removeBtn.disabled = false;
+                    
+                    // Actualizar información de tamaño
+                    updateSizeInfo();
                 } else {
                     // Deshabilitar controles
-                    widthSlider.disabled = true;
                     rotationSlider.disabled = true;
                     opacitySlider.disabled = true;
                     removeBtn.disabled = true;
+                    
+                    // Limpiar información de tamaño
+                    sizeInfo.textContent = '0cm × 0cm';
                 }
             }
             
@@ -630,15 +729,6 @@
             }
             
             // Controles de diseño
-            widthSlider.addEventListener('input', function() {
-                const design = getSelectedDesign();
-                if (design) {
-                    design.scale = this.value / 100;
-                    widthValue.textContent = this.value + '%';
-                    drawCanvas();
-                }
-            });
-            
             rotationSlider.addEventListener('input', function() {
                 const design = getSelectedDesign();
                 if (design) {
@@ -755,7 +845,7 @@
                 }
             });
             
-            // Funcionalidad de arrastre
+            // Funcionalidad de interacción con el mouse
             canvas.addEventListener('mousedown', function(e) {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
@@ -764,48 +854,118 @@
                 const x = (e.clientX - rect.left) * scaleX;
                 const y = (e.clientY - rect.top) * scaleY;
                 
+                lastMouseX = x;
+                lastMouseY = y;
+                
                 // Buscar si se hizo clic en algún diseño
                 for (let i = designs.length - 1; i >= 0; i--) {
-                    if (designs[i].isPointInside(x, y)) {
-                        selectedDesignId = designs[i].id;
+                    const design = designs[i];
+                    
+                    if (design.isRotationHandle(x, y)) {
+                        // Comenzar rotación
+                        selectedDesignId = design.id;
+                        isRotating = true;
+                        updateDesignsList();
+                        updateControls();
+                        drawCanvas();
+                        return;
+                    }
+                    
+                    if (design.isScaleHandle(x, y)) {
+                        // Comenzar redimensionado
+                        selectedDesignId = design.id;
+                        isResizing = true;
+                        updateDesignsList();
+                        updateControls();
+                        drawCanvas();
+                        return;
+                    }
+                    
+                    if (design.isPointInside(x, y)) {
+                        // Comenzar arrastre
+                        selectedDesignId = design.id;
                         isDragging = true;
                         
                         // Calcular offset para un arrastre suave
-                        dragOffsetX = x - designs[i].x;
-                        dragOffsetY = y - designs[i].y;
+                        dragOffsetX = x - design.x;
+                        dragOffsetY = y - design.y;
                         
                         updateDesignsList();
                         updateControls();
                         drawCanvas();
-                        break;
+                        return;
                     }
                 }
+                
+                // Si no se hizo clic en ningún diseño, deseleccionar
+                selectedDesignId = null;
+                updateDesignsList();
+                updateControls();
+                drawCanvas();
             });
             
             canvas.addEventListener('mousemove', function(e) {
-                if (isDragging) {
-                    const rect = canvas.getBoundingClientRect();
-                    const scaleX = canvas.width / rect.width;
-                    const scaleY = canvas.height / rect.height;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+                
+                const dx = x - lastMouseX;
+                const dy = y - lastMouseY;
+                
+                lastMouseX = x;
+                lastMouseY = y;
+                
+                const design = getSelectedDesign();
+                
+                if (isDragging && design) {
+                    // Mover el diseño
+                    design.x = x - dragOffsetX;
+                    design.y = y - dragOffsetY;
+                    drawCanvas();
+                } else if (isRotating && design) {
+                    // Rotar el diseño
+                    const centerX = design.x;
+                    const centerY = design.y;
                     
-                    const x = (e.clientX - rect.left) * scaleX;
-                    const y = (e.clientY - rect.top) * scaleY;
+                    const angle = Math.atan2(y - centerY, x - centerX) * 180 / Math.PI + 90;
+                    design.rotation = angle;
                     
-                    const design = getSelectedDesign();
-                    if (design) {
-                        design.x = x - dragOffsetX;
-                        design.y = y - dragOffsetY;
-                        drawCanvas();
-                    }
+                    rotationSlider.value = angle;
+                    rotationValue.textContent = Math.round(angle) + '°';
+                    
+                    drawCanvas();
+                } else if (isResizing && design) {
+                    // Redimensionar el diseño
+                    const centerX = design.x;
+                    const centerY = design.y;
+                    
+                    // Calcular la distancia desde el centro hasta el cursor
+                    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                    
+                    // Calcular el nuevo scale basado en la distancia
+                    const originalSize = Math.sqrt(Math.pow(design.width * 0.5, 2) + Math.pow(design.height * 0.5, 2));
+                    design.scale = distance / originalSize;
+                    
+                    // Actualizar información de tamaño
+                    updateSizeInfo();
+                    
+                    drawCanvas();
                 }
             });
             
             canvas.addEventListener('mouseup', function() {
                 isDragging = false;
+                isResizing = false;
+                isRotating = false;
             });
             
             canvas.addEventListener('mouseleave', function() {
                 isDragging = false;
+                isResizing = false;
+                isRotating = false;
             });
             
             // Soporte para dispositivos táctiles
