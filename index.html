@@ -368,11 +368,11 @@
                 <div class="tool-section">
                     <h3>Opciones de Exportación</h3>
                     <div class="quality-options">
-                        <label for="quality-select">Calidad de exportación:</label>
+                        <label for="quality-select">Resolución de exportación:</label>
                         <select id="quality-select">
-                            <option value="high">Alta (300 DPI)</option>
-                            <option value="medium" selected>Media (150 DPI)</option>
-                            <option value="low">Baja (72 DPI)</option>
+                            <option value="300">Alta (300 DPI)</option>
+                            <option value="150" selected>Media (150 DPI)</option>
+                            <option value="72">Baja (72 DPI)</option>
                         </select>
                     </div>
                     <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
@@ -509,6 +509,10 @@
             
             // Constantes para la conversión de píxeles a centímetros
             const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
+            
+            // Dimensiones reales en centímetros
+            const CANVAS_WIDTH_CM = 58;
+            const CANVAS_HEIGHT_CM = 100;
             
             // Estado de la aplicación
             let designs = [];
@@ -755,43 +759,49 @@
                 }
             }
             
-            // Crear un canvas de alta calidad para exportación
+            // Calcular dimensiones en píxeles según DPI
+            function getPixelDimensions(dpi) {
+                // Convertir centímetros a pulgadas y luego a píxeles según DPI
+                const inchesPerCm = 0.393701;
+                const widthPx = Math.round(CANVAS_WIDTH_CM * inchesPerCm * dpi);
+                const heightPx = Math.round(CANVAS_HEIGHT_CM * inchesPerCm * dpi);
+                return { width: widthPx, height: heightPx };
+            }
+            
+            // Crear un canvas de alta calidad para exportación con dimensiones correctas
             function createHighQualityCanvas() {
-                const quality = qualitySelect.value;
-                let scaleFactor = 1;
-                
-                switch(quality) {
-                    case 'high':
-                        scaleFactor = 4.17; // 300 DPI (4.17 = 300/72)
-                        break;
-                    case 'medium':
-                        scaleFactor = 2.08; // 150 DPI
-                        break;
-                    case 'low':
-                    default:
-                        scaleFactor = 1; // 72 DPI
-                }
+                const dpi = parseInt(qualitySelect.value);
+                const dimensions = getPixelDimensions(dpi);
                 
                 const exportCanvas = document.createElement('canvas');
-                exportCanvas.width = canvas.width * scaleFactor;
-                exportCanvas.height = canvas.height * scaleFactor;
+                exportCanvas.width = dimensions.width;
+                exportCanvas.height = dimensions.height;
                 const exportCtx = exportCanvas.getContext('2d');
                 
                 // Configurar alta calidad
                 exportCtx.imageSmoothingEnabled = true;
                 exportCtx.imageSmoothingQuality = 'high';
-                exportCtx.scale(scaleFactor, scaleFactor);
+                
+                // Calcular factor de escala
+                const scaleX = exportCanvas.width / canvas.width;
+                const scaleY = exportCanvas.height / canvas.height;
                 
                 // Dibujar fondo transparente
-                exportCtx.clearRect(0, 0, canvas.width, canvas.height);
+                exportCtx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
                 
                 // Dibujar todos los diseños en el canvas de exportación
                 designs.forEach(design => {
                     exportCtx.save();
                     exportCtx.globalAlpha = design.opacity;
-                    exportCtx.translate(design.x, design.y);
+                    
+                    // Ajustar coordenadas y escala según el nuevo tamaño
+                    const x = design.x * scaleX;
+                    const y = design.y * scaleY;
+                    const scale = design.scale * Math.min(scaleX, scaleY);
+                    
+                    exportCtx.translate(x, y);
                     exportCtx.rotate(design.rotation * Math.PI / 180);
-                    exportCtx.scale(design.scale, design.scale);
+                    exportCtx.scale(scale, scale);
                     
                     // Dibujar imagen centrada
                     const width = design.width * 0.5;
@@ -1063,9 +1073,9 @@
                     };
                     img.src = tempCanvas.toDataURL('image/png');
                 }
-            });
+            };
             
-            // Descargar como PNG (con transparencia y alta calidad)
+            // Descargar como PNG (con dimensiones correctas)
             downloadPngBtn.addEventListener('click', function() {
                 const exportCanvas = createHighQualityCanvas();
                 
@@ -1085,7 +1095,7 @@
                 }, 'image/png', 1.0); // Calidad máxima
             });
             
-            // Descargar como PDF
+            // Descargar como PDF (con dimensiones correctas)
             downloadPdfBtn.addEventListener('click', function() {
                 const exportCanvas = createHighQualityCanvas();
                 
@@ -1095,14 +1105,16 @@
                     reader.onload = function() {
                         const imgData = reader.result;
                         const { jsPDF } = window.jspdf;
+                        
+                        // Crear PDF con las dimensiones correctas en milímetros
                         const doc = new jsPDF({
                             orientation: 'portrait',
                             unit: 'mm',
-                            format: [58, 100] // Tamaño DTF
+                            format: [CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10] // Convertir cm a mm
                         });
                         
-                        // Agregar imagen al PDF con máxima calidad
-                        doc.addImage(imgData, 'PNG', 0, 0, 58, 100, undefined, 'FAST');
+                        // Agregar imagen al PDF con las dimensiones exactas
+                        doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10, undefined, 'FAST');
                         doc.save('montaje-dtf.pdf');
                     };
                     reader.readAsDataURL(blob);
