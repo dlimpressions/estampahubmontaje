@@ -318,6 +318,22 @@
             margin-right: 0.5rem;
         }
         
+        .quality-options {
+            margin-top: 1rem;
+        }
+        
+        .quality-options label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quality-options select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+        }
+        
         @media (max-width: 1024px) {
             .main-content {
                 flex-wrap: wrap;
@@ -332,7 +348,7 @@
 <body>
     <div class="container">
         <header>
-            <div class="logo">Editor <span>DTF DAVID ALEJANDRO EL PAPICHULO</span></div>
+            <div class="logo">Editor <span>DTF</span></div>
             <div class="specs">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
         </header>
         
@@ -350,7 +366,15 @@
                 </div>
                 
                 <div class="tool-section">
-                    <h3>Acciones</h3>
+                    <h3>Opciones de Exportación</h3>
+                    <div class="quality-options">
+                        <label for="quality-select">Calidad de exportación:</label>
+                        <select id="quality-select">
+                            <option value="high">Alta (300 DPI)</option>
+                            <option value="medium" selected>Media (150 DPI)</option>
+                            <option value="low">Baja (72 DPI)</option>
+                        </select>
+                    </div>
                     <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
                     <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
                     <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
@@ -374,7 +398,10 @@
                     <div id="zoom-level">Zoom: 100%</div>
                 </div>
                 <div class="canvas-area">
-                    <canvas id="canvas" width="580" height="1000"></canvas>
+                    <!-- Usamos un contenedor para el canvas con fondo de transparencia -->
+                    <div class="canvas-wrapper" style="width: 580px; height: 1000px; background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;">
+                        <canvas id="canvas" width="580" height="1000"></canvas>
+                    </div>
                 </div>
             </div>
             
@@ -478,6 +505,7 @@
             const heightInput = document.getElementById('height-input');
             const applySizeBtn = document.getElementById('apply-size');
             const lockProportion = document.getElementById('lock-proportion');
+            const qualitySelect = document.getElementById('quality-select');
             
             // Constantes para la conversión de píxeles a centímetros
             const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
@@ -493,11 +521,21 @@
             let lastMouseX, lastMouseY;
             let startScale = 1.0; // Para guardar el scale inicial al comenzar a redimensionar
             
-            // Inicializar el lienzo
+            // Inicializar el lienzo con transparencia
             function initCanvas() {
-                // Fondo blanco
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Limpiar el canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Dibujar patrón de transparencia (cuadrícula gris)
+                const size = 20;
+                ctx.fillStyle = '#f0f0f0';
+                for (let y = 0; y < canvas.height; y += size) {
+                    for (let x = 0; x < canvas.width; x += size) {
+                        if ((x / size + y / size) % 2 === 0) {
+                            ctx.fillRect(x, y, size, size);
+                        }
+                    }
+                }
                 
                 // Bordes del área de impresión
                 ctx.strokeStyle = '#cbd5e0';
@@ -544,6 +582,11 @@
                     // Dibujar imagen centrada
                     const width = this.width * 0.5;
                     const height = this.height * 0.5;
+                    
+                    // Habilitar suavizado para mejor calidad
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    
                     ctx.drawImage(this.image, -width / 2, -height / 2, width, height);
                     
                     // Dibujar controles si está seleccionado
@@ -710,6 +753,58 @@
                     sizeInfo.textContent = '0cm × 0cm';
                     originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
                 }
+            }
+            
+            // Crear un canvas de alta calidad para exportación
+            function createHighQualityCanvas() {
+                const quality = qualitySelect.value;
+                let scaleFactor = 1;
+                
+                switch(quality) {
+                    case 'high':
+                        scaleFactor = 4.17; // 300 DPI (4.17 = 300/72)
+                        break;
+                    case 'medium':
+                        scaleFactor = 2.08; // 150 DPI
+                        break;
+                    case 'low':
+                    default:
+                        scaleFactor = 1; // 72 DPI
+                }
+                
+                const exportCanvas = document.createElement('canvas');
+                exportCanvas.width = canvas.width * scaleFactor;
+                exportCanvas.height = canvas.height * scaleFactor;
+                const exportCtx = exportCanvas.getContext('2d');
+                
+                // Configurar alta calidad
+                exportCtx.imageSmoothingEnabled = true;
+                exportCtx.imageSmoothingQuality = 'high';
+                exportCtx.scale(scaleFactor, scaleFactor);
+                
+                // Dibujar fondo transparente
+                exportCtx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Dibujar todos los diseños en el canvas de exportación
+                designs.forEach(design => {
+                    exportCtx.save();
+                    exportCtx.globalAlpha = design.opacity;
+                    exportCtx.translate(design.x, design.y);
+                    exportCtx.rotate(design.rotation * Math.PI / 180);
+                    exportCtx.scale(design.scale, design.scale);
+                    
+                    // Dibujar imagen centrada
+                    const width = design.width * 0.5;
+                    const height = design.height * 0.5;
+                    
+                    exportCtx.imageSmoothingEnabled = true;
+                    exportCtx.imageSmoothingQuality = 'high';
+                    exportCtx.drawImage(design.image, -width / 2, -height / 2, width, height);
+                    
+                    exportCtx.restore();
+                });
+                
+                return exportCanvas;
             }
             
             // Manejar la subida de archivos
@@ -930,7 +1025,8 @@
                 zoomLevel.textContent = 'Zoom: ' + this.value + '%';
                 
                 const canvasContainer = document.querySelector('.canvas-area');
-                canvas.style.transform = `scale(${canvasZoom})`;
+                const canvasWrapper = document.querySelector('.canvas-wrapper');
+                canvasWrapper.style.transform = `scale(${canvasZoom})`;
                 canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth) / 2;
                 canvasContainer.scrollTop = (canvas.height * canvasZoom - canvasContainer.clientHeight) / 2;
             });
@@ -944,6 +1040,9 @@
                     tempCanvas.width = 300;
                     tempCanvas.height = 100;
                     const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // Fondo transparente para el texto
+                    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
                     
                     tempCtx.fillStyle = '#000000';
                     tempCtx.font = '40px Arial';
@@ -966,34 +1065,48 @@
                 }
             });
             
-            // Descargar como PNG
+            // Descargar como PNG (con transparencia y alta calidad)
             downloadPngBtn.addEventListener('click', function() {
+                const exportCanvas = createHighQualityCanvas();
+                
+                // Crear enlace de descarga
                 const link = document.createElement('a');
                 link.download = 'montaje-dtf.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+                
+                // Exportar con transparencia y alta calidad
+                exportCanvas.toBlob(function(blob) {
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    
+                    // Limpiar URL después de la descarga
+                    setTimeout(function() {
+                        URL.revokeObjectURL(link.href);
+                    }, 100);
+                }, 'image/png', 1.0); // Calidad máxima
             });
             
             // Descargar como PDF
             downloadPdfBtn.addEventListener('click', function() {
-                // Usamos html2canvas para capturar el canvas con la calidad adecuada
-                html2canvas(canvas, {
-                    scale: 2, // Mayor calidad
-                    logging: false,
-                    useCORS: true
-                }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: [58, 100] // Tamaño DTF
-                    });
-                    
-                    // Agregar imagen al PDF
-                    doc.addImage(imgData, 'PNG', 0, 0, 58, 100);
-                    doc.save('montaje-dtf.pdf');
-                });
+                const exportCanvas = createHighQualityCanvas();
+                
+                // Convertir a blob primero para mantener la calidad
+                exportCanvas.toBlob(function(blob) {
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        const imgData = reader.result;
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: [58, 100] // Tamaño DTF
+                        });
+                        
+                        // Agregar imagen al PDF con máxima calidad
+                        doc.addImage(imgData, 'PNG', 0, 0, 58, 100, undefined, 'FAST');
+                        doc.save('montaje-dtf.pdf');
+                    };
+                    reader.readAsDataURL(blob);
+                }, 'image/png', 1.0);
             });
             
             // Limpiar lienzo
