@@ -200,6 +200,24 @@
             width: 100%;
         }
         
+        .size-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .size-input {
+            flex: 1;
+        }
+        
+        .size-input input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
         .size-info {
             background: #edf2f7;
             padding: 0.8rem;
@@ -290,6 +308,16 @@
             margin-right: 0.5rem;
         }
         
+        .proportion-lock {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .proportion-lock input {
+            margin-right: 0.5rem;
+        }
+        
         @media (max-width: 1024px) {
             .main-content {
                 flex-wrap: wrap;
@@ -370,9 +398,29 @@
                         </div>
                     </div>
                     
+                    <div class="control-group">
+                        <h4>Tamaño Manual (cm)</h4>
+                        <div class="proportion-lock">
+                            <input type="checkbox" id="lock-proportion" checked>
+                            <label for="lock-proportion">Mantener proporción</label>
+                        </div>
+                        <div class="size-controls">
+                            <div class="size-input">
+                                <label>Ancho</label>
+                                <input type="number" id="width-input" min="1" step="0.1" value="0">
+                            </div>
+                            <div class="size-input">
+                                <label>Alto</label>
+                                <input type="number" id="height-input" min="1" step="0.1" value="0">
+                            </div>
+                        </div>
+                        <button class="btn" id="apply-size">Aplicar Tamaño</button>
+                    </div>
+                    
                     <div class="size-info">
                         <h4>Dimensiones del diseño</h4>
                         <div id="size-info">0cm × 0cm</div>
+                        <div id="original-size">Tamaño original: 0cm × 0cm</div>
                     </div>
                     
                     <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
@@ -425,6 +473,11 @@
             const designsList = document.getElementById('designs-list');
             const removeBtn = document.getElementById('remove-btn');
             const sizeInfo = document.getElementById('size-info');
+            const originalSizeInfo = document.getElementById('original-size');
+            const widthInput = document.getElementById('width-input');
+            const heightInput = document.getElementById('height-input');
+            const applySizeBtn = document.getElementById('apply-size');
+            const lockProportion = document.getElementById('lock-proportion');
             
             // Constantes para la conversión de píxeles a centímetros
             const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
@@ -438,6 +491,7 @@
             let dragOffsetX, dragOffsetY;
             let canvasZoom = 1.0;
             let lastMouseX, lastMouseY;
+            let startScale = 1.0; // Para guardar el scale inicial al comenzar a redimensionar
             
             // Inicializar el lienzo
             function initCanvas() {
@@ -476,6 +530,8 @@
                     this.width = image.width;
                     this.height = image.height;
                     this.aspectRatio = image.width / image.height;
+                    this.originalWidth = image.width;
+                    this.originalHeight = image.height;
                 }
                 
                 draw() {
@@ -524,9 +580,47 @@
                     const widthCm = (this.width * 0.5 * this.scale) / PIXELS_PER_CM;
                     const heightCm = (this.height * 0.5 * this.scale) / PIXELS_PER_CM;
                     return {
-                        width: widthCm.toFixed(1),
-                        height: heightCm.toFixed(1)
+                        width: widthCm,
+                        height: heightCm
                     };
+                }
+                
+                // Obtener dimensiones originales en centímetros
+                getOriginalDimensionsInCm() {
+                    const widthCm = (this.originalWidth * 0.5) / PIXELS_PER_CM;
+                    const heightCm = (this.originalHeight * 0.5) / PIXELS_PER_CM;
+                    return {
+                        width: widthCm,
+                        height: heightCm
+                    };
+                }
+                
+                // Establecer dimensiones en centímetros
+                setDimensions(widthCm, heightCm, maintainProportion = true) {
+                    const targetWidthPx = widthCm * PIXELS_PER_CM;
+                    const targetHeightPx = heightCm * PIXELS_PER_CM;
+                    
+                    if (maintainProportion) {
+                        // Calcular scale basado en el ancho (manteniendo proporción)
+                        const originalHalfWidth = this.originalWidth * 0.5;
+                        this.scale = targetWidthPx / originalHalfWidth;
+                    } else {
+                        // Escalas independientes para ancho y alto
+                        const scaleX = targetWidthPx / (this.originalWidth * 0.5);
+                        const scaleY = targetHeightPx / (this.originalHeight * 0.5);
+                        // Usamos el promedio para no distorsionar demasiado
+                        this.scale = (scaleX + scaleY) / 2;
+                    }
+                    
+                    this.updateInputs();
+                    drawCanvas();
+                }
+                
+                // Actualizar los inputs de tamaño
+                updateInputs() {
+                    const dimensions = this.getDimensionsInCm();
+                    widthInput.value = dimensions.width.toFixed(1);
+                    heightInput.value = dimensions.height.toFixed(1);
                 }
                 
                 isPointInside(x, y) {
@@ -609,9 +703,12 @@
                 const design = getSelectedDesign();
                 if (design) {
                     const dimensions = design.getDimensionsInCm();
-                    sizeInfo.textContent = `${dimensions.width}cm × ${dimensions.height}cm`;
+                    const originalDimensions = design.getOriginalDimensionsInCm();
+                    sizeInfo.textContent = `${dimensions.width.toFixed(1)}cm × ${dimensions.height.toFixed(1)}cm`;
+                    originalSizeInfo.textContent = `Tamaño original: ${originalDimensions.width.toFixed(1)}cm × ${originalDimensions.height.toFixed(1)}cm`;
                 } else {
                     sizeInfo.textContent = '0cm × 0cm';
+                    originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
                 }
             }
             
@@ -705,10 +802,17 @@
                     opacitySlider.value = design.opacity * 100;
                     opacityValue.textContent = Math.round(design.opacity * 100) + '%';
                     
+                    // Actualizar inputs de tamaño
+                    design.updateInputs();
+                    
                     // Habilitar controles
                     rotationSlider.disabled = false;
                     opacitySlider.disabled = false;
                     removeBtn.disabled = false;
+                    widthInput.disabled = false;
+                    heightInput.disabled = false;
+                    applySizeBtn.disabled = false;
+                    lockProportion.disabled = false;
                     
                     // Actualizar información de tamaño
                     updateSizeInfo();
@@ -717,9 +821,14 @@
                     rotationSlider.disabled = true;
                     opacitySlider.disabled = true;
                     removeBtn.disabled = true;
+                    widthInput.disabled = true;
+                    heightInput.disabled = true;
+                    applySizeBtn.disabled = true;
+                    lockProportion.disabled = true;
                     
                     // Limpiar información de tamaño
                     sizeInfo.textContent = '0cm × 0cm';
+                    originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
                 }
             }
             
@@ -727,6 +836,60 @@
             function getSelectedDesign() {
                 return designs.find(d => d.id === selectedDesignId);
             }
+            
+            // Aplicar tamaño manual
+            applySizeBtn.addEventListener('click', function() {
+                const design = getSelectedDesign();
+                if (design) {
+                    const width = parseFloat(widthInput.value);
+                    const height = parseFloat(heightInput.value);
+                    
+                    if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
+                        design.setDimensions(width, height, lockProportion.checked);
+                    }
+                }
+            });
+            
+            // Sincronizar inputs cuando cambia la proporción
+            lockProportion.addEventListener('change', function() {
+                const design = getSelectedDesign();
+                if (design && this.checked) {
+                    // Si se activa mantener proporción, ajustar altura según ancho
+                    const width = parseFloat(widthInput.value);
+                    if (!isNaN(width) && width > 0) {
+                        const proportionalHeight = width / design.aspectRatio;
+                        heightInput.value = proportionalHeight.toFixed(1);
+                    }
+                }
+            });
+            
+            // Sincronizar altura cuando cambia el ancho
+            widthInput.addEventListener('input', function() {
+                if (lockProportion.checked) {
+                    const design = getSelectedDesign();
+                    if (design) {
+                        const width = parseFloat(this.value);
+                        if (!isNaN(width) && width > 0) {
+                            const proportionalHeight = width / design.aspectRatio;
+                            heightInput.value = proportionalHeight.toFixed(1);
+                        }
+                    }
+                }
+            });
+            
+            // Sincronizar ancho cuando cambia la altura
+            heightInput.addEventListener('input', function() {
+                if (lockProportion.checked) {
+                    const design = getSelectedDesign();
+                    if (design) {
+                        const height = parseFloat(this.value);
+                        if (!isNaN(height) && height > 0) {
+                            const proportionalWidth = height * design.aspectRatio;
+                            widthInput.value = proportionalWidth.toFixed(1);
+                        }
+                    }
+                }
+            });
             
             // Controles de diseño
             rotationSlider.addEventListener('input', function() {
@@ -875,6 +1038,7 @@
                         // Comenzar redimensionado
                         selectedDesignId = design.id;
                         isResizing = true;
+                        startScale = design.scale; // Guardar el scale actual
                         updateDesignsList();
                         updateControls();
                         drawCanvas();
@@ -938,7 +1102,7 @@
                     
                     drawCanvas();
                 } else if (isResizing && design) {
-                    // Redimensionar el diseño
+                    // Redimensionar el diseño - FIXED: No volver al tamaño original
                     const centerX = design.x;
                     const centerY = design.y;
                     
@@ -946,8 +1110,11 @@
                     const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
                     
                     // Calcular el nuevo scale basado en la distancia
-                    const originalSize = Math.sqrt(Math.pow(design.width * 0.5, 2) + Math.pow(design.height * 0.5, 2));
-                    design.scale = distance / originalSize;
+                    const originalSize = Math.sqrt(Math.pow(design.originalWidth * 0.5, 2) + Math.pow(design.originalHeight * 0.5, 2));
+                    design.scale = startScale * (distance / originalSize);
+                    
+                    // Actualizar inputs de tamaño
+                    design.updateInputs();
                     
                     // Actualizar información de tamaño
                     updateSizeInfo();
