@@ -158,11 +158,13 @@
             align-items: flex-start;
             padding: 1rem;
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            position: relative;
         }
         
         #canvas {
             background: white;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            touch-action: none;
         }
         
         .controls {
@@ -238,6 +240,43 @@
             margin-bottom: 0.8rem;
         }
         
+        .designs-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.5rem;
+        }
+        
+        .design-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .design-item:hover {
+            background: #edf2f7;
+        }
+        
+        .design-item.active {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+        }
+        
+        .design-thumb {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+        
         @media (max-width: 1024px) {
             .main-content {
                 flex-wrap: wrap;
@@ -260,9 +299,13 @@
             <div class="toolbar">
                 <div class="tool-section">
                     <h3>Gestión de Diseños</h3>
-                    <input type="file" id="file-input" accept="image/*" style="display: none;">
-                    <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño</button>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;" multiple>
+                    <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
                     <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
+                    
+                    <div class="designs-list" id="designs-list">
+                        <div class="no-designs">No hay diseños cargados</div>
+                    </div>
                 </div>
                 
                 <div class="tool-section">
@@ -276,8 +319,9 @@
                     <h3>Instrucciones</h3>
                     <ol>
                         <li>Sube tus diseños con el botón "Subir Diseño"</li>
+                        <li>Selecciona un diseño de la lista para editarlo</li>
                         <li>Arrastra y suelta para posicionar los elementos</li>
-                        <li>Ajusta el tamaño con los controles laterales</li>
+                        <li>Ajusta el tamaño y rotación con los controles</li>
                         <li>Descarga tu montaje en PNG o PDF</li>
                     </ol>
                 </div>
@@ -295,7 +339,7 @@
             
             <div class="controls">
                 <div class="tool-section">
-                    <h3>Controles</h3>
+                    <h3>Controles de Diseño</h3>
                     
                     <div class="control-group">
                         <h4>Tamaño</h4>
@@ -314,17 +358,28 @@
                     </div>
                     
                     <div class="control-group">
-                        <h4>Zoom del Lienzo</h4>
+                        <h4>Opacidad</h4>
                         <div class="slider-container">
-                            <span id="zoom-value">100%</span>
-                            <input type="range" id="zoom-slider" min="20" max="200" value="100">
+                            <span id="opacity-value">100%</span>
+                            <input type="range" id="opacity-slider" min="10" max="100" value="100">
                         </div>
+                    </div>
+                    
+                    <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
+                </div>
+                
+                <div class="control-group">
+                    <h4>Zoom del Lienzo</h4>
+                    <div class="slider-container">
+                        <span id="zoom-value">100%</span>
+                        <input type="range" id="zoom-slider" min="20" max="200" value="100">
                     </div>
                 </div>
                 
                 <div class="help-section">
                     <h4>Consejos</h4>
                     <p>Mantén la proporción de tus diseños para una mejor calidad de impresión.</p>
+                    <p>Arrastra los diseños para posicionarlos donde desees.</p>
                 </div>
             </div>
         </div>
@@ -352,18 +407,20 @@
             const widthValue = document.getElementById('width-value');
             const rotationSlider = document.getElementById('rotation-slider');
             const rotationValue = document.getElementById('rotation-value');
+            const opacitySlider = document.getElementById('opacity-slider');
+            const opacityValue = document.getElementById('opacity-value');
             const zoomSlider = document.getElementById('zoom-slider');
             const zoomValue = document.getElementById('zoom-value');
             const zoomLevel = document.getElementById('zoom-level');
             const addTextBtn = document.getElementById('add-text-btn');
+            const designsList = document.getElementById('designs-list');
+            const removeBtn = document.getElementById('remove-btn');
             
             // Estado de la aplicación
-            let currentImage = null;
-            let currentText = null;
+            let designs = [];
+            let selectedDesignId = null;
             let isDragging = false;
-            let dragStartX, dragStartY;
-            let currentScale = 1.0;
-            let currentRotation = 0;
+            let dragOffsetX, dragOffsetY;
             let canvasZoom = 1.0;
             
             // Inicializar el lienzo
@@ -380,13 +437,85 @@
                 ctx.setLineDash([]);
                 
                 // Texto de guía
-                ctx.fillStyle = '#e2e8f0';
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Arrastra tus diseños aquí', canvas.width / 2, canvas.height / 2);
+                if (designs.length === 0) {
+                    ctx.fillStyle = '#e2e8f0';
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Arrastra tus diseños aquí', canvas.width / 2, canvas.height / 2);
+                }
             }
             
             initCanvas();
+            
+            // Clase para manejar los diseños
+            class Design {
+                constructor(id, image, x, y) {
+                    this.id = id;
+                    this.image = image;
+                    this.x = x || canvas.width / 2;
+                    this.y = y || canvas.height / 2;
+                    this.scale = 1.0;
+                    this.rotation = 0;
+                    this.opacity = 1.0;
+                    this.width = image.width;
+                    this.height = image.height;
+                }
+                
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.opacity;
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation * Math.PI / 180);
+                    ctx.scale(this.scale, this.scale);
+                    
+                    // Dibujar imagen centrada
+                    const width = this.width * 0.5;
+                    const height = this.height * 0.5;
+                    ctx.drawImage(this.image, -width / 2, -height / 2, width, height);
+                    
+                    // Dibujar borde de selección si está seleccionado
+                    if (this.id === selectedDesignId) {
+                        ctx.strokeStyle = '#4299e1';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(-width / 2, -height / 2, width, height);
+                        
+                        // Dibujar punto central
+                        ctx.fillStyle = '#4299e1';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.restore();
+                }
+                
+                isPointInside(x, y) {
+                    // Transformar coordenadas para tener en cuenta escala y rotación
+                    const width = this.width * 0.5 * this.scale;
+                    const height = this.height * 0.5 * this.scale;
+                    
+                    // Coordenadas relativas al centro del diseño
+                    const relX = x - this.x;
+                    const relY = y - this.y;
+                    
+                    // Rotación inversa para comprobar si está dentro del rectángulo
+                    const angle = -this.rotation * Math.PI / 180;
+                    const rotatedX = relX * Math.cos(angle) - relY * Math.sin(angle);
+                    const rotatedY = relX * Math.sin(angle) + relY * Math.cos(angle);
+                    
+                    return Math.abs(rotatedX) <= width / 2 && Math.abs(rotatedY) <= height / 2;
+                }
+            }
+            
+            // Dibujar todos los diseños en el canvas
+            function drawCanvas() {
+                initCanvas();
+                
+                // Dibujar todos los diseños
+                designs.forEach(design => {
+                    design.draw();
+                });
+            }
             
             // Manejar la subida de archivos
             uploadBtn.addEventListener('click', () => {
@@ -394,62 +523,154 @@
             });
             
             fileInput.addEventListener('change', function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(event) {
-                        const img = new Image();
-                        img.onload = function() {
-                            currentImage = img;
-                            drawImage();
+                if (e.target.files && e.target.files.length > 0) {
+                    Array.from(e.target.files).forEach(file => {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(event) {
+                            const img = new Image();
+                            img.onload = function() {
+                                const id = 'design-' + Date.now() + Math.random().toString(36).substr(2, 5);
+                                const newDesign = new Design(id, img);
+                                designs.push(newDesign);
+                                selectedDesignId = id;
+                                
+                                updateDesignsList();
+                                updateControls();
+                                drawCanvas();
+                            };
+                            img.src = event.target.result;
                         };
-                        img.src = event.target.result;
-                    };
-                    
-                    reader.readAsDataURL(e.target.files[0]);
+                        
+                        reader.readAsDataURL(file);
+                    });
                 }
             });
             
-            // Dibujar imagen en el canvas
-            function drawImage() {
-                initCanvas();
+            // Actualizar la lista de diseños
+            function updateDesignsList() {
+                designsList.innerHTML = '';
                 
-                if (currentImage) {
-                    const centerX = canvas.width / 2;
-                    const centerY = canvas.height / 2;
+                if (designs.length === 0) {
+                    designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>';
+                    return;
+                }
+                
+                designs.forEach(design => {
+                    const item = document.createElement('div');
+                    item.className = 'design-item' + (design.id === selectedDesignId ? ' active' : '');
+                    item.dataset.id = design.id;
                     
-                    ctx.save();
-                    ctx.translate(centerX, centerY);
-                    ctx.rotate(currentRotation * Math.PI / 180);
-                    ctx.scale(currentScale, currentScale);
+                    // Crear miniatura
+                    const thumbCanvas = document.createElement('canvas');
+                    thumbCanvas.width = 40;
+                    thumbCanvas.height = 40;
+                    const thumbCtx = thumbCanvas.getContext('2d');
                     
-                    // Dibujar imagen centrada
-                    const width = currentImage.width * 0.5;
-                    const height = currentImage.height * 0.5;
-                    ctx.drawImage(currentImage, -width / 2, -height / 2, width, height);
+                    // Dibujar miniatura
+                    const scale = Math.min(40 / design.width, 40 / design.height) * 0.8;
+                    thumbCtx.fillStyle = '#ffffff';
+                    thumbCtx.fillRect(0, 0, 40, 40);
+                    thumbCtx.save();
+                    thumbCtx.translate(20, 20);
+                    thumbCtx.scale(scale, scale);
+                    thumbCtx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+                    thumbCtx.restore();
                     
-                    // Dibujar borde de selección
-                    ctx.strokeStyle = '#4299e1';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(-width / 2, -height / 2, width, height);
+                    thumbCtx.strokeStyle = '#cbd5e0';
+                    thumbCtx.strokeRect(0, 0, 40, 40);
                     
-                    ctx.restore();
+                    item.innerHTML = `
+                        <img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura">
+                        <div>Diseño ${designs.indexOf(design) + 1}</div>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        selectedDesignId = design.id;
+                        updateDesignsList();
+                        updateControls();
+                        drawCanvas();
+                    });
+                    
+                    designsList.appendChild(item);
+                });
+            }
+            
+            // Actualizar controles con los valores del diseño seleccionado
+            function updateControls() {
+                const design = getSelectedDesign();
+                
+                if (design) {
+                    widthSlider.value = design.scale * 100;
+                    widthValue.textContent = Math.round(design.scale * 100) + '%';
+                    
+                    rotationSlider.value = design.rotation;
+                    rotationValue.textContent = design.rotation + '°';
+                    
+                    opacitySlider.value = design.opacity * 100;
+                    opacityValue.textContent = Math.round(design.opacity * 100) + '%';
+                    
+                    // Habilitar controles
+                    widthSlider.disabled = false;
+                    rotationSlider.disabled = false;
+                    opacitySlider.disabled = false;
+                    removeBtn.disabled = false;
+                } else {
+                    // Deshabilitar controles
+                    widthSlider.disabled = true;
+                    rotationSlider.disabled = true;
+                    opacitySlider.disabled = true;
+                    removeBtn.disabled = true;
                 }
             }
             
-            // Controles de tamaño y rotación
+            // Obtener el diseño seleccionado
+            function getSelectedDesign() {
+                return designs.find(d => d.id === selectedDesignId);
+            }
+            
+            // Controles de diseño
             widthSlider.addEventListener('input', function() {
-                currentScale = this.value / 100;
-                widthValue.textContent = this.value + '%';
-                drawImage();
+                const design = getSelectedDesign();
+                if (design) {
+                    design.scale = this.value / 100;
+                    widthValue.textContent = this.value + '%';
+                    drawCanvas();
+                }
             });
             
             rotationSlider.addEventListener('input', function() {
-                currentRotation = this.value;
-                rotationValue.textContent = this.value + '°';
-                drawImage();
+                const design = getSelectedDesign();
+                if (design) {
+                    design.rotation = parseInt(this.value);
+                    rotationValue.textContent = this.value + '°';
+                    drawCanvas();
+                }
             });
             
+            opacitySlider.addEventListener('input', function() {
+                const design = getSelectedDesign();
+                if (design) {
+                    design.opacity = this.value / 100;
+                    opacityValue.textContent = this.value + '%';
+                    drawCanvas();
+                }
+            });
+            
+            // Eliminar diseño
+            removeBtn.addEventListener('click', function() {
+                const design = getSelectedDesign();
+                if (design && confirm('¿Estás seguro de que quieres eliminar este diseño?')) {
+                    designs = designs.filter(d => d.id !== design.id);
+                    selectedDesignId = designs.length > 0 ? designs[0].id : null;
+                    
+                    updateDesignsList();
+                    updateControls();
+                    drawCanvas();
+                }
+            });
+            
+            // Zoom del canvas
             zoomSlider.addEventListener('input', function() {
                 canvasZoom = this.value / 100;
                 zoomValue.textContent = this.value + '%';
@@ -465,10 +686,30 @@
             addTextBtn.addEventListener('click', function() {
                 const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
                 if (text) {
-                    ctx.font = '30px Arial';
-                    ctx.fillStyle = '#000000';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 100);
+                    // Crear un canvas temporal para el texto
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 300;
+                    tempCanvas.height = 100;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    tempCtx.fillStyle = '#000000';
+                    tempCtx.font = '40px Arial';
+                    tempCtx.textAlign = 'center';
+                    tempCtx.textBaseline = 'middle';
+                    tempCtx.fillText(text, tempCanvas.width/2, tempCanvas.height/2);
+                    
+                    const img = new Image();
+                    img.onload = function() {
+                        const id = 'text-' + Date.now();
+                        const newDesign = new Design(id, img, canvas.width/2, canvas.height/2);
+                        designs.push(newDesign);
+                        selectedDesignId = id;
+                        
+                        updateDesignsList();
+                        updateControls();
+                        drawCanvas();
+                    };
+                    img.src = tempCanvas.toDataURL('image/png');
                 }
             });
             
@@ -504,35 +745,98 @@
             
             // Limpiar lienzo
             clearBtn.addEventListener('click', function() {
-                if (confirm('¿Estás seguro de que quieres limpiar el lienzo? Se perderán todos los diseños.')) {
+                if (designs.length > 0 && confirm('¿Estás seguro de que quieres limpiar el lienzo? Se perderán todos los diseños.')) {
+                    designs = [];
+                    selectedDesignId = null;
+                    
+                    updateDesignsList();
+                    updateControls();
                     initCanvas();
-                    currentImage = null;
-                    currentScale = 1.0;
-                    currentRotation = 0;
-                    widthSlider.value = 100;
-                    rotationSlider.value = 0;
-                    widthValue.textContent = '100%';
-                    rotationValue.textContent = '0°';
                 }
             });
             
-            // Funcionalidad de arrastrar (para una versión más completa)
+            // Funcionalidad de arrastre
             canvas.addEventListener('mousedown', function(e) {
-                isDragging = true;
-                dragStartX = e.offsetX;
-                dragStartY = e.offsetY;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+                
+                // Buscar si se hizo clic en algún diseño
+                for (let i = designs.length - 1; i >= 0; i--) {
+                    if (designs[i].isPointInside(x, y)) {
+                        selectedDesignId = designs[i].id;
+                        isDragging = true;
+                        
+                        // Calcular offset para un arrastre suave
+                        dragOffsetX = x - designs[i].x;
+                        dragOffsetY = y - designs[i].y;
+                        
+                        updateDesignsList();
+                        updateControls();
+                        drawCanvas();
+                        break;
+                    }
+                }
+            });
+            
+            canvas.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    const rect = canvas.getBoundingClientRect();
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+                    
+                    const x = (e.clientX - rect.left) * scaleX;
+                    const y = (e.clientY - rect.top) * scaleY;
+                    
+                    const design = getSelectedDesign();
+                    if (design) {
+                        design.x = x - dragOffsetX;
+                        design.y = y - dragOffsetY;
+                        drawCanvas();
+                    }
+                }
             });
             
             canvas.addEventListener('mouseup', function() {
                 isDragging = false;
             });
             
-            canvas.addEventListener('mousemove', function(e) {
-                if (isDragging) {
-                    // En una implementación completa, aquí se moverían los elementos
-                    console.log('Arrastrando:', e.offsetX, e.offsetY);
-                }
+            canvas.addEventListener('mouseleave', function() {
+                isDragging = false;
             });
+            
+            // Soporte para dispositivos táctiles
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            canvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            // Inicializar controles
+            updateControls();
         });
     </script>
 </body>
