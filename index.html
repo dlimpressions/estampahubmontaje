@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor Gráfico - Gratuito en GitHub</title>
+    <title>Editor DTF - Montaje para Impresión</title>
     <style>
         * {
             margin: 0;
@@ -13,111 +13,78 @@
         }
         
         body {
-            background-color: #f0f2f5;
-            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2d3748;
             line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
         }
         
         .container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
         
         header {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
             color: white;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
         }
         
         .logo {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
+        }
+        
+        .logo span {
+            color: #4299e1;
+        }
+        
+        .specs {
+            background: #4a5568;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
         }
         
         .main-content {
             display: flex;
-            flex: 1;
             padding: 1rem;
-            gap: 1rem;
+            gap: 1.5rem;
+            min-height: 70vh;
         }
         
         .toolbar {
             width: 250px;
-            background: white;
+            background: #f8f9fa;
             border-radius: 10px;
-            padding: 1rem;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
         
         .tool-section {
             margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .tool-section:last-child {
+            border-bottom: none;
         }
         
         .tool-section h3 {
-            margin-bottom: 0.8rem;
-            color: #555;
+            margin-bottom: 1rem;
+            color: #2d3748;
             font-size: 1.1rem;
-        }
-        
-        .tool-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        
-        .tool-btn {
-            padding: 0.5rem;
-            background: #f0f2f5;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .tool-btn:hover {
-            background: #e0e5eb;
-        }
-        
-        .color-option {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-        
-        .canvas-container {
-            flex: 1;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-        }
-        
-        #canvas {
-            background: white;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            cursor: crosshair;
-        }
-        
-        .export-section {
-            width: 250px;
-            background: white;
-            border-radius: 10px;
-            padding: 1rem;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
         }
         
         .btn {
@@ -126,39 +93,157 @@
             padding: 0.8rem;
             margin-bottom: 0.8rem;
             border: none;
-            border-radius: 5px;
-            background: #6e8efb;
+            border-radius: 6px;
+            background: #4299e1;
             color: white;
-            font-weight: bold;
+            font-weight: 500;
             cursor: pointer;
             transition: background 0.3s;
+            text-align: center;
         }
         
         .btn:hover {
-            background: #5a7dea;
+            background: #3182ce;
+        }
+        
+        .btn-upload {
+            background: #48bb78;
+        }
+        
+        .btn-upload:hover {
+            background: #38a169;
         }
         
         .btn-download {
-            background: #4caf50;
+            background: #9f7aea;
         }
         
         .btn-download:hover {
-            background: #3d8b40;
+            background: #805ad5;
+        }
+        
+        .btn-clear {
+            background: #f56565;
+        }
+        
+        .btn-clear:hover {
+            background: #e53e3e;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .canvas-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .canvas-area {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1rem;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        #canvas {
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .controls {
+            width: 250px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .control-group h4 {
+            margin-bottom: 0.8rem;
+            color: #2d3748;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .slider-container span {
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+        }
+        
+        .help-section {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+        
+        .help-section h4 {
+            margin-bottom: 0.5rem;
+            color: #2d3748;
         }
         
         footer {
             text-align: center;
-            padding: 1rem;
-            background: #333;
+            padding: 1.5rem;
+            background: #2d3748;
             color: white;
+            margin-top: 2rem;
         }
         
-        @media (max-width: 768px) {
+        .instructions {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #edf2f7;
+            border-radius: 10px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+        
+        .instructions ol {
+            padding-left: 1.5rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.8rem;
+        }
+        
+        @media (max-width: 1024px) {
             .main-content {
-                flex-direction: column;
+                flex-wrap: wrap;
             }
             
-            .toolbar, .export-section {
+            .toolbar, .controls {
                 width: 100%;
             }
         }
@@ -167,136 +252,287 @@
 <body>
     <div class="container">
         <header>
-            <div class="logo">DiseñoCanvas</div>
-            <p>Editor gráfico gratuito para GitHub Pages</p>
+            <div class="logo">Editor <span>DTF</span></div>
+            <div class="specs">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
         </header>
         
         <div class="main-content">
             <div class="toolbar">
                 <div class="tool-section">
-                    <h3>Herramientas</h3>
-                    <div class="tool-options">
-                        <button class="tool-btn" id="pencil-btn">✏️ Lápiz</button>
-                        <button class="tool-btn" id="text-btn">T Texto</button>
-                        <button class="tool-btn" id="shape-btn">⬢ Formas</button>
-                    </div>
+                    <h3>Gestión de Diseños</h3>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño</button>
+                    <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
                 </div>
                 
                 <div class="tool-section">
-                    <h3>Colores</h3>
-                    <div class="tool-options">
-                        <div class="color-option" style="background: #ff5757;" data-color="#ff5757"></div>
-                        <div class="color-option" style="background: #ffc857;" data-color="#ffc857"></div>
-                        <div class="color-option" style="background: #5eeb5b;" data-color="#5eeb5b"></div>
-                        <div class="color-option" style="background: #57a0ff;" data-color="#57a0ff"></div>
-                        <div class="color-option" style="background: #c957ff;" data-color="#c957ff"></div>
-                        <div class="color-option" style="background: #000000;" data-color="#000000"></div>
-                    </div>
+                    <h3>Acciones</h3>
+                    <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
+                    <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
+                    <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
                 </div>
                 
-                <div class="tool-section">
-                    <h3>Grosor de línea</h3>
-                    <input type="range" id="line-width" min="1" max="20" value="5">
-                    <span id="width-value">5px</span>
+                <div class="instructions">
+                    <h3>Instrucciones</h3>
+                    <ol>
+                        <li>Sube tus diseños con el botón "Subir Diseño"</li>
+                        <li>Arrastra y suelta para posicionar los elementos</li>
+                        <li>Ajusta el tamaño con los controles laterales</li>
+                        <li>Descarga tu montaje en PNG o PDF</li>
+                    </ol>
                 </div>
             </div>
             
             <div class="canvas-container">
-                <canvas id="canvas" width="800" height="500"></canvas>
+                <div class="canvas-title">
+                    <h3>Área de Montaje (58cm × 100cm)</h3>
+                    <div id="zoom-level">Zoom: 100%</div>
+                </div>
+                <div class="canvas-area">
+                    <canvas id="canvas" width="580" height="1000"></canvas>
+                </div>
             </div>
             
-            <div class="export-section">
-                <h3>Exportar diseño</h3>
-                <button class="btn" id="clear-btn">Limpiar lienzo</button>
-                <button class="btn btn-download" id="download-btn">Descargar imagen</button>
-                <p>Para guardar en GitHub, descarga tu diseño y súbelo a tu repositorio.</p>
+            <div class="controls">
+                <div class="tool-section">
+                    <h3>Controles</h3>
+                    
+                    <div class="control-group">
+                        <h4>Tamaño</h4>
+                        <div class="slider-container">
+                            <span id="width-value">100%</span>
+                            <input type="range" id="width-slider" min="10" max="200" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Rotación</h4>
+                        <div class="slider-container">
+                            <span id="rotation-value">0°</span>
+                            <input type="range" id="rotation-slider" min="0" max="360" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Zoom del Lienzo</h4>
+                        <div class="slider-container">
+                            <span id="zoom-value">100%</span>
+                            <input type="range" id="zoom-slider" min="20" max="200" value="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h4>Consejos</h4>
+                    <p>Mantén la proporción de tus diseños para una mejor calidad de impresión.</p>
+                </div>
             </div>
         </div>
         
         <footer>
-            <p>Editor gratuito para GitHub Pages - Creado con HTML5 Canvas</p>
+            <p>Editor de Montajes para Impresión DTF - Compatible con GitHub Pages</p>
         </footer>
     </div>
 
+    <!-- Librería PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Configuración del canvas
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
+            const uploadBtn = document.getElementById('upload-btn');
+            const fileInput = document.getElementById('file-input');
             const clearBtn = document.getElementById('clear-btn');
-            const downloadBtn = document.getElementById('download-btn');
-            const lineWidthInput = document.getElementById('line-width');
+            const downloadPngBtn = document.getElementById('download-png');
+            const downloadPdfBtn = document.getElementById('download-pdf');
+            const widthSlider = document.getElementById('width-slider');
             const widthValue = document.getElementById('width-value');
-            const colorOptions = document.querySelectorAll('.color-option');
+            const rotationSlider = document.getElementById('rotation-slider');
+            const rotationValue = document.getElementById('rotation-value');
+            const zoomSlider = document.getElementById('zoom-slider');
+            const zoomValue = document.getElementById('zoom-value');
+            const zoomLevel = document.getElementById('zoom-level');
+            const addTextBtn = document.getElementById('add-text-btn');
             
-            let isDrawing = false;
-            let lastX = 0;
-            let lastY = 0;
-            let currentColor = '#000000';
-            let currentTool = 'pencil';
+            // Estado de la aplicación
+            let currentImage = null;
+            let currentText = null;
+            let isDragging = false;
+            let dragStartX, dragStartY;
+            let currentScale = 1.0;
+            let currentRotation = 0;
+            let canvasZoom = 1.0;
             
             // Inicializar el lienzo
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            ctx.lineWidth = lineWidthInput.value;
-            ctx.strokeStyle = currentColor;
-            
-            // Dibujar en el canvas
-            function draw(e) {
-                if (!isDrawing) return;
-                
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(e.offsetX, e.offsetY);
-                ctx.stroke();
-                [lastX, lastY] = [e.offsetX, e.offsetY];
-            }
-            
-            // Eventos del mouse
-            canvas.addEventListener('mousedown', (e) => {
-                isDrawing = true;
-                [lastX, lastY] = [e.offsetX, e.offsetY];
-            });
-            
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', () => isDrawing = false);
-            canvas.addEventListener('mouseout', () => isDrawing = false);
-            
-            // Limpiar el lienzo
-            clearBtn.addEventListener('click', () => {
+            function initCanvas() {
+                // Fondo blanco
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = currentColor;
+                
+                // Bordes del área de impresión
+                ctx.strokeStyle = '#cbd5e0';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+                ctx.setLineDash([]);
+                
+                // Texto de guía
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Arrastra tus diseños aquí', canvas.width / 2, canvas.height / 2);
+            }
+            
+            initCanvas();
+            
+            // Manejar la subida de archivos
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click();
             });
             
-            // Descargar imagen
-            downloadBtn.addEventListener('click', function() {
-                const image = canvas.toDataURL('image/png');
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        const img = new Image();
+                        img.onload = function() {
+                            currentImage = img;
+                            drawImage();
+                        };
+                        img.src = event.target.result;
+                    };
+                    
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            // Dibujar imagen en el canvas
+            function drawImage() {
+                initCanvas();
+                
+                if (currentImage) {
+                    const centerX = canvas.width / 2;
+                    const centerY = canvas.height / 2;
+                    
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(currentRotation * Math.PI / 180);
+                    ctx.scale(currentScale, currentScale);
+                    
+                    // Dibujar imagen centrada
+                    const width = currentImage.width * 0.5;
+                    const height = currentImage.height * 0.5;
+                    ctx.drawImage(currentImage, -width / 2, -height / 2, width, height);
+                    
+                    // Dibujar borde de selección
+                    ctx.strokeStyle = '#4299e1';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-width / 2, -height / 2, width, height);
+                    
+                    ctx.restore();
+                }
+            }
+            
+            // Controles de tamaño y rotación
+            widthSlider.addEventListener('input', function() {
+                currentScale = this.value / 100;
+                widthValue.textContent = this.value + '%';
+                drawImage();
+            });
+            
+            rotationSlider.addEventListener('input', function() {
+                currentRotation = this.value;
+                rotationValue.textContent = this.value + '°';
+                drawImage();
+            });
+            
+            zoomSlider.addEventListener('input', function() {
+                canvasZoom = this.value / 100;
+                zoomValue.textContent = this.value + '%';
+                zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+                
+                const canvasContainer = document.querySelector('.canvas-area');
+                canvas.style.transform = `scale(${canvasZoom})`;
+                canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth) / 2;
+                canvasContainer.scrollTop = (canvas.height * canvasZoom - canvasContainer.clientHeight) / 2;
+            });
+            
+            // Agregar texto
+            addTextBtn.addEventListener('click', function() {
+                const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
+                if (text) {
+                    ctx.font = '30px Arial';
+                    ctx.fillStyle = '#000000';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 100);
+                }
+            });
+            
+            // Descargar como PNG
+            downloadPngBtn.addEventListener('click', function() {
                 const link = document.createElement('a');
-                link.href = image;
-                link.download = 'mi-diseno.png';
+                link.download = 'montaje-dtf.png';
+                link.href = canvas.toDataURL('image/png');
                 link.click();
             });
             
-            // Cambiar grosor de línea
-            lineWidthInput.addEventListener('input', function() {
-                ctx.lineWidth = this.value;
-                widthValue.textContent = this.value + 'px';
-            });
-            
-            // Cambiar color
-            colorOptions.forEach(color => {
-                color.addEventListener('click', function() {
-                    currentColor = this.getAttribute('data-color');
-                    ctx.strokeStyle = currentColor;
+            // Descargar como PDF
+            downloadPdfBtn.addEventListener('click', function() {
+                // Usamos html2canvas para capturar el canvas con la calidad adecuada
+                html2canvas(canvas, {
+                    scale: 2, // Mayor calidad
+                    logging: false,
+                    useCORS: true
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: [58, 100] // Tamaño DTF
+                    });
+                    
+                    // Agregar imagen al PDF
+                    doc.addImage(imgData, 'PNG', 0, 0, 58, 100);
+                    doc.save('montaje-dtf.pdf');
                 });
             });
             
-            // Seleccionar herramienta
-            document.getElementById('pencil-btn').addEventListener('click', () => currentTool = 'pencil');
-            document.getElementById('text-btn').addEventListener('click', () => alert('Para añadir texto: selecciona la herramienta y haz clic en el lienzo (funcionalidad en desarrollo)'));
-            document.getElementById('shape-btn').addEventListener('click', () => alert('Para añadir formas: selecciona la herramienta y dibuja en el lienzo (funcionalidad en desarrollo)'));
+            // Limpiar lienzo
+            clearBtn.addEventListener('click', function() {
+                if (confirm('¿Estás seguro de que quieres limpiar el lienzo? Se perderán todos los diseños.')) {
+                    initCanvas();
+                    currentImage = null;
+                    currentScale = 1.0;
+                    currentRotation = 0;
+                    widthSlider.value = 100;
+                    rotationSlider.value = 0;
+                    widthValue.textContent = '100%';
+                    rotationValue.textContent = '0°';
+                }
+            });
+            
+            // Funcionalidad de arrastrar (para una versión más completa)
+            canvas.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                dragStartX = e.offsetX;
+                dragStartY = e.offsetY;
+            });
+            
+            canvas.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+            
+            canvas.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    // En una implementación completa, aquí se moverían los elementos
+                    console.log('Arrastrando:', e.offsetX, e.offsetY);
+                }
+            });
         });
     </script>
 </body>
