@@ -352,6 +352,124 @@
             color: #742a2a;
         }
         
+        .status-info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        
+        .status-loading {
+            background: #e9d8fd;
+            color: #553c9a;
+        }
+        
+        .canvas-background {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .canvas-background label {
+            white-space: nowrap;
+        }
+        
+        .canvas-background input {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+        }
+        
+        .message.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #2c5282;
+        }
+        
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #22543d;
+        }
+        
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #742a2a;
+        }
+        
+        .message.warning {
+            background: #feebcb;
+            color: #744210;
+            border-left: 4px solid #744210;
+        }
+        
+        .message.loading {
+            background: #e9d8fd;
+            color: #553c9a;
+            border-left: 4px solid #553c9a;
+        }
+        
+        .message-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .close-message {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        
+        .close-message:hover {
+            opacity: 1;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
         @media (max-width: 1024px) {
             .main-content {
                 flex-wrap: wrap;
@@ -359,6 +477,13 @@
             
             .toolbar, .controls {
                 width: 100%;
+            }
+            
+            .message-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
             }
         }
     </style>
@@ -378,7 +503,10 @@
                     <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
                     <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
                     
-                    <div id="upload-status" class="upload-status" style="display: none;"></div>
+                    <div class="canvas-background">
+                        <label for="canvas-color">Color de fondo:</label>
+                        <input type="color" id="canvas-color" value="#ffffff">
+                    </div>
                     
                     <div class="designs-list" id="designs-list">
                         <div class="no-designs">No hay diseños cargados</div>
@@ -409,6 +537,10 @@
                         <li>Las dimensiones se muestran en centímetros</li>
                         <li>Descarga tu montaje en PNG o PDF</li>
                     </ol>
+                    <p class="help-section">
+                        <strong>Nota:</strong> El color de fondo es solo para visualización. 
+                        Las exportaciones mantendrán la transparencia.
+                    </p>
                 </div>
             </div>
             
@@ -495,6 +627,9 @@
         </footer>
     </div>
 
+    <!-- Contenedor para mensajes flotantes -->
+    <div class="message-container" id="message-container"></div>
+
     <!-- Librería PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -526,7 +661,8 @@
             const applySizeBtn = document.getElementById('apply-size');
             const lockProportion = document.getElementById('lock-proportion');
             const qualitySelect = document.getElementById('quality-select');
-            const uploadStatus = document.getElementById('upload-status');
+            const canvasColor = document.getElementById('canvas-color');
+            const messageContainer = document.getElementById('message-container');
             
             // Constantes para la conversión de píxeles a centímetros
             const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
@@ -545,6 +681,54 @@
             let canvasZoom = 1.0;
             let lastMouseX, lastMouseY;
             let startScale = 1.0; // Para guardar el scale inicial al comenzar a redimensionar
+            let canvasBackgroundColor = '#ffffff'; // Color de fondo por defecto
+            
+            // Sistema de mensajes
+            function showMessage(message, type = 'info', duration = 5000) {
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${type}`;
+                
+                const icons = {
+                    info: 'ℹ️',
+                    success: '✅',
+                    error: '❌',
+                    warning: '⚠️',
+                    loading: '⏳'
+                };
+                
+                messageEl.innerHTML = `
+                    <span class="message-icon">${icons[type] || icons.info}</span>
+                    <span>${message}</span>
+                    <button class="close-message">&times;</button>
+                `;
+                
+                messageContainer.appendChild(messageEl);
+                
+                // Cerrar mensaje al hacer clic en la X
+                const closeBtn = messageEl.querySelector('.close-message');
+                closeBtn.addEventListener('click', () => {
+                    messageEl.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => {
+                        messageContainer.removeChild(messageEl);
+                    }, 300);
+                });
+                
+                // Auto-eliminar mensaje después de la duración especificada
+                if (duration > 0) {
+                    setTimeout(() => {
+                        if (messageEl.parentNode === messageContainer) {
+                            messageEl.style.animation = 'slideOut 0.3s ease-out';
+                            setTimeout(() => {
+                                if (messageEl.parentNode === messageContainer) {
+                                    messageContainer.removeChild(messageEl);
+                                }
+                            }, 300);
+                        }
+                    }, duration);
+                }
+                
+                return messageEl;
+            }
             
             // Inicializar el lienzo con transparencia
             function initCanvas() {
@@ -561,6 +745,12 @@
                         }
                     }
                 }
+                
+                // Dibujar fondo de color semitransparente para mejor visualización
+                ctx.globalAlpha = 0.7;
+                ctx.fillStyle = canvasBackgroundColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalAlpha = 1.0;
                 
                 // Bordes del área de impresión
                 ctx.strokeStyle = '#cbd5e0';
@@ -580,17 +770,12 @@
             
             initCanvas();
             
-            // Mostrar mensaje de estado
-            function showStatus(message, isError = false) {
-                uploadStatus.textContent = message;
-                uploadStatus.className = isError ? 'upload-status status-error' : 'upload-status status-success';
-                uploadStatus.style.display = 'block';
-                
-                // Ocultar después de 3 segundos
-                setTimeout(() => {
-                    uploadStatus.style.display = 'none';
-                }, 3000);
-            }
+            // Cambiar color de fondo del lienzo
+            canvasColor.addEventListener('input', function() {
+                canvasBackgroundColor = this.value;
+                drawCanvas();
+                showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
+            });
             
             // Clase para manejar los diseños
             class Design {
@@ -819,7 +1004,7 @@
                 const scaleX = exportCanvas.width / canvas.width;
                 const scaleY = exportCanvas.height / canvas.height;
                 
-                // Dibujar fondo transparente
+                // Dibujar fondo transparente (sin el color de fondo visual)
                 exportCtx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
                 
                 // Dibujar todos los diseños en el canvas de exportación
@@ -859,11 +1044,19 @@
                 if (e.target.files && e.target.files.length > 0) {
                     const files = Array.from(e.target.files);
                     let loadedCount = 0;
+                    const totalFiles = files.length;
+                    
+                    // Mostrar mensaje de carga
+                    const loadingMessage = showMessage(`Cargando ${totalFiles} diseño(s)...`, 'loading', 0);
                     
                     files.forEach(file => {
                         // Verificar que sea una imagen
                         if (!file.type.match('image.*')) {
-                            showStatus('Error: Solo se permiten archivos de imagen', true);
+                            showMessage(`Error: ${file.name} no es un archivo de imagen válido`, 'error');
+                            loadedCount++;
+                            if (loadedCount === totalFiles) {
+                                messageContainer.removeChild(loadingMessage);
+                            }
                             return;
                         }
                         
@@ -878,8 +1071,10 @@
                                 selectedDesignId = id;
                                 
                                 loadedCount++;
-                                if (loadedCount === files.length) {
-                                    showStatus(`${files.length} diseño(s) cargado(s) correctamente`);
+                                
+                                if (loadedCount === totalFiles) {
+                                    messageContainer.removeChild(loadingMessage);
+                                    showMessage(`${totalFiles} diseño(s) cargado(s) correctamente`, 'success');
                                 }
                                 
                                 updateDesignsList();
@@ -887,15 +1082,21 @@
                                 drawCanvas();
                             };
                             img.onerror = function() {
-                                showStatus('Error al cargar la imagen: ' + file.name, true);
                                 loadedCount++;
+                                if (loadedCount === totalFiles) {
+                                    messageContainer.removeChild(loadingMessage);
+                                }
+                                showMessage(`Error al cargar la imagen: ${file.name}`, 'error');
                             };
                             img.src = event.target.result;
                         };
                         
                         reader.onerror = function() {
-                            showStatus('Error al leer el archivo: ' + file.name, true);
                             loadedCount++;
+                            if (loadedCount === totalFiles) {
+                                messageContainer.removeChild(loadingMessage);
+                            }
+                            showMessage(`Error al leer el archivo: ${file.name}`, 'error');
                         };
                         
                         reader.readAsDataURL(file);
@@ -946,6 +1147,7 @@
                         updateDesignsList();
                         updateControls();
                         drawCanvas();
+                        showMessage(`Diseño ${designs.indexOf(design) + 1} seleccionado`, 'info', 2000);
                     });
                     
                     designsList.appendChild(item);
@@ -1007,6 +1209,7 @@
                     
                     if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
                         design.setDimensions(width, height, lockProportion.checked);
+                        showMessage(`Tamaño ajustado a ${width}cm × ${height}cm`, 'success', 2000);
                     }
                 }
             });
@@ -1022,6 +1225,7 @@
                         heightInput.value = proportionalHeight.toFixed(1);
                     }
                 }
+                showMessage(this.checked ? 'Proporción bloqueada' : 'Proporción desbloqueada', 'info', 2000);
             });
             
             // Sincronizar altura cuando cambia el ancho
@@ -1078,6 +1282,8 @@
                     designs = designs.filter(d => d.id !== design.id);
                     selectedDesignId = designs.length > 0 ? designs[0].id : null;
                     
+                    showMessage('Diseño eliminado', 'info', 2000);
+                    
                     updateDesignsList();
                     updateControls();
                     drawCanvas();
@@ -1097,7 +1303,7 @@
                 canvasContainer.scrollTop = (canvas.height * canvasZoom - canvasContainer.clientHeight) / 2;
             });
             
-            // Agregar texto - CORREGIDO: Error de sintaxis
+            // Agregar texto
             addTextBtn.addEventListener('click', function() {
                 const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
                 if (text) {
@@ -1123,6 +1329,8 @@
                         designs.push(newDesign);
                         selectedDesignId = id;
                         
+                        showMessage('Texto agregado correctamente', 'success', 2000);
+                        
                         updateDesignsList();
                         updateControls();
                         drawCanvas();
@@ -1134,57 +1342,80 @@
             // Descargar como PNG (con dimensiones correctas)
             downloadPngBtn.addEventListener('click', function() {
                 if (designs.length === 0) {
-                    showStatus('No hay diseños para exportar', true);
+                    showMessage('No hay diseños para exportar', 'error');
                     return;
                 }
                 
-                const exportCanvas = createHighQualityCanvas();
+                const loadingMessage = showMessage('Preparando descarga PNG...', 'loading', 0);
                 
-                // Crear enlace de descarga
-                const link = document.createElement('a');
-                link.download = 'montaje-dtf.png';
-                
-                // Exportar con transparencia y alta calidad
-                exportCanvas.toBlob(function(blob) {
-                    link.href = URL.createObjectURL(blob);
-                    link.click();
-                    
-                    // Limpiar URL después de la descarga
-                    setTimeout(function() {
-                        URL.revokeObjectURL(link.href);
-                    }, 100);
-                }, 'image/png', 1.0); // Calidad máxima
+                setTimeout(() => {
+                    try {
+                        const exportCanvas = createHighQualityCanvas();
+                        
+                        // Crear enlace de descarga
+                        const link = document.createElement('a');
+                        link.download = 'montaje-dtf.png';
+                        
+                        // Exportar con transparencia y alta calidad
+                        exportCanvas.toBlob(function(blob) {
+                            link.href = URL.createObjectURL(blob);
+                            link.click();
+                            
+                            // Limpiar URL después de la descarga
+                            setTimeout(function() {
+                                URL.revokeObjectURL(link.href);
+                                messageContainer.removeChild(loadingMessage);
+                                showMessage('Descarga PNG completada', 'success');
+                            }, 100);
+                        }, 'image/png', 1.0); // Calidad máxima
+                    } catch (error) {
+                        messageContainer.removeChild(loadingMessage);
+                        showMessage('Error al generar el PNG: ' + error.message, 'error');
+                    }
+                }, 500);
             });
             
             // Descargar como PDF (con dimensiones correctas)
             downloadPdfBtn.addEventListener('click', function() {
                 if (designs.length === 0) {
-                    showStatus('No hay diseños para exportar', true);
+                    showMessage('No hay diseños para exportar', 'error');
                     return;
                 }
                 
-                const exportCanvas = createHighQualityCanvas();
+                const loadingMessage = showMessage('Preparando descarga PDF...', 'loading', 0);
                 
-                // Convertir a blob primero para mantener la calidad
-                exportCanvas.toBlob(function(blob) {
-                    const reader = new FileReader();
-                    reader.onload = function() {
-                        const imgData = reader.result;
-                        const { jsPDF } = window.jspdf;
+                setTimeout(() => {
+                    try {
+                        const exportCanvas = createHighQualityCanvas();
                         
-                        // Crear PDF con las dimensiones correctas en milímetros
-                        const doc = new jsPDF({
-                            orientation: 'portrait',
-                            unit: 'mm',
-                            format: [CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10] // Convertir cm a mm
-                        });
-                        
-                        // Agregar imagen al PDF con las dimensiones exactas
-                        doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10, undefined, 'FAST');
-                        doc.save('montaje-dtf.pdf');
-                    };
-                    reader.readAsDataURL(blob);
-                }, 'image/png', 1.0);
+                        // Convertir a blob primero para mantener la calidad
+                        exportCanvas.toBlob(function(blob) {
+                            const reader = new FileReader();
+                            reader.onload = function() {
+                                const imgData = reader.result;
+                                const { jsPDF } = window.jspdf;
+                                
+                                // Crear PDF con las dimensiones correctas en milímetros
+                                const doc = new jsPDF({
+                                    orientation: 'portrait',
+                                    unit: 'mm',
+                                    format: [CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10] // Convertir cm a mm
+                                });
+                                
+                                // Agregar imagen al PDF con las dimensiones exactas
+                                doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10, undefined, 'FAST');
+                                doc.save('montaje-dtf.pdf');
+                                
+                                messageContainer.removeChild(loadingMessage);
+                                showMessage('Descarga PDF completada', 'success');
+                            };
+                            reader.readAsDataURL(blob);
+                        }, 'image/png', 1.0);
+                    } catch (error) {
+                        messageContainer.removeChild(loadingMessage);
+                        showMessage('Error al generar el PDF: ' + error.message, 'error');
+                    }
+                }, 500);
             });
             
             // Limpiar lienzo
@@ -1192,6 +1423,8 @@
                 if (designs.length > 0 && confirm('¿Estás seguro de que quieres limpiar el lienzo? Se perderán todos los diseños.')) {
                     designs = [];
                     selectedDesignId = null;
+                    
+                    showMessage('Lienzo limpiado', 'info', 2000);
                     
                     updateDesignsList();
                     updateControls();
@@ -1355,6 +1588,11 @@
             
             // Inicializar controles
             updateControls();
+            
+            // Mensaje de bienvenida
+            setTimeout(() => {
+                showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.', 'info');
+            }, 1000);
         });
     </script>
 </body>
