@@ -187,7 +187,7 @@
             <span id="zoom-value">100%</span>
             <input type="range" id="zoom-slider" min="20" max="200" value="100">
           </div>
-          <small>Tip: Ctrl + rueda del mouse para zoom rápido.</small>
+          <small>Tip: Ctrl o ⌘ + rueda del mouse para zoom rápido.</small>
         </div>
 
         <div class="tool-section">
@@ -266,7 +266,7 @@
           <p>• Supr/Backspace: eliminar seleccionado</p>
           <p>• Flechas: mover (Shift = 10 px)</p>
           <p>• Ctrl/Cmd + D: duplicar seleccionado</p>
-          <p>• Ctrl + rueda: zoom</p>
+          <p>• Ctrl o ⌘ + rueda: zoom</p>
         </div>
       </div>
     </div>
@@ -316,6 +316,9 @@
         lockError.textContent = 'Contraseña incorrecta';
       }
     }
+
+    // ====== Helpers
+    function addEvent(el,ev,fn,opt){ if(el) el.addEventListener(ev,fn,opt||false); }
 
     // ====== Referencias DOM
     const canvas = document.getElementById('canvas');
@@ -394,7 +397,6 @@
       if (duration>0) setTimeout(()=> messageEl && close(), duration);
       return messageEl;
     }
-    function addEvent(el,ev,fn,opt){ if(el) el.addEventListener(ev,fn,opt||false); }
 
     // ====== Fondo y guía
     function initCanvas() {
@@ -591,7 +593,6 @@
       ectx.imageSmoothingQuality = 'high';
 
       const scaleX = exportCanvas.width / canvas.width;
-      const scaleY = exportCanvas.height / canvas.height;
 
       ectx.clearRect(0,0,exportCanvas.width,exportCanvas.height);
 
@@ -600,8 +601,8 @@
         ectx.globalAlpha = design.opacity;
 
         const x = design.x * scaleX;
-        const y = design.y * scaleY;
-        const scale = design.scale * scaleX; // 1:1 con tu lienzo lógico
+        const y = design.y * scaleX;
+        const scale = design.scale * scaleX; // 1:1 con el lienzo lógico
 
         ectx.translate(x, y);
         ectx.rotate(design.rotation * Math.PI/180);
@@ -624,7 +625,7 @@
       showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
     });
 
-    // ====== Upload (permitir subir el mismo archivo)
+    // ====== Upload
     addEvent(uploadBtn,'click', ()=>{
       if (fileInput) fileInput.value = '';
       if (fileInput) fileInput.click();
@@ -720,8 +721,11 @@
     // ====== Controles
     function updateControls(){
       const d = getSelectedDesign();
-      const all = [rotationSlider, rotationInput, opacitySlider, removeBtn, widthInput, heightInput, applySizeBtn, lockProportion,
-                   mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn];
+      const all = [
+        rotationSlider, rotationInput, opacitySlider, removeBtn,
+        widthInput, heightInput, applySizeBtn, lockProportion,
+        mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
+      ];
       if (d){
         rotationSlider.value = Math.round(d.rotation);
         rotationInput.value = Math.round(d.rotation);
@@ -848,11 +852,11 @@
       canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
     });
 
-    // ====== Zoom con rueda (Ctrl + rueda)
+    // ====== Zoom con rueda (Ctrl o ⌘ + rueda/scroll)
     const canvasArea = document.querySelector('.canvas-area');
     if (canvasArea && zoomSlider){
       canvasArea.addEventListener('wheel', (e)=>{
-        if (!e.ctrlKey) return;
+        if (!e.ctrlKey && !e.metaKey) return;  // soporta Windows/Linux y macOS
         e.preventDefault();
         const current = parseInt(zoomSlider.value, 10);
         const delta = e.deltaY < 0 ? +10 : -10;  // pasos de 10%
@@ -883,7 +887,6 @@
           const id = 'text-' + Date.now();
           const d = new Design(id, img, canvas.width/2, canvas.height/2);
 
-          // ajustar si supera el lienzo
           const maxW = canvas.width - 20;
           const maxH = canvas.height - 20;
           const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
@@ -1108,7 +1111,7 @@
       }
     });
 
-    // ====== ESPEJO (Horizontal)
+    // ====== ESPEJO (Horizontal) robusto
     if (mirrorBtn){
       mirrorBtn.addEventListener('click', ()=>{
         const d = getSelectedDesign(); 
@@ -1118,11 +1121,14 @@
         tCanvas.width = d.image.width;
         tCanvas.height = d.image.height;
         const tctx = tCanvas.getContext('2d', {alpha:true});
+
+        tctx.save();
         tctx.translate(tCanvas.width, 0);
         tctx.scale(-1, 1);
         tctx.imageSmoothingEnabled = true;
         tctx.imageSmoothingQuality = 'high';
-        tctx.drawImage(d.image, 0, 0);
+        tctx.drawImage(d.image, 0, 0, tCanvas.width, tCanvas.height);
+        tctx.restore();
 
         const img = new Image();
         img.onload = ()=>{
@@ -1137,7 +1143,7 @@
     // ====== Z-ORDER
     function indexOfSelected(){
       const id = selectedDesignId;
-      return designs.findIndex(dd => dd.id === id);
+      return designs.findIndex(dd => dd && dd.id === id);
     }
     function resortAndRefresh(){
       updateDesignsList(); 
@@ -1162,7 +1168,7 @@
     }
     if (stepForwardBtn){
       stepForwardBtn.addEventListener('click', ()=>{
-        const i = indexOfSelected(); if (i < 0 || i === designs.length-1) return;
+        const i = indexOfSelected(); if (i < 0 || i >= designs.length-1) return;
         [designs[i], designs[i+1]] = [designs[i+1], designs[i]];
         resortAndRefresh();
       });
