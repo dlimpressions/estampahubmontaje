@@ -289,7 +289,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // ===== Seguridad (Contraseña) =====
+      /* ======================= Seguridad (Contraseña) ======================= */
       const ACCESS_PASSWORD = 'dtf2025'; // <-- cámbiala aquí
       const overlay = document.getElementById('lock-overlay');
       const appRoot = document.getElementById('app-root');
@@ -299,7 +299,6 @@
 
       function showLock(){ overlay.style.display = 'flex'; appRoot.style.visibility = 'hidden'; lockPass.focus(); }
       function unlock(){ overlay.style.display = 'none'; appRoot.style.visibility = 'visible'; }
-
       if (sessionStorage.getItem('dtf_unlocked') === '1') unlock(); else showLock();
       lockBtn.addEventListener('click', tryUnlock);
       lockPass.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
@@ -309,7 +308,7 @@
         } else { lockError.textContent = 'Contraseña incorrecta'; }
       }
 
-      // ===== Referencias DOM
+      /* ======================= Referencias DOM ======================= */
       const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
       const uploadBtn = document.getElementById('upload-btn');
@@ -346,26 +345,21 @@
       const iaBackendSel = document.getElementById('ia-backend');
       const iaFeatherInput = document.getElementById('ia-feather');
 
-      // ===== Constantes físicas
+      /* ======================= Constantes físicas ======================= */
       const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
       const CANVAS_WIDTH_CM = 58; // fijo
       let CANVAS_HEIGHT_CM = 100; // variable (máx 100)
       const INCHES_PER_CM = 0.3937007874;
 
-      // ===== Estado
+      /* ======================= Estado ======================= */
       let designs = [];
       let selectedDesignId = null;
-      let isDragging = false;
-      let isResizing = false;
-      let isRotating = false;
-      let dragOffsetX, dragOffsetY;
-      let canvasZoom = 1.0;
-      let lastMouseX, lastMouseY;
-      let startScale = 1.0;
-      let startResizeDist = 1.0;
+      let isDragging = false, isResizing = false, isRotating = false;
+      let dragOffsetX, dragOffsetY, canvasZoom = 1.0;
+      let lastMouseX, lastMouseY, startScale = 1.0, startResizeDist = 1.0;
       let canvasBackgroundColor = '#ffffff';
 
-      // ===== Mensajes
+      /* ======================= Mensajes ======================= */
       function showMessage(message, type = 'info', duration = 5000) {
         const messageEl = document.createElement('div');
         messageEl.className = `message ${type}`;
@@ -381,12 +375,10 @@
         return messageEl;
       }
 
-      // ===== Fondo y guía
+      /* ======================= Fondo y guía ======================= */
       function initCanvas() {
         ctx.save();
         ctx.clearRect(0,0,canvas.width,canvas.height);
-
-        // patrón de transparencia
         const size = 20;
         ctx.fillStyle = '#f0f0f0';
         for (let y = 0; y < canvas.height; y += size) {
@@ -394,20 +386,15 @@
             if (((x/size + y/size) % 2) === 0) ctx.fillRect(x, y, size, size);
           }
         }
-
-        // color (solo visual)
         ctx.globalAlpha = 0.7;
         ctx.fillStyle = canvasBackgroundColor;
         ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.globalAlpha = 1.0;
-
-        // borde área de impresión
         ctx.strokeStyle = '#cbd5e0';
         ctx.lineWidth = 2;
         ctx.setLineDash([5,5]);
         ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
         ctx.setLineDash([]);
-
         if (designs.length===0){
           ctx.fillStyle = '#e2e8f0';
           ctx.font = '20px Arial';
@@ -418,7 +405,7 @@
       }
       initCanvas();
 
-      // ===== Clase Design
+      /* ======================= Clase Design ======================= */
       class Design {
         constructor(id, image, x, y) {
           this.id = id;
@@ -434,258 +421,151 @@
           this.originalWidth = image.width;
           this.originalHeight = image.height;
         }
-
         draw() {
           ctx.save();
           ctx.globalAlpha = this.opacity;
           ctx.translate(this.x, this.y);
           ctx.rotate(this.rotation * Math.PI / 180);
           ctx.scale(this.scale, this.scale);
-
-          const width = this.width;
-          const height = this.height;
-
+          const width = this.width, height = this.height;
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(this.image, -width/2, -height/2, width, height);
-
           if (this.id === selectedDesignId) {
-            ctx.strokeStyle = '#4299e1';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#4299e1'; ctx.lineWidth = 2;
             ctx.strokeRect(-width/2, -height/2, width, height);
-
-            ctx.fillStyle = '#4299e1';
-            ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
-
-            ctx.fillStyle = '#48bb78';
-            ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
-
-            ctx.fillStyle = '#f56565';
-            ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#4299e1'; ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#48bb78'; ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#f56565'; ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
           }
           ctx.restore();
         }
-
-        getDimensionsInCm() {
-          return {
-            width:  (this.width  * this.scale) / PIXELS_PER_CM,
-            height: (this.height * this.scale) / PIXELS_PER_CM
-          };
+        getDimensionsInCm(){ return { width:(this.width*this.scale)/PIXELS_PER_CM, height:(this.height*this.scale)/PIXELS_PER_CM }; }
+        getOriginalDimensionsInCm(){ return { width:(this.originalWidth)/PIXELS_PER_CM, height:(this.originalHeight)/PIXELS_PER_CM }; }
+        setDimensions(widthCm, heightCm, keep = true){
+          const targetW = widthCm*PIXELS_PER_CM, targetH = heightCm*PIXELS_PER_CM;
+          if (keep) { this.scale = targetW / this.originalWidth; }
+          else { const sx = targetW/this.originalWidth, sy = targetH/this.originalHeight; this.scale = (sx+sy)/2; }
+          this.updateInputs(); drawCanvas();
         }
-
-        getOriginalDimensionsInCm() {
-          return {
-            width:  (this.originalWidth)  / PIXELS_PER_CM,
-            height: (this.originalHeight) / PIXELS_PER_CM
-          };
+        updateInputs(){ const d = this.getDimensionsInCm(); widthInput.value = d.width.toFixed(1); heightInput.value = d.height.toFixed(1); }
+        isPointInside(x,y){
+          const w = this.width*this.scale, h = this.height*this.scale;
+          const relX = x - this.x, relY = y - this.y, ang = -this.rotation*Math.PI/180;
+          const rx = relX*Math.cos(ang) - relY*Math.sin(ang), ry = relX*Math.sin(ang)+relY*Math.cos(ang);
+          return Math.abs(rx) <= w/2 && Math.abs(ry) <= h/2;
         }
-
-        setDimensions(widthCm, heightCm, maintainProportion = true) {
-          const targetWidthPx  = widthCm  * PIXELS_PER_CM;
-          const targetHeightPx = heightCm * PIXELS_PER_CM;
-
-          if (maintainProportion) {
-            this.scale = targetWidthPx / this.originalWidth;
-          } else {
-            const scaleX = targetWidthPx  / this.originalWidth;
-            const scaleY = targetHeightPx / this.originalHeight;
-            this.scale = (scaleX + scaleY) / 2;
-          }
-          this.updateInputs();
-          drawCanvas();
+        isRotationHandle(x,y){
+          const w = this.width*this.scale, h = this.height*this.scale;
+          const relX = x - this.x, relY = y - this.y, ang = -this.rotation*Math.PI/180;
+          const rx = relX*Math.cos(ang) - relY*Math.sin(ang), ry = relX*Math.sin(ang)+relY*Math.cos(ang);
+          return Math.hypot(rx-0, ry-(-h/2-15)) <= 10;
         }
-
-        updateInputs() {
-          const d = this.getDimensionsInCm();
-          widthInput.value = d.width.toFixed(1);
-          heightInput.value = d.height.toFixed(1);
-        }
-
-        isPointInside(x, y) {
-          const width = this.width * this.scale;
-          const height = this.height * this.scale;
-          const relX = x - this.x, relY = y - this.y;
-          const angle = -this.rotation * Math.PI/180;
-          const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-          const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
-          return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
-        }
-
-        isRotationHandle(x, y) {
-          const width = this.width * this.scale;
-          const height = this.height * this.scale;
-          const relX = x - this.x, relY = y - this.y;
-          const angle = -this.rotation * Math.PI/180;
-          const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-          const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
-          const hx = 0, hy = -height/2 - 15;
-          return Math.hypot(rx - hx, ry - hy) <= 10;
-        }
-
-        isScaleHandle(x, y) {
-          const width = this.width * this.scale;
-          const height = this.height * this.scale;
-          const relX = x - this.x, relY = y - this.y;
-          const angle = -this.rotation * Math.PI/180;
-          const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-          const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
-          const hx = width/2 + 5, hy = height/2 + 5;
-          return Math.hypot(rx - hx, ry - hy) <= 10;
+        isScaleHandle(x,y){
+          const w = this.width*this.scale, h = this.height*this.scale;
+          const relX = x - this.x, relY = y - this.y, ang = -this.rotation*Math.PI/180;
+          const rx = relX*Math.cos(ang) - relY*Math.sin(ang), ry = relX*Math.sin(ang)+relY*Math.cos(ang);
+          return Math.hypot(rx-(w/2+5), ry-(h/2+5)) <= 10;
         }
       }
 
-      // ===== Dibujo general
-      function drawCanvas() {
-        initCanvas();
-        designs.forEach(d => d.draw());
-        updateSizeInfo();
-      }
-
-      function updateSizeInfo() {
+      /* ======================= Dibujo general ======================= */
+      function drawCanvas(){ initCanvas(); designs.forEach(d=>d.draw()); updateSizeInfo(); }
+      function updateSizeInfo(){
         const d = getSelectedDesign();
-        if (d) {
-          const c = d.getDimensionsInCm();
-          const o = d.getOriginalDimensionsInCm();
+        if (d){ const c = d.getDimensionsInCm(), o = d.getOriginalDimensionsInCm();
           sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
           originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
-        } else {
-          sizeInfo.textContent = '0cm × 0cm';
-          originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
-        }
+        } else { sizeInfo.textContent = '0cm × 0cm'; originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm'; }
       }
 
-      // ===== Exportación
-      function getPixelDimensions(dpi) {
-        const widthPx  = Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * dpi);
-        const heightPx = Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * dpi);
-        return { width: widthPx, height: heightPx };
+      /* ======================= Exportación ======================= */
+      function getPixelDimensions(dpi){
+        return {
+          width:  Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * dpi),
+          height: Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * dpi)
+        };
       }
-
-      function createHighQualityCanvas() {
+      function createHighQualityCanvas(){
         const dpi = parseInt(qualitySelect.value);
         const dim = getPixelDimensions(dpi);
-
-        const exportCanvas = document.createElement('canvas');
-        exportCanvas.width = dim.width;
-        exportCanvas.height = dim.height;
-        const ectx = exportCanvas.getContext('2d');
-
-        ectx.imageSmoothingEnabled = true;
-        ectx.imageSmoothingQuality = 'high';
-
-        const scaleX = exportCanvas.width / canvas.width;
-        const scaleY = exportCanvas.height / canvas.height;
-
-        ectx.clearRect(0,0,exportCanvas.width,exportCanvas.height);
-
-        designs.forEach(design => {
-          ectx.save();
-          ectx.globalAlpha = design.opacity;
-
-          const x = design.x * scaleX;
-          const y = design.y * scaleY;
-          const scale = design.scale * Math.min(scaleX, scaleY);
-
-          ectx.translate(x, y);
-          ectx.rotate(design.rotation * Math.PI/180);
-          ectx.scale(scale, scale);
-
-          const w = design.width;
-          const h = design.height;
-          ectx.drawImage(design.image, -w/2, -h/2, w, h);
-
+        const out = document.createElement('canvas');
+        out.width = dim.width; out.height = dim.height;
+        const ectx = out.getContext('2d');
+        ectx.imageSmoothingEnabled = true; ectx.imageSmoothingQuality = 'high';
+        const sx = out.width/canvas.width, sy = out.height/canvas.height;
+        ectx.clearRect(0,0,out.width,out.height);
+        designs.forEach(d=>{
+          ectx.save(); ectx.globalAlpha = d.opacity;
+          const x = d.x * sx, y = d.y * sy, sc = d.scale * Math.min(sx, sy);
+          ectx.translate(x, y); ectx.rotate(d.rotation*Math.PI/180); ectx.scale(sc, sc);
+          ectx.drawImage(d.image, -d.width/2, -d.height/2, d.width, d.height);
           ectx.restore();
         });
-
-        return exportCanvas;
+        return out;
       }
 
-      // ===== Color de fondo (visual)
-      canvasColor.addEventListener('input', function(){
-        canvasBackgroundColor = this.value;
-        drawCanvas();
-        showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
-      });
+      /* ======================= Fondo (visual) ======================= */
+      canvasColor.addEventListener('input', function(){ canvasBackgroundColor = this.value; drawCanvas(); showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000); });
 
-      // ===== Upload (permitir mismo archivo y auto-ajuste)
+      /* ======================= Upload (re-subir + auto-fit) ======================= */
       uploadBtn.addEventListener('click', ()=>{ fileInput.value = ''; fileInput.click(); });
       fileInput.addEventListener('change', function(e){
-        if (e.target.files && e.target.files.length>0){
-          const files = Array.from(e.target.files);
-          let loaded = 0; const total = files.length;
-          const loadingMsg = showMessage(`Cargando ${total} diseño(s)...`,'loading',0);
+        if (!e.target.files || !e.target.files.length) return;
+        const files = Array.from(e.target.files);
+        let loaded = 0; const total = files.length;
+        const loadingMsg = showMessage(`Cargando ${total} diseño(s)...`,'loading',0);
 
-          files.forEach(file=>{
-            if (!file.type.match('image.*')){
-              showMessage(`Error: ${file.name} no es una imagen válida`,'error');
-              if (++loaded===total) loadingMsg.remove();
-              return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev){
-              const img = new Image();
-              img.onload = function(){
-                const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
-                const d = new Design(id, img);
-
-                // Auto-fit si supera el lienzo
-                const maxW = canvas.width - 20;
-                const maxH = canvas.height - 20;
-                const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
-                d.scale = Math.min(1, scaleToFit);
-
-                designs.push(d);
-                selectedDesignId = id;
-
-                if (++loaded===total) { loadingMsg.remove(); showMessage(`${total} diseño(s) cargado(s)`,'success'); }
-                updateDesignsList(); updateControls(); drawCanvas();
-              };
-              img.onerror = function(){ if (++loaded===total) loadingMsg.remove(); showMessage(`Error al cargar: ${file.name}`,'error'); }
-              img.src = ev.target.result;
+        files.forEach(file=>{
+          if (!file.type.match('image.*')){ showMessage(`Error: ${file.name} no es imagen`,'error'); if (++loaded===total) loadingMsg.remove(); return; }
+          const reader = new FileReader();
+          reader.onload = ev=>{
+            const img = new Image();
+            img.onload = ()=>{
+              const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
+              const d = new Design(id, img);
+              const maxW = canvas.width - 20, maxH = canvas.height - 20;
+              const fit = Math.min(maxW/d.width, maxH/d.height);
+              d.scale = Math.min(1, fit);
+              designs.push(d); selectedDesignId = id;
+              if (++loaded===total){ loadingMsg.remove(); showMessage(`${total} diseño(s) cargado(s)`,'success'); }
+              updateDesignsList(); updateControls(); drawCanvas();
             };
-            reader.onerror = function(){ if (++loaded===total) loadingMsg.remove(); showMessage(`Error al leer: ${file.name}`,'error'); }
-            reader.readAsDataURL(file);
-          });
+            img.onerror = ()=>{ if (++loaded===total) loadingMsg.remove(); showMessage(`Error al cargar: ${file.name}`,'error'); };
+            img.src = ev.target.result;
+          };
+          reader.onerror = ()=>{ if (++loaded===total) loadingMsg.remove(); showMessage(`Error al leer: ${file.name}`,'error'); };
+          reader.readAsDataURL(file);
+        });
 
-          fileInput.value = ''; // permite “re-subir” igual archivo
-        }
+        fileInput.value = ''; // permite re-subir el mismo archivo
       });
 
-      // ===== Lista de diseños
+      /* ======================= Lista ======================= */
       function updateDesignsList(){
         designsList.innerHTML = '';
-        if (designs.length===0){
-          designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>';
-          return;
-        }
+        if (!designs.length){ designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>'; return; }
         designs.forEach(design=>{
           const item = document.createElement('div');
           item.className = 'design-item' + (design.id===selectedDesignId ? ' active' : '');
           item.dataset.id = design.id;
 
-          const thumbCanvas = document.createElement('canvas');
-          thumbCanvas.width = 40; thumbCanvas.height = 40;
-          const tctx = thumbCanvas.getContext('2d');
-          const scale = Math.min(40/design.width, 40/design.height) * 0.8;
-          tctx.fillStyle = '#fff'; tctx.fillRect(0,0,40,40);
-          tctx.save();
-          tctx.translate(20,20);
-          tctx.scale(scale, scale);
-          tctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
-          tctx.restore();
-          tctx.strokeStyle = '#cbd5e0'; tctx.strokeRect(0,0,40,40);
+          const thumb = document.createElement('canvas');
+          thumb.width = 40; thumb.height = 40;
+          const tc = thumb.getContext('2d');
+          const s = Math.min(40/design.width, 40/design.height) * 0.8;
+          tc.fillStyle = '#fff'; tc.fillRect(0,0,40,40);
+          tc.save(); tc.translate(20,20); tc.scale(s,s);
+          tc.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+          tc.restore(); tc.strokeStyle = '#cbd5e0'; tc.strokeRect(0,0,40,40);
 
-          item.innerHTML = `<img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura"><div>Diseño ${designs.indexOf(design)+1}</div>`;
-          item.addEventListener('click', ()=>{
-            selectedDesignId = design.id;
-            updateDesignsList(); updateControls(); drawCanvas();
-            showMessage(`Diseño ${designs.indexOf(design)+1} seleccionado`,'info',2000);
-          });
+          item.innerHTML = `<img class="design-thumb" src="${thumb.toDataURL('image/png')}" alt="Miniatura"><div>Diseño ${designs.indexOf(design)+1}</div>`;
+          item.addEventListener('click', ()=>{ selectedDesignId = design.id; updateDesignsList(); updateControls(); drawCanvas(); showMessage(`Diseño ${designs.indexOf(design)+1} seleccionado`,'info',2000); });
           designsList.appendChild(item);
         });
       }
 
-      // ===== Controles
+      /* ======================= Controles ======================= */
       function updateControls(){
         const d = getSelectedDesign();
         if (d){
@@ -695,519 +575,286 @@
           opacitySlider.value = Math.round(d.opacity*100);
           opacityValue.textContent = Math.round(d.opacity*100) + '%';
           d.updateInputs();
-
-          [rotationSlider, rotationInput, opacitySlider, removeBtn,
-           widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=false);
-
+          [rotationSlider, rotationInput, opacitySlider, removeBtn, widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=false);
           updateSizeInfo();
         } else {
-          [rotationSlider, rotationInput, opacitySlider, removeBtn,
-           widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=true);
-          sizeInfo.textContent = '0cm × 0cm';
-          originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+          [rotationSlider, rotationInput, opacitySlider, removeBtn, widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=true);
+          sizeInfo.textContent = '0cm × 0cm'; originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
         }
       }
-
       function getSelectedDesign(){ return designs.find(d=> d.id===selectedDesignId); }
 
       applySizeBtn.addEventListener('click', function(){
-        const d = getSelectedDesign();
-        if (d){
-          const w = parseFloat(widthInput.value);
-          const h = parseFloat(heightInput.value);
-          if (!isNaN(w) && !isNaN(h) && w>0 && h>0){
-            d.setDimensions(w,h, lockProportion.checked);
-            showMessage(`Tamaño ajustado a ${w}cm × ${h}cm`, 'success', 2000);
-          }
-        }
+        const d = getSelectedDesign(); if (!d) return;
+        const w = parseFloat(widthInput.value), h = parseFloat(heightInput.value);
+        if (!isNaN(w) && !isNaN(h) && w>0 && h>0){ d.setDimensions(w,h, lockProportion.checked); showMessage(`Tamaño ajustado a ${w}cm × ${h}cm`, 'success', 2000); }
       });
-
       lockProportion.addEventListener('change', function(){
         const d = getSelectedDesign();
-        if (d && this.checked){
-          const w = parseFloat(widthInput.value);
-          if (!isNaN(w) && w>0){ heightInput.value = (w / d.aspectRatio).toFixed(1); }
-        }
+        if (d && this.checked){ const w = parseFloat(widthInput.value); if (!isNaN(w) && w>0) heightInput.value = (w/d.aspectRatio).toFixed(1); }
         showMessage(this.checked ? 'Proporción bloqueada' : 'Proporción desbloqueada','info',2000);
       });
-
       widthInput.addEventListener('input', function(){
-        if (lockProportion.checked){
-          const d = getSelectedDesign();
-          if (d){
-            const w = parseFloat(this.value);
-            if (!isNaN(w) && w>0){ heightInput.value = (w / d.aspectRatio).toFixed(1); }
-          }
-        }
+        if (!lockProportion.checked) return; const d = getSelectedDesign(); if (!d) return;
+        const w = parseFloat(this.value); if (!isNaN(w) && w>0) heightInput.value = (w/d.aspectRatio).toFixed(1);
       });
-
       heightInput.addEventListener('input', function(){
-        if (lockProportion.checked){
-          const d = getSelectedDesign();
-          if (d){
-            const h = parseFloat(this.value);
-            if (!isNaN(h) && h>0){ widthInput.value = (h * d.aspectRatio).toFixed(1); }
-          }
-        }
+        if (!lockProportion.checked) return; const d = getSelectedDesign(); if (!d) return;
+        const h = parseFloat(this.value); if (!isNaN(h) && h>0) widthInput.value = (h*d.aspectRatio).toFixed(1);
       });
-
       rotationSlider.addEventListener('input', function(){
-        const d = getSelectedDesign();
-        if (d){
-          d.rotation = parseInt(this.value);
-          rotationInput.value = this.value;
-          rotationValue.textContent = this.value + '°';
-          drawCanvas();
-        }
+        const d = getSelectedDesign(); if (!d) return;
+        d.rotation = parseInt(this.value); rotationInput.value = this.value; rotationValue.textContent = this.value + '°'; drawCanvas();
       });
-
       rotationInput.addEventListener('input', function(){
-        const d = getSelectedDesign();
-        if (d){
-          let val = parseInt(this.value);
-          if (isNaN(val)) val = 0;
-          val = ((val % 360) + 360) % 360;
-          d.rotation = val;
-          rotationSlider.value = val;
-          rotationValue.textContent = val + '°';
-          drawCanvas();
-        }
+        const d = getSelectedDesign(); if (!d) return;
+        let v = parseInt(this.value); if (isNaN(v)) v = 0; v = ((v%360)+360)%360;
+        d.rotation = v; rotationSlider.value = v; rotationValue.textContent = v + '°'; drawCanvas();
+      });
+      opacitySlider.addEventListener('input', function(){ const d = getSelectedDesign(); if (!d) return; d.opacity = this.value/100; opacityValue.textContent = this.value + '%'; drawCanvas(); });
+      removeBtn.addEventListener('click', function(){ const d = getSelectedDesign(); if (!d) return;
+        if (confirm('¿Eliminar este diseño?')){ designs = designs.filter(x=>x.id!==d.id); selectedDesignId = designs.length ? designs[designs.length-1].id : null; showMessage('Diseño eliminado','info',2000); updateDesignsList(); updateControls(); drawCanvas(); }
       });
 
-      opacitySlider.addEventListener('input', function(){
-        const d = getSelectedDesign();
-        if (d){
-          d.opacity = this.value / 100;
-          opacityValue.textContent = this.value + '%';
-          drawCanvas();
-        }
-      });
-
-      removeBtn.addEventListener('click', function(){
-        const d = getSelectedDesign();
-        if (d && confirm('¿Eliminar este diseño?')){
-          designs = designs.filter(x=> x.id!==d.id);
-          selectedDesignId = designs.length ? designs[designs.length-1].id : null;
-          showMessage('Diseño eliminado','info',2000);
-          updateDesignsList(); updateControls(); drawCanvas();
-        }
-      });
-
-      // ===== Zoom lienzo
+      /* ======================= Zoom ======================= */
       zoomSlider.addEventListener('input', function(){
-        canvasZoom = this.value/100;
-        zoomValue.textContent = this.value + '%';
-        zoomLevel.textContent = 'Zoom: ' + this.value + '%';
-        const canvasContainer = document.querySelector('.canvas-area');
-        canvasWrapper.style.transform = `scale(${canvasZoom})`;
-        canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
-        canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
+        canvasZoom = this.value/100; zoomValue.textContent = this.value + '%'; zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+        const area = document.querySelector('.canvas-area'); canvasWrapper.style.transform = `scale(${canvasZoom})`;
+        area.scrollLeft = (canvas.width*canvasZoom - area.clientWidth)/2; area.scrollTop = (canvas.height*canvasZoom - area.clientHeight)/2;
       });
 
-      // ===== Agregar texto
+      /* ======================= Texto ======================= */
       addTextBtn.addEventListener('click', function(){
         const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
-        if (text){
-          const tCanvas = document.createElement('canvas');
-          tCanvas.width = 600; tCanvas.height = 200;
-          const tctx = tCanvas.getContext('2d');
-          tctx.clearRect(0,0,tCanvas.width,tCanvas.height);
-          tctx.fillStyle = '#000000';
-          tctx.font = '80px Arial';
-          tctx.textAlign = 'center';
-          tctx.textBaseline = 'middle';
-          tctx.fillText(text, tCanvas.width/2, tCanvas.height/2);
-
-          const img = new Image();
-          img.onload = function(){
-            const id = 'text-' + Date.now();
-            const d = new Design(id, img, canvas.width/2, canvas.height/2);
-
-            const maxW = canvas.width - 20;
-            const maxH = canvas.height - 20;
-            const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
-            d.scale = Math.min(1, scaleToFit);
-
-            designs.push(d); selectedDesignId = id;
-            showMessage('Texto agregado correctamente','success',2000);
-            updateDesignsList(); updateControls(); drawCanvas();
-          };
-          img.src = tCanvas.toDataURL('image/png');
-        }
+        if (!text) return;
+        const t = document.createElement('canvas'); t.width = 600; t.height = 200;
+        const tc = t.getContext('2d'); tc.clearRect(0,0,t.width,t.height);
+        tc.fillStyle = '#000'; tc.font = '80px Arial'; tc.textAlign = 'center'; tc.textBaseline = 'middle'; tc.fillText(text, t.width/2, t.height/2);
+        const img = new Image();
+        img.onload = ()=>{ const id='text-'+Date.now(); const d=new Design(id, img, canvas.width/2, canvas.height/2);
+          const maxW=canvas.width-20, maxH=canvas.height-20, fit=Math.min(maxW/d.width, maxH/d.height); d.scale = Math.min(1,fit);
+          designs.push(d); selectedDesignId=id; showMessage('Texto agregado','success',2000); updateDesignsList(); updateControls(); drawCanvas(); };
+        img.src = t.toDataURL('image/png');
       });
 
-      // ===== Exportar
+      /* ======================= Exportar ======================= */
       downloadPngBtn.addEventListener('click', function(){
-        if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+        if (!designs.length){ showMessage('No hay diseños para exportar','error'); return; }
         const loading = showMessage('Preparando descarga PNG...','loading',0);
-        setTimeout(()=>{
-          try{
-            const exportCanvas = createHighQualityCanvas();
-            const link = document.createElement('a');
-            link.download = 'montaje-dtf.png';
-            exportCanvas.toBlob(function(blob){
-              link.href = URL.createObjectURL(blob);
-              link.click();
-              setTimeout(()=>{ URL.revokeObjectURL(link.href); loading.remove(); showMessage('Descarga PNG completada','success'); },100);
-            }, 'image/png', 1.0);
-          } catch(err){ loading.remove(); showMessage('Error al generar PNG: ' + err.message, 'error'); }
-        }, 150);
+        setTimeout(()=>{ try{
+          const ex = createHighQualityCanvas(); const a=document.createElement('a'); a.download='montaje-dtf.png';
+          ex.toBlob(b=>{ a.href=URL.createObjectURL(b); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); loading.remove(); showMessage('Descarga PNG completada','success'); },100); }, 'image/png', 1.0);
+        } catch(err){ loading.remove(); showMessage('Error al generar PNG: '+err.message,'error'); } }, 150);
       });
-
       downloadPdfBtn.addEventListener('click', function(){
-        if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+        if (!designs.length){ showMessage('No hay diseños para exportar','error'); return; }
         const loading = showMessage('Preparando descarga PDF...','loading',0);
-        setTimeout(()=>{
-          try{
-            const exportCanvas = createHighQualityCanvas();
-            exportCanvas.toBlob(function(blob){
-              const reader = new FileReader();
-              reader.onload = function(){
-                const imgData = reader.result;
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                  orientation: 'portrait',
-                  unit: 'mm',
-                  format: [CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10]
-                });
-                doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10, undefined, 'FAST');
-                doc.save('montaje-dtf.pdf');
-                loading.remove();
-                showMessage('Descarga PDF completada','success');
-              };
-              reader.readAsDataURL(blob);
-            }, 'image/png', 1.0);
-          } catch(err){ loading.remove(); showMessage('Error al generar PDF: ' + err.message, 'error'); }
-        }, 150);
+        setTimeout(()=>{ try{
+          const ex = createHighQualityCanvas();
+          ex.toBlob(b=>{
+            const r = new FileReader();
+            r.onload = function(){
+              const imgData = r.result; const { jsPDF } = window.jspdf;
+              const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:[CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10] });
+              doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10, undefined, 'FAST');
+              doc.save('montaje-dtf.pdf'); loading.remove(); showMessage('Descarga PDF completada','success');
+            }; r.readAsDataURL(b);
+          }, 'image/png', 1.0);
+        } catch(err){ loading.remove(); showMessage('Error al generar PDF: '+err.message,'error'); } }, 150);
       });
 
-      // ===== Limpiar lienzo
+      /* ======================= Limpiar ======================= */
       clearBtn.addEventListener('click', function(){
-        if (designs.length>0 && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
-          designs = []; selectedDesignId = null;
-          showMessage('Lienzo limpiado','info',2000);
-          updateDesignsList(); updateControls(); initCanvas();
+        if (designs.length && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
+          designs = []; selectedDesignId = null; showMessage('Lienzo limpiado','info',2000); updateDesignsList(); updateControls(); initCanvas();
         }
       });
 
-      // ===== Interacción mouse/touch
+      /* ======================= Interacción mouse/touch ======================= */
       canvas.addEventListener('mousedown', function(e){
-        const {x, y} = toCanvasCoords(e);
-        lastMouseX = x; lastMouseY = y;
-
-        for (let i=designs.length-1; i>=0; i--){
-          const d = designs[i];
-          if (d.isRotationHandle(x,y)){ selectedDesignId = d.id; isRotating = true; updateDesignsList(); updateControls(); drawCanvas(); return; }
-          if (d.isScaleHandle(x,y)){ selectedDesignId = d.id; isResizing = true; startScale = d.scale; startResizeDist = Math.hypot(x - d.x, y - d.y); updateDesignsList(); updateControls(); drawCanvas(); return; }
-          if (d.isPointInside(x,y)){ selectedDesignId = d.id; isDragging = true; dragOffsetX = x - d.x; dragOffsetY = y - d.y; updateDesignsList(); updateControls(); drawCanvas(); return; }
+        const {x,y} = toCanvasCoords(e); lastMouseX=x; lastMouseY=y;
+        for (let i=designs.length-1;i>=0;i--){
+          const d=designs[i];
+          if (d.isRotationHandle(x,y)){ selectedDesignId=d.id; isRotating=true; updateDesignsList(); updateControls(); drawCanvas(); return; }
+          if (d.isScaleHandle(x,y)){ selectedDesignId=d.id; isResizing=true; startScale=d.scale; startResizeDist=Math.hypot(x-d.x,y-d.y); updateDesignsList(); updateControls(); drawCanvas(); return; }
+          if (d.isPointInside(x,y)){ selectedDesignId=d.id; isDragging=true; dragOffsetX=x-d.x; dragOffsetY=y-d.y; updateDesignsList(); updateControls(); drawCanvas(); return; }
         }
-        selectedDesignId = null; updateDesignsList(); updateControls(); drawCanvas();
+        selectedDesignId=null; updateDesignsList(); updateControls(); drawCanvas();
       });
-
       canvas.addEventListener('mousemove', function(e){
-        const {x, y} = toCanvasCoords(e);
-        lastMouseX = x; lastMouseY = y;
-        const d = getSelectedDesign();
-        if (isDragging && d){ d.x = x - dragOffsetX; d.y = y - dragOffsetY; drawCanvas(); }
-        else if (isRotating && d){
-          let angle = Math.atan2(y - d.y, x - d.x) * 180 / Math.PI + 90;
-          angle = (angle % 360 + 360) % 360;
-          d.rotation = angle; rotationSlider.value = Math.round(angle); rotationInput.value = Math.round(angle); rotationValue.textContent = Math.round(angle) + '°'; drawCanvas();
-        } else if (isResizing && d){
-          const dist = Math.hypot(x - d.x, y - d.y);
-          const factor = dist / Math.max(1, startResizeDist);
-          d.scale = startScale * factor; d.updateInputs(); updateSizeInfo(); drawCanvas();
-        }
+        const {x,y} = toCanvasCoords(e); lastMouseX=x; lastMouseY=y; const d=getSelectedDesign(); if (!d) return;
+        if (isDragging){ d.x=x-dragOffsetX; d.y=y-dragOffsetY; drawCanvas(); }
+        else if (isRotating){ let a=Math.atan2(y-d.y, x-d.x)*180/Math.PI + 90; a=((a%360)+360)%360; d.rotation=a; rotationSlider.value=Math.round(a); rotationInput.value=Math.round(a); rotationValue.textContent=Math.round(a)+'°'; drawCanvas(); }
+        else if (isResizing){ const dist=Math.hypot(x-d.x,y-d.y), factor=dist/Math.max(1,startResizeDist); d.scale=startScale*factor; d.updateInputs(); updateSizeInfo(); drawCanvas(); }
       });
+      ['mouseup','mouseleave'].forEach(ev=> canvas.addEventListener(ev, ()=>{ isDragging=false; isResizing=false; isRotating=false; }));
 
-      ['mouseup','mouseleave'].forEach(ev=>{
-        canvas.addEventListener(ev, function(){ isDragging = false; isResizing = false; isRotating = false; });
-      });
+      canvas.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.touches[0]; canvas.dispatchEvent(new MouseEvent('mousedown',{clientX:t.clientX,clientY:t.clientY})); }, {passive:false});
+      canvas.addEventListener('touchmove',  e=>{ e.preventDefault(); const t=e.touches[0]; canvas.dispatchEvent(new MouseEvent('mousemove',{clientX:t.clientX,clientY:t.clientY})); }, {passive:false});
+      canvas.addEventListener('touchend',   e=>{ e.preventDefault(); canvas.dispatchEvent(new MouseEvent('mouseup',{})); }, {passive:false});
 
-      canvas.addEventListener('touchstart', function(e){
-        e.preventDefault(); const t = e.touches[0];
-        canvas.dispatchEvent(new MouseEvent('mousedown', { clientX:t.clientX, clientY:t.clientY }));
-      }, {passive:false});
-      canvas.addEventListener('touchmove', function(e){
-        e.preventDefault(); const t = e.touches[0];
-        canvas.dispatchEvent(new MouseEvent('mousemove', { clientX:t.clientX, clientY:t.clientY }));
-      }, {passive:false});
-      canvas.addEventListener('touchend', function(e){
-        e.preventDefault(); canvas.dispatchEvent(new MouseEvent('mouseup', {}));
-      }, {passive:false});
-
-      // ===== Alto del lienzo (solo alto, máx 100 cm)
+      /* ======================= Alto del lienzo ======================= */
       applyCanvasHeightBtn.addEventListener('click', function(){
-        let newHcm = parseFloat(canvasHeightInput.value);
-        if (isNaN(newHcm)) return;
-        newHcm = Math.max(10, Math.min(100, newHcm));
-        CANVAS_HEIGHT_CM = newHcm;
+        let newH = parseFloat(canvasHeightInput.value); if (isNaN(newH)) return;
+        newH = Math.max(10, Math.min(100, newH));
+        CANVAS_HEIGHT_CM = newH;
         const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
-        canvas.height = newPx;
-        canvasWrapper.style.height = newPx + 'px';
+        canvas.height = newPx; canvasWrapper.style.height = newPx + 'px';
         canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
         specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
-        drawCanvas();
-        showMessage(`Alto del lienzo ajustado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
+        drawCanvas(); showMessage(`Alto del lienzo ajustado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
       });
 
-      // ===== Atajos de teclado
+      /* ======================= Atajos ======================= */
       document.addEventListener('keydown', function(e){
-        const tag = (e.target.tagName || '').toLowerCase();
-        if (tag === 'input' || tag === 'textarea') return;
+        const tag = (e.target.tagName||'').toLowerCase();
+        if (tag==='input' || tag==='textarea') return;
+        const d = getSelectedDesign(), step = e.shiftKey ? 10 : 1;
 
-        const d = getSelectedDesign();
-        const step = e.shiftKey ? 10 : 1;
-
-        if ((e.key === 'Delete' || e.key === 'Backspace') && d){
-          e.preventDefault();
-          designs = designs.filter(x=> x.id!==d.id);
-          selectedDesignId = designs.length ? designs[designs.length-1].id : null;
-          updateDesignsList(); updateControls(); drawCanvas();
-          showMessage('Diseño eliminado','info',1500);
-          return;
-        }
+        if ((e.key==='Delete' || e.key==='Backspace') && d){ e.preventDefault();
+          designs = designs.filter(x=>x.id!==d.id); selectedDesignId = designs.length ? designs[designs.length-1].id : null;
+          updateDesignsList(); updateControls(); drawCanvas(); showMessage('Diseño eliminado','info',1500); return; }
 
         if (!d) return;
 
-        if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'd')){
-          e.preventDefault();
-          const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
-          const dup = new Design(id, d.image, d.x + 10, d.y + 10);
-          dup.scale = d.scale; dup.rotation = d.rotation; dup.opacity = d.opacity;
-          designs.push(dup);
-          selectedDesignId = id;
-          updateDesignsList(); updateControls(); drawCanvas();
-          showMessage('Diseño duplicado','success',1200);
-          return;
-        }
+        if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='d'){ e.preventDefault();
+          const id='design-'+Date.now()+Math.random().toString(36).slice(2,7); const dup=new Design(id, d.image, d.x+10, d.y+10);
+          dup.scale=d.scale; dup.rotation=d.rotation; dup.opacity=d.opacity; designs.push(dup); selectedDesignId=id;
+          updateDesignsList(); updateControls(); drawCanvas(); showMessage('Diseño duplicado','success',1200); return; }
 
-        const arrows = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
-        if (arrows.includes(e.key)){
+        if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
           e.preventDefault();
-          if (e.key === 'ArrowLeft')  d.x -= step;
-          if (e.key === 'ArrowRight') d.x += step;
-          if (e.key === 'ArrowUp')    d.y -= step;
-          if (e.key === 'ArrowDown')  d.y += step;
+          if (e.key==='ArrowLeft') d.x-=step;
+          if (e.key==='ArrowRight') d.x+=step;
+          if (e.key==='ArrowUp') d.y-=step;
+          if (e.key==='ArrowDown') d.y+=step;
           drawCanvas();
         }
       });
 
       function toCanvasCoords(e){
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+        const r = canvas.getBoundingClientRect();
+        const sx = canvas.width / r.width, sy = canvas.height / r.height;
+        return { x:(e.clientX - r.left)*sx, y:(e.clientY - r.top)*sy };
       }
 
       updateControls();
       setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
 
-     // ===== IA: U²-Netp (ONNX) - versión robusta =====
-let u2netSession = null;
-let u2netLoading = false;
+      /* ======================= IA: U²-Netp (ONNX) - rutas robustas ======================= */
 
-// Construye la URL del modelo relativa a la página (sirve en GitHub Pages y subcarpetas)
-const U2NET_MODEL_PATH = new URL('./models/u2netp.onnx', window.location.href).href;
+      // Detecta el path base real del sitio en GitHub Pages (root, /repo/, /docs/, subcarpetas)
+      function detectBasePath() {
+        const parts = location.pathname.split('/').filter(Boolean);
+        const isGP = location.hostname.endsWith('github.io');
+        if (!isGP) {
+          // Dominio propio: usamos el directorio del documento publicado
+          return location.pathname.replace(/[^/]+$/, '');
+        }
+        if (parts.length === 0) return '/';         // User/Org Pages
+        // Project Pages → primer segmento es el repo (/usuario.github.io/repo/)
+        return `/${parts[0]}/`;
+      }
+      // Si tu app está dentro de otra subcarpeta adicional (ej: /repo/app/), indícalo aquí:
+      const APP_SUBDIR = ''; // por ejemplo 'app/'
 
-// Espera a que onnxruntime-web esté disponible
-async function waitForOrt(maxMs = 5000) {
-  const start = performance.now();
-  while (!window.ort) {
-    if (performance.now() - start > maxMs) throw new Error('onnxruntime-web no cargó');
-    await new Promise(r => setTimeout(r, 50));
-  }
-  return window.ort;
-}
+      const BASE = detectBasePath() + APP_SUBDIR;
+      const U2NET_MODEL_PATH = new URL('models/u2netp.onnx', location.origin + BASE).href;
 
-// Comprueba que el modelo existe (evita 404 silencioso)
-async function assertModelReachable() {
-  const res = await fetch(U2NET_MODEL_PATH, { method: 'HEAD', cache: 'no-store' });
-  if (!res.ok) throw new Error(`Modelo no accesible (${res.status}) en: ${U2NET_MODEL_PATH}`);
-}
+      let u2netSession = null, u2netLoading = false;
 
-// Crea sesión con fallback automático WebGL → WASM
-async function loadU2NetSessionPreferred(backend = 'webgl') {
-  if (u2netSession) return u2netSession;
-  if (u2netLoading) { while (u2netLoading) await new Promise(r => setTimeout(r,100)); return u2netSession; }
-  u2netLoading = true;
-  try {
-    const ort = await waitForOrt();
-    await assertModelReachable();
+      async function waitForOrt(maxMs = 8000) {
+        const t0 = performance.now();
+        while (!window.ort) {
+          if (performance.now() - t0 > maxMs) throw new Error('onnxruntime-web no cargó');
+          await new Promise(r => setTimeout(r, 50));
+        }
+        return window.ort;
+      }
+      async function assertModelReachable() {
+        const res = await fetch(U2NET_MODEL_PATH, { method:'HEAD', cache:'no-store' });
+        if (!res.ok) throw new Error(`Modelo no accesible (${res.status}) en: ${U2NET_MODEL_PATH}`);
+      }
+      async function loadU2NetSessionPreferred(backend = 'webgl') {
+        if (u2netSession) return u2netSession;
+        if (u2netLoading) { while (u2netLoading) await new Promise(r => setTimeout(r,100)); return u2netSession; }
+        u2netLoading = true;
+        try {
+          const ort = await waitForOrt();
+          await assertModelReachable();
+          async function create(EPs){ return await ort.InferenceSession.create(U2NET_MODEL_PATH, { executionProviders: EPs, graphOptimizationLevel: 'all' }); }
+          try {
+            const EPs = backend==='webgl' ? ['webgl','wasm'] : ['wasm'];
+            u2netSession = await create(EPs);
+          } catch(e){
+            console.warn('[IA] Falla con', backend, '→ probando WASM puro', e);
+            u2netSession = await create(['wasm']);
+          }
+          return u2netSession;
+        } finally { u2netLoading = false; }
+      }
+      function u2netPreprocess(image, target = 320) {
+        const w = image.naturalWidth || image.width, h = image.naturalHeight || image.height;
+        const s = Math.min(target/w, target/h);
+        const nw = Math.max(1, Math.round(w*s)), nh = Math.max(1, Math.round(h*s));
+        const ox = Math.floor((target-nw)/2), oy = Math.floor((target-nh)/2);
+        const can = document.createElement('canvas'); can.width = target; can.height = target;
+        const c = can.getContext('2d'); c.fillStyle='black'; c.fillRect(0,0,target,target);
+        c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high'; c.drawImage(image, ox, oy, nw, nh);
+        const rgba = c.getImageData(0,0,target,target).data, f32 = new Float32Array(1*3*target*target);
+        let p=0; for (let y=0;y<target;y++){ for (let x=0;x<target;x++){ const i=(y*target+x)*4; f32[p]=rgba[i]/255; f32[p+target*target]=rgba[i+1]/255; f32[p+2*target*target]=rgba[i+2]/255; p++; } }
+        return { inputTensor: new ort.Tensor('float32', f32, [1,3,target,target]), letterbox:{offX:ox, offY:oy, newW:nw, newH:nh, target} };
+      }
+      function u2netPostprocess(out, design, letterbox, featherPx = 3) {
+        if (!out?.data || !out?.dims) throw new Error('Salida del modelo inválida');
+        const w0=design.originalWidth, h0=design.originalHeight, H=out.dims[2], W=out.dims[3], pred=out.data;
+        const small = document.createElement('canvas'); small.width=W; small.height=H;
+        const sc=small.getContext('2d'); const img=sc.createImageData(W,H); let i=0;
+        for (let y=0;y<H;y++){ for (let x=0;x<W;x++){ const v=Math.max(0,Math.min(1,pred[i++])); const a=Math.round(v*255); const idx=(y*W+x)*4; img.data[idx]=255; img.data[idx+1]=255; img.data[idx+2]=255; img.data[idx+3]=a; } }
+        sc.putImageData(img,0,0);
+        const full = document.createElement('canvas'); full.width=w0; full.height=h0; const fc=full.getContext('2d');
+        fc.imageSmoothingEnabled=true; fc.imageSmoothingQuality='high';
+        const {offX,offY,newW,newH} = letterbox;
+        const src=document.createElement('canvas'); src.width=newW; src.height=newH; const sctx=src.getContext('2d');
+        sctx.drawImage(small, offX, offY, newW, newH, 0, 0, newW, newH);
+        const scaleBack = Math.max(w0/newW, h0/newH), dw=Math.round(newW*scaleBack), dh=Math.round(newH*scaleBack);
+        const dx=Math.round((w0-dw)/2), dy=Math.round((h0-dh)/2);
+        fc.clearRect(0,0,w0,h0); fc.drawImage(src, 0,0,newW,newH, dx,dy,dw,dh);
+        if (featherPx>0){ fc.globalCompositeOperation='destination-in';
+          const blur=document.createElement('canvas'); blur.width=w0; blur.height=h0; const bc=blur.getContext('2d');
+          const f=Math.max(1, Math.min(8, Math.ceil(featherPx/2))), bw=Math.max(1,Math.floor(w0/f)), bh=Math.max(1,Math.floor(h0/f));
+          bc.drawImage(full, 0,0,w0,h0, 0,0,bw,bh); fc.drawImage(blur, 0,0,bw,bh, 0,0,w0,h0); fc.globalCompositeOperation='source-over';
+        }
+        return full;
+      }
+      function applyMask(design, mask){
+        const w=design.originalWidth, h=design.originalHeight, out=document.createElement('canvas'); out.width=w; out.height=h;
+        const oc=out.getContext('2d'); oc.drawImage(design.image,0,0,w,h); oc.globalCompositeOperation='destination-in'; oc.drawImage(mask,0,0,w,h); oc.globalCompositeOperation='source-over';
+        const img=new Image(); img.onload=()=>{ design.image=img; updateDesignsList(); drawCanvas(); }; img.src=out.toDataURL('image/png');
+      }
+      async function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-    async function tryCreate(EPs) {
-      return await ort.InferenceSession.create(U2NET_MODEL_PATH, {
-        executionProviders: EPs,
-        graphOptimizationLevel: 'all'
+      iaBtn.addEventListener('click', async ()=>{
+        const d = getSelectedDesign(); if (!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
+        const backend = iaBackendSel.value || 'webgl'; const feather = parseInt(iaFeatherInput.value||'3',10);
+        const msg = showMessage('Cargando modelo IA…','loading',0);
+        try {
+          const session = await loadU2NetSessionPreferred(backend);
+          msg.innerHTML = msg.innerHTML.replace('Cargando modelo IA', 'Procesando imagen');
+          const { inputTensor, letterbox } = u2netPreprocess(d.image, 320);
+          const feeds = {}; const inName = session.inputNames?.[0]; if (!inName) throw new Error('El modelo no expone entradas'); feeds[inName] = inputTensor;
+          const outMap = await session.run(feeds); const outName = session.outputNames?.[0]; if (!outName) throw new Error('El modelo no expone salidas');
+          const out = outMap[outName]; const mask = u2netPostprocess(out, d, letterbox, feather); applyMask(d, mask);
+          msg.remove(); showMessage('Fondo eliminado con IA','success',1500);
+        } catch (err) {
+          console.error('[IA] Error:', err); msg.remove(); showMessage('Error IA: ' + (err?.message || err), 'error');
+          await wait(50);
+          // pista útil si es 404:
+          if ((err?.message||'').includes('Modelo no accesible')) {
+            showMessage('Verifica que "models/u2netp.onnx" esté en la carpeta que publica GitHub Pages (raíz o /docs) y respete mayúsculas.', 'warning', 6000);
+          }
+        }
       });
-    }
-
-    try {
-      // intento 1: acelerado
-      const ep1 = backend === 'webgl' ? ['webgl','wasm'] : ['wasm'];
-      u2netSession = await tryCreate(ep1);
-    } catch (e1) {
-      console.warn('[IA] Falla con', backend, '→ probando WASM puro', e1);
-      // intento 2: WASM puro
-      u2netSession = await tryCreate(['wasm']);
-    }
-
-    console.log('[IA] Backend activo:', u2netSession?.executionProvider || '(ver consola de ORT)');
-    return u2netSession;
-  } finally { u2netLoading = false; }
-}
-
-// Preprocesado → 320x320 con letterbox, NCHW float32
-function u2netPreprocess(image, target = 320) {
-  const w = image.naturalWidth || image.width;
-  const h = image.naturalHeight || image.height;
-  const scale = Math.min(target / w, target / h);
-  const newW = Math.max(1, Math.round(w * scale));
-  const newH = Math.max(1, Math.round(h * scale));
-  const offX = Math.floor((target - newW) / 2);
-  const offY = Math.floor((target - newH) / 2);
-
-  const can = document.createElement('canvas');
-  can.width = target; can.height = target;
-  const c = can.getContext('2d');
-  c.fillStyle = 'black'; c.fillRect(0,0,target,target);
-  c.imageSmoothingEnabled = true;
-  c.imageSmoothingQuality = 'high';
-  c.drawImage(image, offX, offY, newW, newH);
-
-  const img = c.getImageData(0,0,target,target).data;
-  const floatData = new Float32Array(1 * 3 * target * target);
-  let p = 0;
-  for (let y=0; y<target; y++){
-    for (let x=0; x<target; x++){
-      const idx = (y*target + x)*4;
-      floatData[p] = img[idx] / 255;                       // R
-      floatData[p + target*target] = img[idx+1] / 255;     // G
-      floatData[p + 2*target*target] = img[idx+2] / 255;   // B
-      p++;
-    }
-  }
-  return { inputTensor: new ort.Tensor('float32', floatData, [1,3,target,target]), letterbox: {offX,offY,newW,newH,target} };
-}
-
-// Postproceso → reconstruye máscara al tamaño original + feather opcional
-function u2netPostprocess(outputTensor, design, letterbox, featherPx = 3) {
-  if (!outputTensor?.data || !outputTensor?.dims) {
-    throw new Error('Salida del modelo vacía o inválida');
-  }
-  const w0 = design.originalWidth;
-  const h0 = design.originalHeight;
-  const H = outputTensor.dims[2], W = outputTensor.dims[3];
-  const pred = outputTensor.data;
-
-  // 1) máscara al tamaño del modelo
-  const maskSmall = document.createElement('canvas');
-  maskSmall.width = W; maskSmall.height = H;
-  const msCtx = maskSmall.getContext('2d');
-  const imgData = msCtx.createImageData(W, H);
-  let i = 0;
-  for (let y=0; y<H; y++){
-    for (let x=0; x<W; x++){
-      const v = Math.max(0, Math.min(1, pred[i++]));
-      const a = Math.round(v * 255);
-      const idx = (y*W + x)*4;
-      imgData.data[idx] = 255;
-      imgData.data[idx+1] = 255;
-      imgData.data[idx+2] = 255;
-      imgData.data[idx+3] = a;
-    }
-  }
-  msCtx.putImageData(imgData, 0, 0);
-
-  // 2) quitar letterbox y escalar al tamaño original
-  const maskFull = document.createElement('canvas');
-  maskFull.width = w0; maskFull.height = h0;
-  const mfCtx = maskFull.getContext('2d');
-  mfCtx.imageSmoothingEnabled = true;
-  mfCtx.imageSmoothingQuality = 'high';
-
-  const { offX, offY, newW, newH } = letterbox;
-  const src = document.createElement('canvas');
-  src.width = newW; src.height = newH;
-  const sctx = src.getContext('2d');
-  sctx.drawImage(maskSmall, offX, offY, newW, newH, 0, 0, newW, newH);
-
-  const scaleBack = Math.max(w0 / newW, h0 / newH);
-  const drawW = Math.round(newW * scaleBack);
-  const drawH = Math.round(newH * scaleBack);
-  const drawX = Math.round((w0 - drawW) / 2);
-  const drawY = Math.round((h0 - drawH) / 2);
-
-  mfCtx.clearRect(0,0,w0,h0);
-  mfCtx.drawImage(src, 0,0,newW,newH, drawX,drawY,drawW,drawH);
-
-  // 3) feather (suavizado)
-  if (featherPx > 0) {
-    mfCtx.globalCompositeOperation = 'destination-in';
-    const blurTmp = document.createElement('canvas');
-    blurTmp.width = w0; blurTmp.height = h0;
-    const bctx = blurTmp.getContext('2d');
-    const f = Math.max(1, Math.min(8, Math.ceil(featherPx/2)));
-    const dw = Math.max(1, Math.floor(w0 / f));
-    const dh = Math.max(1, Math.floor(h0 / f));
-    bctx.drawImage(maskFull, 0,0,w0,h0, 0,0,dw,dh);
-    mfCtx.drawImage(blurTmp, 0,0,dw,dh, 0,0,w0,h0);
-    mfCtx.globalCompositeOperation = 'source-over';
-  }
-  return maskFull;
-}
-
-function applyMaskToDesignWithCanvas(design, maskCanvas) {
-  const w = design.originalWidth;
-  const h = design.originalHeight;
-  const out = document.createElement('canvas');
-  out.width = w; out.height = h;
-  const octx = out.getContext('2d');
-  octx.drawImage(design.image, 0, 0, w, h);
-  octx.globalCompositeOperation = 'destination-in';
-  octx.drawImage(maskCanvas, 0, 0, w, h);
-  octx.globalCompositeOperation = 'source-over';
-  const img = new Image();
-  img.onload = () => { design.image = img; updateDesignsList(); drawCanvas(); };
-  img.src = out.toDataURL('image/png');
-}
-
-// Botón IA con logs y fallback
-iaBtn.addEventListener('click', async ()=>{
-  const d = getSelectedDesign();
-  if (!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
-
-  const userBackend = iaBackendSel.value || 'webgl';
-  const feather = parseInt(iaFeatherInput.value || '3', 10);
-  const msg = showMessage('Cargando modelo IA…','loading',0);
-
-  try {
-    const session = await loadU2NetSessionPreferred(userBackend);
-    msg.innerHTML = msg.innerHTML.replace('Cargando modelo IA', 'Procesando imagen');
-
-    const { inputTensor, letterbox } = u2netPreprocess(d.image, 320);
-
-    const feeds = {};
-    const inputName = session.inputNames?.[0];
-    if (!inputName) throw new Error('El modelo no expone entradas');
-    feeds[inputName] = inputTensor;
-
-    const outputMap = await session.run(feeds);
-    const outputName = session.outputNames?.[0];
-    if (!outputName) throw new Error('El modelo no expone salidas');
-    const output = outputMap[outputName];
-
-    const maskCanvas = u2netPostprocess(output, d, letterbox, feather);
-    applyMaskToDesignWithCanvas(d, maskCanvas);
-
-    msg.remove();
-    showMessage('Fondo eliminado con IA','success',1500);
-  } catch (err) {
-    console.error('[IA] Error:', err);
-    msg.remove();
-    showMessage('Error IA: ' + (err?.message || err), 'error');
-  }
-});
     });
   </script>
 </body>
