@@ -187,6 +187,7 @@
             <span id="zoom-value">100%</span>
             <input type="range" id="zoom-slider" min="20" max="200" value="100">
           </div>
+          <small>Tip: usa Ctrl (Windows/Linux) o ⌘ (Mac) + rueda.</small> <!-- <<< añadido tip -->
         </div>
 
         <div class="tool-section">
@@ -238,6 +239,25 @@
             <div id="original-size">Tamaño original: 0cm × 0cm</div>
           </div>
 
+          <!-- ===== HERRAMIENTAS EXTRA: añadidos ===== -->
+          <div class="control-group">
+            <h4>Herramientas</h4>
+            <button class="btn" id="mirror-btn">🪞 Espejo (Horizontal)</button> <!-- <<< -->
+          </div>
+
+          <div class="control-group">
+            <h4>Orden (Z-order)</h4>
+            <div class="row">
+              <button class="btn" id="send-back">⤵️ Al fondo</button>     <!-- <<< -->
+              <button class="btn" id="step-back">⬇️ Atrás</button>        <!-- <<< -->
+            </div>
+            <div class="row" style="margin-top:.5rem">
+              <button class="btn" id="step-forward">⬆️ Adelante</button>   <!-- <<< -->
+              <button class="btn" id="bring-front">⤴️ Al frente</button>  <!-- <<< -->
+            </div>
+          </div>
+          <!-- ===== fin añadidos ===== -->
+
           <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
         </div>
 
@@ -246,6 +266,7 @@
           <p>• Supr/Backspace: eliminar seleccionado</p>
           <p>• Flechas: mover (Shift = 10 px)</p>
           <p>• Ctrl/Cmd + D: duplicar seleccionado</p>
+          <p>• Ctrl o ⌘ + rueda: zoom</p> <!-- <<< -->
         </div>
       </div>
     </div>
@@ -329,6 +350,14 @@
     const canvasSizeLabel = document.getElementById('canvas-size-label');
     const canvasHeightInput = document.getElementById('canvas-height-cm');
     const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
+
+    // <<< NUEVOS botones
+    const mirrorBtn = document.getElementById('mirror-btn');
+    const bringFrontBtn = document.getElementById('bring-front');
+    const sendBackBtn = document.getElementById('send-back');
+    const stepForwardBtn = document.getElementById('step-forward');
+    const stepBackBtn = document.getElementById('step-back');
+    // >>>>
 
     // ====== Constantes físicas
     const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
@@ -602,7 +631,7 @@
     // ====== Upload (permitir subir el mismo archivo)
     if (uploadBtn){
       uploadBtn.addEventListener('click', ()=>{
-        if (fileInput) fileInput.value = ''; // permite volver a subir el mismo archivo
+        if (fileInput) fileInput.value = '';
         if (fileInput) fileInput.click();
       });
     }
@@ -628,11 +657,10 @@
                 const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
                 const d = new Design(id, img);
 
-                // --- AUTO-AJUSTE SI ES MÁS GRANDE QUE EL LIENZO ---
-                const maxW = canvas.width - 20;  // margen 10 px por lado
+                const maxW = canvas.width - 20;
                 const maxH = canvas.height - 20;
                 const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
-                d.scale = Math.min(1, scaleToFit); // solo reduce si es necesario
+                d.scale = Math.min(1, scaleToFit);
 
                 designs.push(d);
                 selectedDesignId = id;
@@ -655,7 +683,6 @@
             reader.readAsDataURL(file);
           });
 
-          // permite volver a disparar change con los mismos archivos
           fileInput.value = '';
         }
       });
@@ -709,12 +736,16 @@
         d.updateInputs();
 
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
-         widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=false);
+         widthInput, heightInput, applySizeBtn, lockProportion,
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn // <<< habilitar extras
+        ].forEach(el=> el && (el.disabled=false));
 
         updateSizeInfo();
       } else {
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
-         widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=true);
+         widthInput, heightInput, applySizeBtn, lockProportion,
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn // <<< deshabilitar extras
+        ].forEach(el=> el && (el.disabled=true));
         sizeInfo.textContent = '0cm × 0cm';
         originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
       }
@@ -834,7 +865,7 @@
       });
     }
 
-    // ====== Zoom
+    // ====== Zoom con slider
     if (zoomSlider){
       zoomSlider.addEventListener('input', function(){
         canvasZoom = this.value/100;
@@ -846,6 +877,21 @@
         canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
         canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
       });
+    }
+
+    // ====== Zoom con rueda (Ctrl o ⌘)  <<< NUEVO
+    const canvasAreaEl = document.querySelector('.canvas-area');
+    if (canvasAreaEl && zoomSlider){
+      canvasAreaEl.addEventListener('wheel', (e)=>{
+        if (!e.ctrlKey && !e.metaKey) return; // Ctrl (Win/Linux) o ⌘ (Mac)
+        e.preventDefault();
+        const cur = parseInt(zoomSlider.value,10);
+        const next = Math.max(20, Math.min(200, cur + (e.deltaY < 0 ? 10 : -10)));
+        if (next !== cur){
+          zoomSlider.value = String(next);
+          zoomSlider.dispatchEvent(new Event('input'));
+        }
+      }, {passive:false});
     }
 
     // ====== Agregar texto
@@ -868,7 +914,6 @@
             const id = 'text-' + Date.now();
             const d = new Design(id, img, canvas.width/2, canvas.height/2);
 
-            // ajustar si supera el lienzo
             const maxW = canvas.width - 20;
             const maxH = canvas.height - 20;
             const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
@@ -1063,7 +1108,6 @@
 
     // ====== Atajos de teclado
     document.addEventListener('keydown', function(e){
-      // Evitar cuando se escribe en inputs/textarea
       const tag = (e.target.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
 
@@ -1106,6 +1150,66 @@
         drawCanvas();
       }
     });
+
+    // ====== ESPEJO (Horizontal)  <<< NUEVO
+    if (mirrorBtn){
+      mirrorBtn.addEventListener('click', ()=>{
+        const d = getSelectedDesign();
+        if (!d){ showMessage('Selecciona un diseño para aplicar espejo','warning',1800); return; }
+
+        const tCanvas = document.createElement('canvas');
+        tCanvas.width = d.image.width;
+        tCanvas.height = d.image.height;
+        const tctx = tCanvas.getContext('2d');
+
+        tctx.save();
+        tctx.translate(tCanvas.width, 0);
+        tctx.scale(-1, 1);
+        tctx.imageSmoothingEnabled = true;
+        tctx.imageSmoothingQuality = 'high';
+        tctx.drawImage(d.image, 0, 0, tCanvas.width, tCanvas.height);
+        tctx.restore();
+
+        const img = new Image();
+        img.onload = ()=>{ d.image = img; drawCanvas(); showMessage('Espejo aplicado','success',1200); };
+        img.src = tCanvas.toDataURL('image/png');
+      });
+    }
+
+    // ====== Z-ORDER  <<< NUEVO
+    function idxSel(){ return designs.findIndex(x=> x.id===selectedDesignId); }
+    function refreshAfterZ(){ updateDesignsList(); drawCanvas(); }
+
+    if (bringFrontBtn){
+      bringFrontBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<0) return;
+        const it = designs.splice(i,1)[0];
+        designs.push(it);
+        refreshAfterZ();
+      });
+    }
+    if (sendBackBtn){
+      sendBackBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<0) return;
+        const it = designs.splice(i,1)[0];
+        designs.unshift(it);
+        refreshAfterZ();
+      });
+    }
+    if (stepForwardBtn){
+      stepForwardBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<0 || i===designs.length-1) return;
+        [designs[i], designs[i+1]] = [designs[i+1], designs[i]];
+        refreshAfterZ();
+      });
+    }
+    if (stepBackBtn){
+      stepBackBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<=0) return;
+        [designs[i-1], designs[i]] = [designs[i], designs[i-1]];
+        refreshAfterZ();
+      });
+    }
 
     // ====== Iniciar controles
     updateControls();
