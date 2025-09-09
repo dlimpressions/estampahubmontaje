@@ -1,1599 +1,948 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor DTF - Montaje para Impresión</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #2d3748;
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        header {
-            background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
-            color: white;
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-        
-        .logo span {
-            color: #4299e1;
-        }
-        
-        .specs {
-            background: #4a5568;
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .main-content {
-            display: flex;
-            padding: 1rem;
-            gap: 1.5rem;
-            min-height: 70vh;
-        }
-        
-        .toolbar {
-            width: 250px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .tool-section {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .tool-section:last-child {
-            border-bottom: none;
-        }
-        
-        .tool-section h3 {
-            margin-bottom: 1rem;
-            color: #2d3748;
-            font-size: 1.1rem;
-        }
-        
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 0.8rem;
-            margin-bottom: 0.8rem;
-            border: none;
-            border-radius: 6px;
-            background: #4299e1;
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s;
-            text-align: center;
-        }
-        
-        .btn:hover {
-            background: #3182ce;
-        }
-        
-        .btn-upload {
-            background: #48bb78;
-        }
-        
-        .btn-upload:hover {
-            background: #38a169;
-        }
-        
-        .btn-download {
-            background: #9f7aea;
-        }
-        
-        .btn-download:hover {
-            background: #805ad5;
-        }
-        
-        .btn-clear {
-            background: #f56565;
-        }
-        
-        .btn-clear:hover {
-            background: #e53e3e;
-        }
-        
-        .canvas-container {
-            flex: 1;
-            background: #f8f9fa;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .canvas-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .canvas-area {
-            flex: 1;
-            background: white;
-            border-radius: 8px;
-            overflow: auto;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 1rem;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
-            position: relative;
-        }
-        
-        #canvas {
-            background: white;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            touch-action: none;
-        }
-        
-        .controls {
-            width: 250px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .control-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .control-group h4 {
-            margin-bottom: 0.8rem;
-            color: #2d3748;
-        }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1rem;
-        }
-        
-        .slider-container span {
-            min-width: 40px;
-            text-align: center;
-        }
-        
-        input[type="range"] {
-            width: 100%;
-        }
-        
-        .size-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1rem;
-        }
-        
-        .size-input {
-            flex: 1;
-        }
-        
-        .size-input input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            text-align: center;
-        }
-        
-        .size-info {
-            background: #edf2f7;
-            padding: 0.8rem;
-            border-radius: 6px;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-        
-        .size-info h4 {
-            margin-bottom: 0.5rem;
-            color: #2d3748;
-        }
-        
-        .help-section {
-            margin-top: 2rem;
-            padding: 1rem;
-            background: #edf2f7;
-            border-radius: 8px;
-        }
-        
-        .help-section h4 {
-            margin-bottom: 0.5rem;
-            color: #2d3748;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 1.5rem;
-            background: #2d3748;
-            color: white;
-            margin-top: 2rem;
-        }
-        
-        .instructions {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background: #edf2f7;
-            border-radius: 10px;
-        }
-        
-        .instructions h3 {
-            margin-bottom: 1rem;
-            color: #2d3748;
-        }
-        
-        .instructions ol {
-            padding-left: 1.5rem;
-        }
-        
-        .instructions li {
-            margin-bottom: 0.8rem;
-        }
-        
-        .designs-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 0.5rem;
-        }
-        
-        .design-item {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .design-item:hover {
-            background: #edf2f7;
-        }
-        
-        .design-item.active {
-            background: #ebf8ff;
-            border: 1px solid #90cdf4;
-        }
-        
-        .design-thumb {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 3px;
-            margin-right: 0.5rem;
-        }
-        
-        .proportion-lock {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .proportion-lock input {
-            margin-right: 0.5rem;
-        }
-        
-        .quality-options {
-            margin-top: 1rem;
-        }
-        
-        .quality-options label {
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-        
-        .quality-options select {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-        }
-        
-        .upload-status {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        
-        .status-success {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-        
-        .status-error {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        
-        .status-info {
-            background: #bee3f8;
-            color: #2c5282;
-        }
-        
-        .status-loading {
-            background: #e9d8fd;
-            color: #553c9a;
-        }
-        
-        .canvas-background {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1rem;
-        }
-        
-        .canvas-background label {
-            white-space: nowrap;
-        }
-        
-        .canvas-background input {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .message-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 350px;
-        }
-        
-        .message {
-            padding: 12px 16px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            animation: slideIn 0.3s ease-out;
-            display: flex;
-            align-items: center;
-        }
-        
-        .message.info {
-            background: #bee3f8;
-            color: #2c5282;
-            border-left: 4px solid #2c5282;
-        }
-        
-        .message.success {
-            background: #c6f6d5;
-            color: #22543d;
-            border-left: 4px solid #22543d;
-        }
-        
-        .message.error {
-            background: #fed7d7;
-            color: #742a2a;
-            border-left: 4px solid #742a2a;
-        }
-        
-        .message.warning {
-            background: #feebcb;
-            color: #744210;
-            border-left: 4px solid #744210;
-        }
-        
-        .message.loading {
-            background: #e9d8fd;
-            color: #553c9a;
-            border-left: 4px solid #553c9a;
-        }
-        
-        .message-icon {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-        
-        .close-message {
-            margin-left: auto;
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            opacity: 0.7;
-        }
-        
-        .close-message:hover {
-            opacity: 1;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-        
-        @media (max-width: 1024px) {
-            .main-content {
-                flex-wrap: wrap;
-            }
-            
-            .toolbar, .controls {
-                width: 100%;
-            }
-            
-            .message-container {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Editor DTF - Montaje para Impresión</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif }
+    body { background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%); color:#2d3748; line-height:1.6; min-height:100vh; padding:20px }
+    .container{ max-width:1400px; margin:0 auto; background:#fff; border-radius:15px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.1)}
+    header{ background:linear-gradient(135deg,#2c3e50 0%,#4a5568 100%); color:#fff; padding:1.5rem 2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap}
+    .logo{ font-size:1.8rem; font-weight:700}
+    .logo span{ color:#4299e1}
+    .specs{ background:#4a5568; color:#fff; padding:.8rem 1.5rem; border-radius:8px; font-size:.9rem}
+    .main-content{ display:flex; padding:1rem; gap:1.5rem; min-height:70vh }
+    .toolbar,.controls{ width:250px; background:#f8f9fa; border-radius:10px; padding:1.5rem; box-shadow:0 4px 6px rgba(0,0,0,.05)}
+    .tool-section{ margin-bottom:1.5rem; padding-bottom:1.5rem; border-bottom:1px solid #e9ecef}
+    .tool-section:last-child{ border-bottom:none}
+    .tool-section h3{ margin-bottom:1rem; color:#2d3748; font-size:1.1rem}
+    .btn{ display:block; width:100%; padding:.8rem; margin-bottom:.8rem; border:none; border-radius:6px; background:#4299e1; color:#fff; font-weight:500; cursor:pointer; transition:background .3s; text-align:center}
+    .btn:hover{ background:#3182ce}
+    .btn-upload{ background:#48bb78}
+    .btn-upload:hover{ background:#38a169}
+    .btn-download{ background:#9f7aea}
+    .btn-download:hover{ background:#805ad5}
+    .btn-clear{ background:#f56565}
+    .btn-clear:hover{ background:#e53e3e}
+    .canvas-container{ flex:1; background:#f8f9fa; border-radius:10px; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,.05); padding:1rem; display:flex; flex-direction:column}
+    .canvas-title{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem}
+    .canvas-area{ flex:1; background:#fff; border-radius:8px; overflow:auto; display:flex; justify-content:center; align-items:flex-start; padding:1rem; box-shadow:inset 0 0 10px rgba(0,0,0,.05); position:relative}
+    #canvas{ background:#fff; box-shadow:0 0 20px rgba(0,0,0,.1); touch-action:none; cursor:default}
+    .control-group{ margin-bottom:1.5rem}
+    .control-group h4{ margin-bottom:.8rem; color:#2d3748}
+    .slider-container{ display:flex; align-items:center; gap:10px; margin-bottom:1rem}
+    .slider-container span{ min-width:40px; text-align:center}
+    input[type="range"]{ width:100%}
+    .size-controls{ display:flex; gap:10px; margin-bottom:1rem}
+    .size-input{ flex:1}
+    .size-input input{ width:100%; padding:.5rem; border:1px solid #cbd5e0; border-radius:4px; text-align:center}
+    .size-info{ background:#edf2f7; padding:.8rem; border-radius:6px; margin-top:1rem; font-size:.9rem}
+    .size-info h4{ margin-bottom:.5rem; color:#2d3748}
+    .help-section{ margin-top:2rem; padding:1rem; background:#edf2f7; border-radius:8px}
+    footer{ text-align:center; padding:1.5rem; background:#2d3748; color:#fff; margin-top:2rem }
+    .instructions{ margin-top:1.5rem; padding:1.5rem; background:#edf2f7; border-radius:10px}
+    .instructions h3{ margin-bottom:1rem; color:#2d3748}
+    .instructions ol{ padding-left:1.5rem}
+    .instructions li{ margin-bottom:.8rem}
+    .designs-list{ max-height:200px; overflow-y:auto; margin-top:1rem; border:1px solid #e2e8f0; border-radius:6px; padding:.5rem}
+    .design-item{ display:flex; align-items:center; padding:.5rem; margin-bottom:.5rem; background:#fff; border-radius:4px; cursor:pointer; transition:background .2s}
+    .design-item:hover{ background:#edf2f7}
+    .design-item.active{ background:#ebf8ff; border:1px solid #90cdf4}
+    .design-thumb{ width:40px; height:40px; object-fit:cover; border-radius:3px; margin-right:.5rem}
+    .proportion-lock{ display:flex; align-items:center; margin-bottom:1rem}
+    .proportion-lock input{ margin-right:.5rem}
+    .quality-options{ margin-top:1rem}
+    .quality-options label{ display:block; margin-bottom:.5rem}
+    .quality-options select{ width:100%; padding:.5rem; border:1px solid #cbd5e0; border-radius:4px}
+    .upload-status{ margin-top:1rem; padding:.5rem; border-radius:4px; text-align:center; font-size:.9rem}
+    .status-success{ background:#c6f6d5; color:#22543d}
+    .status-error{ background:#fed7d7; color:#742a2a}
+    .status-info{ background:#bee3f8; color:#2c5282}
+    .status-loading{ background:#e9d8fd; color:#553c9a}
+    .canvas-background{ display:flex; align-items:center; gap:10px; margin-bottom:1rem}
+    .canvas-background label{ white-space:nowrap}
+    .canvas-background input{ width:30px; height:30px; padding:0; border:1px solid #cbd5e0; border-radius:4px; cursor:pointer}
+    .message-container{ position:fixed; top:20px; right:20px; z-index:1000; max-width:350px}
+    .message{ padding:12px 16px; margin-bottom:10px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); animation:slideIn .3s ease-out; display:flex; align-items:center}
+    .message.info{ background:#bee3f8; color:#2c5282; border-left:4px solid #2c5282}
+    .message.success{ background:#c6f6d5; color:#22543d; border-left:4px solid #22543d}
+    .message.error{ background:#fed7d7; color:#742a2a; border-left:4px solid #742a2a}
+    .message.warning{ background:#feebcb; color:#744210; border-left:4px solid #744210}
+    .message.loading{ background:#e9d8fd; color:#553c9a; border-left:4px solid #553c9a}
+    .message-icon{ margin-right:10px; font-size:18px}
+    .close-message{ margin-left:auto; background:none; border:none; font-size:18px; cursor:pointer; opacity:.7}
+    .close-message:hover{ opacity:1}
+    @keyframes slideIn{ from{ transform:translateX(100%); opacity:0 } to{ transform:translateX(0); opacity:1 } }
+    @keyframes slideOut{ from{ transform:translateX(0); opacity:1 } to{ transform:translateX(100%); opacity:0 } }
+    @media (max-width:1024px){ .main-content{ flex-wrap:wrap } .toolbar,.controls{ width:100% } .message-container{ top:10px; right:10px; left:10px; max-width:none } }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">Editor DTF <span>By: David Munive</span></div>
-            <div class="specs">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
-        </header>
-        
-        <div class="main-content">
-            <div class="toolbar">
-                <div class="tool-section">
-                    <h3>Gestión de Diseños</h3>
-                    <input type="file" id="file-input" accept="image/*" style="display: none;" multiple>
-                    <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
-                    <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
-                    
-                    <div class="canvas-background">
-                        <label for="canvas-color">Color de fondo:</label>
-                        <input type="color" id="canvas-color" value="#ffffff">
-                    </div>
-                    
-                    <div class="designs-list" id="designs-list">
-                        <div class="no-designs">No hay diseños cargados</div>
-                    </div>
-                </div>
-                
-                <div class="tool-section">
-                    <h3>Opciones de Exportación</h3>
-                    <div class="quality-options">
-                        <label for="quality-select">Resolución de exportación:</label>
-                        <select id="quality-select">
-                            <option value="300">Alta (300 DPI)</option>
-                            <option value="150" selected>Media (150 DPI)</option>
-                            <option value="72">Baja (72 DPI)</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
-                    <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
-                    <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
-                </div>
-                
-                <div class="instructions">
-                    <h3>Instrucciones</h3>
-                    <ol>
-                        <li>Sube tus diseños con el botón "Subir Diseño"</li>
-                        <li>Selecciona un diseño de la lista para editarlo</li>
-                        <li>Arrastra para mover, usa los controles para redimensionar y rotar</li>
-                        <li>Las dimensiones se muestran en centímetros</li>
-                        <li>Descarga tu montaje en PNG o PDF</li>
-                    </ol>
-                    <p class="help-section">
-                        <strong>Nota:</strong> El color de fondo es solo para visualización. 
-                        Las exportaciones mantendrán la transparencia.
-                    </p>
-                </div>
-            </div>
-            
-            <div class="canvas-container">
-                <div class="canvas-title">
-                    <h3>Área de Montaje (58cm × 100cm)</h3>
-                    <div id="zoom-level">Zoom: 100%</div>
-                </div>
-                <div class="canvas-area">
-                    <!-- Usamos un contenedor para el canvas con fondo de transparencia -->
-                    <div class="canvas-wrapper" style="width: 580px; height: 1000px; background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;">
-                        <canvas id="canvas" width="580" height="1000"></canvas>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="controls">
-                <div class="tool-section">
-                    <h3>Controles de Diseño</h3>
-                    
-                    <div class="control-group">
-                        <h4>Rotación</h4>
-                        <div class="slider-container">
-                            <span id="rotation-value">0°</span>
-                            <input type="range" id="rotation-slider" min="0" max="360" value="0">
-                        </div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <h4>Opacidad</h4>
-                        <div class="slider-container">
-                            <span id="opacity-value">100%</span>
-                            <input type="range" id="opacity-slider" min="10" max="100" value="100">
-                        </div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <h4>Tamaño Manual (cm)</h4>
-                        <div class="proportion-lock">
-                            <input type="checkbox" id="lock-proportion" checked>
-                            <label for="lock-proportion">Mantener proporción</label>
-                        </div>
-                        <div class="size-controls">
-                            <div class="size-input">
-                                <label>Ancho</label>
-                                <input type="number" id="width-input" min="1" step="0.1" value="0">
-                            </div>
-                            <div class="size-input">
-                                <label>Alto</label>
-                                <input type="number" id="height-input" min="1" step="0.1" value="0">
-                            </div>
-                        </div>
-                        <button class="btn" id="apply-size">Aplicar Tamaño</button>
-                    </div>
-                    
-                    <div class="size-info">
-                        <h4>Dimensiones del diseño</h4>
-                        <div id="size-info">0cm × 0cm</div>
-                        <div id="original-size">Tamaño original: 0cm × 0cm</div>
-                    </div>
-                    
-                    <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
-                </div>
-                
-                <div class="control-group">
-                    <h4>Zoom del Lienzo</h4>
-                    <div class="slider-container">
-                        <span id="zoom-value">100%</span>
-                        <input type="range" id="zoom-slider" min="20" max="200" value="100">
-                    </div>
-                </div>
-                
-                <div class="help-section">
-                    <h4>Controles directos en el lienzo</h4>
-                    <p>• Arrastra el centro para mover</p>
-                    <p>• Usa el control ⬌ para redimensionar</p>
-                    <p>• Usa el control ⭮ para rotar</p>
-                </div>
-            </div>
+  <div class="container">
+    <header>
+      <div class="logo">Editor DTF <span>By: David Munive</span></div>
+      <div class="specs">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
+    </header>
+
+    <div class="main-content">
+      <div class="toolbar">
+        <div class="tool-section">
+          <h3>Gestión de Diseños</h3>
+          <input type="file" id="file-input" accept="image/*" style="display:none" multiple>
+          <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
+          <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
+
+          <div class="canvas-background">
+            <label for="canvas-color">Color de fondo:</label>
+            <input type="color" id="canvas-color" value="#ffffff">
+          </div>
+
+          <div class="designs-list" id="designs-list">
+            <div class="no-designs">No hay diseños cargados</div>
+          </div>
         </div>
-        
-        <footer>
-            <p>Editor de Montajes para Impresión DTF </p>
-        </footer>
+
+        <div class="tool-section">
+          <h3>Opciones de Exportación</h3>
+          <div class="quality-options">
+            <label for="quality-select">Resolución de exportación:</label>
+            <select id="quality-select">
+              <option value="300">Alta (300 DPI)</option>
+              <option value="150" selected>Media (150 DPI)</option>
+              <option value="72">Baja (72 DPI)</option>
+            </select>
+          </div>
+          <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
+          <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
+          <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
+        </div>
+
+        <div class="instructions">
+          <h3>Instrucciones</h3>
+          <ol>
+            <li>Sube tus diseños con el botón "Subir Diseño"</li>
+            <li>Selecciona un diseño de la lista para editarlo</li>
+            <li>Arrastra para mover, usa los controles para redimensionar y rotar</li>
+            <li>Las dimensiones se muestran en centímetros</li>
+            <li>Descarga tu montaje en PNG o PDF</li>
+          </ol>
+          <p class="help-section">
+            <strong>Nota:</strong> El color de fondo es solo para visualización.
+            Las exportaciones mantendrán la transparencia.
+          </p>
+        </div>
+      </div>
+
+      <div class="canvas-container">
+        <div class="canvas-title">
+          <h3>Área de Montaje (58cm × 100cm)</h3>
+          <div id="zoom-level">Zoom: 100%</div>
+        </div>
+        <div class="canvas-area">
+          <!-- contenedor con damero de transparencia -->
+          <div class="canvas-wrapper" style="width:580px;height:1000px;
+            background-image:
+              linear-gradient(45deg,#f0f0f0 25%,transparent 25%),
+              linear-gradient(-45deg,#f0f0f0 25%,transparent 25%),
+              linear-gradient(45deg,transparent 75%,#f0f0f0 75%),
+              linear-gradient(-45deg,transparent 75%,#f0f0f0 75%);
+            background-size:20px 20px;
+            background-position:0 0,0 10px,10px -10px,-10px 0px;">
+            <canvas id="canvas" width="580" height="1000"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="tool-section">
+          <h3>Controles de Diseño</h3>
+
+          <div class="control-group">
+            <h4>Rotación</h4>
+            <div class="slider-container">
+              <span id="rotation-value">0°</span>
+              <input type="range" id="rotation-slider" min="0" max="360" value="0">
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h4>Opacidad</h4>
+            <div class="slider-container">
+              <span id="opacity-value">100%</span>
+              <input type="range" id="opacity-slider" min="10" max="100" value="100">
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h4>Tamaño Manual (cm)</h4>
+            <div class="proportion-lock">
+              <input type="checkbox" id="lock-proportion" checked>
+              <label for="lock-proportion">Mantener proporción</label>
+            </div>
+            <div class="size-controls">
+              <div class="size-input">
+                <label>Ancho</label>
+                <input type="number" id="width-input" min="1" step="0.1" value="0">
+              </div>
+              <div class="size-input">
+                <label>Alto</label>
+                <input type="number" id="height-input" min="1" step="0.1" value="0">
+              </div>
+            </div>
+            <button class="btn" id="apply-size">Aplicar Tamaño</button>
+          </div>
+
+          <div class="size-info">
+            <h4>Dimensiones del diseño</h4>
+            <div id="size-info">0cm × 0cm</div>
+            <div id="original-size">Tamaño original: 0cm × 0cm</div>
+          </div>
+
+          <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
+        </div>
+
+        <div class="control-group">
+          <h4>Zoom del Lienzo</h4>
+          <div class="slider-container">
+            <span id="zoom-value">100%</span>
+            <input type="range" id="zoom-slider" min="20" max="200" value="100">
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4>Controles directos en el lienzo</h4>
+          <p>• Arrastra el centro para mover</p>
+          <p>• Usa el control ⬌ para redimensionar</p>
+          <p>• Usa el control ⭮ para rotar</p>
+        </div>
+      </div>
     </div>
 
-    <!-- Contenedor para mensajes flotantes -->
-    <div class="message-container" id="message-container"></div>
+    <footer>
+      <p>Editor de Montajes para Impresión DTF</p>
+    </footer>
+  </div>
 
-    <!-- Librería PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Mensajes -->
+  <div class="message-container" id="message-container"></div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configuración del canvas
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const uploadBtn = document.getElementById('upload-btn');
-            const fileInput = document.getElementById('file-input');
-            const clearBtn = document.getElementById('clear-btn');
-            const downloadPngBtn = document.getElementById('download-png');
-            const downloadPdfBtn = document.getElementById('download-pdf');
-            const rotationSlider = document.getElementById('rotation-slider');
-            const rotationValue = document.getElementById('rotation-value');
-            const opacitySlider = document.getElementById('opacity-slider');
-            const opacityValue = document.getElementById('opacity-value');
-            const zoomSlider = document.getElementById('zoom-slider');
-            const zoomValue = document.getElementById('zoom-value');
-            const zoomLevel = document.getElementById('zoom-level');
-            const addTextBtn = document.getElementById('add-text-btn');
-            const designsList = document.getElementById('designs-list');
-            const removeBtn = document.getElementById('remove-btn');
-            const sizeInfo = document.getElementById('size-info');
-            const originalSizeInfo = document.getElementById('original-size');
-            const widthInput = document.getElementById('width-input');
-            const heightInput = document.getElementById('height-input');
-            const applySizeBtn = document.getElementById('apply-size');
-            const lockProportion = document.getElementById('lock-proportion');
-            const qualitySelect = document.getElementById('quality-select');
-            const canvasColor = document.getElementById('canvas-color');
-            const messageContainer = document.getElementById('message-container');
-            
-            // Constantes para la conversión de píxeles a centímetros
-            const PIXELS_PER_CM = 10; // 10 píxeles = 1 cm (580px/58cm = 10px/cm)
-            
-            // Dimensiones reales en centímetros
-            const CANVAS_WIDTH_CM = 58;
-            const CANVAS_HEIGHT_CM = 100;
-            
-            // Estado de la aplicación
-            let designs = [];
-            let selectedDesignId = null;
-            let isDragging = false;
-            let isResizing = false;
-            let isRotating = false;
-            let dragOffsetX, dragOffsetY;
-            let canvasZoom = 1.0;
-            let lastMouseX, lastMouseY;
-            let startScale = 1.0; // Para guardar el scale inicial al comenzar a redimensionar
-            let canvasBackgroundColor = '#ffffff'; // Color de fondo por defecto
-            
-            // Sistema de mensajes
-            function showMessage(message, type = 'info', duration = 5000) {
-                const messageEl = document.createElement('div');
-                messageEl.className = `message ${type}`;
-                
-                const icons = {
-                    info: 'ℹ️',
-                    success: '✅',
-                    error: '❌',
-                    warning: '⚠️',
-                    loading: '⏳'
-                };
-                
-                messageEl.innerHTML = `
-                    <span class="message-icon">${icons[type] || icons.info}</span>
-                    <span>${message}</span>
-                    <button class="close-message">&times;</button>
-                `;
-                
-                messageContainer.appendChild(messageEl);
-                
-                // Cerrar mensaje al hacer clic en la X
-                const closeBtn = messageEl.querySelector('.close-message');
-                closeBtn.addEventListener('click', () => {
-                    messageEl.style.animation = 'slideOut 0.3s ease-out';
-                    setTimeout(() => {
-                        messageContainer.removeChild(messageEl);
-                    }, 300);
-                });
-                
-                // Auto-eliminar mensaje después de la duración especificada
-                if (duration > 0) {
-                    setTimeout(() => {
-                        if (messageEl.parentNode === messageContainer) {
-                            messageEl.style.animation = 'slideOut 0.3s ease-out';
-                            setTimeout(() => {
-                                if (messageEl.parentNode === messageContainer) {
-                                    messageContainer.removeChild(messageEl);
-                                }
-                            }, 300);
-                        }
-                    }, duration);
-                }
-                
-                return messageEl;
+  <!-- Librerías -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // --- Referencias DOM
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const uploadBtn = document.getElementById('upload-btn');
+      const fileInput = document.getElementById('file-input');
+      const clearBtn = document.getElementById('clear-btn');
+      const downloadPngBtn = document.getElementById('download-png');
+      const downloadPdfBtn = document.getElementById('download-pdf');
+      const rotationSlider = document.getElementById('rotation-slider');
+      const rotationValue = document.getElementById('rotation-value');
+      const opacitySlider = document.getElementById('opacity-slider');
+      const opacityValue = document.getElementById('opacity-value');
+      const zoomSlider = document.getElementById('zoom-slider');
+      const zoomValue = document.getElementById('zoom-value');
+      const zoomLevel = document.getElementById('zoom-level');
+      const addTextBtn = document.getElementById('add-text-btn');
+      const designsList = document.getElementById('designs-list');
+      const removeBtn = document.getElementById('remove-btn');
+      const sizeInfo = document.getElementById('size-info');
+      const originalSizeInfo = document.getElementById('original-size');
+      const widthInput = document.getElementById('width-input');
+      const heightInput = document.getElementById('height-input');
+      const applySizeBtn = document.getElementById('apply-size');
+      const lockProportion = document.getElementById('lock-proportion');
+      const qualitySelect = document.getElementById('quality-select');
+      const canvasColor = document.getElementById('canvas-color');
+      const messageContainer = document.getElementById('message-container');
+
+      // --- Constantes físicas
+      const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
+      const CANVAS_WIDTH_CM = 58;
+      const CANVAS_HEIGHT_CM = 100;
+      const INCHES_PER_CM = 0.3937007874;
+
+      // --- Estado
+      let designs = [];
+      let selectedDesignId = null;
+      let isDragging = false;
+      let isResizing = false;
+      let isRotating = false;
+      let dragOffsetX, dragOffsetY;
+      let canvasZoom = 1.0;
+      let lastMouseX, lastMouseY;
+      let startScale = 1.0;
+      let startResizeDist = 1.0;
+      let canvasBackgroundColor = '#ffffff';
+
+      // --- Mensajes flotantes
+      function showMessage(message, type = 'info', duration = 5000) {
+        const messageEl = document.createElement('div');
+        messageEl.className = `message ${type}`;
+        const icons = { info:'ℹ️', success:'✅', error:'❌', warning:'⚠️', loading:'⏳' };
+        messageEl.innerHTML = `
+          <span class="message-icon">${icons[type] || icons.info}</span>
+          <span>${message}</span>
+          <button class="close-message">&times;</button>`;
+        messageContainer.appendChild(messageEl);
+        messageEl.querySelector('.close-message').addEventListener('click', () => close());
+        function close(){
+          messageEl.style.animation='slideOut .3s ease-out';
+          setTimeout(()=> messageEl.remove(), 300);
+        }
+        if (duration>0) setTimeout(()=> messageEl && close(), duration);
+        return messageEl;
+      }
+
+      // --- Fondo y guía
+      function initCanvas() {
+        ctx.save();
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        // patrón de transparencia (damero gris)
+        const size = 20;
+        ctx.fillStyle = '#f0f0f0';
+        for (let y = 0; y < canvas.height; y += size) {
+          for (let x = 0; x < canvas.width; x += size) {
+            if (((x/size + y/size) % 2) === 0) ctx.fillRect(x, y, size, size);
+          }
+        }
+
+        // capa de color (solo visual)
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = canvasBackgroundColor;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.globalAlpha = 1.0;
+
+        // borde área de impresión
+        ctx.strokeStyle = '#cbd5e0';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5,5]);
+        ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
+        ctx.setLineDash([]);
+
+        // texto guía
+        if (designs.length===0){
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = '20px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('BY: DAVID MUNIVE', canvas.width/2, canvas.height/2);
+        }
+        ctx.restore();
+      }
+
+      initCanvas();
+
+      // color de fondo
+      canvasColor.addEventListener('input', function(){
+        canvasBackgroundColor = this.value;
+        drawCanvas();
+        showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
+      });
+
+      // --- Clase Design
+      class Design {
+        constructor(id, image, x, y) {
+          this.id = id;
+          this.image = image;
+          this.x = x || canvas.width/2;
+          this.y = y || canvas.height/2;
+          this.scale = 1.0;
+          this.rotation = 0;
+          this.opacity = 1.0;
+          this.width = image.width;
+          this.height = image.height;
+          this.aspectRatio = image.width / image.height;
+          this.originalWidth = image.width;
+          this.originalHeight = image.height;
+        }
+
+        draw() {
+          ctx.save();
+          ctx.globalAlpha = this.opacity;
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rotation * Math.PI / 180);
+          ctx.scale(this.scale, this.scale);
+
+          // imagen centrada a tamaño completo
+          const width = this.width;
+          const height = this.height;
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(this.image, -width/2, -height/2, width, height);
+
+          // controles si está seleccionado
+          if (this.id === selectedDesignId) {
+            // borde de selección
+            ctx.strokeStyle = '#4299e1';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-width/2, -height/2, width, height);
+
+            // punto central
+            ctx.fillStyle = '#4299e1';
+            ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+
+            // handle rotación (arriba)
+            ctx.fillStyle = '#48bb78';
+            ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+
+            // handle escala (esquina inferior derecha)
+            ctx.fillStyle = '#f56565';
+            ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
+
+            // cursores (indicativos, no cambian el cursor real del canvas)
+          }
+          ctx.restore();
+        }
+
+        // dimensiones actuales en cm
+        getDimensionsInCm() {
+          const widthCm = (this.width * this.scale) / PIXELS_PER_CM;
+          const heightCm = (this.height * this.scale) / PIXELS_PER_CM;
+          return { width: widthCm, height: heightCm };
+        }
+
+        // dimensiones originales en cm
+        getOriginalDimensionsInCm() {
+          const widthCm = (this.originalWidth) / PIXELS_PER_CM;
+          const heightCm = (this.originalHeight) / PIXELS_PER_CM;
+          return { width: widthCm, height: heightCm };
+        }
+
+        // fijar dimensiones (cm)
+        setDimensions(widthCm, heightCm, maintainProportion = true) {
+          const targetWidthPx  = widthCm  * PIXELS_PER_CM;
+          const targetHeightPx = heightCm * PIXELS_PER_CM;
+
+          if (maintainProportion) {
+            this.scale = targetWidthPx / this.originalWidth;
+          } else {
+            const scaleX = targetWidthPx  / this.originalWidth;
+            const scaleY = targetHeightPx / this.originalHeight;
+            this.scale = (scaleX + scaleY) / 2;
+          }
+          this.updateInputs();
+          drawCanvas();
+        }
+
+        updateInputs() {
+          const d = this.getDimensionsInCm();
+          widthInput.value = d.width.toFixed(1);
+          heightInput.value = d.height.toFixed(1);
+        }
+
+        // pruebas de colisión (considerando rotación)
+        isPointInside(x, y) {
+          const width = this.width * this.scale;
+          const height = this.height * this.scale;
+          const relX = x - this.x, relY = y - this.y;
+          const angle = -this.rotation * Math.PI/180;
+          const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+          const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+          return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
+        }
+
+        isRotationHandle(x, y) {
+          const width = this.width * this.scale;
+          const height = this.height * this.scale;
+          const relX = x - this.x, relY = y - this.y;
+          const angle = -this.rotation * Math.PI/180;
+          const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+          const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+          const hx = 0, hy = -height/2 - 15;
+          const d = Math.hypot(rx - hx, ry - hy);
+          return d <= 10;
+        }
+
+        isScaleHandle(x, y) {
+          const width = this.width * this.scale;
+          const height = this.height * this.scale;
+          const relX = x - this.x, relY = y - this.y;
+          const angle = -this.rotation * Math.PI/180;
+          const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+          const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+          const hx = width/2 + 5, hy = height/2 + 5;
+          const d = Math.hypot(rx - hx, ry - hy);
+          return d <= 10;
+        }
+      }
+
+      // --- Dibujo general
+      function drawCanvas() {
+        initCanvas();
+        designs.forEach(d => d.draw());
+        updateSizeInfo();
+      }
+
+      // info tamaño
+      function updateSizeInfo() {
+        const d = getSelectedDesign();
+        if (d) {
+          const c = d.getDimensionsInCm();
+          const o = d.getOriginalDimensionsInCm();
+          sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
+          originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
+        } else {
+          sizeInfo.textContent = '0cm × 0cm';
+          originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+        }
+      }
+
+      // dimensiones en px por DPI (para exportación PNG)
+      function getPixelDimensions(dpi) {
+        const widthPx  = Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * dpi);
+        const heightPx = Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * dpi);
+        return { width: widthPx, height: heightPx };
+      }
+
+      // canvas de exportación de alta calidad
+      function createHighQualityCanvas() {
+        const dpi = parseInt(qualitySelect.value);
+        const dim = getPixelDimensions(dpi);
+
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = dim.width;
+        exportCanvas.height = dim.height;
+        const ectx = exportCanvas.getContext('2d');
+
+        ectx.imageSmoothingEnabled = true;
+        ectx.imageSmoothingQuality = 'high';
+
+        const scaleX = exportCanvas.width / canvas.width;
+        const scaleY = exportCanvas.height / canvas.height;
+
+        // transparencia
+        ectx.clearRect(0,0,exportCanvas.width,exportCanvas.height);
+
+        designs.forEach(design => {
+          ectx.save();
+          ectx.globalAlpha = design.opacity;
+
+          const x = design.x * scaleX;
+          const y = design.y * scaleY;
+          const scale = design.scale * Math.min(scaleX, scaleY);
+
+          ectx.translate(x, y);
+          ectx.rotate(design.rotation * Math.PI/180);
+          ectx.scale(scale, scale);
+
+          const w = design.width;
+          const h = design.height;
+          ectx.drawImage(design.image, -w/2, -h/2, w, h);
+
+          ectx.restore();
+        });
+
+        return exportCanvas;
+      }
+
+      // --- Upload
+      uploadBtn.addEventListener('click', ()=> fileInput.click());
+
+      fileInput.addEventListener('change', function(e){
+        if (e.target.files && e.target.files.length>0){
+          const files = Array.from(e.target.files);
+          let loaded = 0;
+          const total = files.length;
+          const loadingMsg = showMessage(`Cargando ${total} diseño(s)...`,'loading',0);
+
+          files.forEach(file=>{
+            if (!file.type.match('image.*')){
+              showMessage(`Error: ${file.name} no es una imagen válida`,'error');
+              if (++loaded===total) loadingMsg.remove();
+              return;
             }
-            
-            // Inicializar el lienzo con transparencia
-            function initCanvas() {
-                // Limpiar el canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Dibujar patrón de transparencia (cuadrícula gris)
-                const size = 20;
-                ctx.fillStyle = '#f0f0f0';
-                for (let y = 0; y < canvas.height; y += size) {
-                    for (let x = 0; x < canvas.width; x += size) {
-                        if ((x / size + y / size) % 2 === 0) {
-                            ctx.fillRect(x, y, size, size);
-                        }
-                    }
-                }
-                
-                // Dibujar fondo de color semitransparente para mejor visualización
-                ctx.globalAlpha = 0.7;
-                ctx.fillStyle = canvasBackgroundColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.globalAlpha = 1.0;
-                
-                // Bordes del área de impresión
-                ctx.strokeStyle = '#cbd5e0';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-                ctx.setLineDash([]);
-                
-                // Texto de guía
-                if (designs.length === 0) {
-                    ctx.fillStyle = '#e2e8f0';
-                    ctx.font = '20px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('BY: DAVID MUNIVE', canvas.width / 2, canvas.height / 2);
-                }
-            }
-            
-            initCanvas();
-            
-            // Cambiar color de fondo del lienzo
-            canvasColor.addEventListener('input', function() {
-                canvasBackgroundColor = this.value;
-                drawCanvas();
-                showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
-            });
-            
-            // Clase para manejar los diseños
-            class Design {
-                constructor(id, image, x, y) {
-                    this.id = id;
-                    this.image = image;
-                    this.x = x || canvas.width / 2;
-                    this.y = y || canvas.height / 2;
-                    this.scale = 1.0;
-                    this.rotation = 0;
-                    this.opacity = 1.0;
-                    this.width = image.width;
-                    this.height = image.height;
-                    this.aspectRatio = image.width / image.height;
-                    this.originalWidth = image.width;
-                    this.originalHeight = image.height;
-                }
-                
-                draw() {
-                    ctx.save();
-                    ctx.globalAlpha = this.opacity;
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.rotation * Math.PI / 180);
-                    ctx.scale(this.scale, this.scale);
-                    
-                    // Dibujar imagen centrada
-                    const width = this.width * 0.5;
-                    const height = this.height * 0.5;
-                    
-                    // Habilitar suavizado para mejor calidad
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    
-                    ctx.drawImage(this.image, -width / 2, -height / 2, width, height);
-                    
-                    // Dibujar controles si está seleccionado
-                    if (this.id === selectedDesignId) {
-                        // Borde de selección
-                        ctx.strokeStyle = '#4299e1';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(-width / 2, -height / 2, width, height);
-                        
-                        // Punto central
-                        ctx.fillStyle = '#4299e1';
-                        ctx.beginPath();
-                        ctx.arc(0, 0, 4, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        // Control de rotación (parte superior)
-                        ctx.fillStyle = '#48bb78';
-                        ctx.beginPath();
-                        ctx.arc(0, -height / 2 - 15, 6, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        // Control de escala (esquina inferior derecha)
-                        ctx.fillStyle = '#f56565';
-                        ctx.beginPath();
-                        ctx.arc(width / 2 + 5, height / 2 + 5, 6, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                    ctx.restore();
-                }
-                
-                // Obtener dimensiones en centímetros
-                getDimensionsInCm() {
-                    const widthCm = (this.width * 0.5 * this.scale) / PIXELS_PER_CM;
-                    const heightCm = (this.height * 0.5 * this.scale) / PIXELS_PER_CM;
-                    return {
-                        width: widthCm,
-                        height: heightCm
-                    };
-                }
-                
-                // Obtener dimensiones originales en centímetros
-                getOriginalDimensionsInCm() {
-                    const widthCm = (this.originalWidth * 0.5) / PIXELS_PER_CM;
-                    const heightCm = (this.originalHeight * 0.5) / PIXELS_PER_CM;
-                    return {
-                        width: widthCm,
-                        height: heightCm
-                    };
-                }
-                
-                // Establecer dimensiones en centímetros
-                setDimensions(widthCm, heightCm, maintainProportion = true) {
-                    const targetWidthPx = widthCm * PIXELS_PER_CM;
-                    const targetHeightPx = heightCm * PIXELS_PER_CM;
-                    
-                    if (maintainProportion) {
-                        // Calcular scale basado en el ancho (manteniendo proporción)
-                        const originalHalfWidth = this.originalWidth * 0.5;
-                        this.scale = targetWidthPx / originalHalfWidth;
-                    } else {
-                        // Escalas independientes para ancho y alto
-                        const scaleX = targetWidthPx / (this.originalWidth * 0.5);
-                        const scaleY = targetHeightPx / (this.originalHeight * 0.5);
-                        // Usamos el promedio para no distorsionar demasiado
-                        this.scale = (scaleX + scaleY) / 2;
-                    }
-                    
-                    this.updateInputs();
-                    drawCanvas();
-                }
-                
-                // Actualizar los inputs de tamaño
-                updateInputs() {
-                    const dimensions = this.getDimensionsInCm();
-                    widthInput.value = dimensions.width.toFixed(1);
-                    heightInput.value = dimensions.height.toFixed(1);
-                }
-                
-                isPointInside(x, y) {
-                    // Transformar coordenadas para tener en cuenta escala y rotación
-                    const width = this.width * 0.5 * this.scale;
-                    const height = this.height * 0.5 * this.scale;
-                    
-                    // Coordenadas relativas al centro del diseño
-                    const relX = x - this.x;
-                    const relY = y - this.y;
-                    
-                    // Rotación inversa para comprobar si está dentro del rectángulo
-                    const angle = -this.rotation * Math.PI / 180;
-                    const rotatedX = relX * Math.cos(angle) - relY * Math.sin(angle);
-                    const rotatedY = relX * Math.sin(angle) + relY * Math.cos(angle);
-                    
-                    return Math.abs(rotatedX) <= width / 2 && Math.abs(rotatedY) <= height / 2;
-                }
-                
-                // Comprobar si el punto está en el control de rotación
-                isRotationHandle(x, y) {
-                    const width = this.width * 0.5 * this.scale;
-                    const height = this.height * 0.5 * this.scale;
-                    
-                    // Coordenadas relativas al centro del diseño
-                    const relX = x - this.x;
-                    const relY = y - this.y;
-                    
-                    // Rotación inversa
-                    const angle = -this.rotation * Math.PI / 180;
-                    const rotatedX = relX * Math.cos(angle) - relY * Math.sin(angle);
-                    const rotatedY = relX * Math.sin(angle) + relY * Math.cos(angle);
-                    
-                    // Comprobar si está cerca del control de rotación (parte superior)
-                    const handleX = 0;
-                    const handleY = -height / 2 - 15;
-                    const distance = Math.sqrt(Math.pow(rotatedX - handleX, 2) + Math.pow(rotatedY - handleY, 2));
-                    
-                    return distance <= 10;
-                }
-                
-                // Comprobar si el punto está en el control de escala
-                isScaleHandle(x, y) {
-                    const width = this.width * 0.5 * this.scale;
-                    const height = this.height * 0.5 * this.scale;
-                    
-                    // Coordenadas relativas al centro del diseño
-                    const relX = x - this.x;
-                    const relY = y - this.y;
-                    
-                    // Rotación inversa
-                    const angle = -this.rotation * Math.PI / 180;
-                    const rotatedX = relX * Math.cos(angle) - relY * Math.sin(angle);
-                    const rotatedY = relX * Math.sin(angle) + relY * Math.cos(angle);
-                    
-                    // Comprobar si está cerca del control de escala (esquina inferior derecha)
-                    const handleX = width / 2 + 5;
-                    const handleY = height / 2 + 5;
-                    const distance = Math.sqrt(Math.pow(rotatedX - handleX, 2) + Math.pow(rotatedY - handleY, 2));
-                    
-                    return distance <= 10;
-                }
-            }
-            
-            // Dibujar todos los diseños en el canvas
-            function drawCanvas() {
-                initCanvas();
-                
-                // Dibujar todos los diseños
-                designs.forEach(design => {
-                    design.draw();
-                });
-                
-                // Actualizar información de tamaño
-                updateSizeInfo();
-            }
-            
-            // Actualizar la información de tamaño
-            function updateSizeInfo() {
-                const design = getSelectedDesign();
-                if (design) {
-                    const dimensions = design.getDimensionsInCm();
-                    const originalDimensions = design.getOriginalDimensionsInCm();
-                    sizeInfo.textContent = `${dimensions.width.toFixed(1)}cm × ${dimensions.height.toFixed(1)}cm`;
-                    originalSizeInfo.textContent = `Tamaño original: ${originalDimensions.width.toFixed(1)}cm × ${originalDimensions.height.toFixed(1)}cm`;
-                } else {
-                    sizeInfo.textContent = '0cm × 0cm';
-                    originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
-                }
-            }
-            
-            // Calcular dimensiones en píxeles según DPI
-            function getPixelDimensions(dpi) {
-                // Convertir centímetros a pulgadas y luego a píxeles según DPI
-                const inchesPerCm = 0.393701;
-                const widthPx = Math.round(CANVAS_WIDTH_CM * inchesPerCm * dpi);
-                const heightPx = Math.round(CANVAS_HEIGHT_CM * inchesPerCm * dpi);
-                return { width: widthPx, height: heightPx };
-            }
-            
-            // Crear un canvas de alta calidad para exportación con dimensiones correctas
-            function createHighQualityCanvas() {
-                const dpi = parseInt(qualitySelect.value);
-                const dimensions = getPixelDimensions(dpi);
-                
-                const exportCanvas = document.createElement('canvas');
-                exportCanvas.width = dimensions.width;
-                exportCanvas.height = dimensions.height;
-                const exportCtx = exportCanvas.getContext('2d');
-                
-                // Configurar alta calidad
-                exportCtx.imageSmoothingEnabled = true;
-                exportCtx.imageSmoothingQuality = 'high';
-                
-                // Calcular factor de escala
-                const scaleX = exportCanvas.width / canvas.width;
-                const scaleY = exportCanvas.height / canvas.height;
-                
-                // Dibujar fondo transparente (sin el color de fondo visual)
-                exportCtx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
-                
-                // Dibujar todos los diseños en el canvas de exportación
-                designs.forEach(design => {
-                    exportCtx.save();
-                    exportCtx.globalAlpha = design.opacity;
-                    
-                    // Ajustar coordenadas y escala según el nuevo tamaño
-                    const x = design.x * scaleX;
-                    const y = design.y * scaleY;
-                    const scale = design.scale * Math.min(scaleX, scaleY);
-                    
-                    exportCtx.translate(x, y);
-                    exportCtx.rotate(design.rotation * Math.PI / 180);
-                    exportCtx.scale(scale, scale);
-                    
-                    // Dibujar imagen centrada
-                    const width = design.width * 0.5;
-                    const height = design.height * 0.5;
-                    
-                    exportCtx.imageSmoothingEnabled = true;
-                    exportCtx.imageSmoothingQuality = 'high';
-                    exportCtx.drawImage(design.image, -width / 2, -height / 2, width, height);
-                    
-                    exportCtx.restore();
-                });
-                
-                return exportCanvas;
-            }
-            
-            // Manejar la subida de archivos
-            uploadBtn.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            fileInput.addEventListener('change', function(e) {
-                if (e.target.files && e.target.files.length > 0) {
-                    const files = Array.from(e.target.files);
-                    let loadedCount = 0;
-                    const totalFiles = files.length;
-                    
-                    // Mostrar mensaje de carga
-                    const loadingMessage = showMessage(`Cargando ${totalFiles} diseño(s)...`, 'loading', 0);
-                    
-                    files.forEach(file => {
-                        // Verificar que sea una imagen
-                        if (!file.type.match('image.*')) {
-                            showMessage(`Error: ${file.name} no es un archivo de imagen válido`, 'error');
-                            loadedCount++;
-                            if (loadedCount === totalFiles) {
-                                messageContainer.removeChild(loadingMessage);
-                            }
-                            return;
-                        }
-                        
-                        const reader = new FileReader();
-                        
-                        reader.onload = function(event) {
-                            const img = new Image();
-                            img.onload = function() {
-                                const id = 'design-' + Date.now() + Math.random().toString(36).substr(2, 5);
-                                const newDesign = new Design(id, img);
-                                designs.push(newDesign);
-                                selectedDesignId = id;
-                                
-                                loadedCount++;
-                                
-                                if (loadedCount === totalFiles) {
-                                    messageContainer.removeChild(loadingMessage);
-                                    showMessage(`${totalFiles} diseño(s) cargado(s) correctamente`, 'success');
-                                }
-                                
-                                updateDesignsList();
-                                updateControls();
-                                drawCanvas();
-                            };
-                            img.onerror = function() {
-                                loadedCount++;
-                                if (loadedCount === totalFiles) {
-                                    messageContainer.removeChild(loadingMessage);
-                                }
-                                showMessage(`Error al cargar la imagen: ${file.name}`, 'error');
-                            };
-                            img.src = event.target.result;
-                        };
-                        
-                        reader.onerror = function() {
-                            loadedCount++;
-                            if (loadedCount === totalFiles) {
-                                messageContainer.removeChild(loadingMessage);
-                            }
-                            showMessage(`Error al leer el archivo: ${file.name}`, 'error');
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    });
-                }
-            });
-            
-            // Actualizar la lista de diseños
-            function updateDesignsList() {
-                designsList.innerHTML = '';
-                
-                if (designs.length === 0) {
-                    designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>';
-                    return;
-                }
-                
-                designs.forEach(design => {
-                    const item = document.createElement('div');
-                    item.className = 'design-item' + (design.id === selectedDesignId ? ' active' : '');
-                    item.dataset.id = design.id;
-                    
-                    // Crear miniatura
-                    const thumbCanvas = document.createElement('canvas');
-                    thumbCanvas.width = 40;
-                    thumbCanvas.height = 40;
-                    const thumbCtx = thumbCanvas.getContext('2d');
-                    
-                    // Dibujar miniatura
-                    const scale = Math.min(40 / design.width, 40 / design.height) * 0.8;
-                    thumbCtx.fillStyle = '#ffffff';
-                    thumbCtx.fillRect(0, 0, 40, 40);
-                    thumbCtx.save();
-                    thumbCtx.translate(20, 20);
-                    thumbCtx.scale(scale, scale);
-                    thumbCtx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
-                    thumbCtx.restore();
-                    
-                    thumbCtx.strokeStyle = '#cbd5e0';
-                    thumbCtx.strokeRect(0, 0, 40, 40);
-                    
-                    item.innerHTML = `
-                        <img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura">
-                        <div>Diseño ${designs.indexOf(design) + 1}</div>
-                    `;
-                    
-                    item.addEventListener('click', () => {
-                        selectedDesignId = design.id;
-                        updateDesignsList();
-                        updateControls();
-                        drawCanvas();
-                        showMessage(`Diseño ${designs.indexOf(design) + 1} seleccionado`, 'info', 2000);
-                    });
-                    
-                    designsList.appendChild(item);
-                });
-            }
-            
-            // Actualizar controles con los valores del diseño seleccionado
-            function updateControls() {
-                const design = getSelectedDesign();
-                
-                if (design) {
-                    rotationSlider.value = design.rotation;
-                    rotationValue.textContent = design.rotation + '°';
-                    
-                    opacitySlider.value = design.opacity * 100;
-                    opacityValue.textContent = Math.round(design.opacity * 100) + '%';
-                    
-                    // Actualizar inputs de tamaño
-                    design.updateInputs();
-                    
-                    // Habilitar controles
-                    rotationSlider.disabled = false;
-                    opacitySlider.disabled = false;
-                    removeBtn.disabled = false;
-                    widthInput.disabled = false;
-                    heightInput.disabled = false;
-                    applySizeBtn.disabled = false;
-                    lockProportion.disabled = false;
-                    
-                    // Actualizar información de tamaño
-                    updateSizeInfo();
-                } else {
-                    // Deshabilitar controles
-                    rotationSlider.disabled = true;
-                    opacitySlider.disabled = true;
-                    removeBtn.disabled = true;
-                    widthInput.disabled = true;
-                    heightInput.disabled = true;
-                    applySizeBtn.disabled = true;
-                    lockProportion.disabled = true;
-                    
-                    // Limpiar información de tamaño
-                    sizeInfo.textContent = '0cm × 0cm';
-                    originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
-                }
-            }
-            
-            // Obtener el diseño seleccionado
-            function getSelectedDesign() {
-                return designs.find(d => d.id === selectedDesignId);
-            }
-            
-            // Aplicar tamaño manual
-            applySizeBtn.addEventListener('click', function() {
-                const design = getSelectedDesign();
-                if (design) {
-                    const width = parseFloat(widthInput.value);
-                    const height = parseFloat(heightInput.value);
-                    
-                    if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
-                        design.setDimensions(width, height, lockProportion.checked);
-                        showMessage(`Tamaño ajustado a ${width}cm × ${height}cm`, 'success', 2000);
-                    }
-                }
-            });
-            
-            // Sincronizar inputs cuando cambia la proporción
-            lockProportion.addEventListener('change', function() {
-                const design = getSelectedDesign();
-                if (design && this.checked) {
-                    // Si se activa mantener proporción, ajustar altura según ancho
-                    const width = parseFloat(widthInput.value);
-                    if (!isNaN(width) && width > 0) {
-                        const proportionalHeight = width / design.aspectRatio;
-                        heightInput.value = proportionalHeight.toFixed(1);
-                    }
-                }
-                showMessage(this.checked ? 'Proporción bloqueada' : 'Proporción desbloqueada', 'info', 2000);
-            });
-            
-            // Sincronizar altura cuando cambia el ancho
-            widthInput.addEventListener('input', function() {
-                if (lockProportion.checked) {
-                    const design = getSelectedDesign();
-                    if (design) {
-                        const width = parseFloat(this.value);
-                        if (!isNaN(width) && width > 0) {
-                            const proportionalHeight = width / design.aspectRatio;
-                            heightInput.value = proportionalHeight.toFixed(1);
-                        }
-                    }
-                }
-            });
-            
-            // Sincronizar ancho cuando cambia la altura
-            heightInput.addEventListener('input', function() {
-                if (lockProportion.checked) {
-                    const design = getSelectedDesign();
-                    if (design) {
-                        const height = parseFloat(this.value);
-                        if (!isNaN(height) && height > 0) {
-                            const proportionalWidth = height * design.aspectRatio;
-                            widthInput.value = proportionalWidth.toFixed(1);
-                        }
-                    }
-                }
-            });
-            
-            // Controles de diseño
-            rotationSlider.addEventListener('input', function() {
-                const design = getSelectedDesign();
-                if (design) {
-                    design.rotation = parseInt(this.value);
-                    rotationValue.textContent = this.value + '°';
-                    drawCanvas();
-                }
-            });
-            
-            opacitySlider.addEventListener('input', function() {
-                const design = getSelectedDesign();
-                if (design) {
-                    design.opacity = this.value / 100;
-                    opacityValue.textContent = this.value + '%';
-                    drawCanvas();
-                }
-            });
-            
-            // Eliminar diseño
-            removeBtn.addEventListener('click', function() {
-                const design = getSelectedDesign();
-                if (design && confirm('¿Estás seguro de que quieres eliminar este diseño?')) {
-                    designs = designs.filter(d => d.id !== design.id);
-                    selectedDesignId = designs.length > 0 ? designs[0].id : null;
-                    
-                    showMessage('Diseño eliminado', 'info', 2000);
-                    
-                    updateDesignsList();
-                    updateControls();
-                    drawCanvas();
-                }
-            });
-            
-            // Zoom del canvas
-            zoomSlider.addEventListener('input', function() {
-                canvasZoom = this.value / 100;
-                zoomValue.textContent = this.value + '%';
-                zoomLevel.textContent = 'Zoom: ' + this.value + '%';
-                
-                const canvasContainer = document.querySelector('.canvas-area');
-                const canvasWrapper = document.querySelector('.canvas-wrapper');
-                canvasWrapper.style.transform = `scale(${canvasZoom})`;
-                canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth) / 2;
-                canvasContainer.scrollTop = (canvas.height * canvasZoom - canvasContainer.clientHeight) / 2;
-            });
-            
-            // Agregar texto
-            addTextBtn.addEventListener('click', function() {
-                const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
-                if (text) {
-                    // Crear un canvas temporal para el texto
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = 300;
-                    tempCanvas.height = 100;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    
-                    // Fondo transparente para el texto
-                    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    
-                    tempCtx.fillStyle = '#000000';
-                    tempCtx.font = '40px Arial';
-                    tempCtx.textAlign = 'center';
-                    tempCtx.textBaseline = 'middle';
-                    tempCtx.fillText(text, tempCanvas.width/2, tempCanvas.height/2);
-                    
-                    const img = new Image();
-                    img.onload = function() {
-                        const id = 'text-' + Date.now();
-                        const newDesign = new Design(id, img, canvas.width/2, canvas.height/2);
-                        designs.push(newDesign);
-                        selectedDesignId = id;
-                        
-                        showMessage('Texto agregado correctamente', 'success', 2000);
-                        
-                        updateDesignsList();
-                        updateControls();
-                        drawCanvas();
-                    };
-                    img.src = tempCanvas.toDataURL('image/png');
-                }
-            });
-            
-            // Descargar como PNG (con dimensiones correctas)
-            downloadPngBtn.addEventListener('click', function() {
-                if (designs.length === 0) {
-                    showMessage('No hay diseños para exportar', 'error');
-                    return;
-                }
-                
-                const loadingMessage = showMessage('Preparando descarga PNG...', 'loading', 0);
-                
-                setTimeout(() => {
-                    try {
-                        const exportCanvas = createHighQualityCanvas();
-                        
-                        // Crear enlace de descarga
-                        const link = document.createElement('a');
-                        link.download = 'montaje-dtf.png';
-                        
-                        // Exportar con transparencia y alta calidad
-                        exportCanvas.toBlob(function(blob) {
-                            link.href = URL.createObjectURL(blob);
-                            link.click();
-                            
-                            // Limpiar URL después de la descarga
-                            setTimeout(function() {
-                                URL.revokeObjectURL(link.href);
-                                messageContainer.removeChild(loadingMessage);
-                                showMessage('Descarga PNG completada', 'success');
-                            }, 100);
-                        }, 'image/png', 1.0); // Calidad máxima
-                    } catch (error) {
-                        messageContainer.removeChild(loadingMessage);
-                        showMessage('Error al generar el PNG: ' + error.message, 'error');
-                    }
-                }, 500);
-            });
-            
-            // Descargar como PDF (con dimensiones correctas)
-            downloadPdfBtn.addEventListener('click', function() {
-                if (designs.length === 0) {
-                    showMessage('No hay diseños para exportar', 'error');
-                    return;
-                }
-                
-                const loadingMessage = showMessage('Preparando descarga PDF...', 'loading', 0);
-                
-                setTimeout(() => {
-                    try {
-                        const exportCanvas = createHighQualityCanvas();
-                        
-                        // Convertir a blob primero para mantener la calidad
-                        exportCanvas.toBlob(function(blob) {
-                            const reader = new FileReader();
-                            reader.onload = function() {
-                                const imgData = reader.result;
-                                const { jsPDF } = window.jspdf;
-                                
-                                // Crear PDF con las dimensiones correctas en milímetros
-                                const doc = new jsPDF({
-                                    orientation: 'portrait',
-                                    unit: 'mm',
-                                    format: [CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10] // Convertir cm a mm
-                                });
-                                
-                                // Agregar imagen al PDF con las dimensiones exactas
-                                doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM * 10, CANVAS_HEIGHT_CM * 10, undefined, 'FAST');
-                                doc.save('montaje-dtf.pdf');
-                                
-                                messageContainer.removeChild(loadingMessage);
-                                showMessage('Descarga PDF completada', 'success');
-                            };
-                            reader.readAsDataURL(blob);
-                        }, 'image/png', 1.0);
-                    } catch (error) {
-                        messageContainer.removeChild(loadingMessage);
-                        showMessage('Error al generar el PDF: ' + error.message, 'error');
-                    }
-                }, 500);
-            });
-            
-            // Limpiar lienzo
-            clearBtn.addEventListener('click', function() {
-                if (designs.length > 0 && confirm('¿Estás seguro de que quieres limpiar el lienzo? Se perderán todos los diseños.')) {
-                    designs = [];
-                    selectedDesignId = null;
-                    
-                    showMessage('Lienzo limpiado', 'info', 2000);
-                    
-                    updateDesignsList();
-                    updateControls();
-                    initCanvas();
-                }
-            });
-            
-            // Funcionalidad de interacción con el mouse
-            canvas.addEventListener('mousedown', function(e) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                const x = (e.clientX - rect.left) * scaleX;
-                const y = (e.clientY - rect.top) * scaleY;
-                
-                lastMouseX = x;
-                lastMouseY = y;
-                
-                // Buscar si se hizo clic en algún diseño
-                for (let i = designs.length - 1; i >= 0; i--) {
-                    const design = designs[i];
-                    
-                    if (design.isRotationHandle(x, y)) {
-                        // Comenzar rotación
-                        selectedDesignId = design.id;
-                        isRotating = true;
-                        updateDesignsList();
-                        updateControls();
-                        drawCanvas();
-                        return;
-                    }
-                    
-                    if (design.isScaleHandle(x, y)) {
-                        // Comenzar redimensionado
-                        selectedDesignId = design.id;
-                        isResizing = true;
-                        startScale = design.scale; // Guardar el scale actual
-                        updateDesignsList();
-                        updateControls();
-                        drawCanvas();
-                        return;
-                    }
-                    
-                    if (design.isPointInside(x, y)) {
-                        // Comenzar arrastre
-                        selectedDesignId = design.id;
-                        isDragging = true;
-                        
-                        // Calcular offset para un arrastre suave
-                        dragOffsetX = x - design.x;
-                        dragOffsetY = y - design.y;
-                        
-                        updateDesignsList();
-                        updateControls();
-                        drawCanvas();
-                        return;
-                    }
-                }
-                
-                // Si no se hizo clic en ningún diseño, deseleccionar
-                selectedDesignId = null;
+            const reader = new FileReader();
+            reader.onload = function(ev){
+              const img = new Image();
+              img.onload = function(){
+                const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
+                const d = new Design(id, img);
+                designs.push(d);
+                selectedDesignId = id;
+                if (++loaded===total) { loadingMsg.remove(); showMessage(`${total} diseño(s) cargado(s)`,'success'); }
                 updateDesignsList();
                 updateControls();
                 drawCanvas();
-            });
-            
-            canvas.addEventListener('mousemove', function(e) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                const x = (e.clientX - rect.left) * scaleX;
-                const y = (e.clientY - rect.top) * scaleY;
-                
-                const dx = x - lastMouseX;
-                const dy = y - lastMouseY;
-                
-                lastMouseX = x;
-                lastMouseY = y;
-                
-                const design = getSelectedDesign();
-                
-                if (isDragging && design) {
-                    // Mover el diseño
-                    design.x = x - dragOffsetX;
-                    design.y = y - dragOffsetY;
-                    drawCanvas();
-                } else if (isRotating && design) {
-                    // Rotar el diseño
-                    const centerX = design.x;
-                    const centerY = design.y;
-                    
-                    const angle = Math.atan2(y - centerY, x - centerX) * 180 / Math.PI + 90;
-                    design.rotation = angle;
-                    
-                    rotationSlider.value = angle;
-                    rotationValue.textContent = Math.round(angle) + '°';
-                    
-                    drawCanvas();
-                } else if (isResizing && design) {
-                    // Redimensionar el diseño - FIXED: No volver al tamaño original
-                    const centerX = design.x;
-                    const centerY = design.y;
-                    
-                    // Calcular la distancia desde el centro hasta el cursor
-                    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-                    
-                    // Calcular el nuevo scale basado en la distancia
-                    const originalSize = Math.sqrt(Math.pow(design.originalWidth * 0.5, 2) + Math.pow(design.originalHeight * 0.5, 2));
-                    design.scale = startScale * (distance / originalSize);
-                    
-                    // Actualizar inputs de tamaño
-                    design.updateInputs();
-                    
-                    // Actualizar información de tamaño
-                    updateSizeInfo();
-                    
-                    drawCanvas();
-                }
-            });
-            
-            canvas.addEventListener('mouseup', function() {
-                isDragging = false;
-                isResizing = false;
-                isRotating = false;
-            });
-            
-            canvas.addEventListener('mouseleave', function() {
-                isDragging = false;
-                isResizing = false;
-                isRotating = false;
-            });
-            
-            // Soporte para dispositivos táctiles
-            canvas.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousedown', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            });
-            
-            canvas.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            });
-            
-            canvas.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                const mouseEvent = new MouseEvent('mouseup', {});
-                canvas.dispatchEvent(mouseEvent);
-            });
-            
-            // Inicializar controles
-            updateControls();
-            
-            // Mensaje de bienvenida
-            setTimeout(() => {
-                showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.', 'info');
-            }, 1000);
+              };
+              img.onerror = function(){
+                if (++loaded===total) loadingMsg.remove();
+                showMessage(`Error al cargar la imagen: ${file.name}`,'error');
+              }
+              img.src = ev.target.result;
+            };
+            reader.onerror = function(){
+              if (++loaded===total) loadingMsg.remove();
+              showMessage(`Error al leer: ${file.name}`,'error');
+            }
+            reader.readAsDataURL(file);
+          });
+        }
+      });
+
+      // --- Lista de diseños
+      function updateDesignsList(){
+        designsList.innerHTML = '';
+        if (designs.length===0){
+          designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>';
+          return;
+        }
+        designs.forEach(design=>{
+          const item = document.createElement('div');
+          item.className = 'design-item' + (design.id===selectedDesignId ? ' active' : '');
+          item.dataset.id = design.id;
+
+          const thumbCanvas = document.createElement('canvas');
+          thumbCanvas.width = 40; thumbCanvas.height = 40;
+          const tctx = thumbCanvas.getContext('2d');
+          const scale = Math.min(40/design.width, 40/design.height) * 0.8;
+          tctx.fillStyle = '#fff'; tctx.fillRect(0,0,40,40);
+          tctx.save();
+          tctx.translate(20,20);
+          tctx.scale(scale, scale);
+          tctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+          tctx.restore();
+          tctx.strokeStyle = '#cbd5e0'; tctx.strokeRect(0,0,40,40);
+
+          item.innerHTML = `
+            <img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura">
+            <div>Diseño ${designs.indexOf(design)+1}</div>`;
+          item.addEventListener('click', ()=>{
+            selectedDesignId = design.id;
+            updateDesignsList(); updateControls(); drawCanvas();
+            showMessage(`Diseño ${designs.indexOf(design)+1} seleccionado`,'info',2000);
+          });
+          designsList.appendChild(item);
         });
-    </script>
+      }
+
+      // --- Controles
+      function updateControls(){
+        const d = getSelectedDesign();
+        if (d){
+          rotationSlider.value = Math.round(d.rotation);
+          rotationValue.textContent = Math.round(d.rotation) + '°';
+          opacitySlider.value = Math.round(d.opacity*100);
+          opacityValue.textContent = Math.round(d.opacity*100) + '%';
+
+          d.updateInputs();
+
+          rotationSlider.disabled = false;
+          opacitySlider.disabled = false;
+          removeBtn.disabled = false;
+          widthInput.disabled = false;
+          heightInput.disabled = false;
+          applySizeBtn.disabled = false;
+          lockProportion.disabled = false;
+
+          updateSizeInfo();
+        } else {
+          rotationSlider.disabled = true;
+          opacitySlider.disabled = true;
+          removeBtn.disabled = true;
+          widthInput.disabled = true;
+          heightInput.disabled = true;
+          applySizeBtn.disabled = true;
+          lockProportion.disabled = true;
+
+          sizeInfo.textContent = '0cm × 0cm';
+          originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+        }
+      }
+
+      function getSelectedDesign(){
+        return designs.find(d=> d.id===selectedDesignId);
+      }
+
+      // aplicar tamaño manual
+      applySizeBtn.addEventListener('click', function(){
+        const d = getSelectedDesign();
+        if (d){
+          const w = parseFloat(widthInput.value);
+          const h = parseFloat(heightInput.value);
+          if (!isNaN(w) && !isNaN(h) && w>0 && h>0){
+            d.setDimensions(w,h, lockProportion.checked);
+            showMessage(`Tamaño ajustado a ${w}cm × ${h}cm`, 'success', 2000);
+          }
+        }
+      });
+
+      // sincronización ancho/alto manteniendo proporción
+      lockProportion.addEventListener('change', function(){
+        const d = getSelectedDesign();
+        if (d && this.checked){
+          const w = parseFloat(widthInput.value);
+          if (!isNaN(w) && w>0){
+            heightInput.value = (w / d.aspectRatio).toFixed(1);
+          }
+        }
+        showMessage(this.checked ? 'Proporción bloqueada' : 'Proporción desbloqueada','info',2000);
+      });
+
+      widthInput.addEventListener('input', function(){
+        if (lockProportion.checked){
+          const d = getSelectedDesign();
+          if (d){
+            const w = parseFloat(this.value);
+            if (!isNaN(w) && w>0){
+              heightInput.value = (w / d.aspectRatio).toFixed(1);
+            }
+          }
+        }
+      });
+
+      heightInput.addEventListener('input', function(){
+        if (lockProportion.checked){
+          const d = getSelectedDesign();
+          if (d){
+            const h = parseFloat(this.value);
+            if (!isNaN(h) && h>0){
+              widthInput.value = (h * d.aspectRatio).toFixed(1);
+            }
+          }
+        }
+      });
+
+      rotationSlider.addEventListener('input', function(){
+        const d = getSelectedDesign();
+        if (d){
+          d.rotation = parseInt(this.value);
+          rotationValue.textContent = this.value + '°';
+          drawCanvas();
+        }
+      });
+
+      opacitySlider.addEventListener('input', function(){
+        const d = getSelectedDesign();
+        if (d){
+          d.opacity = this.value / 100;
+          opacityValue.textContent = this.value + '%';
+          drawCanvas();
+        }
+      });
+
+      // eliminar diseño
+      removeBtn.addEventListener('click', function(){
+        const d = getSelectedDesign();
+        if (d && confirm('¿Eliminar este diseño?')){
+          designs = designs.filter(x=> x.id!==d.id);
+          selectedDesignId = designs.length ? designs[designs.length-1].id : null;
+          showMessage('Diseño eliminado','info',2000);
+          updateDesignsList(); updateControls(); drawCanvas();
+        }
+      });
+
+      // --- Zoom lienzo
+      zoomSlider.addEventListener('input', function(){
+        canvasZoom = this.value/100;
+        zoomValue.textContent = this.value + '%';
+        zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+
+        const canvasContainer = document.querySelector('.canvas-area');
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        canvasWrapper.style.transform = `scale(${canvasZoom})`;
+        canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
+        canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
+      });
+
+      // --- Agregar texto
+      addTextBtn.addEventListener('click', function(){
+        const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
+        if (text){
+          const tCanvas = document.createElement('canvas');
+          tCanvas.width = 600; tCanvas.height = 200; // mejor base para más nitidez
+          const tctx = tCanvas.getContext('2d');
+          tctx.clearRect(0,0,tCanvas.width,tCanvas.height);
+          tctx.fillStyle = '#000000';
+          tctx.font = '80px Arial';
+          tctx.textAlign = 'center';
+          tctx.textBaseline = 'middle';
+          tctx.fillText(text, tCanvas.width/2, tCanvas.height/2);
+
+          const img = new Image();
+          img.onload = function(){
+            const id = 'text-' + Date.now();
+            const d = new Design(id, img, canvas.width/2, canvas.height/2);
+            designs.push(d); selectedDesignId = id;
+            showMessage('Texto agregado correctamente','success',2000);
+            updateDesignsList(); updateControls(); drawCanvas();
+          };
+          img.src = tCanvas.toDataURL('image/png');
+        }
+      });
+
+      // --- Exportar PNG
+      downloadPngBtn.addEventListener('click', function(){
+        if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+        const loading = showMessage('Preparando descarga PNG...','loading',0);
+        setTimeout(()=>{
+          try{
+            const exportCanvas = createHighQualityCanvas();
+            const link = document.createElement('a');
+            link.download = 'montaje-dtf.png';
+            exportCanvas.toBlob(function(blob){
+              link.href = URL.createObjectURL(blob);
+              link.click();
+              setTimeout(()=>{
+                URL.revokeObjectURL(link.href);
+                loading.remove();
+                showMessage('Descarga PNG completada','success');
+              },100);
+            }, 'image/png', 1.0);
+          } catch(err){
+            loading.remove();
+            showMessage('Error al generar PNG: ' + err.message, 'error');
+          }
+        }, 200);
+      });
+
+      // --- Exportar PDF (580mm × 1000mm)
+      downloadPdfBtn.addEventListener('click', function(){
+        if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+        const loading = showMessage('Preparando descarga PDF...','loading',0);
+        setTimeout(()=>{
+          try{
+            const exportCanvas = createHighQualityCanvas();
+            exportCanvas.toBlob(function(blob){
+              const reader = new FileReader();
+              reader.onload = function(){
+                const imgData = reader.result;
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                  orientation: 'portrait',
+                  unit: 'mm',
+                  format: [CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10] // 580 × 1000 mm
+                });
+                doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10, undefined, 'FAST');
+                doc.save('montaje-dtf.pdf');
+                loading.remove();
+                showMessage('Descarga PDF completada','success');
+              };
+              reader.readAsDataURL(blob);
+            }, 'image/png', 1.0);
+          } catch(err){
+            loading.remove();
+            showMessage('Error al generar PDF: ' + err.message, 'error');
+          }
+        }, 200);
+      });
+
+      // --- Limpiar lienzo
+      clearBtn.addEventListener('click', function(){
+        if (designs.length>0 && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
+          designs = []; selectedDesignId = null;
+          showMessage('Lienzo limpiado','info',2000);
+          updateDesignsList(); updateControls(); initCanvas();
+        }
+      });
+
+      // --- Interacción mouse/touch
+      canvas.addEventListener('mousedown', function(e){
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        lastMouseX = x; lastMouseY = y;
+
+        // buscar desde arriba (último dibujado)
+        for (let i=designs.length-1; i>=0; i--){
+          const d = designs[i];
+
+          if (d.isRotationHandle(x,y)){
+            selectedDesignId = d.id;
+            isRotating = true;
+            updateDesignsList(); updateControls(); drawCanvas();
+            return;
+          }
+          if (d.isScaleHandle(x,y)){
+            selectedDesignId = d.id;
+            isResizing = true;
+            startScale = d.scale;
+            startResizeDist = Math.hypot(x - d.x, y - d.y);
+            updateDesignsList(); updateControls(); drawCanvas();
+            return;
+          }
+          if (d.isPointInside(x,y)){
+            selectedDesignId = d.id;
+            isDragging = true;
+            dragOffsetX = x - d.x;
+            dragOffsetY = y - d.y;
+            updateDesignsList(); updateControls(); drawCanvas();
+            return;
+          }
+        }
+        selectedDesignId = null;
+        updateDesignsList(); updateControls(); drawCanvas();
+      });
+
+      canvas.addEventListener('mousemove', function(e){
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        const dx = x - lastMouseX;
+        const dy = y - lastMouseY;
+        lastMouseX = x; lastMouseY = y;
+
+        const d = getSelectedDesign();
+        if (isDragging && d){
+          d.x = x - dragOffsetX;
+          d.y = y - dragOffsetY;
+          drawCanvas();
+        } else if (isRotating && d){
+          let angle = Math.atan2(y - d.y, x - d.x) * 180 / Math.PI + 90;
+          angle = (angle % 360 + 360) % 360; // normaliza [0,360)
+          d.rotation = angle;
+          rotationSlider.value = Math.round(angle);
+          rotationValue.textContent = Math.round(angle) + '°';
+          drawCanvas();
+        } else if (isResizing && d){
+          const dist = Math.hypot(x - d.x, y - d.y);
+          const factor = dist / Math.max(1, startResizeDist);
+          d.scale = startScale * factor;
+          d.updateInputs();
+          updateSizeInfo();
+          drawCanvas();
+        }
+      });
+
+      ['mouseup','mouseleave'].forEach(ev=>{
+        canvas.addEventListener(ev, function(){
+          isDragging = false; isResizing = false; isRotating = false;
+        });
+      });
+
+      // touch
+      canvas.addEventListener('touchstart', function(e){
+        e.preventDefault();
+        const t = e.touches[0];
+        canvas.dispatchEvent(new MouseEvent('mousedown', { clientX:t.clientX, clientY:t.clientY }));
+      }, {passive:false});
+      canvas.addEventListener('touchmove', function(e){
+        e.preventDefault();
+        const t = e.touches[0];
+        canvas.dispatchEvent(new MouseEvent('mousemove', { clientX:t.clientX, clientY:t.clientY }));
+      }, {passive:false});
+      canvas.addEventListener('touchend', function(e){
+        e.preventDefault();
+        canvas.dispatchEvent(new MouseEvent('mouseup', {}));
+      }, {passive:false});
+
+      // iniciar controles
+      updateControls();
+
+      // bienvenida
+      setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 1000);
+    });
+  </script>
 </body>
 </html>
