@@ -22,7 +22,7 @@
     .btn-upload{background:#48bb78}.btn-upload:hover{background:#38a169}
     .btn-download{background:#9f7aea}.btn-download:hover{background:#805ad5}
     .btn-clear{background:#f56565}.btn-clear:hover{background:#e53e3e}
-    .canvas-container{flex:1;background:#f8f9fa;border-radius:10px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.05);padding:1rem;display:flex;flex-direction:column}
+    .canvas-container{flex:1;background:#f8f9fa;border-radius:10px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.05);padding:1rem;display:flex;flex-direction:column;position:relative}
     .canvas-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
     .canvas-area{flex:1;background:#fff;border-radius:8px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem;box-shadow:inset 0 0 10px rgba(0,0,0,.05);position:relative}
     #canvas{background:#fff;box-shadow:0 0 20px rgba(0,0,0,.1);touch-action:none;cursor:default}
@@ -78,6 +78,50 @@
     .lock-card input{width:100%;padding:.8rem;border-radius:8px;border:none;margin:.5rem 0 1rem 0}
     .lock-card button{width:100%;padding:.8rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer}
     .lock-error{color:#fed7d7;min-height:1.2em;margin-bottom:.5rem}
+
+    /* --- Pane derecho pegajoso (mínimo cambio) --- */
+    .controls{
+      position: sticky;
+      top: 10px;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+    }
+
+    /* --- Barra flotante sobre el lienzo --- */
+    .floating-tools{
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 50;
+      display: flex;
+      gap: 6px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      border-radius: 8px;
+      padding: 6px;
+      backdrop-filter: blur(6px);
+    }
+    .floating-tools .btn-mini{
+      border: 1px solid #cbd5e0;
+      background: #edf2f7;
+      color: #2d3748;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .floating-tools .btn-mini:hover{
+      background:#e2e8f0;
+    }
+    .floating-tools .sep{
+      width:1px; background:#e2e8f0; margin:0 4px;
+    }
+    @media (max-width: 768px){
+      .floating-tools{ right: 6px; left: 6px; justify-content: center; flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
@@ -150,6 +194,18 @@
 
       <!-- Canvas central -->
       <div class="canvas-container">
+        <!-- Barra flotante (accesos rápidos) -->
+        <div class="floating-tools" id="floating-tools">
+          <button class="btn-mini" data-target="mirror-btn">🪞 Espejo</button>
+          <span class="sep"></span>
+          <button class="btn-mini" data-target="send-back" title="Al fondo">⤵️ Fondo</button>
+          <button class="btn-mini" data-target="step-back" title="Un paso atrás">⬇️ Atrás</button>
+          <button class="btn-mini" data-target="step-forward" title="Un paso adelante">⬆️ Adelante</button>
+          <button class="btn-mini" data-target="bring-front" title="Al frente">⤴️ Frente</button>
+          <span class="sep"></span>
+          <button class="btn-mini" data-target="remove-btn" title="Eliminar">🗑️ Eliminar</button>
+        </div>
+
         <div class="canvas-title">
           <h3>Área de Montaje (<span id="canvas-size-label">58cm × 100cm</span>)</h3>
           <div id="zoom-level">Zoom: 100%</div>
@@ -187,7 +243,7 @@
             <span id="zoom-value">100%</span>
             <input type="range" id="zoom-slider" min="20" max="200" value="100">
           </div>
-          <small>Tip: usa Ctrl (Windows/Linux) o ⌘ (Mac) + rueda.</small> <!-- <<< añadido tip -->
+          <small>Tip: Ctrl (Win/Linux) o ⌘ (Mac) + rueda.</small>
         </div>
 
         <div class="tool-section">
@@ -239,24 +295,23 @@
             <div id="original-size">Tamaño original: 0cm × 0cm</div>
           </div>
 
-          <!-- ===== HERRAMIENTAS EXTRA: añadidos ===== -->
+          <!-- HERRAMIENTAS EXTRA -->
           <div class="control-group">
             <h4>Herramientas</h4>
-            <button class="btn" id="mirror-btn">🪞 Espejo (Horizontal)</button> <!-- <<< -->
+            <button class="btn" id="mirror-btn">🪞 Espejo (Horizontal)</button>
           </div>
 
           <div class="control-group">
             <h4>Orden (Z-order)</h4>
             <div class="row">
-              <button class="btn" id="send-back">⤵️ Al fondo</button>     <!-- <<< -->
-              <button class="btn" id="step-back">⬇️ Atrás</button>        <!-- <<< -->
+              <button class="btn" id="send-back">⤵️ Al fondo</button>
+              <button class="btn" id="step-back">⬇️ Atrás</button>
             </div>
             <div class="row" style="margin-top:.5rem">
-              <button class="btn" id="step-forward">⬆️ Adelante</button>   <!-- <<< -->
-              <button class="btn" id="bring-front">⤴️ Al frente</button>  <!-- <<< -->
+              <button class="btn" id="step-forward">⬆️ Adelante</button>
+              <button class="btn" id="bring-front">⤴️ Al frente</button>
             </div>
           </div>
-          <!-- ===== fin añadidos ===== -->
 
           <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
         </div>
@@ -266,7 +321,7 @@
           <p>• Supr/Backspace: eliminar seleccionado</p>
           <p>• Flechas: mover (Shift = 10 px)</p>
           <p>• Ctrl/Cmd + D: duplicar seleccionado</p>
-          <p>• Ctrl o ⌘ + rueda: zoom</p> <!-- <<< -->
+          <p>• Ctrl o ⌘ + rueda: zoom</p>
         </div>
       </div>
     </div>
@@ -351,13 +406,12 @@
     const canvasHeightInput = document.getElementById('canvas-height-cm');
     const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
 
-    // <<< NUEVOS botones
+    // Botones añadidos (ya presentes en el HTML)
     const mirrorBtn = document.getElementById('mirror-btn');
     const bringFrontBtn = document.getElementById('bring-front');
     const sendBackBtn = document.getElementById('send-back');
     const stepForwardBtn = document.getElementById('step-forward');
     const stepBackBtn = document.getElementById('step-back');
-    // >>>>
 
     // ====== Constantes físicas
     const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
@@ -737,14 +791,14 @@
 
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
          widthInput, heightInput, applySizeBtn, lockProportion,
-         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn // <<< habilitar extras
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
         ].forEach(el=> el && (el.disabled=false));
 
         updateSizeInfo();
       } else {
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
          widthInput, heightInput, applySizeBtn, lockProportion,
-         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn // <<< deshabilitar extras
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
         ].forEach(el=> el && (el.disabled=true));
         sizeInfo.textContent = '0cm × 0cm';
         originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
@@ -879,11 +933,11 @@
       });
     }
 
-    // ====== Zoom con rueda (Ctrl o ⌘)  <<< NUEVO
+    // ====== Zoom con rueda (Ctrl o ⌘)
     const canvasAreaEl = document.querySelector('.canvas-area');
     if (canvasAreaEl && zoomSlider){
       canvasAreaEl.addEventListener('wheel', (e)=>{
-        if (!e.ctrlKey && !e.metaKey) return; // Ctrl (Win/Linux) o ⌘ (Mac)
+        if (!e.ctrlKey && !e.metaKey) return;
         e.preventDefault();
         const cur = parseInt(zoomSlider.value,10);
         const next = Math.max(20, Math.min(200, cur + (e.deltaY < 0 ? 10 : -10)));
@@ -971,7 +1025,7 @@
                 const doc = new jsPDF({
                   orientation: 'portrait',
                   unit: 'mm',
-                  format: [CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10] // 58cm × alto actual
+                  format: [CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10]
                 });
                 doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10, undefined, 'FAST');
                 doc.save('montaje-dtf.pdf');
@@ -1090,10 +1144,9 @@
       applyCanvasHeightBtn.addEventListener('click', function(){
         let newHcm = parseFloat(canvasHeightInput.value);
         if (isNaN(newHcm)) return;
-        newHcm = Math.max(10, Math.min(100, newHcm)); // clamp 10..100
+        newHcm = Math.max(10, Math.min(100, newHcm));
         CANVAS_HEIGHT_CM = newHcm;
 
-        // px = cm * 10
         const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
         canvas.height = newPx;
         canvasWrapper.style.height = newPx + 'px';
@@ -1114,7 +1167,6 @@
       const d = getSelectedDesign();
       const step = e.shiftKey ? 10 : 1;
 
-      // Eliminar
       if ((e.key === 'Delete' || e.key === 'Backspace') && d){
         e.preventDefault();
         designs = designs.filter(x=> x.id!==d.id);
@@ -1126,7 +1178,6 @@
 
       if (!d) return;
 
-      // Duplicar
       if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'd')){
         e.preventDefault();
         const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
@@ -1139,7 +1190,6 @@
         return;
       }
 
-      // Mover con flechas
       const arrows = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
       if (arrows.includes(e.key)){
         e.preventDefault();
@@ -1151,7 +1201,7 @@
       }
     });
 
-    // ====== ESPEJO (Horizontal)  <<< NUEVO
+    // ====== ESPEJO (Horizontal)
     if (mirrorBtn){
       mirrorBtn.addEventListener('click', ()=>{
         const d = getSelectedDesign();
@@ -1176,7 +1226,7 @@
       });
     }
 
-    // ====== Z-ORDER  <<< NUEVO
+    // ====== Z-ORDER
     function idxSel(){ return designs.findIndex(x=> x.id===selectedDesignId); }
     function refreshAfterZ(){ updateDesignsList(); drawCanvas(); }
 
@@ -1210,6 +1260,24 @@
         refreshAfterZ();
       });
     }
+
+    // ====== Barra flotante: reenvía clicks a botones originales
+    (function(){
+      const floatBar = document.getElementById('floating-tools');
+      if (!floatBar) return;
+      floatBar.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-target]');
+        if (!btn) return;
+        const targetId = btn.getAttribute('data-target');
+        const realBtn = document.getElementById(targetId);
+        if (realBtn && !realBtn.disabled){
+          realBtn.click();
+        } else if (realBtn && realBtn.disabled){
+          const d = getSelectedDesign();
+          if (!d) showMessage('Selecciona un diseño primero', 'warning', 1600);
+        }
+      });
+    })();
 
     // ====== Iniciar controles
     updateControls();
