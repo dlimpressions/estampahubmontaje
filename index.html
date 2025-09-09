@@ -352,12 +352,6 @@
     const specsLabel = document.getElementById('specs-label');
     const canvasSizeLabel = document.getElementById('canvas-size-label');
     const canvasHeightInput = document.getElementById('canvas-height-cm');
-    // Nuevos botones: espejo y z-order
-    const mirrorBtn = document.getElementById('mirror-btn');
-    const bringFrontBtn = document.getElementById('bring-front');
-    const sendBackBtn = document.getElementById('send-back');
-    const stepForwardBtn = document.getElementById('step-forward');
-    const stepBackBtn = document.getElementById('step-back');
 
     // ====== Constantes físicas
     const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
@@ -403,7 +397,6 @@
       ctx.save();
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      // patrón de transparencia
       const size = 20;
       ctx.fillStyle = '#f0f0f0';
       for (let y = 0; y < canvas.height; y += size) {
@@ -412,20 +405,17 @@
         }
       }
 
-      // capa de color (solo visual)
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = canvasBackgroundColor;
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.globalAlpha = 1.0;
 
-      // borde área de impresión
       ctx.strokeStyle = '#cbd5e0';
       ctx.lineWidth = 2;
       ctx.setLineDash([5,5]);
       ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
       ctx.setLineDash([]);
 
-      // texto guía
       if (designs.length===0){
         ctx.fillStyle = '#e2e8f0';
         ctx.font = '20px Arial';
@@ -602,7 +592,7 @@
 
         const x = design.x * scaleX;
         const y = design.y * scaleX;
-        const scale = design.scale * scaleX; // 1:1 con el lienzo lógico
+        const scale = design.scale * scaleX;
 
         ectx.translate(x, y);
         ectx.rotate(design.rotation * Math.PI/180);
@@ -651,7 +641,6 @@
               const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
               const d = new Design(id, img);
 
-              // auto fit
               const maxW = canvas.width - 20;
               const maxH = canvas.height - 20;
               const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
@@ -721,11 +710,8 @@
     // ====== Controles
     function updateControls(){
       const d = getSelectedDesign();
-      const all = [
-        rotationSlider, rotationInput, opacitySlider, removeBtn,
-        widthInput, heightInput, applySizeBtn, lockProportion,
-        mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
-      ];
+      const core = [rotationSlider, rotationInput, opacitySlider, removeBtn, widthInput, heightInput, applySizeBtn, lockProportion];
+      // Botones espejo/zorder NUNCA se deshabilitan; si no hay selección, mostrarán aviso.
       if (d){
         rotationSlider.value = Math.round(d.rotation);
         rotationInput.value = Math.round(d.rotation);
@@ -733,10 +719,10 @@
         opacitySlider.value = Math.round(d.opacity*100);
         opacityValue.textContent = Math.round(d.opacity*100) + '%';
         d.updateInputs();
-        all.forEach(el=> el && (el.disabled=false));
+        core.forEach(el=> el && (el.disabled=false));
         updateSizeInfo();
       } else {
-        all.forEach(el=> el && (el.disabled=true));
+        core.forEach(el=> el && (el.disabled=true));
         sizeInfo.textContent = '0cm × 0cm';
         originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
       }
@@ -856,10 +842,10 @@
     const canvasArea = document.querySelector('.canvas-area');
     if (canvasArea && zoomSlider){
       canvasArea.addEventListener('wheel', (e)=>{
-        if (!e.ctrlKey && !e.metaKey) return;  // soporta Windows/Linux y macOS
+        if (!e.ctrlKey && !e.metaKey) return;
         e.preventDefault();
         const current = parseInt(zoomSlider.value, 10);
-        const delta = e.deltaY < 0 ? +10 : -10;  // pasos de 10%
+        const delta = e.deltaY < 0 ? +10 : -10;
         const next = Math.max(20, Math.min(200, current + delta));
         if (next !== current){
           zoomSlider.value = String(next);
@@ -1055,7 +1041,7 @@
     addEvent(applyCanvasHeightBtn,'click', function(){
       let newHcm = parseFloat(canvasHeightInput.value);
       if (isNaN(newHcm)) return;
-      newHcm = Math.max(10, Math.min(100, newHcm)); // clamp 10..100
+      newHcm = Math.max(10, Math.min(100, newHcm));
       CANVAS_HEIGHT_CM = newHcm;
 
       const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
@@ -1067,6 +1053,57 @@
 
       drawCanvas();
       showMessage(`Alto del lienzo ajustado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
+    });
+
+    // ====== Delegación de eventos para ESPEJO y Z-ORDER (siempre activos)
+    document.addEventListener('click', (e)=>{
+      const target = e.target.closest('#mirror-btn, #bring-front, #send-back, #step-forward, #step-back');
+      if (!target) return;
+
+      const d = getSelectedDesign();
+      const needSel = ['#mirror-btn','#bring-front','#send-back','#step-forward','#step-back'];
+      if (needSel.includes('#'+target.id) && !d){
+        showMessage('Selecciona un diseño primero','warning',1800);
+        return;
+      }
+
+      if (target.id === 'mirror-btn'){
+        const tCanvas = document.createElement('canvas');
+        tCanvas.width = d.image.width;
+        tCanvas.height = d.image.height;
+        const tctx = tCanvas.getContext('2d',{alpha:true});
+        tctx.translate(tCanvas.width, 0);
+        tctx.scale(-1,1);
+        tctx.imageSmoothingEnabled = true;
+        tctx.imageSmoothingQuality = 'high';
+        tctx.drawImage(d.image,0,0,tCanvas.width,tCanvas.height);
+        const img = new Image();
+        img.onload = ()=>{ d.image = img; drawCanvas(); showMessage('Espejo aplicado','success',1200); };
+        img.src = tCanvas.toDataURL('image/png');
+      }
+
+      if (target.id === 'bring-front'){
+        const i = designs.findIndex(o=>o.id===selectedDesignId); if (i<0) return;
+        const it = designs.splice(i,1)[0];
+        designs.push(it);
+        updateDesignsList(); drawCanvas();
+      }
+      if (target.id === 'send-back'){
+        const i = designs.findIndex(o=>o.id===selectedDesignId); if (i<0) return;
+        const it = designs.splice(i,1)[0];
+        designs.unshift(it);
+        updateDesignsList(); drawCanvas();
+      }
+      if (target.id === 'step-forward'){
+        const i = designs.findIndex(o=>o.id===selectedDesignId); if (i<0 || i===designs.length-1) return;
+        [designs[i], designs[i+1]] = [designs[i+1], designs[i]];
+        updateDesignsList(); drawCanvas();
+      }
+      if (target.id === 'step-back'){
+        const i = designs.findIndex(o=>o.id===selectedDesignId); if (i<=0) return;
+        [designs[i-1], designs[i]] = [designs[i], designs[i-1]];
+        updateDesignsList(); drawCanvas();
+      }
     });
 
     // ====== Atajos de teclado
@@ -1086,9 +1123,8 @@
         return;
       }
 
-      if (!d) return;
-
-      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'd')){
+      // duplicar
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'd') && d){
         e.preventDefault();
         const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
         const dup = new Design(id, d.image, d.x + 10, d.y + 10);
@@ -1100,6 +1136,9 @@
         return;
       }
 
+      if (!d) return;
+
+      // mover
       const arrows = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
       if (arrows.includes(e.key)){
         e.preventDefault();
@@ -1110,76 +1149,6 @@
         drawCanvas();
       }
     });
-
-    // ====== ESPEJO (Horizontal) robusto
-    if (mirrorBtn){
-      mirrorBtn.addEventListener('click', ()=>{
-        const d = getSelectedDesign(); 
-        if (!d){ showMessage('Selecciona un diseño para aplicar espejo','warning',2000); return; }
-
-        const tCanvas = document.createElement('canvas');
-        tCanvas.width = d.image.width;
-        tCanvas.height = d.image.height;
-        const tctx = tCanvas.getContext('2d', {alpha:true});
-
-        tctx.save();
-        tctx.translate(tCanvas.width, 0);
-        tctx.scale(-1, 1);
-        tctx.imageSmoothingEnabled = true;
-        tctx.imageSmoothingQuality = 'high';
-        tctx.drawImage(d.image, 0, 0, tCanvas.width, tCanvas.height);
-        tctx.restore();
-
-        const img = new Image();
-        img.onload = ()=>{
-          d.image = img;
-          drawCanvas();
-          showMessage('Espejo aplicado','success',1500);
-        };
-        img.src = tCanvas.toDataURL('image/png');
-      });
-    }
-
-    // ====== Z-ORDER
-    function indexOfSelected(){
-      const id = selectedDesignId;
-      return designs.findIndex(dd => dd && dd.id === id);
-    }
-    function resortAndRefresh(){
-      updateDesignsList(); 
-      drawCanvas();
-    }
-
-    if (bringFrontBtn){
-      bringFrontBtn.addEventListener('click', ()=>{
-        const i = indexOfSelected(); if (i < 0) return;
-        const d = designs.splice(i,1)[0];
-        designs.push(d);
-        resortAndRefresh();
-      });
-    }
-    if (sendBackBtn){
-      sendBackBtn.addEventListener('click', ()=>{
-        const i = indexOfSelected(); if (i < 0) return;
-        const d = designs.splice(i,1)[0];
-        designs.unshift(d);
-        resortAndRefresh();
-      });
-    }
-    if (stepForwardBtn){
-      stepForwardBtn.addEventListener('click', ()=>{
-        const i = indexOfSelected(); if (i < 0 || i >= designs.length-1) return;
-        [designs[i], designs[i+1]] = [designs[i+1], designs[i]];
-        resortAndRefresh();
-      });
-    }
-    if (stepBackBtn){
-      stepBackBtn.addEventListener('click', ()=>{
-        const i = indexOfSelected(); if (i <= 0) return;
-        [designs[i-1], designs[i]] = [designs[i], designs[i-1]];
-        resortAndRefresh();
-      });
-    }
 
     // ====== Iniciar controles
     updateControls();
