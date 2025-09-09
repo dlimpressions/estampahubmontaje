@@ -22,7 +22,6 @@
     .btn-upload{background:#48bb78}.btn-upload:hover{background:#38a169}
     .btn-download{background:#9f7aea}.btn-download:hover{background:#805ad5}
     .btn-clear{background:#f56565}.btn-clear:hover{background:#e53e3e}
-    .btn-ai{background:#6b46c1}.btn-ai:hover{background:#5531a8}
     .canvas-container{flex:1;background:#f8f9fa;border-radius:10px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.05);padding:1rem;display:flex;flex-direction:column}
     .canvas-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
     .canvas-area{flex:1;background:#fff;border-radius:8px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem;box-shadow:inset 0 0 10px rgba(0,0,0,.05);position:relative}
@@ -131,24 +130,6 @@
           <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
           <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
           <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
-          <button class="btn btn-ai" id="bg-remove-btn">🪄 Quitar Fondo (IA)</button>
-        </div>
-
-        <!-- Controles de refinado IA -->
-        <div class="tool-section">
-          <h3>Refinar Quitar Fondo</h3>
-          <div class="control-group">
-            <label for="ia-thresh">Umbral: <span id="ia-thresh-val">0.50</span></label>
-            <input type="range" id="ia-thresh" min="0" max="1" step="0.01" value="0.50">
-          </div>
-          <div class="control-group">
-            <label for="ia-feather">Suavizado (px): <span id="ia-feather-val">2</span></label>
-            <input type="range" id="ia-feather" min="0" max="10" step="0.5" value="2">
-          </div>
-          <div class="control-group">
-            <label for="ia-grow">Expandir/Contraer (px): <span id="ia-grow-val">1</span></label>
-            <input type="range" id="ia-grow" min="-10" max="10" step="1" value="1">
-          </div>
         </div>
 
         <div class="instructions">
@@ -199,7 +180,7 @@
           <small>El ancho permanece en 58 cm. Máximo 100 cm de alto.</small>
         </div>
 
-        <!-- Zoom del lienzo -->
+        <!-- Zoom del lienzo (debajo del alto) -->
         <div class="control-group">
           <h4>Zoom del Lienzo</h4>
           <div class="slider-container">
@@ -279,12 +260,10 @@
 
   <!-- Librerías -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- ONNX Runtime Web para IA -->
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 
   <script>
-    /* =================== Seguridad (Contraseña) =================== */
-    const ACCESS_PASSWORD = 'dtf2025'; // cámbiala aquí
+    // ====== Seguridad (Contraseña) ======
+    const ACCESS_PASSWORD = 'dtf2025'; // <-- cámbiala aquí
     const overlay = document.getElementById('lock-overlay');
     const appRoot = document.getElementById('app-root');
     const lockBtn = document.getElementById('lock-btn');
@@ -300,17 +279,24 @@
       overlay.style.display = 'none';
       appRoot.style.visibility = 'visible';
     }
-    if (sessionStorage.getItem('dtf_unlocked') === '1') { unlock(); } else { showLock(); }
+    if (sessionStorage.getItem('dtf_unlocked') === '1') {
+      unlock();
+    } else {
+      showLock();
+    }
     if (lockBtn) lockBtn.addEventListener('click', tryUnlock);
     if (lockPass) lockPass.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
     function tryUnlock(){
       if (!lockPass) return;
       if (lockPass.value === ACCESS_PASSWORD){
-        sessionStorage.setItem('dtf_unlocked','1'); unlock();
-      } else { lockError.textContent = 'Contraseña incorrecta'; }
+        sessionStorage.setItem('dtf_unlocked','1');
+        unlock();
+      } else {
+        lockError.textContent = 'Contraseña incorrecta';
+      }
     }
 
-    /* =================== Referencias DOM =================== */
+    // ====== Referencias DOM
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const uploadBtn = document.getElementById('upload-btn');
@@ -343,241 +329,14 @@
     const canvasSizeLabel = document.getElementById('canvas-size-label');
     const canvasHeightInput = document.getElementById('canvas-height-cm');
     const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
-    const bgRemoveBtn = document.getElementById('bg-remove-btn');
 
-    // Controles IA
-    const iaThresh = document.getElementById('ia-thresh');
-    const iaFeather = document.getElementById('ia-feather');
-    const iaGrow = document.getElementById('ia-grow');
-    const iaThreshVal = document.getElementById('ia-thresh-val');
-    const iaFeatherVal = document.getElementById('ia-feather-val');
-    const iaGrowVal = document.getElementById('ia-grow-val');
-
-    if (iaThresh) iaThresh.addEventListener('input', ()=> iaThreshVal.textContent = (+iaThresh.value).toFixed(2));
-    if (iaFeather) iaFeather.addEventListener('input', ()=> iaFeatherVal.textContent = (+iaFeather.value).toString());
-    if (iaGrow) iaGrow.addEventListener('input', ()=> iaGrowVal.textContent = (+iaGrow.value).toString());
-
-    /* =================== Constantes físicas =================== */
+    // ====== Constantes físicas
     const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
     const CANVAS_WIDTH_CM = 58; // fijo
     let CANVAS_HEIGHT_CM = 100; // variable (máx 100)
     const INCHES_PER_CM = 0.3937007874;
 
-    /* =================== IA (U2Net ONNX) =================== */
-    const MODEL_URL = 'https://dlimpressions.github.io/estampahubmontaje/models/u2net.onnx';
-    let ortSession = null;
-    let modelLoading = false;
-
-    async function ensureModel(){
-      if (ortSession) return ortSession;
-      if (modelLoading) {
-        while (modelLoading && !ortSession) { await new Promise(r=>setTimeout(r,100)); }
-        return ortSession;
-      }
-      modelLoading = true;
-      const msg = showMessage('Cargando modelo IA (U²-Net)...','loading',0);
-      try{
-        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
-        ortSession = await ort.InferenceSession.create(MODEL_URL, {
-          executionProviders: ['wasm'],
-          graphOptimizationLevel: 'all'
-        });
-        msg.remove();
-        showMessage('Modelo IA cargado','success',1500);
-        return ortSession;
-      } catch(e){
-        console.error(e);
-        msg.remove();
-        showMessage('No se pudo cargar el modelo IA', 'error', 4000);
-        modelLoading = false;
-        throw e;
-      } finally {
-        modelLoading = false;
-      }
-    }
-
-    // Sigmoid para logits -> 0..1
-    function sigmoid(x){ return 1 / (1 + Math.exp(-x)); }
-
-    // Preprocesa con letterbox, sin deformar
-    function imageToInputTensor(img){
-      const target = 320;
-      const iw = img.width, ih = img.height;
-      const scale = Math.min(target/iw, target/ih);
-      const nw = Math.round(iw * scale);
-      const nh = Math.round(ih * scale);
-      const padX = Math.floor((target - nw)/2);
-      const padY = Math.floor((target - nh)/2);
-
-      const tmp = document.createElement('canvas');
-      tmp.width = target; tmp.height = target;
-      const tctx = tmp.getContext('2d');
-      tctx.clearRect(0,0,target,target);
-      tctx.drawImage(img, padX, padY, nw, nh);
-
-      const { data } = tctx.getImageData(0,0,target,target);
-      const float32 = new Float32Array(1*3*target*target);
-      let c0=0, c1=target*target, c2=2*target*target;
-      for (let y=0;y<target;y++){
-        for (let x=0;x<target;x++){
-          const i = (y*target + x)*4;
-          float32[c0++] = data[i]   / 255; // R
-          float32[c1++] = data[i+1] / 255; // G
-          float32[c2++] = data[i+2] / 255; // B
-        }
-      }
-      const tensor = new ort.Tensor('float32', float32, [1,3,target,target]);
-      return { tensor, letterbox:{target, nw, nh, padX, padY, iw, ih} };
-    }
-
-    // Construye máscara original + postproceso (grow/feather/threshold)
-    function maskFromOutput(outputTensor, letterbox, opts){
-      const {target, nw, nh, padX, padY, iw, ih} = letterbox;
-      const out = outputTensor.data;
-      const side = Math.sqrt(out.length)|0; // 320
-
-      // logits -> prob
-      const prob = new Float32Array(out.length);
-      for (let i=0;i<out.length;i++){ prob[i] = sigmoid(out[i]); }
-
-      // máscara 320x320
-      const maskSmall = document.createElement('canvas');
-      maskSmall.width = side; maskSmall.height = side;
-      const mctx = maskSmall.getContext('2d');
-      const imgData = mctx.createImageData(side, side);
-      for (let i=0;i<prob.length;i++){
-        const v = Math.max(0, Math.min(255, prob[i]*255));
-        imgData.data[i*4+0]=v; imgData.data[i*4+1]=v; imgData.data[i*4+2]=v; imgData.data[i*4+3]=255;
-      }
-      mctx.putImageData(imgData,0,0);
-
-      // recorte sin bandas + upscale
-      const crop = document.createElement('canvas');
-      crop.width = nw; crop.height = nh;
-      const cctx = crop.getContext('2d');
-      cctx.imageSmoothingEnabled = true;
-      cctx.imageSmoothingQuality = 'high';
-      cctx.drawImage(maskSmall, padX, padY, nw, nh, 0, 0, nw, nh);
-
-      const mask = document.createElement('canvas');
-      mask.width = iw; mask.height = ih;
-      const ctx2 = mask.getContext('2d');
-      ctx2.imageSmoothingEnabled = true;
-      ctx2.imageSmoothingQuality = 'high';
-      ctx2.drawImage(crop, 0, 0, iw, ih);
-
-      // post-proceso
-      const growPx = (opts?.growPx ?? 1);
-      const featherPx = Math.max(0, opts?.featherPx ?? 2);
-      const thresh = Math.min(1, Math.max(0, opts?.threshold ?? 0.5));
-
-      // grow/erode aproximado
-      if (growPx !== 0){
-        const exp = document.createElement('canvas');
-        exp.width = iw; exp.height = ih;
-        const ex = exp.getContext('2d');
-        ex.imageSmoothingEnabled = true;
-        ex.imageSmoothingQuality = 'high';
-        const reps = Math.abs(growPx);
-        for (let dy=-reps; dy<=reps; dy++){
-          for (let dx=-reps; dx<=reps; dx++){
-            if (dx*dx + dy*dy <= reps*reps){ ex.drawImage(mask, dx, dy); }
-          }
-        }
-        const exData = ex.getImageData(0,0,iw,ih);
-        const md = exData.data;
-        for (let i=0;i<md.length;i+=4){
-          const v = Math.max(md[i], md[i+1], md[i+2]);
-          md[i]=md[i+1]=md[i+2]=v; md[i+3]=255;
-        }
-        ex.putImageData(exData,0,0);
-        if (growPx>0) {
-          ctx2.clearRect(0,0,iw,ih);
-          ctx2.drawImage(exp,0,0);
-        } else {
-          ctx2.globalCompositeOperation = 'destination-in';
-          ctx2.drawImage(exp,0,0);
-          ctx2.globalCompositeOperation = 'source-over';
-        }
-      }
-
-      if (featherPx>0){
-        ctx2.filter = `blur(${featherPx}px)`;
-        const btmp = document.createElement('canvas');
-        btmp.width = iw; btmp.height = ih;
-        btmp.getContext('2d').drawImage(mask,0,0);
-        ctx2.clearRect(0,0,iw,ih);
-        ctx2.drawImage(btmp,0,0);
-        ctx2.filter = 'none';
-      }
-
-      const finalData = ctx2.getImageData(0,0,iw,ih);
-      const fd = finalData.data;
-      const t255 = Math.round(thresh*255);
-      for (let i=0;i<fd.length;i+=4){
-        const v = fd[i];
-        const keep = (v >= t255) ? 255 : 0;
-        fd[i]=fd[i+1]=fd[i+2]=keep; fd[i+3]=keep;
-      }
-      ctx2.putImageData(finalData,0,0);
-      return mask;
-    }
-
-    function applyMaskToImage(img, maskCanvas){
-      const w = img.width, h = img.height;
-      const out = document.createElement('canvas');
-      out.width = w; out.height = h;
-      const octx = out.getContext('2d');
-      octx.drawImage(img,0,0,w,h);
-      octx.globalCompositeOperation = 'destination-in';
-      octx.drawImage(maskCanvas,0,0,w,h);
-      octx.globalCompositeOperation = 'source-over';
-      return out;
-    }
-
-    async function removeBackgroundForSelected(){
-      const d = getSelectedDesign();
-      if (!d){ showMessage('Selecciona un diseño primero','warning',2000); return; }
-      const loading = showMessage('Quitando fondo con IA...','loading',0);
-      try{
-        const session = await ensureModel();
-        const { tensor, letterbox } = imageToInputTensor(d.image);
-
-        const inputNames = session.inputNames || Object.keys(session.inputNames||{});
-        const feeds = {};
-        feeds[inputNames[0] || 'input'] = tensor;
-
-        const results = await session.run(feeds);
-        const outName = session.outputNames ? session.outputNames[0] : Object.keys(results)[0];
-        const output = results[outName];
-
-        const opts = {
-          threshold: iaThresh ? parseFloat(iaThresh.value) : 0.5,
-          featherPx: iaFeather ? parseFloat(iaFeather.value) : 2,
-          growPx:    iaGrow ? parseInt(iaGrow.value) : 1
-        };
-
-        const mask = maskFromOutput(output, letterbox, opts);
-        const cut = applyMaskToImage(d.image, mask);
-
-        const newImg = new Image();
-        newImg.onload = function(){
-          d.image = newImg;
-          d.width = newImg.width;
-          d.height = newImg.height;
-          updateDesignsList(); updateControls(); drawCanvas();
-          loading.remove();
-          showMessage('Fondo quitado ✅ (ajústalo con Umbral/Feather/Expandir)','success',2400);
-        };
-        newImg.src = cut.toDataURL('image/png');
-      } catch(e){
-        console.error(e);
-        loading.remove();
-        showMessage('Error al quitar fondo con IA', 'error', 3500);
-      }
-    }
-
-    /* =================== Estado base =================== */
+    // ====== Estado
     let designs = [];
     let selectedDesignId = null;
     let isDragging = false;
@@ -590,7 +349,7 @@
     let startResizeDist = 1.0;
     let canvasBackgroundColor = '#ffffff';
 
-    /* =================== Mensajes =================== */
+    // ====== Mensajes flotantes
     function showMessage(message, type = 'info', duration = 5000) {
       const messageEl = document.createElement('div');
       messageEl.className = `message ${type}`;
@@ -601,17 +360,21 @@
         <button class="close-message">&times;</button>`;
       messageContainer.appendChild(messageEl);
       const closeBtn = messageEl.querySelector('.close-message');
-      function close(){ messageEl.style.animation='slideOut .3s ease-out'; setTimeout(()=> messageEl.remove(), 300); }
+      function close(){
+        messageEl.style.animation='slideOut .3s ease-out';
+        setTimeout(()=> messageEl.remove(), 300);
+      }
       if (closeBtn) closeBtn.addEventListener('click', close);
       if (duration>0) setTimeout(()=> messageEl && close(), duration);
       return messageEl;
     }
 
-    /* =================== Fondo y guía =================== */
+    // ====== Fondo y guía
     function initCanvas() {
       ctx.save();
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
+      // patrón de transparencia
       const size = 20;
       ctx.fillStyle = '#f0f0f0';
       for (let y = 0; y < canvas.height; y += size) {
@@ -620,17 +383,20 @@
         }
       }
 
+      // capa de color (solo visual)
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = canvasBackgroundColor;
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.globalAlpha = 1.0;
 
+      // borde área de impresión
       ctx.strokeStyle = '#cbd5e0';
       ctx.lineWidth = 2;
       ctx.setLineDash([5,5]);
       ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
       ctx.setLineDash([]);
 
+      // texto guía
       if (designs.length===0){
         ctx.fillStyle = '#e2e8f0';
         ctx.font = '20px Arial';
@@ -639,46 +405,75 @@
       }
       ctx.restore();
     }
+
     initCanvas();
 
-    /* =================== Clase Design =================== */
+    // ====== Clase Design
     class Design {
       constructor(id, image, x, y) {
-        this.id = id; this.image = image;
+        this.id = id;
+        this.image = image;
         this.x = x || canvas.width/2;
         this.y = y || canvas.height/2;
-        this.scale = 1.0; this.rotation = 0; this.opacity = 1.0;
-        this.width = image.width; this.height = image.height;
+        this.scale = 1.0;
+        this.rotation = 0;
+        this.opacity = 1.0;
+        this.width = image.width;
+        this.height = image.height;
         this.aspectRatio = image.width / image.height;
-        this.originalWidth = image.width; this.originalHeight = image.height;
+        this.originalWidth = image.width;
+        this.originalHeight = image.height;
       }
+
       draw() {
         ctx.save();
         ctx.globalAlpha = this.opacity;
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation * Math.PI / 180);
         ctx.scale(this.scale, this.scale);
-        const width = this.width, height = this.height;
-        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+
+        const width = this.width;
+        const height = this.height;
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(this.image, -width/2, -height/2, width, height);
+
         if (this.id === selectedDesignId) {
-          ctx.strokeStyle = '#4299e1'; ctx.lineWidth = 2;
+          ctx.strokeStyle = '#4299e1';
+          ctx.lineWidth = 2;
           ctx.strokeRect(-width/2, -height/2, width, height);
-          ctx.fillStyle = '#4299e1'; ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle = '#48bb78'; ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = '#f56565'; ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
+
+          ctx.fillStyle = '#4299e1';
+          ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+
+          ctx.fillStyle = '#48bb78';
+          ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+
+          ctx.fillStyle = '#f56565';
+          ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
         }
         ctx.restore();
       }
+
       getDimensionsInCm() {
-        return { width:(this.width*this.scale)/PIXELS_PER_CM, height:(this.height*this.scale)/PIXELS_PER_CM };
+        return {
+          width:  (this.width  * this.scale) / PIXELS_PER_CM,
+          height: (this.height * this.scale) / PIXELS_PER_CM
+        };
       }
+
       getOriginalDimensionsInCm() {
-        return { width:this.originalWidth/PIXELS_PER_CM, height:this.originalHeight/PIXELS_PER_CM };
+        return {
+          width:  (this.originalWidth)  / PIXELS_PER_CM,
+          height: (this.originalHeight) / PIXELS_PER_CM
+        };
       }
+
       setDimensions(widthCm, heightCm, maintainProportion = true) {
         const targetWidthPx  = widthCm  * PIXELS_PER_CM;
         const targetHeightPx = heightCm * PIXELS_PER_CM;
+
         if (maintainProportion) {
           this.scale = targetWidthPx / this.originalWidth;
         } else {
@@ -686,144 +481,213 @@
           const scaleY = targetHeightPx / this.originalHeight;
           this.scale = (scaleX + scaleY) / 2;
         }
-        this.updateInputs(); drawCanvas();
+        this.updateInputs();
+        drawCanvas();
       }
+
       updateInputs() {
         const d = this.getDimensionsInCm();
         widthInput.value = d.width.toFixed(1);
         heightInput.value = d.height.toFixed(1);
       }
+
       isPointInside(x, y) {
-        const width = this.width*this.scale, height = this.height*this.scale;
+        const width = this.width * this.scale;
+        const height = this.height * this.scale;
         const relX = x - this.x, relY = y - this.y;
         const angle = -this.rotation * Math.PI/180;
-        const rx = relX*Math.cos(angle) - relY*Math.sin(angle);
-        const ry = relX*Math.sin(angle) + relY*Math.cos(angle);
+        const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+        const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
         return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
       }
+
       isRotationHandle(x, y) {
-        const width = this.width*this.scale, height = this.height*this.scale;
+        const width = this.width * this.scale;
+        const height = this.height * this.scale;
         const relX = x - this.x, relY = y - this.y;
         const angle = -this.rotation * Math.PI/180;
-        const rx = relX*Math.cos(angle) - relY*Math.sin(angle);
-        const ry = relX*Math.sin(angle) + relY*Math.cos(angle);
+        const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+        const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
         const hx = 0, hy = -height/2 - 15;
         return Math.hypot(rx - hx, ry - hy) <= 10;
       }
+
       isScaleHandle(x, y) {
-        const width = this.width*this.scale, height = this.height*this.scale;
+        const width = this.width * this.scale;
+        const height = this.height * this.scale;
         const relX = x - this.x, relY = y - this.y;
         const angle = -this.rotation * Math.PI/180;
-        const rx = relX*Math.cos(angle) - relY*Math.sin(angle);
-        const ry = relX*Math.sin(angle) + relY*Math.cos(angle);
+        const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+        const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
         const hx = width/2 + 5, hy = height/2 + 5;
         return Math.hypot(rx - hx, ry - hy) <= 10;
       }
     }
 
-    /* =================== Dibujo general =================== */
-    function drawCanvas() { initCanvas(); designs.forEach(d => d.draw()); updateSizeInfo(); }
+    // ====== Dibujo general
+    function drawCanvas() {
+      initCanvas();
+      designs.forEach(d => d.draw());
+      updateSizeInfo();
+    }
+
     function updateSizeInfo() {
       const d = getSelectedDesign();
       if (d) {
-        const c = d.getDimensionsInCm(), o = d.getOriginalDimensionsInCm();
+        const c = d.getDimensionsInCm();
+        const o = d.getOriginalDimensionsInCm();
         sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
         originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
-      } else { sizeInfo.textContent = '0cm × 0cm'; originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm'; }
+      } else {
+        sizeInfo.textContent = '0cm × 0cm';
+        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+      }
     }
 
-    /* =================== Exportación =================== */
+    // ====== Exportación
     function getPixelDimensions(dpi) {
       const widthPx  = Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * dpi);
       const heightPx = Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * dpi);
       return { width: widthPx, height: heightPx };
     }
+
     function createHighQualityCanvas() {
       const dpi = parseInt(qualitySelect.value);
       const dim = getPixelDimensions(dpi);
+
       const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = dim.width; exportCanvas.height = dim.height;
+      exportCanvas.width = dim.width;
+      exportCanvas.height = dim.height;
       const ectx = exportCanvas.getContext('2d');
-      ectx.imageSmoothingEnabled = true; ectx.imageSmoothingQuality = 'high';
+
+      ectx.imageSmoothingEnabled = true;
+      ectx.imageSmoothingQuality = 'high';
+
       const scaleX = exportCanvas.width / canvas.width;
       const scaleY = exportCanvas.height / canvas.height;
+
       ectx.clearRect(0,0,exportCanvas.width,exportCanvas.height);
+
       designs.forEach(design => {
-        ectx.save(); ectx.globalAlpha = design.opacity;
-        const x = design.x * scaleX, y = design.y * scaleY;
+        ectx.save();
+        ectx.globalAlpha = design.opacity;
+
+        const x = design.x * scaleX;
+        const y = design.y * scaleY;
         const scale = design.scale * Math.min(scaleX, scaleY);
-        ectx.translate(x, y); ectx.rotate(design.rotation * Math.PI/180); ectx.scale(scale, scale);
-        const w = design.width, h = design.height;
-        ectx.drawImage(design.image, -w/2, -h/2, w, h); ectx.restore();
+
+        ectx.translate(x, y);
+        ectx.rotate(design.rotation * Math.PI/180);
+        ectx.scale(scale, scale);
+
+        const w = design.width;
+        const h = design.height;
+        ectx.drawImage(design.image, -w/2, -h/2, w, h);
+
+        ectx.restore();
       });
+
       return exportCanvas;
     }
 
-    /* =================== UI básica =================== */
+    // ====== UI: color de fondo
     if (canvasColor){
       canvasColor.addEventListener('input', function(){
-        canvasBackgroundColor = this.value; drawCanvas();
+        canvasBackgroundColor = this.value;
+        drawCanvas();
         showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
       });
     }
 
+    // ====== Upload (permitir subir el mismo archivo)
     if (uploadBtn){
       uploadBtn.addEventListener('click', ()=>{
-        if (fileInput) fileInput.value = '';
+        if (fileInput) fileInput.value = ''; // permite volver a subir el mismo archivo
         if (fileInput) fileInput.click();
       });
     }
+
     if (fileInput){
       fileInput.addEventListener('change', function(e){
-        if (!e.target.files || e.target.files.length===0) return;
-        const files = Array.from(e.target.files);
-        let loaded = 0; const total = files.length;
-        const loadingMsg = showMessage(`Cargando ${total} diseño(s)...`,'loading',0);
-        files.forEach(file=>{
-          if (!file.type.match('image.*')){
-            showMessage(`Error: ${file.name} no es una imagen válida`,'error');
-            if (++loaded===total) loadingMsg.remove();
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = function(ev){
-            const img = new Image();
-            img.onload = function(){
-              const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
-              const d = new Design(id, img);
-              const maxW = canvas.width - 20, maxH = canvas.height - 20;
-              const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
-              d.scale = Math.min(1, scaleToFit);
-              designs.push(d); selectedDesignId = id;
-              if (++loaded===total) { loadingMsg.remove(); showMessage(`${total} diseño(s) cargado(s)`,'success'); }
-              updateDesignsList(); updateControls(); drawCanvas();
+        if (e.target.files && e.target.files.length>0){
+          const files = Array.from(e.target.files);
+          let loaded = 0;
+          const total = files.length;
+          const loadingMsg = showMessage(`Cargando ${total} diseño(s)...`,'loading',0);
+
+          files.forEach(file=>{
+            if (!file.type.match('image.*')){
+              showMessage(`Error: ${file.name} no es una imagen válida`,'error');
+              if (++loaded===total) loadingMsg.remove();
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(ev){
+              const img = new Image();
+              img.onload = function(){
+                const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
+                const d = new Design(id, img);
+
+                // --- AUTO-AJUSTE SI ES MÁS GRANDE QUE EL LIENZO ---
+                const maxW = canvas.width - 20;  // margen 10 px por lado
+                const maxH = canvas.height - 20;
+                const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
+                d.scale = Math.min(1, scaleToFit); // solo reduce si es necesario
+
+                designs.push(d);
+                selectedDesignId = id;
+
+                if (++loaded===total) { loadingMsg.remove(); showMessage(`${total} diseño(s) cargado(s)`,'success'); }
+                updateDesignsList();
+                updateControls();
+                drawCanvas();
+              };
+              img.onerror = function(){
+                if (++loaded===total) loadingMsg.remove();
+                showMessage(`Error al cargar la imagen: ${file.name}`,'error');
+              }
+              img.src = ev.target.result;
             };
-            img.onerror = function(){ if (++loaded===total) loadingMsg.remove(); showMessage(`Error al cargar: ${file.name}`,'error'); }
-            img.src = ev.target.result;
-          };
-          reader.onerror = function(){ if (++loaded===total) loadingMsg.remove(); showMessage(`Error al leer: ${file.name}`,'error'); }
-          reader.readAsDataURL(file);
-        });
-        fileInput.value = '';
+            reader.onerror = function(){
+              if (++loaded===total) loadingMsg.remove();
+              showMessage(`Error al leer: ${file.name}`,'error');
+            }
+            reader.readAsDataURL(file);
+          });
+
+          // permite volver a disparar change con los mismos archivos
+          fileInput.value = '';
+        }
       });
     }
 
+    // ====== Lista de diseños
     function updateDesignsList(){
       designsList.innerHTML = '';
-      if (designs.length===0){ designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>'; return; }
+      if (designs.length===0){
+        designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>';
+        return;
+      }
       designs.forEach(design=>{
         const item = document.createElement('div');
         item.className = 'design-item' + (design.id===selectedDesignId ? ' active' : '');
         item.dataset.id = design.id;
+
         const thumbCanvas = document.createElement('canvas');
         thumbCanvas.width = 40; thumbCanvas.height = 40;
         const tctx = thumbCanvas.getContext('2d');
         const scale = Math.min(40/design.width, 40/design.height) * 0.8;
         tctx.fillStyle = '#fff'; tctx.fillRect(0,0,40,40);
-        tctx.save(); tctx.translate(20,20); tctx.scale(scale, scale);
+        tctx.save();
+        tctx.translate(20,20);
+        tctx.scale(scale, scale);
         tctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
-        tctx.restore(); tctx.strokeStyle = '#cbd5e0'; tctx.strokeRect(0,0,40,40);
-        item.innerHTML = `<img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura"><div>Diseño ${designs.indexOf(design)+1}</div>`;
+        tctx.restore();
+        tctx.strokeStyle = '#cbd5e0'; tctx.strokeRect(0,0,40,40);
+
+        item.innerHTML = `
+          <img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura">
+          <div>Diseño ${designs.indexOf(design)+1}</div>`;
         item.addEventListener('click', ()=>{
           selectedDesignId = design.id;
           updateDesignsList(); updateControls(); drawCanvas();
@@ -833,6 +697,7 @@
       });
     }
 
+    // ====== Controles
     function updateControls(){
       const d = getSelectedDesign();
       if (d){
@@ -842,62 +707,121 @@
         opacitySlider.value = Math.round(d.opacity*100);
         opacityValue.textContent = Math.round(d.opacity*100) + '%';
         d.updateInputs();
-        [rotationSlider, rotationInput, opacitySlider, removeBtn, widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=false);
+
+        [rotationSlider, rotationInput, opacitySlider, removeBtn,
+         widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=false);
+
         updateSizeInfo();
       } else {
-        [rotationSlider, rotationInput, opacitySlider, removeBtn, widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=true);
-        sizeInfo.textContent = '0cm × 0cm'; originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+        [rotationSlider, rotationInput, opacitySlider, removeBtn,
+         widthInput, heightInput, applySizeBtn, lockProportion].forEach(el=> el.disabled=true);
+        sizeInfo.textContent = '0cm × 0cm';
+        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
       }
     }
-    function getSelectedDesign(){ return designs.find(d=> d.id===selectedDesignId); }
 
+    function getSelectedDesign(){
+      return designs.find(d=> d.id===selectedDesignId);
+    }
+
+    // tamaño manual
     if (applySizeBtn){
       applySizeBtn.addEventListener('click', function(){
-        const d = getSelectedDesign(); if (!d) return;
-        const w = parseFloat(widthInput.value), h = parseFloat(heightInput.value);
-        if (!isNaN(w) && !isNaN(h) && w>0 && h>0){
-          d.setDimensions(w,h, lockProportion.checked);
-          showMessage(`Tamaño ajustado a ${w}cm × ${h}cm`, 'success', 2000);
+        const d = getSelectedDesign();
+        if (d){
+          const w = parseFloat(widthInput.value);
+          const h = parseFloat(heightInput.value);
+          if (!isNaN(w) && !isNaN(h) && w>0 && h>0){
+            d.setDimensions(w,h, lockProportion.checked);
+            showMessage(`Tamaño ajustado a ${w}cm × ${h}cm`, 'success', 2000);
+          }
         }
       });
     }
+
+    // sync proporción
     if (lockProportion){
       lockProportion.addEventListener('change', function(){
-        const d = getSelectedDesign(); if (d && this.checked){
-          const w = parseFloat(widthInput.value); if (!isNaN(w) && w>0){ heightInput.value = (w / d.aspectRatio).toFixed(1); }
+        const d = getSelectedDesign();
+        if (d && this.checked){
+          const w = parseFloat(widthInput.value);
+          if (!isNaN(w) && w>0){
+            heightInput.value = (w / d.aspectRatio).toFixed(1);
+          }
         }
         showMessage(this.checked ? 'Proporción bloqueada' : 'Proporción desbloqueada','info',2000);
       });
     }
+
     if (widthInput){
       widthInput.addEventListener('input', function(){
-        if (lockProportion.checked){ const d = getSelectedDesign(); if (d){ const w = parseFloat(this.value); if (!isNaN(w) && w>0){ heightInput.value = (w / d.aspectRatio).toFixed(1); } } }
+        if (lockProportion.checked){
+          const d = getSelectedDesign();
+          if (d){
+            const w = parseFloat(this.value);
+            if (!isNaN(w) && w>0){
+              heightInput.value = (w / d.aspectRatio).toFixed(1);
+            }
+          }
+        }
       });
     }
+
     if (heightInput){
       heightInput.addEventListener('input', function(){
-        if (lockProportion.checked){ const d = getSelectedDesign(); if (d){ const h = parseFloat(this.value); if (!isNaN(h) && h>0){ widthInput.value = (h * d.aspectRatio).toFixed(1); } } }
+        if (lockProportion.checked){
+          const d = getSelectedDesign();
+          if (d){
+            const h = parseFloat(this.value);
+            if (!isNaN(h) && h>0){
+              widthInput.value = (h * d.aspectRatio).toFixed(1);
+            }
+          }
+        }
       });
     }
+
+    // rotación slider
     if (rotationSlider){
       rotationSlider.addEventListener('input', function(){
-        const d = getSelectedDesign(); if (!d) return;
-        d.rotation = parseInt(this.value); rotationInput.value = this.value; rotationValue.textContent = this.value + '°'; drawCanvas();
+        const d = getSelectedDesign();
+        if (d){
+          d.rotation = parseInt(this.value);
+          rotationInput.value = this.value;
+          rotationValue.textContent = this.value + '°';
+          drawCanvas();
+        }
       });
     }
+    // rotación manual
     if (rotationInput){
       rotationInput.addEventListener('input', function(){
-        const d = getSelectedDesign(); if (!d) return;
-        let val = parseInt(this.value); if (isNaN(val)) val = 0; val = ((val % 360) + 360) % 360;
-        d.rotation = val; rotationSlider.value = val; rotationValue.textContent = val + '°'; drawCanvas();
+        const d = getSelectedDesign();
+        if (d){
+          let val = parseInt(this.value);
+          if (isNaN(val)) val = 0;
+          val = ((val % 360) + 360) % 360;
+          d.rotation = val;
+          rotationSlider.value = val;
+          rotationValue.textContent = val + '°';
+          drawCanvas();
+        }
       });
     }
+
+    // opacidad
     if (opacitySlider){
       opacitySlider.addEventListener('input', function(){
-        const d = getSelectedDesign(); if (!d) return;
-        d.opacity = this.value / 100; opacityValue.textContent = this.value + '%'; drawCanvas();
+        const d = getSelectedDesign();
+        if (d){
+          d.opacity = this.value / 100;
+          opacityValue.textContent = this.value + '%';
+          drawCanvas();
+        }
       });
     }
+
+    // eliminar
     if (removeBtn){
       removeBtn.addEventListener('click', function(){
         const d = getSelectedDesign();
@@ -910,11 +834,13 @@
       });
     }
 
+    // ====== Zoom
     if (zoomSlider){
       zoomSlider.addEventListener('input', function(){
         canvasZoom = this.value/100;
         zoomValue.textContent = this.value + '%';
         zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+
         const canvasContainer = document.querySelector('.canvas-area');
         canvasWrapper.style.transform = `scale(${canvasZoom})`;
         canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
@@ -922,29 +848,42 @@
       });
     }
 
+    // ====== Agregar texto
     if (addTextBtn){
       addTextBtn.addEventListener('click', function(){
         const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
-        if (!text) return;
-        const tCanvas = document.createElement('canvas'); tCanvas.width = 600; tCanvas.height = 200;
-        const tctx = tCanvas.getContext('2d'); tctx.clearRect(0,0,tCanvas.width,tCanvas.height);
-        tctx.fillStyle = '#000000'; tctx.font = '80px Arial'; tctx.textAlign = 'center'; tctx.textBaseline = 'middle';
-        tctx.fillText(text, tCanvas.width/2, tCanvas.height/2);
-        const img = new Image();
-        img.onload = function(){
-          const id = 'text-' + Date.now();
-          const d = new Design(id, img, canvas.width/2, canvas.height/2);
-          const maxW = canvas.width - 20, maxH = canvas.height - 20;
-          const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
-          d.scale = Math.min(1, scaleToFit);
-          designs.push(d); selectedDesignId = id;
-          showMessage('Texto agregado correctamente','success',2000);
-          updateDesignsList(); updateControls(); drawCanvas();
-        };
-        img.src = tCanvas.toDataURL('image/png');
+        if (text){
+          const tCanvas = document.createElement('canvas');
+          tCanvas.width = 600; tCanvas.height = 200;
+          const tctx = tCanvas.getContext('2d');
+          tctx.clearRect(0,0,tCanvas.width,tCanvas.height);
+          tctx.fillStyle = '#000000';
+          tctx.font = '80px Arial';
+          tctx.textAlign = 'center';
+          tctx.textBaseline = 'middle';
+          tctx.fillText(text, tCanvas.width/2, tCanvas.height/2);
+
+          const img = new Image();
+          img.onload = function(){
+            const id = 'text-' + Date.now();
+            const d = new Design(id, img, canvas.width/2, canvas.height/2);
+
+            // ajustar si supera el lienzo
+            const maxW = canvas.width - 20;
+            const maxH = canvas.height - 20;
+            const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
+            d.scale = Math.min(1, scaleToFit);
+
+            designs.push(d); selectedDesignId = id;
+            showMessage('Texto agregado correctamente','success',2000);
+            updateDesignsList(); updateControls(); drawCanvas();
+          };
+          img.src = tCanvas.toDataURL('image/png');
+        }
       });
     }
 
+    // ====== Exportar PNG
     if (downloadPngBtn){
       downloadPngBtn.addEventListener('click', function(){
         if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
@@ -955,14 +894,23 @@
             const link = document.createElement('a');
             link.download = 'montaje-dtf.png';
             exportCanvas.toBlob(function(blob){
-              link.href = URL.createObjectURL(blob); link.click();
-              setTimeout(()=>{ URL.revokeObjectURL(link.href); loading.remove(); showMessage('Descarga PNG completada','success'); },100);
+              link.href = URL.createObjectURL(blob);
+              link.click();
+              setTimeout(()=>{
+                URL.revokeObjectURL(link.href);
+                loading.remove();
+                showMessage('Descarga PNG completada','success');
+              },100);
             }, 'image/png', 1.0);
-          } catch(err){ loading.remove(); showMessage('Error al generar PNG: ' + err.message, 'error'); }
+          } catch(err){
+            loading.remove();
+            showMessage('Error al generar PNG: ' + err.message, 'error');
+          }
         }, 200);
       });
     }
 
+    // ====== Exportar PDF
     if (downloadPdfBtn){
       downloadPdfBtn.addEventListener('click', function(){
         if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
@@ -973,17 +921,29 @@
             exportCanvas.toBlob(function(blob){
               const reader = new FileReader();
               reader.onload = function(){
-                const imgData = reader.result; const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:[CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10] });
+                const imgData = reader.result;
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                  orientation: 'portrait',
+                  unit: 'mm',
+                  format: [CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10] // 58cm × alto actual
+                });
                 doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10, undefined, 'FAST');
-                doc.save('montaje-dtf.pdf'); loading.remove(); showMessage('Descarga PDF completada','success');
-              }; reader.readAsDataURL(blob);
+                doc.save('montaje-dtf.pdf');
+                loading.remove();
+                showMessage('Descarga PDF completada','success');
+              };
+              reader.readAsDataURL(blob);
             }, 'image/png', 1.0);
-          } catch(err){ loading.remove(); showMessage('Error al generar PDF: ' + err.message, 'error'); }
+          } catch(err){
+            loading.remove();
+            showMessage('Error al generar PDF: ' + err.message, 'error');
+          }
         }, 200);
       });
     }
 
+    // ====== Limpiar lienzo
     if (clearBtn){
       clearBtn.addEventListener('click', function(){
         if (designs.length>0 && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
@@ -994,81 +954,148 @@
       });
     }
 
+    // ====== Interacción mouse/touch
     function toCanvasCoords(e){
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
-      return { x:(e.clientX - rect.left)*scaleX, y:(e.clientY - rect.top)*scaleY };
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top)  * scaleY
+      };
     }
 
     canvas.addEventListener('mousedown', function(e){
-      const {x, y} = toCanvasCoords(e); lastMouseX = x; lastMouseY = y;
+      const {x, y} = toCanvasCoords(e);
+      lastMouseX = x; lastMouseY = y;
+
       for (let i=designs.length-1; i>=0; i--){
         const d = designs[i];
-        if (d.isRotationHandle(x,y)){ selectedDesignId = d.id; isRotating = true; updateDesignsList(); updateControls(); drawCanvas(); return; }
-        if (d.isScaleHandle(x,y)){ selectedDesignId = d.id; isResizing = true; startScale = d.scale; startResizeDist = Math.hypot(x - d.x, y - d.y); updateDesignsList(); updateControls(); drawCanvas(); return; }
-        if (d.isPointInside(x,y)){ selectedDesignId = d.id; isDragging = true; dragOffsetX = x - d.x; dragOffsetY = y - d.y; updateDesignsList(); updateControls(); drawCanvas(); return; }
+
+        if (d.isRotationHandle(x,y)){
+          selectedDesignId = d.id; isRotating = true;
+          updateDesignsList(); updateControls(); drawCanvas(); return;
+        }
+        if (d.isScaleHandle(x,y)){
+          selectedDesignId = d.id; isResizing = true;
+          startScale = d.scale;
+          startResizeDist = Math.hypot(x - d.x, y - d.y);
+          updateDesignsList(); updateControls(); drawCanvas(); return;
+        }
+        if (d.isPointInside(x,y)){
+          selectedDesignId = d.id; isDragging = true;
+          dragOffsetX = x - d.x; dragOffsetY = y - d.y;
+          updateDesignsList(); updateControls(); drawCanvas(); return;
+        }
       }
-      selectedDesignId = null; updateDesignsList(); updateControls(); drawCanvas();
+      selectedDesignId = null;
+      updateDesignsList(); updateControls(); drawCanvas();
     });
 
     canvas.addEventListener('mousemove', function(e){
-      const {x, y} = toCanvasCoords(e); const d = getSelectedDesign(); lastMouseX = x; lastMouseY = y;
-      if (isDragging && d){ d.x = x - dragOffsetX; d.y = y - dragOffsetY; drawCanvas(); }
-      else if (isRotating && d){
-        let angle = Math.atan2(y - d.y, x - d.x) * 180 / Math.PI + 90; angle = (angle % 360 + 360) % 360;
-        d.rotation = angle; rotationSlider.value = Math.round(angle); rotationInput.value = Math.round(angle); rotationValue.textContent = Math.round(angle) + '°'; drawCanvas();
+      const {x, y} = toCanvasCoords(e);
+      const d = getSelectedDesign();
+      lastMouseX = x; lastMouseY = y;
+
+      if (isDragging && d){
+        d.x = x - dragOffsetX; d.y = y - dragOffsetY;
+        drawCanvas();
+      } else if (isRotating && d){
+        let angle = Math.atan2(y - d.y, x - d.x) * 180 / Math.PI + 90;
+        angle = (angle % 360 + 360) % 360;
+        d.rotation = angle;
+        rotationSlider.value = Math.round(angle);
+        rotationInput.value = Math.round(angle);
+        rotationValue.textContent = Math.round(angle) + '°';
+        drawCanvas();
       } else if (isResizing && d){
-        const dist = Math.hypot(x - d.x, y - d.y); const factor = dist / Math.max(1, startResizeDist);
-        d.scale = startScale * factor; d.updateInputs(); updateSizeInfo(); drawCanvas();
+        const dist = Math.hypot(x - d.x, y - d.y);
+        const factor = dist / Math.max(1, startResizeDist);
+        d.scale = startScale * factor;
+        d.updateInputs();
+        updateSizeInfo();
+        drawCanvas();
       }
     });
 
-    ['mouseup','mouseleave'].forEach(ev=>{ canvas.addEventListener(ev, function(){ isDragging=false; isResizing=false; isRotating=false; }); });
+    ['mouseup','mouseleave'].forEach(ev=>{
+      canvas.addEventListener(ev, function(){
+        isDragging = false; isResizing = false; isRotating = false;
+      });
+    });
 
+    // touch
     canvas.addEventListener('touchstart', function(e){
-      e.preventDefault(); const t = e.touches[0];
+      e.preventDefault();
+      const t = e.touches[0];
       canvas.dispatchEvent(new MouseEvent('mousedown', { clientX:t.clientX, clientY:t.clientY }));
     }, {passive:false});
     canvas.addEventListener('touchmove', function(e){
-      e.preventDefault(); const t = e.touches[0];
+      e.preventDefault();
+      const t = e.touches[0];
       canvas.dispatchEvent(new MouseEvent('mousemove', { clientX:t.clientX, clientY:t.clientY }));
     }, {passive:false});
     canvas.addEventListener('touchend', function(e){
-      e.preventDefault(); canvas.dispatchEvent(new MouseEvent('mouseup', {}));
+      e.preventDefault();
+      canvas.dispatchEvent(new MouseEvent('mouseup', {}));
     }, {passive:false});
 
+    // ====== Alto del lienzo (solo alto, máx 100 cm)
     if (applyCanvasHeightBtn){
       applyCanvasHeightBtn.addEventListener('click', function(){
-        let newHcm = parseFloat(canvasHeightInput.value); if (isNaN(newHcm)) return;
-        newHcm = Math.max(10, Math.min(100, newHcm)); CANVAS_HEIGHT_CM = newHcm;
+        let newHcm = parseFloat(canvasHeightInput.value);
+        if (isNaN(newHcm)) return;
+        newHcm = Math.max(10, Math.min(100, newHcm)); // clamp 10..100
+        CANVAS_HEIGHT_CM = newHcm;
+
+        // px = cm * 10
         const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
-        canvas.height = newPx; canvasWrapper.style.height = newPx + 'px';
+        canvas.height = newPx;
+        canvasWrapper.style.height = newPx + 'px';
+
         canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
         specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
-        drawCanvas(); showMessage(`Alto del lienzo ajustado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
+
+        drawCanvas();
+        showMessage(`Alto del lienzo ajustado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
       });
     }
 
+    // ====== Atajos de teclado
     document.addEventListener('keydown', function(e){
+      // Evitar cuando se escribe en inputs/textarea
       const tag = (e.target.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
+
       const d = getSelectedDesign();
       const step = e.shiftKey ? 10 : 1;
+
+      // Eliminar
       if ((e.key === 'Delete' || e.key === 'Backspace') && d){
-        e.preventDefault(); designs = designs.filter(x=> x.id!==d.id);
+        e.preventDefault();
+        designs = designs.filter(x=> x.id!==d.id);
         selectedDesignId = designs.length ? designs[designs.length-1].id : null;
-        updateDesignsList(); updateControls(); drawCanvas(); showMessage('Diseño eliminado','info',1500); return;
+        updateDesignsList(); updateControls(); drawCanvas();
+        showMessage('Diseño eliminado','info',1500);
+        return;
       }
+
       if (!d) return;
+
+      // Duplicar
       if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'd')){
         e.preventDefault();
         const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
         const dup = new Design(id, d.image, d.x + 10, d.y + 10);
         dup.scale = d.scale; dup.rotation = d.rotation; dup.opacity = d.opacity;
-        designs.push(dup); selectedDesignId = id; updateDesignsList(); updateControls(); drawCanvas();
-        showMessage('Diseño duplicado','success',1200); return;
+        designs.push(dup);
+        selectedDesignId = id;
+        updateDesignsList(); updateControls(); drawCanvas();
+        showMessage('Diseño duplicado','success',1200);
+        return;
       }
+
+      // Mover con flechas
       const arrows = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
       if (arrows.includes(e.key)){
         e.preventDefault();
@@ -1080,8 +1107,7 @@
       }
     });
 
-    if (bgRemoveBtn){ bgRemoveBtn.addEventListener('click', removeBackgroundForSelected); }
-
+    // ====== Iniciar controles
     updateControls();
     setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
   </script>
