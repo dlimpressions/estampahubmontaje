@@ -87,10 +87,13 @@
       overflow: auto;
     }
 
+    /* ====== NUEVO: variable para altura del título ====== */
+    :root { --title-h: 0px; }
+
     /* --- Barra flotante sobre el lienzo --- */
     .floating-tools{
       position: absolute;
-      top: 10px;
+      top: calc(10px + var(--title-h)); /* respeta la altura real del título */
       right: 10px;
       z-index: 50;
       display: flex;
@@ -101,6 +104,9 @@
       border-radius: 8px;
       padding: 6px;
       backdrop-filter: blur(6px);
+      cursor: move;            /* NUEVO: arrastrable */
+      user-select: none;       /* NUEVO: evita selección accidental */
+      touch-action: none;      /* ayuda en móviles al arrastrar */
     }
     .floating-tools .btn-mini{
       border: 1px solid #cbd5e0;
@@ -195,7 +201,7 @@
       <!-- Canvas central -->
       <div class="canvas-container">
         <!-- Barra flotante (accesos rápidos) -->
-        <div class="floating-tools" id="floating-tools">
+        <div class="floating-tools" id="floating-tools" title="Doble click para volver a posición inicial">
           <button class="btn-mini" data-target="mirror-btn">🪞 Espejo</button>
           <span class="sep"></span>
           <button class="btn-mini" data-target="send-back" title="Al fondo">⤵️ Fondo</button>
@@ -590,9 +596,12 @@
         const relX = x - this.x, relY = y - this.y;
         const angle = -this.rotation * Math.PI/180;
         const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-        const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+        const ry = relX * Math.cos? relY : relY; // no-op, evita warnings minificadores
         const hx = 0, hy = -height/2 - 15;
-        return Math.hypot(rx - hx, ry - hy) <= 10;
+        return Math.hypot(
+          (relX * Math.cos(angle) - relY * Math.sin(angle)) - hx,
+          (relX * Math.sin(angle) + relY * Math.cos(angle)) - hy
+        ) <= 10;
       }
 
       isScaleHandle(x, y) {
@@ -1261,7 +1270,7 @@
       });
     }
 
-    // ====== Barra flotante: reenvía clicks a botones originales
+    // ====== Barra flotante: reenvía clicks a botones originales (tu código)
     (function(){
       const floatBar = document.getElementById('floating-tools');
       if (!floatBar) return;
@@ -1276,6 +1285,136 @@
           const d = getSelectedDesign();
           if (!d) showMessage('Selecciona un diseño primero', 'warning', 1600);
         }
+      });
+    })();
+
+    // ====== NUEVO: colocar barra debajo del título automáticamente mientras esté "anclada"
+    (function placeFloatBelowTitle(){
+      const titleEl = document.querySelector('.canvas-title');
+      function update(){
+        if (!titleEl) return;
+        const h = titleEl.offsetHeight || 0;
+        document.documentElement.style.setProperty('--title-h', h + 'px');
+      }
+      window.addEventListener('load', update);
+      window.addEventListener('resize', update);
+      if ('ResizeObserver' in window && titleEl){
+        const ro = new ResizeObserver(update);
+        ro.observe(titleEl);
+      } else {
+        // fallback sencillo
+        setInterval(update, 500);
+      }
+      update();
+    })();
+
+    // ====== NUEVO: hacer la barra arrastrable + recordar posición + doble click para reset
+    (function makeFloatingToolsDraggable(){
+      const bar = document.getElementById('floating-tools');
+      const container = document.querySelector('.canvas-container');
+      if (!bar || !container) return;
+
+      // Estado de posicionamiento: 'docked' (anclada) o 'free' (libre)
+      function loadPos(){
+        try { return JSON.parse(localStorage.getItem('dtf_float_pos') || '{}'); }
+        catch { return {}; }
+      }
+      function savePos(obj){
+        localStorage.setItem('dtf_float_pos', JSON.stringify(obj || {}));
+      }
+
+      const saved = loadPos();
+      if (typeof saved.top === 'number' && typeof saved.left === 'number'){
+        // compatibilidad con versión anterior: asumir modo libre
+        bar.style.top = saved.top + 'px';
+        bar.style.left = saved.left + 'px';
+        bar.style.right = 'auto';
+        savePos({ mode:'free', top:saved.top, left:saved.left });
+      } else if (saved.mode === 'free'){
+        if (typeof saved.top === 'number')  bar.style.top  = saved.top + 'px';
+        if (typeof saved.left === 'number') bar.style.left = saved.left + 'px';
+        bar.style.right = 'auto';
+      } // si no hay guardado, queda en 'docked' usando el CSS (top calculado con --title-h)
+
+      let startX=0, startY=0, startLeft=0, startTop=0, dragging=false;
+
+      function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
+
+      function getBarRectRel(){
+        const cont = container.getBoundingClientRect();
+        const rect = bar.getBoundingClientRect();
+        return {
+          left: rect.left - cont.left + container.scrollLeft,
+          top : rect.top  - cont.top  + container.scrollTop,
+          width: rect.width,
+          height: rect.height,
+          contW: cont.width,
+          contH: cont.height
+        };
+      }
+
+      function onPointerDown(e){
+        // Si clickea un botón, deja pasar el click normal
+        if (e.target.closest('button[data-target]')) return;
+        dragging = true;
+        const r = getBarRectRel();
+        startX = e.clientX; startY = e.clientY;
+        startLeft = r.left; startTop = r.top;
+
+        bar.setPointerCapture?.(e.pointerId);
+        e.preventDefault();
+      }
+
+      function onPointerMove(e){
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        const r = getBarRectRel();
+        const maxLeft = r.contW - r.width - 6;
+        const maxTop  = r.contH - r.height - 6;
+
+        const nextLeft = clamp(startLeft + dx, 6, Math.max(6, maxLeft));
+        const nextTop  = clamp(startTop  + dy, 6, Math.max(6, maxTop));
+
+        // Cambiar a modo libre
+        bar.style.left = nextLeft + 'px';
+        bar.style.top  = nextTop  + 'px';
+        bar.style.right = 'auto';
+
+        savePos({ mode:'free', top: nextTop, left: nextLeft });
+      }
+
+      function onPointerUp(){
+        dragging = false;
+      }
+
+      // Doble click: resetear a "anclada" (debajo del título)
+      bar.addEventListener('dblclick', ()=>{
+        bar.style.left = '';
+        bar.style.top  = '';
+        bar.style.right = ''; // vuelve a usar right: 10px desde CSS
+        savePos({ mode:'docked' });
+        showMessage('Barra reposicionada debajo del título','info',1500);
+      });
+
+      bar.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+
+      // Re-clampear en resize si está en modo libre
+      window.addEventListener('resize', ()=>{
+        const s = loadPos();
+        if (s.mode !== 'free') return;
+        const r = getBarRectRel();
+        const maxLeft = r.contW - r.width - 6;
+        const maxTop  = r.contH - r.height - 6;
+        const newLeft = clamp(parseInt(bar.style.left||'0',10), 6, Math.max(6, maxLeft));
+        const newTop  = clamp(parseInt(bar.style.top ||'0',10),  6, Math.max(6, maxTop));
+        bar.style.left = newLeft + 'px';
+        bar.style.top  = newTop + 'px';
+        savePos({ mode:'free', top:newTop, left:newLeft });
       });
     })();
 
