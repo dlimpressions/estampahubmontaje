@@ -22,6 +22,7 @@
     .btn-upload{background:#48bb78}.btn-upload:hover{background:#38a169}
     .btn-download{background:#9f7aea}.btn-download:hover{background:#805ad5}
     .btn-clear{background:#f56565}.btn-clear:hover{background:#e53e3e}
+    .btn-ai{background:#6b46c1}.btn-ai:hover{background:#5531a8}
     .canvas-container{flex:1;background:#f8f9fa;border-radius:10px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.05);padding:1rem;display:flex;flex-direction:column}
     .canvas-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
     .canvas-area{flex:1;background:#fff;border-radius:8px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem;box-shadow:inset 0 0 10px rgba(0,0,0,.05);position:relative}
@@ -130,6 +131,7 @@
           <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
           <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
           <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
+          <button class="btn btn-ai" id="bg-remove-btn">🪄 Quitar Fondo (IA)</button>
         </div>
 
         <div class="instructions">
@@ -260,6 +262,8 @@
 
   <!-- Librerías -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- ONNX Runtime Web para IA -->
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 
   <script>
     // ====== Seguridad (Contraseña) ======
@@ -329,12 +333,201 @@
     const canvasSizeLabel = document.getElementById('canvas-size-label');
     const canvasHeightInput = document.getElementById('canvas-height-cm');
     const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
+    const bgRemoveBtn = document.getElementById('bg-remove-btn');
 
     // ====== Constantes físicas
     const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
     const CANVAS_WIDTH_CM = 58; // fijo
     let CANVAS_HEIGHT_CM = 100; // variable (máx 100)
     const INCHES_PER_CM = 0.3937007874;
+
+    // ====== IA (U2Net ONNX)
+    const MODEL_URL = 'https://dlimpressions.github.io/estampahubmontaje/models/u2net.onnx';
+    let ortSession = null;
+    let modelLoading = false;
+
+    async function ensureModel(){
+      if (ortSession) return ortSession;
+      if (modelLoading) {
+        // espera breve con backoff simple
+        while (modelLoading && !ortSession) {
+          await new Promise(r=>setTimeout(r,100));
+        }
+        return ortSession;
+      }
+      modelLoading = true;
+      const msg = showMessage('Cargando modelo IA (U²-Net)...','loading',0);
+      try{
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
+        ortSession = await ort.InferenceSession.create(MODEL_URL, {
+          executionProviders: ['wasm'],
+          graphOptimizationLevel: 'all'
+        });
+        msg.remove();
+        showMessage('Modelo IA cargado','success',1500);
+        return ortSession;
+      } catch(e){
+        console.error(e);
+        msg.remove();
+        showMessage('No se pudo cargar el modelo IA', 'error', 4000);
+        modelLoading = false;
+        throw e;
+      } finally {
+        modelLoading = false;
+      }
+    }
+
+    // Preprocesar imagen -> tensor [1,3,320,320] float32 en [0,1]
+    function imageToInputTensor(img){
+      const target = 320;
+      const tmp = document.createElement('canvas');
+      tmp.width = target; tmp.height = target;
+      const tctx = tmp.getContext('2d');
+      // estiramos a 320x320 (U2Net suele esperar esa entrada)
+      tctx.drawImage(img, 0, 0, target, target);
+      const { data } = tctx.getImageData(0,0,target,target);
+
+      const float32 = new Float32Array(1 * 3 * target * target);
+      let idx = 0;
+      // CHW
+      // R plane
+      for (let y=0;y<target;y++){
+        for (let x=0;x<target;x++){
+          const i = (y*target + x)*4;
+          float32[idx++] = data[i] / 255; // R
+        }
+      }
+      // G plane
+      for (let y=0;y<target;y++){
+        for (let x=0;x<target;x++){
+          const i = (y*target + x)*4;
+          float32[idx++] = data[i+1] / 255; // G
+        }
+      }
+      // B plane
+      for (let y=0;y<target;y++){
+        for (let x=0;x<target;x++){
+          const i = (y*target + x)*4;
+          float32[idx++] = data[i+2] / 255; // B
+        }
+      }
+      const tensor = new ort.Tensor('float32', float32, [1,3,target,target]);
+      return tensor;
+    }
+
+    // Postproceso: devuelve una máscara canvas del tamaño original
+    function maskFromOutput(outputTensor, outW, outH){
+      // Toma el primer output del modelo (1,1,320,320)
+      let data = outputTensor.data;
+      // Normalizamos 0..1 (por si acaso)
+      let min=Infinity, max=-Infinity;
+      for (let i=0;i<data.length;i++){ const v=data[i]; if (v<min) min=v; if (v>max) max=v; }
+      const range = max - min || 1;
+      const norm = new Float32Array(data.length);
+      for (let i=0;i<data.length;i++){ norm[i] = (data[i]-min)/range; }
+
+      const side = Math.sqrt(norm.length)|0; // 320
+      const maskSmall = document.createElement('canvas');
+      maskSmall.width = side; maskSmall.height = side;
+      const mctx = maskSmall.getContext('2d');
+      const imgData = mctx.createImageData(side, side);
+      for (let i=0;i<norm.length;i++){
+        const v = Math.max(0, Math.min(255, norm[i]*255));
+        imgData.data[i*4+0] = v;
+        imgData.data[i*4+1] = v;
+        imgData.data[i*4+2] = v;
+        imgData.data[i*4+3] = 255;
+      }
+      mctx.putImageData(imgData,0,0);
+
+      // Escalamos la máscara al tamaño original de la imagen
+      const mask = document.createElement('canvas');
+      mask.width = outW; mask.height = outH;
+      const ctx2 = mask.getContext('2d');
+      // Suavizado + ligero blur para borde
+      ctx2.imageSmoothingEnabled = true;
+      ctx2.imageSmoothingQuality = 'high';
+      ctx2.filter = 'blur(1.5px)';
+      ctx2.drawImage(maskSmall, 0, 0, outW, outH);
+      ctx2.filter = 'none';
+
+      // Binarizamos con umbral 0.5
+      const maskData = ctx2.getImageData(0,0,outW,outH);
+      const d = maskData.data;
+      for (let i = 0; i < d.length; i+=4){
+        const v = d[i]; // 0..255
+        const keep = v >= 128 ? 255 : 0;
+        d[i]=d[i+1]=d[i+2]=keep;
+        d[i+3]=keep;
+      }
+      ctx2.putImageData(maskData,0,0);
+
+      return mask;
+    }
+
+    // Aplica máscara a imagen -> PNG con transparencia
+    function applyMaskToImage(img, maskCanvas){
+      const w = img.width, h = img.height;
+      const out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      const octx = out.getContext('2d');
+
+      // dibuja imagen
+      octx.drawImage(img,0,0,w,h);
+      // mantiene solo lo blanco de la máscara
+      octx.globalCompositeOperation = 'destination-in';
+      octx.drawImage(maskCanvas,0,0,w,h);
+      octx.globalCompositeOperation = 'source-over';
+      return out;
+    }
+
+    async function removeBackgroundForSelected(){
+      const d = getSelectedDesign();
+      if (!d){
+        showMessage('Selecciona un diseño primero','warning',2000);
+        return;
+      }
+      const loading = showMessage('Quitando fondo con IA...','loading',0);
+      try{
+        const session = await ensureModel();
+
+        // Prepara entrada
+        const input = imageToInputTensor(d.image);
+
+        // Input name (obtenemos el primero del modelo)
+        const inputNames = session.inputNames || Object.keys(session.inputNames||{});
+        const feeds = {};
+        feeds[inputNames[0] || 'input'] = input;
+
+        const results = await session.run(feeds);
+        // Toma el primer output disponible
+        const outName = session.outputNames ? session.outputNames[0] : Object.keys(results)[0];
+        const output = results[outName];
+
+        // Construye máscara y aplica
+        const mask = maskFromOutput(output, d.image.width, d.image.height);
+        const cut = applyMaskToImage(d.image, mask);
+
+        // crea nueva imagen y reemplaza en el diseño
+        const newImg = new Image();
+        newImg.onload = function(){
+          d.image = newImg;
+          d.width = newImg.width;
+          d.height = newImg.height;
+          // mantener escala/rotación/posición igual
+          updateDesignsList();
+          updateControls();
+          drawCanvas();
+          loading.remove();
+          showMessage('Fondo quitado','success',1800);
+        };
+        newImg.src = cut.toDataURL('image/png');
+      } catch(e){
+        console.error(e);
+        loading.remove();
+        showMessage('Error al quitar fondo con IA', 'error', 3500);
+      }
+    }
 
     // ====== Estado
     let designs = [];
@@ -1107,10 +1300,14 @@
       }
     });
 
+    // Botón IA quitar fondo
+    if (bgRemoveBtn){
+      bgRemoveBtn.addEventListener('click', removeBackgroundForSelected);
+    }
+
     // ====== Iniciar controles
     updateControls();
     setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
   </script>
 </body>
 </html>
-
