@@ -178,80 +178,86 @@
         <div class="tool-section">
           <h3>Controles de Diseño</h3>
 
-          <div class="control-group">
-            <h4>Rotación</h4>
-            <div class="row">
-              <div>
-                <div class="slider-container">
-                  <span id="rotation-value">0°</span>
-                  <input type="range" id="rotation-slider" min="0" max="360" value="0">
-                </div>
-              </div>
-              <input type="number" id="rotation-input" min="0" max="360" step="1" value="0" title="Rotación (°)">
-            </div>
-          </div>
+          <div class="controls">
+  <!-- 1) Alto del lienzo (arriba de todo) -->
+  <div class="control-group">
+    <h4>Alto del lienzo (cm)</h4>
+    <div class="row">
+      <input type="number" id="canvas-height-cm" min="10" max="100" step="0.5" value="100" title="Alto en cm (máx. 100)">
+      <button class="btn" id="apply-canvas-height">Aplicar alto</button>
+    </div>
+    <small>El ancho permanece en 58 cm. Máximo 100 cm de alto.</small>
+  </div>
 
-          <div class="control-group">
-            <h4>Opacidad</h4>
-            <div class="slider-container">
-              <span id="opacity-value">100%</span>
-              <input type="range" id="opacity-slider" min="10" max="100" value="100">
-            </div>
-          </div>
+  <!-- 2) Zoom del lienzo (debajo del alto) -->
+  <div class="control-group">
+    <h4>Zoom del Lienzo</h4>
+    <div class="slider-container">
+      <span id="zoom-value">100%</span>
+      <input type="range" id="zoom-slider" min="20" max="200" value="100">
+    </div>
+  </div>
 
-          <div class="control-group">
-            <h4>Tamaño Manual (cm)</h4>
-            <div class="proportion-lock">
-              <input type="checkbox" id="lock-proportion" checked>
-              <label for="lock-proportion">Mantener proporción</label>
-            </div>
-            <div class="size-controls">
-              <div class="size-input">
-                <label>Ancho</label>
-                <input type="number" id="width-input" min="1" step="0.1" value="0">
-              </div>
-              <div class="size-input">
-                <label>Alto</label>
-                <input type="number" id="height-input" min="1" step="0.1" value="0">
-              </div>
-            </div>
-            <button class="btn" id="apply-size">Aplicar Tamaño</button>
-          </div>
+  <!-- 3) Resto de controles (como estaban) -->
+  <div class="tool-section">
+    <h3>Controles de Diseño</h3>
 
-          <div class="size-info">
-            <h4>Dimensiones del diseño</h4>
-            <div id="size-info">0cm × 0cm</div>
-            <div id="original-size">Tamaño original: 0cm × 0cm</div>
-          </div>
-
-          <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
-        </div>
-
-        <div class="control-group">
-          <h4>Zoom del Lienzo</h4>
+    <div class="control-group">
+      <h4>Rotación</h4>
+      <div class="row">
+        <div>
           <div class="slider-container">
-            <span id="zoom-value">100%</span>
-            <input type="range" id="zoom-slider" min="20" max="200" value="100">
+            <span id="rotation-value">0°</span>
+            <input type="range" id="rotation-slider" min="0" max="360" value="0">
           </div>
         </div>
-
-        <div class="control-group">
-          <h4>Alto del lienzo (cm)</h4>
-          <div class="row">
-            <input type="number" id="canvas-height-cm" min="10" max="100" step="0.5" value="100" title="Alto en cm (máx. 100)">
-            <button class="btn" id="apply-canvas-height">Aplicar alto</button>
-          </div>
-          <small>El ancho permanece en 58 cm. Máximo 100 cm de alto.</small>
-        </div>
-
-        <div class="help-section">
-          <h4>Atajos</h4>
-          <p>• Supr/Backspace: eliminar seleccionado</p>
-          <p>• Flechas: mover (Shift = 10 px)</p>
-          <p>• Ctrl/Cmd + D: duplicar seleccionado</p>
-        </div>
+        <input type="number" id="rotation-input" min="0" max="360" step="1" value="0" title="Rotación (°)">
       </div>
     </div>
+
+    <div class="control-group">
+      <h4>Opacidad</h4>
+      <div class="slider-container">
+        <span id="opacity-value">100%</span>
+        <input type="range" id="opacity-slider" min="10" max="100" value="100">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h4>Tamaño Manual (cm)</h4>
+      <div class="proportion-lock">
+        <input type="checkbox" id="lock-proportion" checked>
+        <label for="lock-proportion">Mantener proporción</label>
+      </div>
+      <div class="size-controls">
+        <div class="size-input">
+          <label>Ancho</label>
+          <input type="number" id="width-input" min="1" step="0.1" value="0">
+        </div>
+        <div class="size-input">
+          <label>Alto</label>
+          <input type="number" id="height-input" min="1" step="0.1" value="0">
+        </div>
+      </div>
+      <button class="btn" id="apply-size">Aplicar Tamaño</button>
+    </div>
+
+    <div class="size-info">
+      <h4>Dimensiones del diseño</h4>
+      <div id="size-info">0cm × 0cm</div>
+      <div id="original-size">Tamaño original: 0cm × 0cm</div>
+    </div>
+
+    <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
+  </div>
+
+  <div class="help-section">
+    <h4>Atajos</h4>
+    <p>• Supr/Backspace: eliminar seleccionado</p>
+    <p>• Flechas: mover (Shift = 10 px)</p>
+    <p>• Ctrl/Cmd + D: duplicar seleccionado</p>
+  </div>
+</div>
 
     <footer>
       <p>Editor de Montajes para Impresión DTF</p>
