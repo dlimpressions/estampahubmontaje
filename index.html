@@ -1003,173 +1003,211 @@
       updateControls();
       setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
 
-      // ===== IA: U²-Netp (ONNX) =====
-      let u2netSession = null;
-      let u2netLoading = false;
-      const U2NET_MODEL_PATH = './models/u2netp.onnx'; // <-- modelo ligero (4-5 MB)
+     // ===== IA: U²-Netp (ONNX) - versión robusta =====
+let u2netSession = null;
+let u2netLoading = false;
 
-      async function loadU2NetSession(backend = 'webgl') {
-        if (u2netSession) return u2netSession;
-        if (u2netLoading) { while (u2netLoading) { await new Promise(r => setTimeout(r, 100)); } return u2netSession; }
-        u2netLoading = true;
-        try {
-          const EPs = backend === 'webgl' ? ['webgl', 'wasm'] : ['wasm'];
-          u2netSession = await ort.InferenceSession.create(U2NET_MODEL_PATH, {
-            executionProviders: EPs,
-            graphOptimizationLevel: 'all'
-          });
-          return u2netSession;
-        } finally { u2netLoading = false; }
-      }
+// Construye la URL del modelo relativa a la página (sirve en GitHub Pages y subcarpetas)
+const U2NET_MODEL_PATH = new URL('./models/u2netp.onnx', window.location.href).href;
 
-      function u2netPreprocess(image, target = 320) {
-        const w = image.naturalWidth || image.width;
-        const h = image.naturalHeight || image.height;
+// Espera a que onnxruntime-web esté disponible
+async function waitForOrt(maxMs = 5000) {
+  const start = performance.now();
+  while (!window.ort) {
+    if (performance.now() - start > maxMs) throw new Error('onnxruntime-web no cargó');
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return window.ort;
+}
 
-        const scale = Math.min(target / w, target / h);
-        const newW = Math.round(w * scale);
-        const newH = Math.round(h * scale);
-        const offX = Math.floor((target - newW) / 2);
-        const offY = Math.floor((target - newH) / 2);
+// Comprueba que el modelo existe (evita 404 silencioso)
+async function assertModelReachable() {
+  const res = await fetch(U2NET_MODEL_PATH, { method: 'HEAD', cache: 'no-store' });
+  if (!res.ok) throw new Error(`Modelo no accesible (${res.status}) en: ${U2NET_MODEL_PATH}`);
+}
 
-        const can = document.createElement('canvas');
-        can.width = target; can.height = target;
-        const c = can.getContext('2d');
-        c.fillStyle = 'black'; c.fillRect(0,0,target,target);
-        c.imageSmoothingEnabled = true;
-        c.imageSmoothingQuality = 'high';
-        c.drawImage(image, offX, offY, newW, newH);
+// Crea sesión con fallback automático WebGL → WASM
+async function loadU2NetSessionPreferred(backend = 'webgl') {
+  if (u2netSession) return u2netSession;
+  if (u2netLoading) { while (u2netLoading) await new Promise(r => setTimeout(r,100)); return u2netSession; }
+  u2netLoading = true;
+  try {
+    const ort = await waitForOrt();
+    await assertModelReachable();
 
-        const img = c.getImageData(0,0,target,target).data;
-        const floatData = new Float32Array(1 * 3 * target * target);
-        let p = 0;
-        for (let y=0; y<target; y++){
-          for (let x=0; x<target; x++){
-            const idx = (y*target + x)*4;
-            const r = img[idx] / 255;
-            const g = img[idx+1] / 255;
-            const b = img[idx+2] / 255;
-            floatData[p] = r;
-            floatData[p + target*target] = g;
-            floatData[p + 2*target*target] = b;
-            p++;
-          }
-        }
-        return { inputTensor: new ort.Tensor('float32', floatData, [1,3,target,target]), letterbox: {offX,offY,newW,newH,target} };
-      }
-
-      function u2netPostprocess(outputTensor, design, letterbox, featherPx = 3) {
-        const w0 = design.originalWidth;
-        const h0 = design.originalHeight;
-
-        const H = outputTensor.dims[2], W = outputTensor.dims[3];
-        const pred = outputTensor.data;
-
-        const maskSmall = document.createElement('canvas');
-        maskSmall.width = W; maskSmall.height = H;
-        const msCtx = maskSmall.getContext('2d');
-        const imgData = msCtx.createImageData(W, H);
-
-        let i = 0;
-        for (let y=0; y<H; y++){
-          for (let x=0; x<W; x++){
-            const v = Math.max(0, Math.min(1, pred[i++]));
-            const a = Math.round(v * 255);
-            const idx = (y*W + x)*4;
-            imgData.data[idx] = 255;
-            imgData.data[idx+1] = 255;
-            imgData.data[idx+2] = 255;
-            imgData.data[idx+3] = a;
-          }
-        }
-        msCtx.putImageData(imgData, 0, 0);
-
-        const maskFull = document.createElement('canvas');
-        maskFull.width = w0; maskFull.height = h0;
-        const mfCtx = maskFull.getContext('2d');
-        mfCtx.imageSmoothingEnabled = true;
-        mfCtx.imageSmoothingQuality = 'high';
-
-        const { offX, offY, newW, newH } = letterbox;
-
-        const src = document.createElement('canvas');
-        src.width = newW; src.height = newH;
-        const sctx = src.getContext('2d');
-        sctx.drawImage(maskSmall, offX, offY, newW, newH, 0, 0, newW, newH);
-
-        // Escalamos la máscara recortada al tamaño original manteniendo centro
-        const scaleBack = Math.max(w0 / newW, h0 / newH);
-        const drawW = Math.round(newW * scaleBack);
-        const drawH = Math.round(newH * scaleBack);
-        const drawX = Math.round((w0 - drawW) / 2);
-        const drawY = Math.round((h0 - drawH) / 2);
-        mfCtx.clearRect(0,0,w0,h0);
-        mfCtx.drawImage(src, 0,0,newW,newH, drawX,drawY,drawW,drawH);
-
-        // Feather opcional
-        if (featherPx > 0) {
-          mfCtx.globalCompositeOperation = 'destination-in';
-          const blurTmp = document.createElement('canvas');
-          blurTmp.width = w0; blurTmp.height = h0;
-          const bctx = blurTmp.getContext('2d');
-          const f = Math.max(1, Math.min(8, Math.ceil(featherPx/2)));
-          const dw = Math.max(1, Math.floor(w0 / f));
-          const dh = Math.max(1, Math.floor(h0 / f));
-          bctx.drawImage(maskFull, 0,0,w0,h0, 0,0,dw,dh);
-          mfCtx.drawImage(blurTmp, 0,0,dw,dh, 0,0,w0,h0);
-          mfCtx.globalCompositeOperation = 'source-over';
-        }
-        return maskFull;
-      }
-
-      function applyMaskToDesignWithCanvas(design, maskCanvas) {
-        const w = design.originalWidth;
-        const h = design.originalHeight;
-        const out = document.createElement('canvas');
-        out.width = w; out.height = h;
-        const octx = out.getContext('2d');
-        octx.drawImage(design.image, 0, 0, w, h);
-        octx.globalCompositeOperation = 'destination-in';
-        octx.drawImage(maskCanvas, 0, 0, w, h);
-        octx.globalCompositeOperation = 'source-over';
-        const img = new Image();
-        img.onload = () => { design.image = img; updateDesignsList(); drawCanvas(); };
-        img.src = out.toDataURL('image/png');
-      }
-
-      iaBtn.addEventListener('click', async ()=>{
-        const d = getSelectedDesign();
-        if (!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
-
-        const backend = iaBackendSel.value || 'webgl';
-        const feather = parseInt(iaFeatherInput.value || '3', 10);
-
-        const msg = showMessage('Cargando modelo IA…','loading',0);
-        try {
-          const session = await loadU2NetSession(backend);
-          msg.innerHTML = msg.innerHTML.replace('Cargando modelo IA', 'Procesando imagen');
-
-          const { inputTensor, letterbox } = u2netPreprocess(d.image, 320);
-
-          const feeds = {};
-          const inputName = session.inputNames[0];
-          feeds[inputName] = inputTensor;
-
-          const outputMap = await session.run(feeds);
-          const outputName = session.outputNames[0];
-          const output = outputMap[outputName];
-
-          const maskCanvas = u2netPostprocess(output, d, letterbox, feather);
-          applyMaskToDesignWithCanvas(d, maskCanvas);
-
-          msg.remove();
-          showMessage('Fondo eliminado con IA','success',1500);
-        } catch (err) {
-          console.error(err);
-          msg.remove();
-          showMessage('Error IA: ' + err.message, 'error');
-        }
+    async function tryCreate(EPs) {
+      return await ort.InferenceSession.create(U2NET_MODEL_PATH, {
+        executionProviders: EPs,
+        graphOptimizationLevel: 'all'
       });
+    }
+
+    try {
+      // intento 1: acelerado
+      const ep1 = backend === 'webgl' ? ['webgl','wasm'] : ['wasm'];
+      u2netSession = await tryCreate(ep1);
+    } catch (e1) {
+      console.warn('[IA] Falla con', backend, '→ probando WASM puro', e1);
+      // intento 2: WASM puro
+      u2netSession = await tryCreate(['wasm']);
+    }
+
+    console.log('[IA] Backend activo:', u2netSession?.executionProvider || '(ver consola de ORT)');
+    return u2netSession;
+  } finally { u2netLoading = false; }
+}
+
+// Preprocesado → 320x320 con letterbox, NCHW float32
+function u2netPreprocess(image, target = 320) {
+  const w = image.naturalWidth || image.width;
+  const h = image.naturalHeight || image.height;
+  const scale = Math.min(target / w, target / h);
+  const newW = Math.max(1, Math.round(w * scale));
+  const newH = Math.max(1, Math.round(h * scale));
+  const offX = Math.floor((target - newW) / 2);
+  const offY = Math.floor((target - newH) / 2);
+
+  const can = document.createElement('canvas');
+  can.width = target; can.height = target;
+  const c = can.getContext('2d');
+  c.fillStyle = 'black'; c.fillRect(0,0,target,target);
+  c.imageSmoothingEnabled = true;
+  c.imageSmoothingQuality = 'high';
+  c.drawImage(image, offX, offY, newW, newH);
+
+  const img = c.getImageData(0,0,target,target).data;
+  const floatData = new Float32Array(1 * 3 * target * target);
+  let p = 0;
+  for (let y=0; y<target; y++){
+    for (let x=0; x<target; x++){
+      const idx = (y*target + x)*4;
+      floatData[p] = img[idx] / 255;                       // R
+      floatData[p + target*target] = img[idx+1] / 255;     // G
+      floatData[p + 2*target*target] = img[idx+2] / 255;   // B
+      p++;
+    }
+  }
+  return { inputTensor: new ort.Tensor('float32', floatData, [1,3,target,target]), letterbox: {offX,offY,newW,newH,target} };
+}
+
+// Postproceso → reconstruye máscara al tamaño original + feather opcional
+function u2netPostprocess(outputTensor, design, letterbox, featherPx = 3) {
+  if (!outputTensor?.data || !outputTensor?.dims) {
+    throw new Error('Salida del modelo vacía o inválida');
+  }
+  const w0 = design.originalWidth;
+  const h0 = design.originalHeight;
+  const H = outputTensor.dims[2], W = outputTensor.dims[3];
+  const pred = outputTensor.data;
+
+  // 1) máscara al tamaño del modelo
+  const maskSmall = document.createElement('canvas');
+  maskSmall.width = W; maskSmall.height = H;
+  const msCtx = maskSmall.getContext('2d');
+  const imgData = msCtx.createImageData(W, H);
+  let i = 0;
+  for (let y=0; y<H; y++){
+    for (let x=0; x<W; x++){
+      const v = Math.max(0, Math.min(1, pred[i++]));
+      const a = Math.round(v * 255);
+      const idx = (y*W + x)*4;
+      imgData.data[idx] = 255;
+      imgData.data[idx+1] = 255;
+      imgData.data[idx+2] = 255;
+      imgData.data[idx+3] = a;
+    }
+  }
+  msCtx.putImageData(imgData, 0, 0);
+
+  // 2) quitar letterbox y escalar al tamaño original
+  const maskFull = document.createElement('canvas');
+  maskFull.width = w0; maskFull.height = h0;
+  const mfCtx = maskFull.getContext('2d');
+  mfCtx.imageSmoothingEnabled = true;
+  mfCtx.imageSmoothingQuality = 'high';
+
+  const { offX, offY, newW, newH } = letterbox;
+  const src = document.createElement('canvas');
+  src.width = newW; src.height = newH;
+  const sctx = src.getContext('2d');
+  sctx.drawImage(maskSmall, offX, offY, newW, newH, 0, 0, newW, newH);
+
+  const scaleBack = Math.max(w0 / newW, h0 / newH);
+  const drawW = Math.round(newW * scaleBack);
+  const drawH = Math.round(newH * scaleBack);
+  const drawX = Math.round((w0 - drawW) / 2);
+  const drawY = Math.round((h0 - drawH) / 2);
+
+  mfCtx.clearRect(0,0,w0,h0);
+  mfCtx.drawImage(src, 0,0,newW,newH, drawX,drawY,drawW,drawH);
+
+  // 3) feather (suavizado)
+  if (featherPx > 0) {
+    mfCtx.globalCompositeOperation = 'destination-in';
+    const blurTmp = document.createElement('canvas');
+    blurTmp.width = w0; blurTmp.height = h0;
+    const bctx = blurTmp.getContext('2d');
+    const f = Math.max(1, Math.min(8, Math.ceil(featherPx/2)));
+    const dw = Math.max(1, Math.floor(w0 / f));
+    const dh = Math.max(1, Math.floor(h0 / f));
+    bctx.drawImage(maskFull, 0,0,w0,h0, 0,0,dw,dh);
+    mfCtx.drawImage(blurTmp, 0,0,dw,dh, 0,0,w0,h0);
+    mfCtx.globalCompositeOperation = 'source-over';
+  }
+  return maskFull;
+}
+
+function applyMaskToDesignWithCanvas(design, maskCanvas) {
+  const w = design.originalWidth;
+  const h = design.originalHeight;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+  octx.drawImage(design.image, 0, 0, w, h);
+  octx.globalCompositeOperation = 'destination-in';
+  octx.drawImage(maskCanvas, 0, 0, w, h);
+  octx.globalCompositeOperation = 'source-over';
+  const img = new Image();
+  img.onload = () => { design.image = img; updateDesignsList(); drawCanvas(); };
+  img.src = out.toDataURL('image/png');
+}
+
+// Botón IA con logs y fallback
+iaBtn.addEventListener('click', async ()=>{
+  const d = getSelectedDesign();
+  if (!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
+
+  const userBackend = iaBackendSel.value || 'webgl';
+  const feather = parseInt(iaFeatherInput.value || '3', 10);
+  const msg = showMessage('Cargando modelo IA…','loading',0);
+
+  try {
+    const session = await loadU2NetSessionPreferred(userBackend);
+    msg.innerHTML = msg.innerHTML.replace('Cargando modelo IA', 'Procesando imagen');
+
+    const { inputTensor, letterbox } = u2netPreprocess(d.image, 320);
+
+    const feeds = {};
+    const inputName = session.inputNames?.[0];
+    if (!inputName) throw new Error('El modelo no expone entradas');
+    feeds[inputName] = inputTensor;
+
+    const outputMap = await session.run(feeds);
+    const outputName = session.outputNames?.[0];
+    if (!outputName) throw new Error('El modelo no expone salidas');
+    const output = outputMap[outputName];
+
+    const maskCanvas = u2netPostprocess(output, d, letterbox, feather);
+    applyMaskToDesignWithCanvas(d, maskCanvas);
+
+    msg.remove();
+    showMessage('Fondo eliminado con IA','success',1500);
+  } catch (err) {
+    console.error('[IA] Error:', err);
+    msg.remove();
+    showMessage('Error IA: ' + (err?.message || err), 'error');
+  }
+});
     });
   </script>
 </body>
