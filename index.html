@@ -171,10 +171,6 @@
   display:flex;flex-wrap:wrap;gap:10px;align-items:center
 }
 .mockup-controls > *{ margin:3px 0; }
-<!-- Lista de capas -->
-<div id="mock-layers-list" class="designs-list" style="margin-bottom:10px">
-  <div class="no-designs">No hay capas aún</div>
-</div>
 .mockup-stage{
   position:relative;
   width:min(900px, 100%);
@@ -357,12 +353,17 @@
     </div>
   </div>
 
+ <!-- ✅ Lista de capas (AQUÍ, como HTML real) -->
+  <div id="mock-layers-list" class="designs-list" style="margin:10px 0">
+    <div class="no-designs">No hay capas aún</div>
+  </div>
   <div class="mockup-stage" id="mock-stage">
     <img id="mock-template" alt="Plantilla camiseta">
     <!-- Host de capas (múltiples diseños) -->
     <div id="mock-layer-host"></div>
   </div>
 </div>
+
 <!-- ===== /MOCKUPS: panel ===== -->
 
       <!-- Panel derecho (controles) -->
