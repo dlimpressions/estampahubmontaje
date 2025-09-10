@@ -842,12 +842,25 @@ function refineMask(maskCanvas, opts) {
   }
 }
 
-// Ejecuta el modelo en un tamaño dado y devuelve una máscara gris 0..255 en canvas
-async function predictMaskAtSize(img, side) {
-  // 1) Asegurar que el modelo esté listo y usar ESTA sesión (no la global)
-  const session = await loadU2NetModel();
 
-  // 2) Preparar canvas cuadrado con “marcos” (padding) sin deformar
+// Ejecuta el modelo al tamaño que espera (detectado desde la sesión; por defecto 320)
+async function predictMaskAtSize(img) {
+  await loadU2NetModel();
+
+  // 1) Detectar tamaño de entrada del modelo (ej. 320)
+  const inputName = u2netSession.inputNames[0];
+  let side = 320; // fallback
+  try {
+    const meta = u2netSession.inputMetadata?.[inputName];
+    const dims = meta?.dimensions; // [1,3,320,320]
+    if (Array.isArray(dims) && dims.length === 4) {
+      const h = typeof dims[2] === 'number' ? dims[2] : 320;
+      const w = typeof dims[3] === 'number' ? dims[3] : 320;
+      side = Math.max(h, w) || 320;
+    }
+  } catch (_) {}
+
+  // 2) Preprocesado con “marcos” (padding) sin deformar
   const tmp = document.createElement('canvas');
   tmp.width = side; tmp.height = side;
   const tctx = tmp.getContext('2d');
@@ -863,39 +876,32 @@ async function predictMaskAtSize(img, side) {
   tctx.imageSmoothingQuality = 'high';
   tctx.drawImage(img, ox, oy, nw, nh);
 
-  // 3) Pasar a tensor CHW float32 0..1
+  // 3) A tensor CHW float32 0..1
   const src = tctx.getImageData(0,0,side,side).data;
   const tData = new Float32Array(1 * 3 * side * side);
   for (let i=0, p=0; i<src.length; i+=4, p++){
-    tData[p]                 = src[i]   / 255;         // R
-    tData[p + side*side]     = src[i+1] / 255;         // G
-    tData[p + 2*side*side]   = src[i+2] / 255;         // B
+    tData[p]                   = src[i]   / 255;        // R
+    tData[p + side*side]       = src[i+1] / 255;        // G
+    tData[p + 2*side*side]     = src[i+2] / 255;        // B
   }
 
-  // 4) Nombres de entrada/salida robustos
-  const inputName  = (session.inputNames  && session.inputNames[0])  || 'input';
-  const outputName = (session.outputNames && session.outputNames[0]) || null;
-
-  // 5) Inferencia
   const feeds = { [inputName]: new ort.Tensor('float32', tData, [1,3,side,side]) };
-  const outMap = await session.run(feeds);
-  const out    = outMap[outputName || Object.keys(outMap)[0]];
+  const outputs = await u2netSession.run(feeds);
+  const outName = u2netSession.outputNames?.[0] || Object.keys(outputs)[0];
+  const out = outputs[outName]; // dims [1,1,side,side]; data 0..1
 
-  // 6) Convertir salida a máscara 0..255 (canvas side×side)
+  // 4) Pasar a máscara gris 0..255
   const maskSide = document.createElement('canvas');
   maskSide.width = side; maskSide.height = side;
   const mctx = maskSide.getContext('2d');
   const imgOut = mctx.createImageData(side, side);
   for (let i=0; i<side*side; i++){
     const g = Math.round(Math.max(0, Math.min(1, out.data[i])) * 255);
-    imgOut.data[i*4+0] = g;
-    imgOut.data[i*4+1] = g;
-    imgOut.data[i*4+2] = g;
-    imgOut.data[i*4+3] = 255;
+    imgOut.data[i*4+0]=g; imgOut.data[i*4+1]=g; imgOut.data[i*4+2]=g; imgOut.data[i*4+3]=255;
   }
   mctx.putImageData(imgOut, 0, 0);
 
-  // 7) Recortar padding y reescalar al tamaño original
+  // 5) Recortar padding y reescalar al tamaño original
   const crop = document.createElement('canvas');
   crop.width = nw; crop.height = nh;
   const cctx = crop.getContext('2d');
@@ -913,6 +919,7 @@ async function predictMaskAtSize(img, side) {
   return maskFull;
 }
 
+
 // Aplica la máscara (gris 0..255) como alfa a la imagen original
 function applyMaskToImage(img, maskCanvas) {
   const outCanvas = document.createElement('canvas');
@@ -929,41 +936,20 @@ function applyMaskToImage(img, maskCanvas) {
   return outCanvas;
 }
 
-// === Función principal: mejor recorte (SECUENCIAL) ===
+
+// === Función principal: una pasada al tamaño del modelo ===
 async function removeBackgroundFromImage(img, opts) {
   const options = Object.assign({ threshold: 'auto', clean: 1, feather: 2 }, opts || {});
 
-  // --- IMPORTANTE: correr una tras otra (NO Promise.all) ---
-  const m320 = await predictMaskAtSize(img, 320);
-  const m512 = await predictMaskAtSize(img, 512);
+  // Una sola inferencia al tamaño que admite el modelo (ej. 320)
+  const mask = await predictMaskAtSize(img);
 
-  const w = img.width, h = img.height;
-
-  // Fusionar por máximo (combina lo mejor de cada pasada)
-  const fuse = document.createElement('canvas');
-  fuse.width = w; fuse.height = h;
-  const fctx = fuse.getContext('2d');
-
-  const a = m320.getContext('2d').getImageData(0,0,w,h);
-  const b = m512.getContext('2d').getImageData(0,0,w,h);
-  const out = fctx.createImageData(w,h);
-  for (let i=0; i<a.data.length; i+=4){
-    const g = Math.max(a.data[i], b.data[i]);
-    out.data[i]   = g;
-    out.data[i+1] = g;
-    out.data[i+2] = g;
-    out.data[i+3] = 255;
-  }
-  fctx.putImageData(out, 0, 0);
-
-  // Refinar (umbralizado, limpieza y feather)
-  refineMask(fuse, options);
+  // Refinar (umbral, limpieza morfológica y feather)
+  refineMask(mask, options);
 
   // Aplicar máscara como alfa
-  return applyMaskToImage(img, fuse);
+  return applyMaskToImage(img, mask);
 }
-
-
 
 
     // ====== Dibujo general
