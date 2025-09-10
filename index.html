@@ -1590,30 +1590,43 @@ if (removeBgBtn) {
     const d = getSelectedDesign();
     if (!d) { showMessage('Selecciona un diseño primero','warning'); return; }
 
-    // Preguntamos nivel (simple y sin líos de interfaz)
+    // Evitar ejecuciones simultáneas por doble clic
+    if (removeBgBtn.__busy) return;
+    removeBgBtn.__busy = true;
+    removeBgBtn.disabled = true;
+
+    // Preguntar nivel (opcional)
     const nivel = (prompt('Nivel de recorte (suave / medio / fuerte):', 'medio') || 'medio').toLowerCase();
     let opts;
     if (nivel.startsWith('f')) { // fuerte
       opts = { threshold: 0.92, feather: 3, clean: 2 };
     } else if (nivel.startsWith('s')) { // suave
       opts = { threshold: 0.70, feather: 2, clean: 1 };
-    } else { // medio (por defecto)
+    } else { // medio
       opts = { threshold: 0.85, feather: 2, clean: 1 };
     }
 
+    let loading;
     try {
-      const loading = showMessage('Quitando fondo (Beta)...','loading',0);
+      loading = showMessage('Quitando fondo (Beta)...','loading',0);
+
+      // Llamada SECUENCIAL interna (arreglado en la función)
       const cut = await removeBackgroundFromImage(d.image, opts);
+
       const newImg = new Image();
       newImg.onload = ()=>{
         d.image = newImg;
         drawCanvas();
-        loading.remove();
+        if (loading) loading.remove();
         showMessage(`Fondo eliminado (${nivel}) ✅`,'success',2000);
       };
       newImg.src = cut.toDataURL('image/png');
     } catch(err){
+      if (loading) loading.remove();
       showMessage('Error al quitar fondo: '+err.message,'error');
+    } finally {
+      removeBgBtn.__busy = false;
+      removeBgBtn.disabled = false;
     }
   });
 }
