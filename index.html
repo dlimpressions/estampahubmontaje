@@ -129,6 +129,56 @@
     @media (max-width: 768px){
       .floating-tools{ right: 6px; left: 6px; justify-content: center; flex-wrap: wrap; }
     }
+/* === MOCKUPS === */
+.mockup-pane{
+  display:none;
+  background:#f8f9fa;
+  border-radius:10px;
+  box-shadow:0 4px 6px rgba(0,0,0,.05);
+  padding:1rem;
+  margin-top:1rem;
+}
+.mockup-header{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px
+}
+.mockup-controls{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center
+}
+.mockup-controls > *{ margin:3px 0; }
+.mockup-stage{
+  position:relative;
+  width:min(900px, 100%);
+  margin:0 auto;
+  background:
+    linear-gradient(45deg,#eee 25%,transparent 25%),
+    linear-gradient(-45deg,#eee 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#eee 75%),
+    linear-gradient(-45deg,transparent 75%,#eee 75%);
+  background-size:20px 20px;
+  background-position:0 0,0 10px,10px -10px,-10px 0px;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  overflow:hidden;
+}
+#mock-template{
+  display:block;width:100%;height:auto;user-select:none;pointer-events:none;
+}
+#mock-design{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  max-width:95%;
+  pointer-events:auto; /* para arrastrar */
+  mix-blend-mode:multiply; /* por defecto */
+  opacity:0.95;
+  cursor:grab;
+}
+#mock-design:active{ cursor:grabbing; }
+.mock-btn{ padding:.6rem .8rem;border:none;border-radius:6px;background:#4299e1;color:#fff;cursor:pointer }
+.mock-btn:hover{ background:#3182ce }
+.mock-select, .mock-input{
+  padding:.45rem .6rem;border:1px solid #cbd5e0;border-radius:6px;background:#fff
+}
+.mock-slider{ width:160px }
   </style>
 </head>
 <body>
@@ -158,6 +208,8 @@
           <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
           <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
           <button class="btn" id="remove-bg-btn">🪄 Quitar fondo (Beta)</button>
+          <button class="btn" id="open-mockups">🧥 Abrir Mockups</button>
+
 
           <div class="canvas-background">
             <label for="canvas-color">Color de fondo:</label>
@@ -231,6 +283,55 @@
           </div>
         </div>
       </div>
+<!-- ===== MOCKUPS: panel ===== -->
+<div class="mockup-pane" id="mockup-pane">
+  <div class="mockup-header">
+    <h3>Mockups de Camiseta</h3>
+    <div class="mockup-controls">
+      <!-- Plantilla (elige tu camiseta de imgbb) -->
+      <select id="mock-template-select" class="mock-select" title="Plantilla de camiseta"></select>
+
+      <!-- Color/mezcla y opacidad -->
+      <select id="mock-blend" class="mock-select" title="Modo de fusión">
+        <option value="normal" selected>Normal</option>
+        <option value="multiply">Multiply</option>
+        <option value="screen">Screen</option>
+        <option value="overlay">Overlay</option>
+        <option value="darken">Darken</option>
+        <option value="lighten">Lighten</option>
+      </select>
+
+      <label>Opacidad
+        <input type="range" id="mock-opacity" class="mock-slider" min="10" max="100" value="95">
+      </label>
+
+      <!-- Escala / Rotación -->
+      <label>Escala
+        <input type="range" id="mock-scale" class="mock-slider" min="10" max="300" value="100">
+      </label>
+      <label>Rotación
+        <input type="range" id="mock-rot" class="mock-slider" min="0" max="360" value="0">
+      </label>
+
+      <!-- Cargar diseño para mockup -->
+      <input type="file" id="mock-file" accept="image/*" style="display:none">
+      <button class="mock-btn" id="mock-use-selected">Usar diseño seleccionado</button>
+      <button class="mock-btn" id="mock-upload">Subir diseño</button>
+
+      <!-- Descargar -->
+      <button class="mock-btn" id="mock-download">Descargar PNG</button>
+
+      <!-- Cerrar -->
+      <button class="mock-btn" id="mock-close">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="mockup-stage" id="mock-stage">
+    <img id="mock-template" alt="Plantilla camiseta">
+    <img id="mock-design" alt="Diseño" draggable="false">
+  </div>
+</div>
+<!-- ===== /MOCKUPS: panel ===== -->
 
       <!-- Panel derecho (controles) -->
       <div class="controls">
@@ -1801,6 +1902,310 @@ if (removeBgBtn) {
         savePos({ mode:'free', top:newTop, left:newLeft });
       });
     })();
+
+// ===== MOCKUPS: Referencias y estado =====
+const openMockupsBtn = document.getElementById('open-mockups');
+const mockPane     = document.getElementById('mockup-pane');
+const mockStage    = document.getElementById('mock-stage');
+const mockTemplate = document.getElementById('mock-template');
+const mockDesign   = document.getElementById('mock-design');
+const mockTemplateSelect = document.getElementById('mock-template-select');
+const mockBlend    = document.getElementById('mock-blend');
+const mockOpacity  = document.getElementById('mock-opacity');
+const mockScale    = document.getElementById('mock-scale');
+const mockRot      = document.getElementById('mock-rot');
+const mockUploadBtn= document.getElementById('mock-upload');
+const mockFile     = document.getElementById('mock-file');
+const mockUseSelectedBtn = document.getElementById('mock-use-selected');
+const mockDownloadBtn = document.getElementById('mock-download');
+const mockCloseBtn = document.getElementById('mock-close');
+
+let mockState = {
+  // posición del diseño (relativa al contenedor)
+  x: 0.5,  // 0..1
+  y: 0.5,  // 0..1
+  scale: 1.0,
+  rot: 0,
+  blend: 'multiply',
+  opacity: 0.95,
+  designLoaded: false,
+  templateLoaded: false
+};
+
+// ===== MOCKUPS: tus plantillas de imgbb =====
+// IMPORTANTE: usa los ENLACES DIRECTOS (dominio i.ibb.co) para evitar problemas.
+// Reemplaza las URLs de ejemplo por las tuyas.
+const MOCK_TEMPLATES = [
+  { name: 'Camiseta Blanca', url: 'https://i.ibb.co/9kDxHZyY/camiseta-blanca.png' },
+  { name: 'Camiseta Negra',  url: 'https://i.ibb.co/0F5tQ8d/tee-black.png' },
+  { name: 'Camiseta Gris',   url: 'https://i.ibb.co/9V0b9mB/tee-gray.png' }
+];
+
+// Rellena el select
+function fillMockTemplateSelect(){
+  mockTemplateSelect.innerHTML = '';
+  MOCK_TEMPLATES.forEach((t, i)=>{
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = t.name;
+    mockTemplateSelect.appendChild(opt);
+  });
+}
+fillMockTemplateSelect();
+
+// Carga imagen con CORS anónimo (necesario para exportar)
+function loadImageCORS(src){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=> resolve(img);
+    img.onerror = ()=> reject(new Error('No se pudo cargar la imagen: ' + src));
+    img.src = src;
+  });
+}
+
+// Muestra/Oculta panel
+if (openMockupsBtn){
+  openMockupsBtn.addEventListener('click', async ()=>{
+    mockPane.style.display = 'block';
+    showMessage('Panel de Mockups abierto','info',1500);
+
+    // Cargar la plantilla seleccionada por defecto
+    try {
+      const idx = parseInt(mockTemplateSelect.value || '0', 10) || 0;
+      await setMockTemplate(MOCK_TEMPLATES[idx].url);
+    } catch(err){
+      showMessage(err.message, 'error');
+    }
+  });
+}
+if (mockCloseBtn){
+  mockCloseBtn.addEventListener('click', ()=>{
+    mockPane.style.display = 'none';
+  });
+}
+
+// Cambiar plantilla
+mockTemplateSelect.addEventListener('change', async ()=>{
+  const idx = parseInt(mockTemplateSelect.value, 10);
+  if (isNaN(idx)) return;
+  const url = MOCK_TEMPLATES[idx]?.url;
+  if (!url) return;
+  try{
+    await setMockTemplate(url);
+  }catch(err){ showMessage(err.message, 'error'); }
+});
+
+async function setMockTemplate(url){
+  const img = await loadImageCORS(url);
+  // Ajustar stage a la relación de aspecto de la plantilla
+  mockTemplate.src = img.src;
+  mockTemplate.style.width = '100%';
+  mockTemplate.style.height = 'auto';
+  mockState.templateLoaded = true;
+
+  // Reset de diseño centrado (pero conserva escala/rot)
+  centerMockDesign();
+}
+
+// Centra el diseño en el medio del stage
+function centerMockDesign(){
+  mockState.x = 0.5;
+  mockState.y = 0.5;
+  applyMockLayout();
+}
+
+// Poner diseño desde archivo
+mockUploadBtn.addEventListener('click', ()=> mockFile.click());
+mockFile.addEventListener('change', async (e)=>{
+  if (!e.target.files || e.target.files.length===0) return;
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      mockDesign.src = img.src;
+      mockDesign.style.display = 'block';
+      mockState.designLoaded = true;
+      // Auto escala inicial (ancho 50% del stage)
+      mockScale.value = 100;
+      mockState.scale = 1.0;
+      mockRot.value = 0;
+      mockState.rot = 0;
+      centerMockDesign();
+      applyMockLayout();
+      showMessage('Diseño cargado en mockup','success',1500);
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Usar el diseño actualmente seleccionado en el editor central
+mockUseSelectedBtn.addEventListener('click', ()=>{
+  const d = getSelectedDesign();
+  if (!d){ showMessage('Selecciona un diseño en el editor', 'warning', 1800); return; }
+
+  // Pasar el bitmap del diseño (con transformaciones aplicadas)
+  // Renderizamos el diseño seleccionado sobre un canvas temporal:
+  const temp = document.createElement('canvas');
+  temp.width = d.image.width;
+  temp.height = d.image.height;
+  const tctx = temp.getContext('2d');
+  tctx.imageSmoothingEnabled = true;
+  tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(d.image, 0, 0, temp.width, temp.height);
+
+  mockDesign.src = temp.toDataURL('image/png');
+  mockDesign.style.display = 'block';
+  mockState.designLoaded = true;
+  mockScale.value = 100; mockState.scale = 1.0;
+  mockRot.value = Math.round(d.rotation || 0); mockState.rot = d.rotation || 0;
+  centerMockDesign();
+  applyMockLayout();
+  showMessage('Diseño del editor enviado al mockup', 'success', 1500);
+});
+
+// Controles de mezcla/opacidad/escala/rotación
+mockBlend.addEventListener('change', ()=>{
+  mockState.blend = mockBlend.value;
+  mockDesign.style.mixBlendMode = mockState.blend;
+});
+mockOpacity.addEventListener('input', ()=>{
+  mockState.opacity = parseInt(mockOpacity.value, 10)/100;
+  mockDesign.style.opacity = String(mockState.opacity);
+});
+mockScale.addEventListener('input', ()=>{
+  mockState.scale = parseInt(mockScale.value, 10)/100;
+  applyMockLayout();
+});
+mockRot.addEventListener('input', ()=>{
+  mockState.rot = parseInt(mockRot.value, 10) || 0;
+  applyMockLayout();
+});
+
+// Aplicar posición/escala/rot al <img> del diseño
+function applyMockLayout(){
+  const rect = mockStage.getBoundingClientRect();
+  const dx = mockState.x * rect.width;
+  const dy = mockState.y * rect.height;
+
+  mockDesign.style.left = dx + 'px';
+  mockDesign.style.top  = dy + 'px';
+  mockDesign.style.transform = `translate(-50%, -50%) rotate(${mockState.rot}deg) scale(${mockState.scale})`;
+  mockDesign.style.mixBlendMode = mockState.blend;
+  mockDesign.style.opacity = String(mockState.opacity);
+}
+
+// Arrastrar el diseño con el mouse o touch
+(function enableDragOnMockDesign(){
+  let dragging = false, startX=0, startY=0, startLeft=0, startTop=0;
+
+  function onDown(e){
+    if (!mockState.designLoaded) return;
+    dragging = true;
+    const pt = getPoint(e);
+    startX = pt.x; startY = pt.y;
+
+    const rect = mockDesign.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+    e.preventDefault();
+  }
+  function onMove(e){
+    if (!dragging) return;
+    const pt = getPoint(e);
+    const dx = pt.x - startX;
+    const dy = pt.y - startY;
+
+    const stageRect = mockStage.getBoundingClientRect();
+    // posición absoluta nueva del centro
+    const newCX = (startLeft + dx) + rectHalf(mockDesign).w;
+    const newCY = (startTop  + dy) + rectHalf(mockDesign).h;
+
+    // normalizar a 0..1
+    mockState.x = clamp((newCX - stageRect.left) / stageRect.width , 0, 1);
+    mockState.y = clamp((newCY - stageRect.top ) / stageRect.height, 0, 1);
+
+    applyMockLayout();
+  }
+  function onUp(){ dragging = false; }
+
+  function getPoint(e){
+    if (e.touches && e.touches[0]) return { x:e.touches[0].clientX, y:e.touches[0].clientY };
+    return { x:e.clientX, y:e.clientY };
+  }
+  function rectHalf(el){
+    const r = el.getBoundingClientRect();
+    return { w: r.width/2, h: r.height/2 };
+  }
+  function clamp(v, mn, mx){ return Math.max(mn, Math.min(mx, v)); }
+
+  mockDesign.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+
+  mockDesign.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp);
+})();
+
+// Descargar PNG del mockup (render a canvas)
+mockDownloadBtn.addEventListener('click', async ()=>{
+  if (!mockState.templateLoaded || !mockState.designLoaded){
+    showMessage('Carga una plantilla y un diseño primero', 'warning', 2000);
+    return;
+  }
+  const stageRect = mockStage.getBoundingClientRect();
+  // Renderizamos a un tamaño cómodo (2x para mejor calidad)
+  const W = Math.round(stageRect.width * 2);
+  const H = Math.round(stageRect.height * 2);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = true;
+  x.imageSmoothingQuality = 'high';
+
+  // 1) Dibujar plantilla
+  const tplImg = await loadImageCORS(mockTemplate.src);
+  x.drawImage(tplImg, 0, 0, W, H);
+
+  // 2) Dibujar diseño con transform, mezcla y opacidad
+  const desImg = await loadImageCORS(mockDesign.src);
+  x.save();
+  x.globalAlpha = mockState.opacity;
+  x.globalCompositeOperation = mockState.blend; // funciona en navegadores modernos
+  const cx = mockState.x * W;
+  const cy = mockState.y * H;
+  x.translate(cx, cy);
+  x.rotate(mockState.rot * Math.PI/180);
+  x.scale(mockState.scale, mockState.scale);
+
+  // Ajuste de tamaño base del diseño: lo dibujamos al 50% del ancho del stage (igual que inicial)
+  // Calculamos un tamaño base armónico:
+  const baseW = W * 0.5;
+  const ratio = desImg.width / desImg.height;
+  const dw = baseW;
+  const dh = baseW / ratio;
+  x.drawImage(desImg, -dw/2, -dh/2, dw, dh);
+  x.restore();
+
+  // 3) Descargar
+  c.toBlob(blob=>{
+    const a = document.createElement('a');
+    a.download = 'mockup-camiseta.png';
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png', 1.0);
+});
+
+// Inicializa valores por defecto
+(function initMockDefaults(){
+  mockBlend.value = 'multiply';
+  mockState.blend = 'multiply';
+  mockOpacity.value = 95;
+  mockState.opacity = 0.95;
+})();
+
 
     // ====== Iniciar controles
     updateControls();
