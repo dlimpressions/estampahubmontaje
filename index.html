@@ -463,14 +463,22 @@
       ctx.save();
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      // patrón de transparencia
-      const size = 20;
-      ctx.fillStyle = '#f0f0f0';
-      for (let y = 0; y < canvas.height; y += size) {
-        for (let x = 0; x < canvas.width; x += size) {
-          if (((x/size + y/size) % 2) === 0) ctx.fillRect(x, y, size, size);
-        }
-      }
+        // patrón de transparencia optimizado
+  const size = 20;
+  const patternCanvas = document.createElement('canvas');
+  patternCanvas.width = size * 2;
+  patternCanvas.height = size * 2;
+  const pctx = patternCanvas.getContext('2d');
+
+  // pinta 2 cuadros grises en diagonal
+  pctx.fillStyle = '#f0f0f0';
+  pctx.fillRect(0, 0, size, size);
+  pctx.fillRect(size, size, size, size);
+
+  const pattern = ctx.createPattern(patternCanvas, 'repeat');
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 
       // capa de color (solo visual)
       ctx.globalAlpha = 0.7;
