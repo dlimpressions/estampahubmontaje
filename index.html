@@ -2025,6 +2025,7 @@ mockFile.addEventListener('change', async (e)=>{
     const img = new Image();
     img.onload = ()=>{
       mockDesign.src = img.src;
+      mockDesign.style.width = '50%'; // base visual consistente
       mockDesign.style.display = 'block';
       mockState.designLoaded = true;
       // Auto escala inicial (ancho 50% del stage)
@@ -2057,6 +2058,7 @@ mockUseSelectedBtn.addEventListener('click', ()=>{
   tctx.drawImage(d.image, 0, 0, temp.width, temp.height);
 
   mockDesign.src = temp.toDataURL('image/png');
+  mockDesign.style.width = '50%'; // base visual consistente
   mockDesign.style.display = 'block';
   mockState.designLoaded = true;
   mockScale.value = 100; mockState.scale = 1.0;
@@ -2149,46 +2151,56 @@ function applyMockLayout(){
   window.addEventListener('touchend', onUp);
 })();
 
-// Descargar PNG del mockup (render a canvas)
+// Descargar PNG del mockup (render a canvas) – FIX: respeta tamaño visible
 mockDownloadBtn.addEventListener('click', async ()=>{
   if (!mockState.templateLoaded || !mockState.designLoaded){
     showMessage('Carga una plantilla y un diseño primero', 'warning', 2000);
     return;
   }
+
+  // 1) Medimos stage y elementos tal como se ven en pantalla
   const stageRect = mockStage.getBoundingClientRect();
-  // Renderizamos a un tamaño cómodo (2x para mejor calidad)
-  const W = Math.round(stageRect.width * 2);
-  const H = Math.round(stageRect.height * 2);
+  const tplRect   = mockTemplate.getBoundingClientRect(); // suele ser igual al stage
+  const desRect   = mockDesign.getBoundingClientRect();
+
+  // 2) Definimos el canvas de salida. 2x para buena nitidez
+  const scaleOut = 2;
+  const W = Math.max(2, Math.round(stageRect.width * scaleOut));
+  const H = Math.max(2, Math.round(stageRect.height * scaleOut));
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   x.imageSmoothingEnabled = true;
   x.imageSmoothingQuality = 'high';
 
-  // 1) Dibujar plantilla
+  // 3) Dibujar la plantilla escalada al canvas
   const tplImg = await loadImageCORS(mockTemplate.src);
   x.drawImage(tplImg, 0, 0, W, H);
 
-  // 2) Dibujar diseño con transform, mezcla y opacidad
-  const desImg = await loadImageCORS(mockDesign.src);
-  x.save();
-  x.globalAlpha = mockState.opacity;
-  x.globalCompositeOperation = mockState.blend; // funciona en navegadores modernos
+  // 4) Dibujar el diseño con el TAMAÑO QUE SE VE
+  //    Convertimos el tamaño visible (desRect) al espacio del canvas
+  const stageToCanvas = W / stageRect.width; // mismo para alto
+  const dw = Math.max(1, Math.round(desRect.width  * stageToCanvas));
+  const dh = Math.max(1, Math.round(desRect.height * stageToCanvas));
+
+  // Centro (en porcentaje del estado) -> coordenadas canvas
   const cx = mockState.x * W;
   const cy = mockState.y * H;
-  x.translate(cx, cy);
-  x.rotate(mockState.rot * Math.PI/180);
-  x.scale(mockState.scale, mockState.scale);
 
-  // Ajuste de tamaño base del diseño: lo dibujamos al 50% del ancho del stage (igual que inicial)
-  // Calculamos un tamaño base armónico:
-  const baseW = W * 0.5;
-  const ratio = desImg.width / desImg.height;
-  const dw = baseW;
-  const dh = baseW / ratio;
+  // Modo de fusión (canvas usa 'source-over' para "normal")
+  const blend = (mockState.blend === 'normal') ? 'source-over' : mockState.blend;
+
+  x.save();
+  x.globalAlpha = mockState.opacity;
+  x.globalCompositeOperation = blend;
+  x.translate(cx, cy);
+  x.rotate((mockState.rot || 0) * Math.PI/180);
+
+  const desImg = await loadImageCORS(mockDesign.src);
+  // Dibujamos centrado usando el ancho/alto visibles calculados
   x.drawImage(desImg, -dw/2, -dh/2, dw, dh);
   x.restore();
 
-  // 3) Descargar
+  // 5) Descargar
   c.toBlob(blob=>{
     const a = document.createElement('a');
     a.download = 'mockup-camiseta.png';
