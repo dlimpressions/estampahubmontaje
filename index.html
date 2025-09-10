@@ -591,18 +591,26 @@
       }
 
       isRotationHandle(x, y) {
-        const width = this.width * this.scale;
-        const height = this.height * this.scale;
-        const relX = x - this.x, relY = y - this.y;
-        const angle = -this.rotation * Math.PI/180;
-        const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-        const ry = relX * Math.cos? relY : relY; // no-op, evita warnings minificadores
-        const hx = 0, hy = -height/2 - 15;
-        return Math.hypot(
-          (relX * Math.cos(angle) - relY * Math.sin(angle)) - hx,
-          (relX * Math.sin(angle) + relY * Math.cos(angle)) - hy
-        ) <= 10;
-      }
+  const width  = this.width * this.scale;
+  const height = this.height * this.scale;
+
+  // Punto del mouse relativo al centro del diseño
+  const relX = x - this.x;
+  const relY = y - this.y;
+
+  // "Des-rotamos" el punto para comparar en el eje del objeto
+  const angle = -this.rotation * Math.PI / 180;
+  const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+  const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+  // El "handle" de rotación está centrado arriba del rectángulo seleccionado
+  const hx = 0;
+  const hy = -height / 2 - 15;
+
+  // Si el mouse está cerca (radio 10px), estamos sobre el handle
+  return Math.hypot(rx - hx, ry - hy) <= 10;
+}
+
 
       isScaleHandle(x, y) {
         const width = this.width * this.scale;
