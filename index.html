@@ -929,32 +929,40 @@ function applyMaskToImage(img, maskCanvas) {
   return outCanvas;
 }
 
-// === Función principal: mejor recorte ===
+// === Función principal: mejor recorte (SECUENCIAL) ===
 async function removeBackgroundFromImage(img, opts) {
-  const options = Object.assign({ threshold: 'auto', clean: 1, feather: 2 }, opts||{});
+  const options = Object.assign({ threshold: 'auto', clean: 1, feather: 2 }, opts || {});
 
-  // 1) dos pasadas (320 y 512) y fusionar (máximo por píxel)
-  const [m320, m512] = await Promise.all([predictMaskAtSize(img, 320), predictMaskAtSize(img, 512)]);
+  // --- IMPORTANTE: correr una tras otra (NO Promise.all) ---
+  const m320 = await predictMaskAtSize(img, 320);
+  const m512 = await predictMaskAtSize(img, 512);
+
   const w = img.width, h = img.height;
 
+  // Fusionar por máximo (combina lo mejor de cada pasada)
   const fuse = document.createElement('canvas');
   fuse.width = w; fuse.height = h;
   const fctx = fuse.getContext('2d');
+
   const a = m320.getContext('2d').getImageData(0,0,w,h);
   const b = m512.getContext('2d').getImageData(0,0,w,h);
   const out = fctx.createImageData(w,h);
   for (let i=0; i<a.data.length; i+=4){
-    const g = Math.max(a.data[i], b.data[i]); // combinar por máximo
-    out.data[i]=out.data[i+1]=out.data[i+2]=g; out.data[i+3]=255;
+    const g = Math.max(a.data[i], b.data[i]);
+    out.data[i]   = g;
+    out.data[i+1] = g;
+    out.data[i+2] = g;
+    out.data[i+3] = 255;
   }
   fctx.putImageData(out, 0, 0);
 
-  // 2) refinar (umbral, limpieza, feather)
+  // Refinar (umbralizado, limpieza y feather)
   refineMask(fuse, options);
 
-  // 3) aplicar
+  // Aplicar máscara como alfa
   return applyMaskToImage(img, fuse);
 }
+
 
 
 
