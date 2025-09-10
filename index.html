@@ -514,121 +514,153 @@
 
     initCanvas();
 
-    // ====== Clase Design
-    class Design {
-      constructor(id, image, x, y) {
-        this.id = id;
-        this.image = image;
-        this.x = x || canvas.width/2;
-        this.y = y || canvas.height/2;
-        this.scale = 1.0;
-        this.rotation = 0;
-        this.opacity = 1.0;
-        this.width = image.width;
-        this.height = image.height;
-        this.aspectRatio = image.width / image.height;
-        this.originalWidth = image.width;
-        this.originalHeight = image.height;
-      }
+   // ====== Clase Design
+class Design {
+  constructor(id, image, x, y) {
+    this.id = id;
+    this.image = image;
+    this.x = x || canvas.width/2;
+    this.y = y || canvas.height/2;
+    this.scale = 1.0;
+    this.rotation = 0;
+    this.opacity = 1.0;
+    this.width = image.width;
+    this.height = image.height;
+    this.aspectRatio = image.width / image.height;
+    this.originalWidth = image.width;
+    this.originalHeight = image.height;
+  }
 
-      draw() {
-        ctx.save();
-        ctx.globalAlpha = this.opacity;
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation * Math.PI / 180);
-        ctx.scale(this.scale, this.scale);
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation * Math.PI / 180);
+    ctx.scale(this.scale, this.scale);
 
-        const width = this.width;
-        const height = this.height;
+    const width = this.width;
+    const height = this.height;
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(this.image, -width/2, -height/2, width, height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(this.image, -width/2, -height/2, width, height);
 
-        if (this.id === selectedDesignId) {
-          ctx.strokeStyle = '#4299e1';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(-width/2, -height/2, width, height);
+    if (this.id === selectedDesignId) {
+      // borde del seleccionado
+      ctx.strokeStyle = '#4299e1';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-width/2, -height/2, width, height);
 
-          ctx.fillStyle = '#4299e1';
-          ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+      // centro
+      ctx.fillStyle = '#4299e1';
+      ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
 
-          ctx.fillStyle = '#48bb78';
-          ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+      // handle rotación (arriba)
+      ctx.fillStyle = '#48bb78';
+      ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
 
-          ctx.fillStyle = '#f56565';
-          ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
-        }
-        ctx.restore();
-      }
-
-      getDimensionsInCm() {
-        return {
-          width:  (this.width  * this.scale) / PIXELS_PER_CM,
-          height: (this.height * this.scale) / PIXELS_PER_CM
-        };
-      }
-
-      getOriginalDimensionsInCm() {
-        return {
-          width:  (this.originalWidth)  / PIXELS_PER_CM,
-          height: (this.originalHeight) / PIXELS_PER_CM
-        };
-      }
-
-      setDimensions(widthCm, heightCm, maintainProportion = true) {
-        const targetWidthPx  = widthCm  * PIXELS_PER_CM;
-        const targetHeightPx = heightCm * PIXELS_PER_CM;
-
-        if (maintainProportion) {
-          this.scale = targetWidthPx / this.originalWidth;
-        } else {
-          const scaleX = targetWidthPx  / this.originalWidth;
-          const scaleY = targetHeightPx / this.originalHeight;
-          this.scale = (scaleX + scaleY) / 2;
-        }
-        this.updateInputs();
-        drawCanvas();
-      }
-
-      updateInputs() {
-        const d = this.getDimensionsInCm();
-        widthInput.value = d.width.toFixed(1);
-        heightInput.value = d.height.toFixed(1);
-      }
-
-      isPointInside(x, y) {
-        const width = this.width * this.scale;
-        const height = this.height * this.scale;
-        const relX = x - this.x, relY = y - this.y;
-        const angle = -this.rotation * Math.PI/180;
-        const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-        const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
-        return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
-      }
-
-      isRotationHandle(x, y) {
-  const width  = this.width * this.scale;
-  const height = this.height * this.scale;
-
-  // Punto del mouse relativo al centro del diseño
-  const relX = x - this.x;
-  const relY = y - this.y;
-
-  // "Des-rotamos" el punto para comparar en el eje del objeto
-  const angle = -this.rotation * Math.PI / 180;
-  const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
-  const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
-
-  // El "handle" de rotación está centrado arriba del rectángulo
-  const hx = 0;
-  const hy = -height / 2 - 15;
-
-  // Si el mouse está cerca (radio 10px), estamos sobre el handle
-  return Math.hypot(rx - hx, ry - hy) <= 10;
-     }
-
+      // handle escala (esquina inferior derecha)
+      ctx.fillStyle = '#f56565';
+      ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
     }
+    ctx.restore();
+  }
+
+  getDimensionsInCm() {
+    return {
+      width:  (this.width  * this.scale) / PIXELS_PER_CM,
+      height: (this.height * this.scale) / PIXELS_PER_CM
+    };
+  }
+
+  getOriginalDimensionsInCm() {
+    return {
+      width:  (this.originalWidth)  / PIXELS_PER_CM,
+      height: (this.originalHeight) / PIXELS_PER_CM
+    };
+  }
+
+  setDimensions(widthCm, heightCm, maintainProportion = true) {
+    const targetWidthPx  = widthCm  * PIXELS_PER_CM;
+    const targetHeightPx = heightCm * PIXELS_PER_CM;
+
+    if (maintainProportion) {
+      this.scale = targetWidthPx / this.originalWidth;
+    } else {
+      const scaleX = targetWidthPx  / this.originalWidth;
+      const scaleY = targetHeightPx / this.originalHeight;
+      this.scale = (scaleX + scaleY) / 2;
+    }
+    this.updateInputs();
+    drawCanvas();
+  }
+
+  updateInputs() {
+    const d = this.getDimensionsInCm();
+    widthInput.value = d.width.toFixed(1);
+    heightInput.value = d.height.toFixed(1);
+  }
+
+  isPointInside(x, y) {
+    const width = this.width * this.scale;
+    const height = this.height * this.scale;
+
+    // punto relativo al centro del diseño
+    const relX = x - this.x;
+    const relY = y - this.y;
+
+    // "des-rotamos" el punto
+    const angle = -this.rotation * Math.PI/180;
+    const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+    const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+    // ¿está dentro del rectángulo?
+    return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
+  }
+
+  isRotationHandle(x, y) {
+    const width  = this.width * this.scale;
+    const height = this.height * this.scale;
+
+    // punto relativo al centro
+    const relX = x - this.x;
+    const relY = y - this.y;
+
+    // "des-rotamos" el punto
+    const angle = -this.rotation * Math.PI / 180;
+    const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+    const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+    // handle de rotación centrado arriba
+    const hx = 0;
+    const hy = -height / 2 - 15;
+
+    // radio 10px
+    return Math.hypot(rx - hx, ry - hy) <= 10;
+  }
+
+  isScaleHandle(x, y) {
+    const width  = this.width * this.scale;
+    const height = this.height * this.scale;
+
+    // punto relativo al centro
+    const relX = x - this.x;
+    const relY = y - this.y;
+
+    // "des-rotamos" el punto
+    const angle = -this.rotation * Math.PI / 180;
+    const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+    const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+    // handle de escala en la esquina inferior derecha
+    const hx = width / 2 + 5;
+    const hy = height / 2 + 5;
+
+    // radio 10px
+    return Math.hypot(rx - hx, ry - hy) <= 10;
+  }
+}
+
   
 // === Quitar Fondo (Beta) – funciones globales ===
 // OJO: Ya declaraste antes estas variables (no las dupliques):
