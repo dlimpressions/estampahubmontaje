@@ -2209,6 +2209,47 @@ function enableDragFor(el){
 }
 
 // ===== Añadir capas =====
+// Lee la(s) imagen(es) elegida(s) en el input hidden y crea capas
+mockFile.addEventListener('change', (e)=>{
+  if (!mockState.templateLoaded){
+    showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
+    mockFile.value = ''; // limpia por si se reintenta
+    return;
+  }
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+
+  let ok = 0, fail = 0;
+  files.forEach(file=>{
+    if (!file.type.match(/^image\//)){
+      fail++;
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      try {
+        // Usamos DataURL para evitar problemas de CORS
+        addLayerFromSrc(ev.target.result, { scale: 1.0, rot: 0 });
+        ok++;
+        rebuildLayersList();
+      } catch(err){
+        fail++;
+      }
+    };
+    reader.onerror = ()=> fail++;
+    reader.readAsDataURL(file);
+  });
+
+  // Feedback
+  setTimeout(()=>{
+    if (ok>0)  showMessage(`Capa(s) añadida(s): ${ok}`, 'success', 1800);
+    if (fail>0) showMessage(`No se pudieron cargar ${fail} archivo(s)`, 'warning', 2500);
+  }, 50);
+
+  // permitir volver a subir el mismo archivo
+  mockFile.value = '';
+});
+
 mockUploadBtn.addEventListener('click', ()=>{
   if (!mockState.templateLoaded){
     showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
