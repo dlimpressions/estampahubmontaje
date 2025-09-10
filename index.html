@@ -139,12 +139,15 @@
   position:absolute; left:50%; top:50%;
   transform:translate(-50%,-50%);
   max-width:95%;
+  max-height:95%;          /* NUEVO: evita que el diseño entre demasiado grande */
   mix-blend-mode:multiply;
   opacity:.95;
   cursor:grab;
-  pointer-events:auto;        /* esta sí recibe drag */
+  pointer-events:auto;
+  touch-action: none;      /* NUEVO: mejora arrastre en móvil */
 }
 .mock-design:active{ cursor:grabbing; }
+
 
 /* Selección visual de la capa activa */
 .mock-design.selected{
@@ -2013,11 +2016,17 @@ mockTemplateSelect.addEventListener('change', async ()=>{
 
 async function setMockTemplate(url){
   const img = await loadImageCORS(url);
-  mockTemplate.src = img.src;
-  mockTemplate.style.width = '100%';
-  mockTemplate.style.height = 'auto';
-  mockState.templateLoaded = true;
+  return new Promise((resolve)=>{
+    mockTemplate.onload = ()=>{
+      mockTemplate.style.width = '100%';
+      mockTemplate.style.height = 'auto';
+      mockState.templateLoaded = true;
+      resolve();
+    };
+    mockTemplate.src = img.src;
+  });
 }
+
 
 // ===== Capas: helpers =====
 function addLayerFromSrc(src, opts={}){
@@ -2199,20 +2208,24 @@ function enableDragFor(el){
 }
 
 // ===== Añadir capas =====
-mockUploadBtn.addEventListener('click', ()=> mockFile.click());
-mockFile.addEventListener('change', (e)=>{
-  if (!e.target.files || e.target.files.length===0) return;
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    addLayerFromSrc(reader.result, { scale: 1.0, rot: 0 });
-  };
-  reader.readAsDataURL(file);
+mockUploadBtn.addEventListener('click', ()=>{
+  if (!mockState.templateLoaded){
+    showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
+    return;
+  }
+  mockFile.click();
 });
 
 mockUseSelectedBtn.addEventListener('click', ()=>{
+  if (!mockState.templateLoaded){
+    showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
+    return;
+  }
   const d = getSelectedDesign();
-  if (!d){ showMessage('Selecciona un diseño en el editor', 'warning', 1800); return; }
+  if (!d){ 
+    showMessage('Selecciona un diseño en el editor', 'warning', 1800); 
+    return; 
+  }
   const temp = document.createElement('canvas');
   temp.width = d.image.width; temp.height = d.image.height;
   const tctx = temp.getContext('2d');
@@ -2220,6 +2233,7 @@ mockUseSelectedBtn.addEventListener('click', ()=>{
   tctx.drawImage(d.image, 0, 0, temp.width, temp.height);
   addLayerFromSrc(temp.toDataURL('image/png'), { scale: 1.0, rot: d.rotation||0 });
 });
+
 
 // ===== Controles aplican a la capa activa =====
 mockBlend.addEventListener('change', ()=>{
