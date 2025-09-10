@@ -662,8 +662,10 @@ class Design {
 }
 
   
+<!-- REEMPLAZO COMPLETO del bloque "Quitar Fondo (Beta) – funciones globales" -->
+<script>
 // === Quitar Fondo (Beta) – funciones globales ===
-// Usamos el modelo "silueta.onnx" (ya apuntado en U2NET_MODEL_PATH)
+// Usa el modelo que ya tienes en U2NET_MODEL_PATH (silueta.onnx). No cambies eso.
 
 async function loadU2NetModel() {
   if (typeof ort === 'undefined') {
@@ -672,98 +674,212 @@ async function loadU2NetModel() {
   }
   if (u2netSession || u2netLoading) return u2netSession;
   u2netLoading = true;
-  showMessage('Cargando modelo de recorte (silueta)...', 'loading', 0);
+  showMessage('Cargando modelo de recorte...', 'loading', 0);
   try {
     u2netSession = await ort.InferenceSession.create(U2NET_MODEL_PATH, {
       executionProviders: ['webgl', 'wasm'],
       graphOptimizationLevel: 'all'
     });
-    showMessage('Modelo listo ✅', 'success', 1500);
+    showMessage('Modelo listo ✅', 'success', 1200);
     return u2netSession;
   } finally {
     u2netLoading = false;
   }
 }
 
-/**
- * removeBackgroundFromImage(img, opts)
- * - Preprocesa a 320x320 sin deformar (padding).
- * - Aplica umbral (threshold) para quitar más fondo.
- * - "clean" (pasadas de limpieza) para cerrar huequitos.
- * - "feather" (suavizado) de bordes.
- * - Aplica la máscara en el CANAL ALFA.
- */
-async function removeBackgroundFromImage(img, opts = {}) {
-  await loadU2NetModel();
+// --- Utilidades ---
 
-  // Opciones por defecto + merge con lo que pase el usuario
-  const options = {
-    threshold: 0.85, // 0..1 (más alto = quita más fondo)
-    feather: 2,      // px
-    clean: 1,        // pasadas de limpieza
-    ...opts
+// Umbral de Otsu (0..1) sobre una imagen en escala de grises (canal R)
+function otsuThresholdFromImageData(imgData) {
+  const data = imgData.data;
+  const hist = new Array(256).fill(0);
+  for (let i=0; i<data.length; i+=4) hist[data[i]]++;
+  const total = imgData.width * imgData.height;
+  let sum = 0;
+  for (let t=0; t<256; t++) sum += t * hist[t];
+  let sumB = 0, wB = 0, wF = 0, mB = 0, mF = 0, maxVar = -1, threshold = 0;
+  for (let t=0; t<256; t++) {
+    wB += hist[t];
+    if (wB === 0) continue;
+    wF = total - wB;
+    if (wF === 0) break;
+    sumB += t * hist[t];
+    mB = sumB / wB;
+    mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > maxVar) { maxVar = between; threshold = t; }
+  }
+  return threshold / 255;
+}
+
+// Operaciones morfológicas muy básicas sobre una máscara binaria (0/255)
+function morph(maskCtx, w, h, type /*'erode'|'dilate'*/) {
+  const src = maskCtx.getImageData(0,0,w,h);
+  const dst = maskCtx.createImageData(w,h);
+  const S = src.data, D = dst.data;
+
+  // kernel 3x3
+  const get = (x,y) => {
+    if (x<0 || y<0 || x>=w || y>=h) return 0;
+    const i = (y*w + x) * 4;
+    return S[i]; // rojo (R=G=B)
   };
 
-  // --- 1) Preprocesado a 320x320 con "marcos" (padding) ---
-  const target = 320;
+  for (let y=0; y<h; y++){
+    for (let x=0; x<w; x++){
+      let val;
+      if (type === 'dilate') {
+        // si algún vecino es 255 => 255
+        val = 0;
+        for (let j=-1;j<=1;j++) for (let i=-1;i<=1;i++) val = Math.max(val, get(x+i, y+j));
+      } else {
+        // si todos vecinos 255 => 255
+        val = 255;
+        for (let j=-1;j<=1;j++) for (let i=-1;i<=1;i++) val = Math.min(val, get(x+i, y+j));
+      }
+      const k = (y*w + x) * 4;
+      D[k]=D[k+1]=D[k+2]=val; D[k+3]=255;
+    }
+  }
+  maskCtx.putImageData(dst, 0, 0);
+}
+
+// Mantener solo el componente conectado más grande (el sujeto principal)
+function keepLargestComponent(maskCtx, w, h) {
+  const img = maskCtx.getImageData(0,0,w,h);
+  const data = img.data;
+  const visited = new Uint8Array(w*h);
+  const idx = (x,y)=> y*w + x;
+
+  let bestArea = 0, bestLabel = -1, label = 1;
+  const labels = new Int32Array(w*h);
+
+  // BFS flood fill para etiquetar componentes (pixeles == 255)
+  const qx = new Int32Array(w*h), qy = new Int32Array(w*h);
+  for (let y=0; y<h; y++){
+    for (let x=0; x<w; x++){
+      const i = idx(x,y);
+      if (visited[i]) continue;
+      const v = data[i*4]; // R
+      if (v !== 255) { visited[i]=1; continue; }
+      let front = 0, back = 0, area = 0;
+      qx[back]=x; qy[back]=y; back++;
+      visited[i]=1;
+      labels[i] = label;
+      while (front<back){
+        const cx = qx[front], cy = qy[front]; front++;
+        area++;
+        // 4-vecinos
+        const N = [[1,0],[-1,0],[0,1],[0,-1]];
+        for (const [dx,dy] of N){
+          const nx=cx+dx, ny=cy+dy;
+          if (nx<0||ny<0||nx>=w||ny>=h) continue;
+          const ni = idx(nx,ny);
+          if (visited[ni]) continue;
+          if (data[ni*4] === 255){
+            visited[ni]=1; labels[ni]=label;
+            qx[back]=nx; qy[back]=ny; back++;
+          } else visited[ni]=1;
+        }
+      }
+      if (area > bestArea){ bestArea = area; bestLabel = label; }
+      label++;
+    }
+  }
+  // borrar todo lo que no sea el mayor
+  for (let i=0; i<w*h; i++){
+    const keep = (labels[i] === bestLabel) ? 255 : 0;
+    data[i*4]=data[i*4+1]=data[i*4+2]=keep; data[i*4+3]=255;
+  }
+  maskCtx.putImageData(img, 0, 0);
+}
+
+// Binarizar + limpiar + feather
+function refineMask(maskCanvas, opts) {
+  const { threshold='auto', clean=1, feather=2 } = opts || {};
+  const w = maskCanvas.width, h = maskCanvas.height;
+  const ctx = maskCanvas.getContext('2d');
+
+  // 1) binarizar
+  const img = ctx.getImageData(0,0,w,h);
+  const thr = (threshold === 'auto')
+    ? otsuThresholdFromImageData(img)
+    : Math.max(0, Math.min(1, threshold));
+  for (let i=0; i<img.data.length; i+=4){
+    const v = img.data[i]/255;
+    const bin = v >= thr ? 255 : 0;
+    img.data[i]=img.data[i+1]=img.data[i+2]=bin; img.data[i+3]=255;
+  }
+  ctx.putImageData(img, 0, 0);
+
+  // 2) cerrar pequeños huecos y suciedad
+  for (let k=0; k<clean; k++) { morph(ctx,w,h,'dilate'); morph(ctx,w,h,'erode'); }
+
+  // 3) mantener solo el componente principal (evita “islas”)
+  keepLargestComponent(ctx, w, h);
+
+  // 4) feather (suaviza borde)
+  if (feather>0){
+    const soft = document.createElement('canvas');
+    soft.width = w; soft.height = h;
+    const sctx = soft.getContext('2d');
+    sctx.filter = `blur(${feather}px)`;
+    sctx.drawImage(maskCanvas, 0, 0);
+    sctx.filter = 'none';
+    const g = sctx.getImageData(0,0,w,h);
+    ctx.putImageData(g, 0, 0);
+  }
+}
+
+// Ejecuta el modelo en un tamaño dado y devuelve una máscara gris 0..255 en canvas
+async function predictMaskAtSize(img, side) {
+  await loadU2NetModel();
   const tmp = document.createElement('canvas');
-  tmp.width = target; tmp.height = target;
+  tmp.width = side; tmp.height = side;
   const tctx = tmp.getContext('2d');
 
-  const scale = Math.min(target / img.width, target / img.height);
+  // “marcos” (padding) sin deformar
+  const scale = Math.min(side / img.width, side / img.height);
   const nw = Math.max(1, Math.round(img.width * scale));
   const nh = Math.max(1, Math.round(img.height * scale));
-  const ox = Math.floor((target - nw) / 2);
-  const oy = Math.floor((target - nh) / 2);
+  const ox = Math.floor((side - nw) / 2);
+  const oy = Math.floor((side - nh) / 2);
 
-  tctx.clearRect(0,0,target,target);
+  tctx.clearRect(0,0,side,side);
   tctx.imageSmoothingEnabled = true;
   tctx.imageSmoothingQuality = 'high';
   tctx.drawImage(img, ox, oy, nw, nh);
 
-  // --- 2) A tensor CHW float32 0..1 ---
-  const src = tctx.getImageData(0,0,target,target).data;
-  const tensorData = new Float32Array(1 * 3 * target * target);
-  for (let i=0, p=0; i<src.length; i+=4, p++) {
-    tensorData[p]                      = src[i]   / 255;          // R
-    tensorData[p + target*target]      = src[i+1] / 255;          // G
-    tensorData[p + 2*target*target]    = src[i+2] / 255;          // B
+  // a tensor CHW float32 0..1
+  const src = tctx.getImageData(0,0,side,side).data;
+  const tData = new Float32Array(1*3*side*side);
+  for (let i=0, p=0; i<src.length; i+=4, p++){
+    tData[p]                   = src[i]/255;
+    tData[p + side*side]       = src[i+1]/255;
+    tData[p + 2*side*side]     = src[i+2]/255;
   }
-  const inputName = (u2netSession.inputNames && u2netSession.inputNames[0]) || 'input';
-  const feeds = {};
-  feeds[inputName] = new ort.Tensor('float32', tensorData, [1,3,target,target]);
+  const feeds = { [u2netSession.inputNames[0]]: new ort.Tensor('float32', tData, [1,3,side,side]) };
+  const out = (await u2netSession.run(feeds))[u2netSession.outputNames[0]];
 
-  // --- 3) Inferencia ---
-  const outputs = await u2netSession.run(feeds);
-  const outName = (u2netSession.outputNames && u2netSession.outputNames[0]) || Object.keys(outputs)[0];
-  const out = outputs[outName]; // dims típicas [1,1,320,320]
-  const outData = out.data;
-  const w = target, h = target;
-
-  // --- 4) Máscara 0..255 en 320x320 ---
-  const mask320 = document.createElement('canvas');
-  mask320.width = w; mask320.height = h;
-  const mctx = mask320.getContext('2d');
-  const mimg = mctx.createImageData(w, h);
-  for (let i=0; i<w*h; i++){
-    const v = Math.max(0, Math.min(1, outData[i]));
-    const g = Math.round(v * 255);
-    mimg.data[i*4+0] = g;
-    mimg.data[i*4+1] = g;
-    mimg.data[i*4+2] = g;
-    mimg.data[i*4+3] = 255;
+  // máscara 0..255 en 320/512
+  const maskSide = document.createElement('canvas');
+  maskSide.width = side; maskSide.height = side;
+  const mctx = maskSide.getContext('2d');
+  const imgOut = mctx.createImageData(side, side);
+  for (let i=0; i<side*side; i++){
+    const g = Math.round(Math.max(0, Math.min(1, out.data[i])) * 255);
+    imgOut.data[i*4+0]=g; imgOut.data[i*4+1]=g; imgOut.data[i*4+2]=g; imgOut.data[i*4+3]=255;
   }
-  mctx.putImageData(mimg, 0, 0);
+  mctx.putImageData(imgOut, 0, 0);
 
-  // Recortamos a la zona útil (quitamos padding)
+  // Recortar “padding” y volver al tamaño del original
   const crop = document.createElement('canvas');
   crop.width = nw; crop.height = nh;
   const cctx = crop.getContext('2d');
   cctx.imageSmoothingEnabled = true;
   cctx.imageSmoothingQuality = 'high';
-  cctx.drawImage(mask320, ox, oy, nw, nh, 0, 0, nw, nh);
+  cctx.drawImage(maskSide, ox, oy, nw, nh, 0, 0, nw, nh);
 
-  // --- 5) Reescalar la máscara al tamaño original ---
   const maskFull = document.createElement('canvas');
   maskFull.width = img.width; maskFull.height = img.height;
   const fctx = maskFull.getContext('2d');
@@ -771,57 +887,52 @@ async function removeBackgroundFromImage(img, opts = {}) {
   fctx.imageSmoothingQuality = 'high';
   fctx.drawImage(crop, 0, 0, img.width, img.height);
 
-  // --- 6) Umbral + limpieza sobre el CANAL ALFA ---
-  // Pasamos la máscara (gris) a alfa binario según threshold
-  const mask = document.createElement('canvas');
-  mask.width = img.width; mask.height = img.height;
-  const mk = mask.getContext('2d');
-  mk.drawImage(maskFull, 0, 0);
-  let id = mk.getImageData(0,0,img.width,img.height);
-  let px = id.data;
-  const thr255 = Math.round(options.threshold * 255);
-  for (let i=0; i<px.length; i+=4) {
-    const v = px[i];                // gris en R (0..255)
-    const a = (v >= thr255) ? 255 : 0;
-    px[i] = px[i+1] = px[i+2] = 0;  // color irrelevante
-    px[i+3] = a;                    // *** alfa con la máscara binaria ***
-  }
-  mk.putImageData(id, 0, 0);
+  return maskFull;
+}
 
-  // Limpieza (cierra huecos pequeños) con una pasada blur + re-umbral simple
-  for (let k=0; k<options.clean; k++) {
-    mk.globalCompositeOperation = 'copy';
-    mk.filter = 'blur(1px)';
-    mk.drawImage(mask, 0, 0);
-    mk.filter = 'none';
-    // re-umbralizar alfa (0/255)
-    let id2 = mk.getImageData(0,0,img.width,img.height);
-    let px2 = id2.data;
-    for (let i=0; i<px2.length; i+=4) {
-      px2[i+3] = (px2[i+3] >= 128) ? 255 : 0;
-    }
-    mk.putImageData(id2, 0, 0);
-  }
-
-  // Feather (suavizado de bordes) sobre alfa
-  if (options.feather > 0) {
-    mk.globalCompositeOperation = 'copy';
-    mk.filter = `blur(${options.feather}px)`;
-    mk.drawImage(mask, 0, 0);
-    mk.filter = 'none';
-  }
-
-  // --- 7) Aplicar la máscara (alfa) al original ---
+// Aplica la máscara (gris 0..255) como alfa a la imagen original
+function applyMaskToImage(img, maskCanvas) {
   const outCanvas = document.createElement('canvas');
   outCanvas.width = img.width; outCanvas.height = img.height;
   const octx = outCanvas.getContext('2d');
   octx.drawImage(img, 0, 0);
-  octx.globalCompositeOperation = 'destination-in';
-  octx.drawImage(mask, 0, 0); // usa el ***alfa*** del canvas "mask"
-  octx.globalCompositeOperation = 'source-over';
-
+  const rgba = octx.getImageData(0,0,img.width,img.height);
+  const mctx = maskCanvas.getContext('2d');
+  const mdata = mctx.getImageData(0,0,img.width,img.height).data;
+  for (let i=0, j=0; i<rgba.data.length; i+=4, j++){
+    rgba.data[i+3] = mdata[i]; // usar R como alfa
+  }
+  octx.putImageData(rgba, 0, 0);
   return outCanvas;
 }
+
+// === Función principal: mejor recorte ===
+async function removeBackgroundFromImage(img, opts) {
+  const options = Object.assign({ threshold: 'auto', clean: 1, feather: 2 }, opts||{});
+
+  // 1) dos pasadas (320 y 512) y fusionar (máximo por píxel)
+  const [m320, m512] = await Promise.all([predictMaskAtSize(img, 320), predictMaskAtSize(img, 512)]);
+  const w = img.width, h = img.height;
+
+  const fuse = document.createElement('canvas');
+  fuse.width = w; fuse.height = h;
+  const fctx = fuse.getContext('2d');
+  const a = m320.getContext('2d').getImageData(0,0,w,h);
+  const b = m512.getContext('2d').getImageData(0,0,w,h);
+  const out = fctx.createImageData(w,h);
+  for (let i=0; i<a.data.length; i+=4){
+    const g = Math.max(a.data[i], b.data[i]); // combinar por máximo
+    out.data[i]=out.data[i+1]=out.data[i+2]=g; out.data[i+3]=255;
+  }
+  fctx.putImageData(out, 0, 0);
+
+  // 2) refinar (umbral, limpieza, feather)
+  refineMask(fuse, options);
+
+  // 3) aplicar
+  return applyMaskToImage(img, fuse);
+}
+</script>
 
 
     // ====== Dibujo general
