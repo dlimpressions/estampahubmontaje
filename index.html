@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Editor DTF - Montaje para Impresión</title>
@@ -156,6 +157,7 @@
           <input type="file" id="file-input" accept="image/*" style="display:none" multiple>
           <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
           <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
+          <button class="btn" id="remove-bg-btn">🪄 Quitar fondo (Beta)</button>
 
           <div class="canvas-background">
             <label for="canvas-color">Color de fondo:</label>
@@ -418,12 +420,19 @@
     const sendBackBtn = document.getElementById('send-back');
     const stepForwardBtn = document.getElementById('step-forward');
     const stepBackBtn = document.getElementById('step-back');
+    const removeBgBtn = document.getElementById('remove-bg-btn');
 
     // ====== Constantes físicas
     const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
     const CANVAS_WIDTH_CM = 58; // fijo
     let CANVAS_HEIGHT_CM = 100; // variable (máx 100)
     const INCHES_PER_CM = 0.3937007874;
+   
+ // ====== U2NET (quita fondo beta)
+    const U2NET_MODEL_PATH = 'models/u2netp.onnx'; // asegúrate que el archivo esté ahí
+    let u2netSession = null;
+    let u2netLoading = false;
+
 
     // ====== Estado
     let designs = [];
@@ -601,6 +610,69 @@
       isRotationHandle(x, y) {
   const width  = this.width * this.scale;
   const height = this.height * this.scale;
+
+async function loadU2NetModel() {
+  if (u2netSession || u2netLoading) return u2netSession;
+  u2netLoading = true;
+  showMessage('Cargando modelo de recorte (beta)...', 'loading', 3000);
+  try {
+    u2netSession = await ort.InferenceSession.create(U2NET_MODEL_PATH, {
+      executionProviders: ['webgl', 'wasm'],
+      graphOptimizationLevel: 'all'
+    });
+    showMessage('Modelo cargado ✅', 'success', 1500);
+    return u2netSession;
+  } catch (err) {
+    showMessage('No se pudo cargar el modelo: ' + err.message, 'error', 5000);
+    throw err;
+  } finally {
+    u2netLoading = false;
+  }
+}
+
+async function removeBackgroundFromImage(img) {
+  await loadU2NetModel();
+
+  // Redimensionamos la imagen al tamaño que el modelo espera
+  const tmp = document.createElement('canvas');
+  tmp.width = 320; tmp.height = 320;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(img, 0, 0, 320, 320);
+
+  const imageData = tctx.getImageData(0,0,320,320);
+  const { data } = imageData;
+
+  // Pasamos a tensor (formato que entiende el modelo)
+  const float32Data = new Float32Array(1*3*320*320);
+  for (let i=0, p=0; i<data.length; i+=4, p++) {
+    float32Data[p]               = data[i]/255;     // R
+    float32Data[p+320*320]       = data[i+1]/255;   // G
+    float32Data[p+2*320*320]     = data[i+2]/255;   // B
+  }
+  const inputTensor = new ort.Tensor('float32', float32Data, [1,3,320,320]);
+
+  // Ejecutamos el modelo
+  const results = await u2netSession.run({ [u2netSession.inputNames[0]]: inputTensor });
+  const output = results[u2netSession.outputNames[0]];
+
+  // Creamos máscara
+  const maskData = output.data;
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = img.width;
+  maskCanvas.height = img.height;
+  const mctx = maskCanvas.getContext('2d');
+  mctx.drawImage(img, 0, 0, img.width, img.height);
+  const outImage = mctx.getImageData(0,0,img.width,img.height);
+
+  for (let i=0; i<outImage.data.length/4; i++) {
+    const v = maskData[i % maskData.length] * 255; // 0..255
+    outImage.data[i*4+3] = v; // usamos como transparencia
+  }
+
+  mctx.putImageData(outImage, 0, 0);
+  return maskCanvas;
+}
+
 
   // Punto del mouse relativo al centro del diseño
   const relX = x - this.x;
@@ -1250,6 +1322,28 @@
         img.src = tCanvas.toDataURL('image/png');
       });
     }
+
+if (removeBgBtn) {
+  removeBgBtn.addEventListener('click', async ()=>{
+    const d = getSelectedDesign();
+    if (!d) { showMessage('Selecciona un diseño primero','warning'); return; }
+    try {
+      const loading = showMessage('Quitando fondo (Beta)...','loading',0);
+      const cut = await removeBackgroundFromImage(d.image);
+      const newImg = new Image();
+      newImg.onload = ()=>{
+        d.image = newImg;
+        drawCanvas();
+        loading.remove();
+        showMessage('Fondo eliminado (Beta) ✅','success',2000);
+      };
+      newImg.src = cut.toDataURL('image/png');
+    } catch(err){
+      showMessage('Error al quitar fondo: '+err.message,'error');
+    }
+  });
+}
+
 
     // ====== Z-ORDER
     function idxSel(){ return designs.findIndex(x=> x.id===selectedDesignId); }
