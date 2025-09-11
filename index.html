@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+r"""<!DOCTYPE html>
 <html lang="es">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Editor DTF - Montaje para Impresión</title>
+  <title>Editor DTF - Montaje para Impresión (sin removedor de fondo)</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
     body{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);color:#2d3748;line-height:1.6;min-height:100vh;padding:20px}
@@ -80,21 +79,16 @@
     .lock-card button{width:100%;padding:.8rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer}
     .lock-error{color:#fed7d7;min-height:1.2em;margin-bottom:.5rem}
 
-    /* --- Pane derecho pegajoso (mínimo cambio) --- */
-    .controls{
-      position: sticky;
-      top: 10px;
-      max-height: calc(100vh - 40px);
-      overflow: auto;
-    }
+    /* Pane derecho pegajoso */
+    .controls{ position: sticky; top: 10px; max-height: calc(100vh - 40px); overflow: auto; }
 
-    /* ====== NUEVO: variable para altura del título ====== */
+    /* Variable para altura del título */
     :root { --title-h: 0px; }
 
-    /* --- Barra flotante sobre el lienzo --- */
+    /* Barra flotante sobre el lienzo */
     .floating-tools{
       position: absolute;
-      top: calc(10px + var(--title-h)); /* respeta la altura real del título */
+      top: calc(10px + var(--title-h));
       right: 10px;
       z-index: 50;
       display: flex;
@@ -105,9 +99,9 @@
       border-radius: 8px;
       padding: 6px;
       backdrop-filter: blur(6px);
-      cursor: move;            /* NUEVO: arrastrable */
-      user-select: none;       /* NUEVO: evita selección accidental */
-      touch-action: none;      /* ayuda en móviles al arrastrar */
+      cursor: move;
+      user-select: none;
+      touch-action: none;
     }
     .floating-tools .btn-mini{
       border: 1px solid #cbd5e0;
@@ -120,61 +114,29 @@
       line-height: 1;
       white-space: nowrap;
     }
-    .floating-tools .btn-mini:hover{
-      background:#e2e8f0;
-    }
-    .floating-tools .sep{
-      width:1px; background:#e2e8f0; margin:0 4px;
-    }
+    .floating-tools .btn-mini:hover{ background:#e2e8f0; }
+    .floating-tools .sep{ width:1px; background:#e2e8f0; margin:0 4px; }
     @media (max-width: 768px){
       .floating-tools{ right: 6px; left: 6px; justify-content: center; flex-wrap: wrap; }
     }
+
 /* === MOCKUPS === */
-/* Capas del mockup (cada diseño es un <img>) */
-#mock-layer-host{
-  position:absolute; left:0; top:0; right:0; bottom:0;
-  pointer-events:none; /* evita bloquear clicks sobre la plantilla */
-}
+#mock-layer-host{ position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; }
 .mock-design{
   position:absolute; left:50%; top:50%;
   transform:translate(-50%,-50%);
-  max-width:95%;
-  max-height:95%;          /* NUEVO: evita que el diseño entre demasiado grande */
-  mix-blend-mode:multiply;
-  opacity:.95;
-  cursor:grab;
-  pointer-events:auto;
-  touch-action: none;      /* NUEVO: mejora arrastre en móvil */
+  max-width:95%; max-height:95%;
+  mix-blend-mode:multiply; opacity:.95;
+  cursor:grab; pointer-events:auto; touch-action: none;
 }
 .mock-design:active{ cursor:grabbing; }
-
-
-/* Selección visual de la capa activa */
-.mock-design.selected{
-  outline: 2px dashed #4299e1;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.mockup-pane{
-  display:none;
-  background:#f8f9fa;
-  border-radius:10px;
-  box-shadow:0 4px 6px rgba(0,0,0,.05);
-  padding:1rem;
-  margin-top:1rem;
-}
-.mockup-header{
-  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px
-}
-.mockup-controls{
-  display:flex;flex-wrap:wrap;gap:10px;align-items:center
-}
+.mock-design.selected{ outline: 2px dashed #4299e1; outline-offset: 2px; border-radius: 4px; }
+.mockup-pane{ display:none; background:#f8f9fa; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,.05); padding:1rem; margin-top:1rem; }
+.mockup-header{ display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px }
+.mockup-controls{ display:flex;flex-wrap:wrap;gap:10px;align-items:center }
 .mockup-controls > *{ margin:3px 0; }
 .mockup-stage{
-  position:relative;
-  width:min(900px, 100%);
-  margin:0 auto;
+  position:relative; width:min(900px, 100%); margin:0 auto;
   background:
     linear-gradient(45deg,#eee 25%,transparent 25%),
     linear-gradient(-45deg,#eee 25%,transparent 25%),
@@ -182,28 +144,19 @@
     linear-gradient(-45deg,transparent 75%,#eee 75%);
   background-size:20px 20px;
   background-position:0 0,0 10px,10px -10px,-10px 0px;
-  border:1px solid #e2e8f0;
-  border-radius:8px;
-  overflow:hidden;
+  border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;
 }
-#mock-template{
-  display:block;width:100%;height:auto;user-select:none;pointer-events:none;
-}
+#mock-template{ display:block;width:100%;height:auto;user-select:none;pointer-events:none; }
 #mock-design{
   position:absolute;left:50%;top:50%;
   transform:translate(-50%,-50%);
   max-width:95%;
-  pointer-events:auto; /* para arrastrar */
-  mix-blend-mode:multiply; /* por defecto */
-  opacity:0.95;
-  cursor:grab;
+  pointer-events:auto; mix-blend-mode:multiply; opacity:0.95; cursor:grab;
 }
 #mock-design:active{ cursor:grabbing; }
 .mock-btn{ padding:.6rem .8rem;border:none;border-radius:6px;background:#4299e1;color:#fff;cursor:pointer }
 .mock-btn:hover{ background:#3182ce }
-.mock-select, .mock-input{
-  padding:.45rem .6rem;border:1px solid #cbd5e0;border-radius:6px;background:#fff
-}
+.mock-select, .mock-input{ padding:.45rem .6rem;border:1px solid #cbd5e0;border-radius:6px;background:#fff }
 .mock-slider{ width:160px }
   </style>
 </head>
@@ -233,9 +186,7 @@
           <input type="file" id="file-input" accept="image/*" style="display:none" multiple>
           <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
           <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
-          <button class="btn" id="remove-bg-btn">🪄 Quitar fondo (Beta)</button>
           <button class="btn" id="open-mockups">🧥 Abrir Mockups</button>
-
 
           <div class="canvas-background">
             <label for="canvas-color">Color de fondo:</label>
@@ -309,15 +260,13 @@
           </div>
         </div>
       </div>
+
 <!-- ===== MOCKUPS: panel ===== -->
 <div class="mockup-pane" id="mockup-pane">
   <div class="mockup-header">
     <h3>Mockups de Camiseta</h3>
     <div class="mockup-controls">
-      <!-- Plantilla (elige tu camiseta de imgbb) -->
       <select id="mock-template-select" class="mock-select" title="Plantilla de camiseta"></select>
-
-      <!-- Color/mezcla y opacidad -->
       <select id="mock-blend" class="mock-select" title="Modo de fusión">
         <option value="normal" selected>Normal</option>
         <option value="multiply">Multiply</option>
@@ -326,49 +275,38 @@
         <option value="darken">Darken</option>
         <option value="lighten">Lighten</option>
       </select>
-
       <label>Opacidad
         <input type="range" id="mock-opacity" class="mock-slider" min="10" max="100" value="95">
       </label>
-
-      <!-- Escala / Rotación -->
       <label>Escala
         <input type="range" id="mock-scale" class="mock-slider" min="10" max="300" value="100">
       </label>
       <label>Rotación
         <input type="range" id="mock-rot" class="mock-slider" min="0" max="360" value="0">
       </label>
-
-      <!-- Cargar diseño para mockup -->
       <input type="file" id="mock-file" accept="image/*" style="display:none">
       <button class="mock-btn" id="mock-use-selected">Añadir desde editor</button>
-<button class="mock-btn" id="mock-upload">Subir diseño</button>
-<button class="mock-btn" id="mock-delete">Eliminar capa</button>
-<button class="mock-btn" id="mock-front">Al frente</button>
-<button class="mock-btn" id="mock-back">Al fondo</button>
-<button class="mock-btn" id="mock-download">Descargar PNG</button>
-
-      <!-- Cerrar -->
+      <button class="mock-btn" id="mock-upload">Subir diseño</button>
+      <button class="mock-btn" id="mock-delete">Eliminar capa</button>
+      <button class="mock-btn" id="mock-front">Al frente</button>
+      <button class="mock-btn" id="mock-back">Al fondo</button>
+      <button class="mock-btn" id="mock-download">Descargar PNG</button>
       <button class="mock-btn" id="mock-close">Cerrar</button>
     </div>
   </div>
 
- <!-- ✅ Lista de capas (AQUÍ, como HTML real) -->
   <div id="mock-layers-list" class="designs-list" style="margin:10px 0">
     <div class="no-designs">No hay capas aún</div>
   </div>
   <div class="mockup-stage" id="mock-stage">
     <img id="mock-template" alt="Plantilla camiseta">
-    <!-- Host de capas (múltiples diseños) -->
     <div id="mock-layer-host"></div>
   </div>
 </div>
-
 <!-- ===== /MOCKUPS: panel ===== -->
 
       <!-- Panel derecho (controles) -->
       <div class="controls">
-        <!-- Alto del lienzo (arriba) -->
         <div class="control-group">
           <h4>Alto del lienzo (cm)</h4>
           <div class="row">
@@ -378,7 +316,6 @@
           <small>El ancho permanece en 58 cm. Máximo 100 cm de alto.</small>
         </div>
 
-        <!-- Zoom del lienzo (debajo del alto) -->
         <div class="control-group">
           <h4>Zoom del Lienzo</h4>
           <div class="slider-container">
@@ -437,7 +374,6 @@
             <div id="original-size">Tamaño original: 0cm × 0cm</div>
           </div>
 
-          <!-- HERRAMIENTAS EXTRA -->
           <div class="control-group">
             <h4>Herramientas</h4>
             <button class="btn" id="mirror-btn">🪞 Espejo (Horizontal)</button>
@@ -481,7 +417,7 @@
 
   <script>
     // ====== Seguridad (Contraseña) ======
-    const ACCESS_PASSWORD = 'dtf2025'; // <-- cámbiala aquí
+    const ACCESS_PASSWORD = 'dtf2025';
     const overlay = document.getElementById('lock-overlay');
     const appRoot = document.getElementById('app-root');
     const lockBtn = document.getElementById('lock-btn');
@@ -548,25 +484,17 @@
     const canvasHeightInput = document.getElementById('canvas-height-cm');
     const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
 
-    // Botones añadidos (ya presentes en el HTML)
     const mirrorBtn = document.getElementById('mirror-btn');
     const bringFrontBtn = document.getElementById('bring-front');
     const sendBackBtn = document.getElementById('send-back');
     const stepForwardBtn = document.getElementById('step-forward');
     const stepBackBtn = document.getElementById('step-back');
-    const removeBgBtn = document.getElementById('remove-bg-btn');
 
     // ====== Constantes físicas
-    const PIXELS_PER_CM = 10; // 10 px = 1 cm (580px/58cm)
-    const CANVAS_WIDTH_CM = 58; // fijo
-    let CANVAS_HEIGHT_CM = 100; // variable (máx 100)
+    const PIXELS_PER_CM = 10;
+    const CANVAS_WIDTH_CM = 58;
+    let CANVAS_HEIGHT_CM = 100;
     const INCHES_PER_CM = 0.3937007874;
-   
- // ====== U2NET (quita fondo beta)
-    const U2NET_MODEL_PATH = 'models/silueta.onnx';
-    let u2netSession = null;
-    let u2netLoading = false;
-
 
     // ====== Estado
     let designs = [];
@@ -606,37 +534,29 @@
       ctx.save();
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-        // patrón de transparencia optimizado
-  const size = 20;
-  const patternCanvas = document.createElement('canvas');
-  patternCanvas.width = size * 2;
-  patternCanvas.height = size * 2;
-  const pctx = patternCanvas.getContext('2d');
+      const size = 20;
+      const patternCanvas = document.createElement('canvas');
+      patternCanvas.width = size * 2;
+      patternCanvas.height = size * 2;
+      const pctx = patternCanvas.getContext('2d');
+      pctx.fillStyle = '#f0f0f0';
+      pctx.fillRect(0, 0, size, size);
+      pctx.fillRect(size, size, size, size);
+      const pattern = ctx.createPattern(patternCanvas, 'repeat');
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // pinta 2 cuadros grises en diagonal
-  pctx.fillStyle = '#f0f0f0';
-  pctx.fillRect(0, 0, size, size);
-  pctx.fillRect(size, size, size, size);
-
-  const pattern = ctx.createPattern(patternCanvas, 'repeat');
-  ctx.fillStyle = pattern;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-
-      // capa de color (solo visual)
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = canvasBackgroundColor;
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.globalAlpha = 1.0;
 
-      // borde área de impresión
       ctx.strokeStyle = '#cbd5e0';
       ctx.lineWidth = 2;
       ctx.setLineDash([5,5]);
       ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
       ctx.setLineDash([]);
 
-      // texto guía
       if (designs.length===0){
         ctx.fillStyle = '#e2e8f0';
         ctx.font = '20px Arial';
@@ -645,7 +565,6 @@
       }
       ctx.restore();
     }
-
     initCanvas();
 
    // ====== Clase Design
@@ -680,20 +599,16 @@ class Design {
     ctx.drawImage(this.image, -width/2, -height/2, width, height);
 
     if (this.id === selectedDesignId) {
-      // borde del seleccionado
       ctx.strokeStyle = '#4299e1';
       ctx.lineWidth = 2;
       ctx.strokeRect(-width/2, -height/2, width, height);
 
-      // centro
       ctx.fillStyle = '#4299e1';
       ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
 
-      // handle rotación (arriba)
       ctx.fillStyle = '#48bb78';
       ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
 
-      // handle escala (esquina inferior derecha)
       ctx.fillStyle = '#f56565';
       ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
     }
@@ -739,16 +654,13 @@ class Design {
     const width = this.width * this.scale;
     const height = this.height * this.scale;
 
-    // punto relativo al centro del diseño
     const relX = x - this.x;
     const relY = y - this.y;
 
-    // "des-rotamos" el punto
     const angle = -this.rotation * Math.PI/180;
     const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
     const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
 
-    // ¿está dentro del rectángulo?
     return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
   }
 
@@ -756,20 +668,16 @@ class Design {
     const width  = this.width * this.scale;
     const height = this.height * this.scale;
 
-    // punto relativo al centro
     const relX = x - this.x;
     const relY = y - this.y;
 
-    // "des-rotamos" el punto
     const angle = -this.rotation * Math.PI / 180;
     const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
     const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
 
-    // handle de rotación centrado arriba
     const hx = 0;
     const hy = -height / 2 - 15;
 
-    // radio 10px
     return Math.hypot(rx - hx, ry - hy) <= 10;
   }
 
@@ -777,314 +685,19 @@ class Design {
     const width  = this.width * this.scale;
     const height = this.height * this.scale;
 
-    // punto relativo al centro
     const relX = x - this.x;
     const relY = y - this.y;
 
-    // "des-rotamos" el punto
     const angle = -this.rotation * Math.PI / 180;
     const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
     const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
 
-    // handle de escala en la esquina inferior derecha
     const hx = width / 2 + 5;
     const hy = height / 2 + 5;
 
-    // radio 10px
     return Math.hypot(rx - hx, ry - hy) <= 10;
   }
 }
-
-  
-// === Quitar Fondo (Beta) – funciones globales ===
-// Usa el modelo que ya tienes en U2NET_MODEL_PATH (silueta.onnx). No cambies eso.
-
-// === Quitar Fondo (Beta) – funciones globales ===
-// ...
-let u2netReadyPromise = null; // <- NUEVO
-
-async function loadU2NetModel() {
-  if (typeof ort === 'undefined') {
-    showMessage('Falta la librería del modelo (ort.min.js).', 'error', 6000);
-    throw new Error('onnxruntime-web no cargado');
-  }
-  if (u2netSession) return u2netSession;           // ya cargado
-  if (u2netReadyPromise) return u2netReadyPromise; // ya cargándose: esperar
-
-  showMessage('Cargando modelo de recorte...', 'loading', 0);
-
-  u2netReadyPromise = ort.InferenceSession.create(U2NET_MODEL_PATH, {
-    executionProviders: ['webgl', 'wasm'],
-    graphOptimizationLevel: 'all'
-  })
-  .then(session => {
-    u2netSession = session;
-    showMessage('Modelo listo ✅', 'success', 1200);
-    return session;
-  })
-  .catch(err => {
-    showMessage('No se pudo cargar el modelo: ' + err.message, 'error', 6000);
-    u2netReadyPromise = null; // permitir reintentar
-    throw err;
-  });
-
-  return u2netReadyPromise;
-}
-
-
-// --- Utilidades ---
-
-// Umbral de Otsu (0..1) sobre una imagen en escala de grises (canal R)
-function otsuThresholdFromImageData(imgData) {
-  const data = imgData.data;
-  const hist = new Array(256).fill(0);
-  for (let i=0; i<data.length; i+=4) hist[data[i]]++;
-  const total = imgData.width * imgData.height;
-  let sum = 0;
-  for (let t=0; t<256; t++) sum += t * hist[t];
-  let sumB = 0, wB = 0, wF = 0, mB = 0, mF = 0, maxVar = -1, threshold = 0;
-  for (let t=0; t<256; t++) {
-    wB += hist[t];
-    if (wB === 0) continue;
-    wF = total - wB;
-    if (wF === 0) break;
-    sumB += t * hist[t];
-    mB = sumB / wB;
-    mF = (sum - sumB) / wF;
-    const between = wB * wF * (mB - mF) * (mB - mF);
-    if (between > maxVar) { maxVar = between; threshold = t; }
-  }
-  return threshold / 255;
-}
-
-// Operaciones morfológicas muy básicas sobre una máscara binaria (0/255)
-function morph(maskCtx, w, h, type /*'erode'|'dilate'*/) {
-  const src = maskCtx.getImageData(0,0,w,h);
-  const dst = maskCtx.createImageData(w,h);
-  const S = src.data, D = dst.data;
-
-  // kernel 3x3
-  const get = (x,y) => {
-    if (x<0 || y<0 || x>=w || y>=h) return 0;
-    const i = (y*w + x) * 4;
-    return S[i]; // rojo (R=G=B)
-  };
-
-  for (let y=0; y<h; y++){
-    for (let x=0; x<w; x++){
-      let val;
-      if (type === 'dilate') {
-        // si algún vecino es 255 => 255
-        val = 0;
-        for (let j=-1;j<=1;j++) for (let i=-1;i<=1;i++) val = Math.max(val, get(x+i, y+j));
-      } else {
-        // si todos vecinos 255 => 255
-        val = 255;
-        for (let j=-1;j<=1;j++) for (let i=-1;i<=1;i++) val = Math.min(val, get(x+i, y+j));
-      }
-      const k = (y*w + x) * 4;
-      D[k]=D[k+1]=D[k+2]=val; D[k+3]=255;
-    }
-  }
-  maskCtx.putImageData(dst, 0, 0);
-}
-
-// Mantener solo el componente conectado más grande (el sujeto principal)
-function keepLargestComponent(maskCtx, w, h) {
-  const img = maskCtx.getImageData(0,0,w,h);
-  const data = img.data;
-  const visited = new Uint8Array(w*h);
-  const idx = (x,y)=> y*w + x;
-
-  let bestArea = 0, bestLabel = -1, label = 1;
-  const labels = new Int32Array(w*h);
-
-  // BFS flood fill para etiquetar componentes (pixeles == 255)
-  const qx = new Int32Array(w*h), qy = new Int32Array(w*h);
-  for (let y=0; y<h; y++){
-    for (let x=0; x<w; x++){
-      const i = idx(x,y);
-      if (visited[i]) continue;
-      const v = data[i*4]; // R
-      if (v !== 255) { visited[i]=1; continue; }
-      let front = 0, back = 0, area = 0;
-      qx[back]=x; qy[back]=y; back++;
-      visited[i]=1;
-      labels[i] = label;
-      while (front<back){
-        const cx = qx[front], cy = qy[front]; front++;
-        area++;
-        // 4-vecinos
-        const N = [[1,0],[-1,0],[0,1],[0,-1]];
-        for (const [dx,dy] of N){
-          const nx=cx+dx, ny=cy+dy;
-          if (nx<0||ny<0||nx>=w||ny>=h) continue;
-          const ni = idx(nx,ny);
-          if (visited[ni]) continue;
-          if (data[ni*4] === 255){
-            visited[ni]=1; labels[ni]=label;
-            qx[back]=nx; qy[back]=ny; back++;
-          } else visited[ni]=1;
-        }
-      }
-      if (area > bestArea){ bestArea = area; bestLabel = label; }
-      label++;
-    }
-  }
-  // borrar todo lo que no sea el mayor
-  for (let i=0; i<w*h; i++){
-    const keep = (labels[i] === bestLabel) ? 255 : 0;
-    data[i*4]=data[i*4+1]=data[i*4+2]=keep; data[i*4+3]=255;
-  }
-  maskCtx.putImageData(img, 0, 0);
-}
-
-// Binarizar + limpiar + feather
-function refineMask(maskCanvas, opts) {
-  const { threshold='auto', clean=1, feather=2 } = opts || {};
-  const w = maskCanvas.width, h = maskCanvas.height;
-  const ctx = maskCanvas.getContext('2d');
-
-  // 1) binarizar
-  const img = ctx.getImageData(0,0,w,h);
-  const thr = (threshold === 'auto')
-    ? otsuThresholdFromImageData(img)
-    : Math.max(0, Math.min(1, threshold));
-  for (let i=0; i<img.data.length; i+=4){
-    const v = img.data[i]/255;
-    const bin = v >= thr ? 255 : 0;
-    img.data[i]=img.data[i+1]=img.data[i+2]=bin; img.data[i+3]=255;
-  }
-  ctx.putImageData(img, 0, 0);
-
-  // 2) cerrar pequeños huecos y suciedad
-  for (let k=0; k<clean; k++) { morph(ctx,w,h,'dilate'); morph(ctx,w,h,'erode'); }
-
-  // 3) mantener solo el componente principal (evita “islas”)
-  keepLargestComponent(ctx, w, h);
-
-  // 4) feather (suaviza borde)
-  if (feather>0){
-    const soft = document.createElement('canvas');
-    soft.width = w; soft.height = h;
-    const sctx = soft.getContext('2d');
-    sctx.filter = `blur(${feather}px)`;
-    sctx.drawImage(maskCanvas, 0, 0);
-    sctx.filter = 'none';
-    const g = sctx.getImageData(0,0,w,h);
-    ctx.putImageData(g, 0, 0);
-  }
-}
-
-
-// Ejecuta el modelo al tamaño que espera (detectado desde la sesión; por defecto 320)
-async function predictMaskAtSize(img) {
-  await loadU2NetModel();
-
-  // 1) Detectar tamaño de entrada del modelo (ej. 320)
-  const inputName = u2netSession.inputNames[0];
-  let side = 320; // fallback
-  try {
-    const meta = u2netSession.inputMetadata?.[inputName];
-    const dims = meta?.dimensions; // [1,3,320,320]
-    if (Array.isArray(dims) && dims.length === 4) {
-      const h = typeof dims[2] === 'number' ? dims[2] : 320;
-      const w = typeof dims[3] === 'number' ? dims[3] : 320;
-      side = Math.max(h, w) || 320;
-    }
-  } catch (_) {}
-
-  // 2) Preprocesado con “marcos” (padding) sin deformar
-  const tmp = document.createElement('canvas');
-  tmp.width = side; tmp.height = side;
-  const tctx = tmp.getContext('2d');
-
-  const scale = Math.min(side / img.width, side / img.height);
-  const nw = Math.max(1, Math.round(img.width * scale));
-  const nh = Math.max(1, Math.round(img.height * scale));
-  const ox = Math.floor((side - nw) / 2);
-  const oy = Math.floor((side - nh) / 2);
-
-  tctx.clearRect(0,0,side,side);
-  tctx.imageSmoothingEnabled = true;
-  tctx.imageSmoothingQuality = 'high';
-  tctx.drawImage(img, ox, oy, nw, nh);
-
-  // 3) A tensor CHW float32 0..1
-  const src = tctx.getImageData(0,0,side,side).data;
-  const tData = new Float32Array(1 * 3 * side * side);
-  for (let i=0, p=0; i<src.length; i+=4, p++){
-    tData[p]                   = src[i]   / 255;        // R
-    tData[p + side*side]       = src[i+1] / 255;        // G
-    tData[p + 2*side*side]     = src[i+2] / 255;        // B
-  }
-
-  const feeds = { [inputName]: new ort.Tensor('float32', tData, [1,3,side,side]) };
-  const outputs = await u2netSession.run(feeds);
-  const outName = u2netSession.outputNames?.[0] || Object.keys(outputs)[0];
-  const out = outputs[outName]; // dims [1,1,side,side]; data 0..1
-
-  // 4) Pasar a máscara gris 0..255
-  const maskSide = document.createElement('canvas');
-  maskSide.width = side; maskSide.height = side;
-  const mctx = maskSide.getContext('2d');
-  const imgOut = mctx.createImageData(side, side);
-  for (let i=0; i<side*side; i++){
-    const g = Math.round(Math.max(0, Math.min(1, out.data[i])) * 255);
-    imgOut.data[i*4+0]=g; imgOut.data[i*4+1]=g; imgOut.data[i*4+2]=g; imgOut.data[i*4+3]=255;
-  }
-  mctx.putImageData(imgOut, 0, 0);
-
-  // 5) Recortar padding y reescalar al tamaño original
-  const crop = document.createElement('canvas');
-  crop.width = nw; crop.height = nh;
-  const cctx = crop.getContext('2d');
-  cctx.imageSmoothingEnabled = true;
-  cctx.imageSmoothingQuality = 'high';
-  cctx.drawImage(maskSide, ox, oy, nw, nh, 0, 0, nw, nh);
-
-  const maskFull = document.createElement('canvas');
-  maskFull.width = img.width; maskFull.height = img.height;
-  const fctx = maskFull.getContext('2d');
-  fctx.imageSmoothingEnabled = true;
-  fctx.imageSmoothingQuality = 'high';
-  fctx.drawImage(crop, 0, 0, img.width, img.height);
-
-  return maskFull;
-}
-
-
-// Aplica la máscara (gris 0..255) como alfa a la imagen original
-function applyMaskToImage(img, maskCanvas) {
-  const outCanvas = document.createElement('canvas');
-  outCanvas.width = img.width; outCanvas.height = img.height;
-  const octx = outCanvas.getContext('2d');
-  octx.drawImage(img, 0, 0);
-  const rgba = octx.getImageData(0,0,img.width,img.height);
-  const mctx = maskCanvas.getContext('2d');
-  const mdata = mctx.getImageData(0,0,img.width,img.height).data;
-  for (let i=0, j=0; i<rgba.data.length; i+=4, j++){
-    rgba.data[i+3] = mdata[i]; // usar R como alfa
-  }
-  octx.putImageData(rgba, 0, 0);
-  return outCanvas;
-}
-
-
-// === Función principal: una pasada al tamaño del modelo ===
-async function removeBackgroundFromImage(img, opts) {
-  const options = Object.assign({ threshold: 'auto', clean: 1, feather: 2 }, opts || {});
-
-  // Una sola inferencia al tamaño que admite el modelo (ej. 320)
-  const mask = await predictMaskAtSize(img);
-
-  // Refinar (umbral, limpieza morfológica y feather)
-  refineMask(mask, options);
-
-  // Aplicar máscara como alfa
-  return applyMaskToImage(img, mask);
-}
-
 
     // ====== Dibujo general
     function drawCanvas() {
@@ -1161,7 +774,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Upload (permitir subir el mismo archivo)
+    // ====== Upload
     if (uploadBtn){
       uploadBtn.addEventListener('click', ()=>{
         if (fileInput) fileInput.value = '';
@@ -1303,7 +916,6 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // sync proporción
     if (lockProportion){
       lockProportion.addEventListener('change', function(){
         const d = getSelectedDesign();
@@ -1345,7 +957,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // rotación slider
+    // rotación
     if (rotationSlider){
       rotationSlider.addEventListener('input', function(){
         const d = getSelectedDesign();
@@ -1357,7 +969,6 @@ async function removeBackgroundFromImage(img, opts) {
         }
       });
     }
-    // rotación manual
     if (rotationInput){
       rotationInput.addEventListener('input', function(){
         const d = getSelectedDesign();
@@ -1398,7 +1009,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Zoom con slider
+    // Zoom con slider
     if (zoomSlider){
       zoomSlider.addEventListener('input', function(){
         canvasZoom = this.value/100;
@@ -1412,7 +1023,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Zoom con rueda (Ctrl o ⌘)
+    // Zoom con rueda (Ctrl o ⌘)
     const canvasAreaEl = document.querySelector('.canvas-area');
     if (canvasAreaEl && zoomSlider){
       canvasAreaEl.addEventListener('wheel', (e)=>{
@@ -1427,7 +1038,7 @@ async function removeBackgroundFromImage(img, opts) {
       }, {passive:false});
     }
 
-    // ====== Agregar texto
+    // Agregar texto
     if (addTextBtn){
       addTextBtn.addEventListener('click', function(){
         const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
@@ -1461,7 +1072,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Exportar PNG
+    // Exportar PNG
     if (downloadPngBtn){
       downloadPngBtn.addEventListener('click', function(){
         if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
@@ -1488,7 +1099,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Exportar PDF
+    // Exportar PDF
     if (downloadPdfBtn){
       downloadPdfBtn.addEventListener('click', function(){
         if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
@@ -1521,7 +1132,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Limpiar lienzo
+    // Limpiar lienzo
     if (clearBtn){
       clearBtn.addEventListener('click', function(){
         if (designs.length>0 && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
@@ -1532,7 +1143,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Interacción mouse/touch
+    // Interacción mouse/touch
     function toCanvasCoords(e){
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
@@ -1618,7 +1229,7 @@ async function removeBackgroundFromImage(img, opts) {
       canvas.dispatchEvent(new MouseEvent('mouseup', {}));
     }, {passive:false});
 
-    // ====== Alto del lienzo (solo alto, máx 100 cm)
+    // Alto del lienzo (máx 100 cm)
     if (applyCanvasHeightBtn){
       applyCanvasHeightBtn.addEventListener('click', function(){
         let newHcm = parseFloat(canvasHeightInput.value);
@@ -1638,7 +1249,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-    // ====== Atajos de teclado
+    // Atajos de teclado
     document.addEventListener('keydown', function(e){
       const tag = (e.target.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
@@ -1680,7 +1291,7 @@ async function removeBackgroundFromImage(img, opts) {
       }
     });
 
-    // ====== ESPEJO (Horizontal)
+    // ESPEJO (Horizontal)
     if (mirrorBtn){
       mirrorBtn.addEventListener('click', ()=>{
         const d = getSelectedDesign();
@@ -1705,55 +1316,7 @@ async function removeBackgroundFromImage(img, opts) {
       });
     }
 
-if (removeBgBtn) {
-  removeBgBtn.addEventListener('click', async ()=>{
-    const d = getSelectedDesign();
-    if (!d) { showMessage('Selecciona un diseño primero','warning'); return; }
-
-    // Evitar ejecuciones simultáneas por doble clic
-    if (removeBgBtn.__busy) return;
-    removeBgBtn.__busy = true;
-    removeBgBtn.disabled = true;
-
-    // Preguntar nivel (opcional)
-    const nivel = (prompt('Nivel de recorte (suave / medio / fuerte):', 'medio') || 'medio').toLowerCase();
-    let opts;
-    if (nivel.startsWith('f')) { // fuerte
-      opts = { threshold: 0.92, feather: 3, clean: 2 };
-    } else if (nivel.startsWith('s')) { // suave
-      opts = { threshold: 0.70, feather: 2, clean: 1 };
-    } else { // medio
-      opts = { threshold: 0.85, feather: 2, clean: 1 };
-    }
-
-    let loading;
-    try {
-      loading = showMessage('Quitando fondo (Beta)...','loading',0);
-
-      // Llamada SECUENCIAL interna (arreglado en la función)
-      const cut = await removeBackgroundFromImage(d.image, opts);
-
-      const newImg = new Image();
-      newImg.onload = ()=>{
-        d.image = newImg;
-        drawCanvas();
-        if (loading) loading.remove();
-        showMessage(`Fondo eliminado (${nivel}) ✅`,'success',2000);
-      };
-      newImg.src = cut.toDataURL('image/png');
-    } catch(err){
-      if (loading) loading.remove();
-      showMessage('Error al quitar fondo: '+err.message,'error');
-    } finally {
-      removeBgBtn.__busy = false;
-      removeBgBtn.disabled = false;
-    }
-  });
-}
-
-
-
-    // ====== Z-ORDER
+    // Z-ORDER
     function idxSel(){ return designs.findIndex(x=> x.id===selectedDesignId); }
     function refreshAfterZ(){ updateDesignsList(); drawCanvas(); }
 
@@ -1788,7 +1351,7 @@ if (removeBgBtn) {
       });
     }
 
-    // ====== Barra flotante: reenvía clicks a botones originales (tu código)
+    // Barra flotante: reenviar clicks
     (function(){
       const floatBar = document.getElementById('floating-tools');
       if (!floatBar) return;
@@ -1806,7 +1369,7 @@ if (removeBgBtn) {
       });
     })();
 
-    // ====== NUEVO: colocar barra debajo del título automáticamente mientras esté "anclada"
+    // Colocar barra debajo del título automáticamente mientras esté "anclada"
     (function placeFloatBelowTitle(){
       const titleEl = document.querySelector('.canvas-title');
       function update(){
@@ -1820,19 +1383,17 @@ if (removeBgBtn) {
         const ro = new ResizeObserver(update);
         ro.observe(titleEl);
       } else {
-        // fallback sencillo
         setInterval(update, 500);
       }
       update();
     })();
 
-    // ====== NUEVO: hacer la barra arrastrable + recordar posición + doble click para reset
+    // Hacer la barra arrastrable + recordar posición + doble click para reset
     (function makeFloatingToolsDraggable(){
       const bar = document.getElementById('floating-tools');
       const container = document.querySelector('.canvas-container');
       if (!bar || !container) return;
 
-      // Estado de posicionamiento: 'docked' (anclada) o 'free' (libre)
       function loadPos(){
         try { return JSON.parse(localStorage.getItem('dtf_float_pos') || '{}'); }
         catch { return {}; }
@@ -1843,7 +1404,6 @@ if (removeBgBtn) {
 
       const saved = loadPos();
       if (typeof saved.top === 'number' && typeof saved.left === 'number'){
-        // compatibilidad con versión anterior: asumir modo libre
         bar.style.top = saved.top + 'px';
         bar.style.left = saved.left + 'px';
         bar.style.right = 'auto';
@@ -1852,7 +1412,7 @@ if (removeBgBtn) {
         if (typeof saved.top === 'number')  bar.style.top  = saved.top + 'px';
         if (typeof saved.left === 'number') bar.style.left = saved.left + 'px';
         bar.style.right = 'auto';
-      } // si no hay guardado, queda en 'docked' usando el CSS (top calculado con --title-h)
+      }
 
       let startX=0, startY=0, startLeft=0, startTop=0, dragging=false;
 
@@ -1872,13 +1432,11 @@ if (removeBgBtn) {
       }
 
       function onPointerDown(e){
-        // Si clickea un botón, deja pasar el click normal
         if (e.target.closest('button[data-target]')) return;
         dragging = true;
         const r = getBarRectRel();
         startX = e.clientX; startY = e.clientY;
         startLeft = r.left; startTop = r.top;
-
         bar.setPointerCapture?.(e.pointerId);
         e.preventDefault();
       }
@@ -1895,7 +1453,6 @@ if (removeBgBtn) {
         const nextLeft = clamp(startLeft + dx, 6, Math.max(6, maxLeft));
         const nextTop  = clamp(startTop  + dy, 6, Math.max(6, maxTop));
 
-        // Cambiar a modo libre
         bar.style.left = nextLeft + 'px';
         bar.style.top  = nextTop  + 'px';
         bar.style.right = 'auto';
@@ -1903,15 +1460,12 @@ if (removeBgBtn) {
         savePos({ mode:'free', top: nextTop, left: nextLeft });
       }
 
-      function onPointerUp(){
-        dragging = false;
-      }
+      function onPointerUp(){ dragging = false; }
 
-      // Doble click: resetear a "anclada" (debajo del título)
       bar.addEventListener('dblclick', ()=>{
         bar.style.left = '';
         bar.style.top  = '';
-        bar.style.right = ''; // vuelve a usar right: 10px desde CSS
+        bar.style.right = '';
         savePos({ mode:'docked' });
         showMessage('Barra reposicionada debajo del título','info',1500);
       });
@@ -1921,7 +1475,6 @@ if (removeBgBtn) {
       window.addEventListener('pointerup', onPointerUp);
       window.addEventListener('pointercancel', onPointerUp);
 
-      // Re-clampear en resize si está en modo libre
       window.addEventListener('resize', ()=>{
         const s = loadPos();
         if (s.mode !== 'free') return;
@@ -1962,11 +1515,10 @@ const mockLayersList = document.getElementById('mock-layers-list');
 
 let mockState = {
   templateLoaded: false,
-  layers: [],           // [{el, src, x, y, scale, rot, blend, opacity}]
-  active: -1            // índice de capa seleccionada
+  layers: [],
+  active: -1
 };
 
-// ===== TUS PLANTILLAS (i.ibb.co enlaces directos) =====
 const MOCK_TEMPLATES = [
   { name: 'Camiseta Blanca', url: 'https://i.ibb.co/9kDxHZyY/camiseta-blanca.png' },
   { name: 'Camiseta Negra',  url: 'https://i.ibb.co/8DwDJ6xZ/camiseta-negra.png' },
@@ -1993,7 +1545,6 @@ function loadImageCORS(src){
   });
 }
 
-// Abrir/Cerrar panel
 if (openMockupsBtn){
   openMockupsBtn.addEventListener('click', async ()=>{
     mockPane.style.display = 'block';
@@ -2006,7 +1557,6 @@ if (openMockupsBtn){
 }
 mockCloseBtn?.addEventListener('click', ()=> mockPane.style.display='none');
 
-// Cambiar plantilla
 mockTemplateSelect.addEventListener('change', async ()=>{
   const idx = parseInt(mockTemplateSelect.value, 10);
   if (isNaN(idx)) return;
@@ -2028,8 +1578,6 @@ async function setMockTemplate(url){
   });
 }
 
-
-// ===== Capas: helpers =====
 function addLayerFromSrc(src, opts={}){
   const el = document.createElement('img');
   el.className = 'mock-design';
@@ -2037,7 +1585,6 @@ function addLayerFromSrc(src, opts={}){
   el.alt = 'Capa';
   el.src = src;
 
-  // Estado por defecto
   const layer = {
     el,
     src,
@@ -2049,7 +1596,6 @@ function addLayerFromSrc(src, opts={}){
     opacity: opts.opacity ?? (parseInt(mockOpacity.value,10)/100 || 0.95)
   };
 
-  // base visual coherente
   el.style.width = '50%';
 
   mockHost.appendChild(el);
@@ -2062,13 +1608,11 @@ function addLayerFromSrc(src, opts={}){
 }
 
 function selectLayer(index){
-  // deseleccionar visualmente
   mockState.layers.forEach(l=> l.el.classList.remove('selected'));
   mockState.active = index;
   const L = mockState.layers[index];
   if (L){
     L.el.classList.add('selected');
-    // sincroniza controles globales con la capa activa
     mockBlend.value = L.blend === 'source-over' ? 'normal' : L.blend;
     mockOpacity.value = Math.round((L.opacity ?? 1)*100);
     mockScale.value = Math.round(L.scale * 100);
@@ -2093,7 +1637,7 @@ function moveActiveToFront(){
   if (i<0 || i===mockState.layers.length-1) return;
   const [L] = mockState.layers.splice(i,1);
   mockState.layers.push(L);
-  mockHost.appendChild(L.el); // último = al frente
+  mockHost.appendChild(L.el);
   selectLayer(mockState.layers.length-1);
   rebuildLayersList();
 }
@@ -2178,7 +1722,6 @@ function enableDragFor(el){
   });
   window.addEventListener('mouseup', ()=> dragging=false);
 
-  // Touch
   el.addEventListener('touchstart', (e)=>{
     const idx = mockState.layers.findIndex(L=> L.el === el);
     if (idx>=0) selectLayer(idx);
@@ -2208,12 +1751,11 @@ function enableDragFor(el){
   window.addEventListener('touchend', ()=> dragging=false);
 }
 
-// ===== Añadir capas =====
-// Lee la(s) imagen(es) elegida(s) en el input hidden y crea capas
+// Añadir capas
 mockFile.addEventListener('change', (e)=>{
   if (!mockState.templateLoaded){
     showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
-    mockFile.value = ''; // limpia por si se reintenta
+    mockFile.value = '';
     return;
   }
   const files = Array.from(e.target.files || []);
@@ -2228,7 +1770,6 @@ mockFile.addEventListener('change', (e)=>{
     const reader = new FileReader();
     reader.onload = ev=>{
       try {
-        // Usamos DataURL para evitar problemas de CORS
         addLayerFromSrc(ev.target.result, { scale: 1.0, rot: 0 });
         ok++;
         rebuildLayersList();
@@ -2240,13 +1781,11 @@ mockFile.addEventListener('change', (e)=>{
     reader.readAsDataURL(file);
   });
 
-  // Feedback
   setTimeout(()=>{
     if (ok>0)  showMessage(`Capa(s) añadida(s): ${ok}`, 'success', 1800);
     if (fail>0) showMessage(`No se pudieron cargar ${fail} archivo(s)`, 'warning', 2500);
   }, 50);
 
-  // permitir volver a subir el mismo archivo
   mockFile.value = '';
 });
 
@@ -2264,9 +1803,9 @@ mockUseSelectedBtn.addEventListener('click', ()=>{
     return;
   }
   const d = getSelectedDesign();
-  if (!d){ 
-    showMessage('Selecciona un diseño en el editor', 'warning', 1800); 
-    return; 
+  if (!d){
+    showMessage('Selecciona un diseño en el editor', 'warning', 1800);
+    return;
   }
   const temp = document.createElement('canvas');
   temp.width = d.image.width; temp.height = d.image.height;
@@ -2276,8 +1815,7 @@ mockUseSelectedBtn.addEventListener('click', ()=>{
   addLayerFromSrc(temp.toDataURL('image/png'), { scale: 1.0, rot: d.rotation||0 });
 });
 
-
-// ===== Controles aplican a la capa activa =====
+// Controles aplican a la capa activa
 mockBlend.addEventListener('change', ()=>{
   const L = mockState.layers[mockState.active]; if (!L) return;
   L.blend = (mockBlend.value === 'normal') ? 'source-over' : mockBlend.value;
@@ -2314,7 +1852,7 @@ document.addEventListener('keydown', (e)=>{
   }
 });
 
-// ===== Descargar PNG del mockup (todas las capas, tamaños reales) =====
+// Descargar PNG del mockup
 mockDownloadBtn.addEventListener('click', async ()=>{
   if (!mockState.templateLoaded){
     showMessage('Carga una plantilla primero','warning',2000); return;
@@ -2324,26 +1862,21 @@ mockDownloadBtn.addEventListener('click', async ()=>{
   }
 
   const stageRect = mockStage.getBoundingClientRect();
-  const W = Math.max(2, Math.round(stageRect.width * 2)); // 2x nitidez
+  const W = Math.max(2, Math.round(stageRect.width * 2));
   const H = Math.max(2, Math.round(stageRect.height * 2));
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
 
-  // 1) Plantilla
   const tplImg = await loadImageCORS(mockTemplate.src);
   x.drawImage(tplImg, 0, 0, W, H);
 
-  // 2) Capas (en orden, de fondo a frente)
   for (const L of mockState.layers){
     const img = await loadImageCORS(L.src);
-
-    // ancho/alto visibles del <img> en pantalla
     const elRect = L.el.getBoundingClientRect();
     const sx = W / stageRect.width;
     const dw = Math.max(1, Math.round(elRect.width  * sx));
     const dh = Math.max(1, Math.round(elRect.height * sx));
-
     const cx = L.x * W;
     const cy = L.y * H;
 
@@ -2353,9 +1886,6 @@ mockDownloadBtn.addEventListener('click', async ()=>{
     x.translate(cx, cy);
     x.rotate((L.rot||0) * Math.PI/180);
     x.scale(L.scale || 1, L.scale || 1);
-    // OJO: ya incluimos scale en CSS (al medir el rect). Para evitar doble escala,
-    // dibujamos el tamaño base sin volver a multiplicar por L.scale en dw/dh.
-    // Por eso aquí el .scale() sí se usa y dw/dh vienen del tamaño visual sin scale CSS.
     x.drawImage(img, -dw/2, -dh/2, dw, dh);
     x.restore();
   }
@@ -2369,9 +1899,10 @@ mockDownloadBtn.addEventListener('click', async ()=>{
   }, 'image/png', 1.0);
 });
 
-    // ====== Iniciar controles
+    // Iniciar controles
     updateControls();
     setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
   </script>
 </body>
 </html>
+"""
