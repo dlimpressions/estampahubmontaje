@@ -207,9 +207,6 @@ console.log('[Auto-Pack PRO] cargado');
       msg('No hay diseños para ordenar.', 'warning', 2000);
       return;
     }
-window.__autoPackDesignsPRO__ = autoPackDesignsPRO;
-// --> pega esto DENTRO del IIFE, después de definir autoPackDesignsPRO:
-window.__autoPackDesignsPRO__ = autoPackDesignsPRO;
 
 
     // Construimos lista de items con sus AABB y posible rotación 90° si conviene.
@@ -304,6 +301,8 @@ window.__autoPackDesignsPRO__ = autoPackDesignsPRO;
       msg('Ordenado PRO completado ✅', 'success', 2500);
     }
   }
+// === Exportar la función para que el botón (y otros scripts) puedan usarla
+window.__autoPackDesignsPRO__ = autoPackDesignsPRO;
 
   // ========= Inyectar botón en UI =========
   function placeButton(){
