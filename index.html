@@ -1904,5 +1904,48 @@ mockDownloadBtn.addEventListener('click', async ()=>{
     setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
   </script>
 <script src="auto_pack_pro.js"></script>
+<script>
+  // Fuerza a crear el botón debajo del botón "Espejo"
+  (function(){
+    function place() {
+      var mirror = document.getElementById('mirror-btn');
+      if (!mirror) { setTimeout(place, 200); return; }
+
+      if (document.getElementById('auto-pack-pro-btn')) return;
+
+      var btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.id = 'auto-pack-pro-btn';
+      btn.textContent = '🧠 Ordenar diseños (Pro)';
+      // inserta justo debajo del botón "Espejo"
+      mirror.parentElement.insertBefore(btn, mirror.nextSibling);
+
+      // Si el addon ya está cargado, él mismo registra el click.
+      // Por si acaso, añadimos un fallback para invocarlo manualmente:
+      btn.addEventListener('click', function(){
+        // intenta llamar a la función del addon si existe
+        if (window.PIXELS_PER_CM && window.canvas && window.designs && typeof window.drawCanvas === 'function') {
+          // emula el flujo del addon Pro
+          var defCm = 0.8;
+          var val = prompt('Espacio entre diseños (en cm):', String(defCm));
+          if (val === null) return;
+          var cm = parseFloat(val); if (!isFinite(cm) || cm < 0) cm = defCm;
+          var rotateAns = prompt('¿Permitir rotación automática de 90° si ayuda? (si/no)', 'si');
+          var allowAutoRotate90 = (rotateAns||'').trim().toLowerCase().startsWith('s');
+          // Si el addon Pro expuso la función, úsala
+          if (typeof window.__autoPackDesignsPRO__ === 'function') {
+            window.__autoPackDesignsPRO__(cm * (window.PIXELS_PER_CM||10), allowAutoRotate90);
+          } else {
+            alert('El motor PRO no está disponible. Revisa que auto_pack_pro.js se haya cargado.');
+          }
+        } else {
+          alert('El editor aún no está listo. Recarga la página.');
+        }
+      });
+    }
+    place();
+  })();
+</script>
+
 </body>
 </html>
