@@ -11,6 +11,7 @@
      - window.drawCanvas() (función para repintar)
      - window.PIXELS_PER_CM (número; si no existe, se usa 10)
    ============================================================ */
+console.log('[Auto-Pack PRO] cargado');
 (function(){
   // ========= Helpers UI =========
   function msg(text, type, ms){
@@ -206,6 +207,10 @@
       msg('No hay diseños para ordenar.', 'warning', 2000);
       return;
     }
+window.__autoPackDesignsPRO__ = autoPackDesignsPRO;
+// --> pega esto DENTRO del IIFE, después de definir autoPackDesignsPRO:
+window.__autoPackDesignsPRO__ = autoPackDesignsPRO;
+
 
     // Construimos lista de items con sus AABB y posible rotación 90° si conviene.
     // Ordenamos por lado mayor descendente (mejora la calidad del packing).
