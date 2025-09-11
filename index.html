@@ -1136,7 +1136,9 @@ class Design {
     if (clearBtn){
       clearBtn.addEventListener('click', function(){
         if (designs.length>0 && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
-          designs = []; selectedDesignId = null;
+          designs = [];
+          syncDesignsRef();  // <-- NUEVO
+          selectedDesignId = null;
           showMessage('Lienzo limpiado','info',2000);
           updateDesignsList(); updateControls(); initCanvas();
         }
@@ -1259,7 +1261,8 @@ class Design {
 
       if ((e.key === 'Delete' || e.key === 'Backspace') && d){
         e.preventDefault();
-        designs = designs.filter(x=> x.id!==d.id);
+       designs = designs.filter(x=> x.id!==d.id);
+        syncDesignsRef();  // <-- NUEVO
         selectedDesignId = designs.length ? designs[designs.length-1].id : null;
         updateDesignsList(); updateControls(); drawCanvas();
         showMessage('Diseño eliminado','info',1500);
@@ -1898,6 +1901,17 @@ mockDownloadBtn.addEventListener('click', async ()=>{
     setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
   }, 'image/png', 1.0);
 });
+
+// --- Exponer referencias globales para el motor PRO ---
+// (Esto permite que auto_pack_pro.js encuentre las cosas)
+window.canvas = canvas;
+window.drawCanvas = drawCanvas;
+window.PIXELS_PER_CM = PIXELS_PER_CM;
+
+// MUY IMPORTANTE: mantener window.designs apuntando al array actual
+function syncDesignsRef(){ window.designs = designs; }
+syncDesignsRef();
+
 
     // Iniciar controles
     updateControls();
