@@ -2107,61 +2107,87 @@ syncDesignsRef();
     return `${base}-${datePart}-${randomPart}`;
   }
 
-  // --- Nuevo diseño premium del bono ---
-  function drawBono(name, product, id){
-    const W = 700, H = 400;
-    bonoCanvas.width = W; 
-    bonoCanvas.height = H;
-    ctxBono.clearRect(0,0,W,H);
+function drawBono(name, product, id){
+  const W = 700, H = 400;
+  bonoCanvas.width = W; 
+  bonoCanvas.height = H;
+  ctxBono.clearRect(0,0,W,H);
 
-    // Fondo negro con textura y brillo dorado
-    const bgGradient = ctxBono.createLinearGradient(0,0,W,H);
-    bgGradient.addColorStop(0,"#0a0a0a");
-    bgGradient.addColorStop(0.5,"#111111");
-    bgGradient.addColorStop(1,"#1a1a1a");
-    ctxBono.fillStyle = bgGradient;
-    ctxBono.fillRect(0,0,W,H);
+  // === Fondo completamente negro con textura tipo carbono ===
+  // Crear patrón de textura diagonal
+  const patternCanvas = document.createElement('canvas');
+  patternCanvas.width = 20; patternCanvas.height = 20;
+  const pctx = patternCanvas.getContext('2d');
+  pctx.fillStyle = '#000';
+  pctx.fillRect(0,0,20,20);
+  pctx.strokeStyle = '#111';
+  pctx.lineWidth = 2;
+  pctx.beginPath();
+  pctx.moveTo(0,20); pctx.lineTo(20,0);
+  pctx.stroke();
+  const pattern = ctxBono.createPattern(patternCanvas, 'repeat');
+  ctxBono.fillStyle = pattern;
+  ctxBono.fillRect(0,0,W,H);
 
-    // Marco exterior dorado
-    const frameGrad = ctxBono.createLinearGradient(0,0,W,0);
-    frameGrad.addColorStop(0,"#b8860b");
-    frameGrad.addColorStop(0.5,"#ffd700");
-    frameGrad.addColorStop(1,"#b8860b");
-    ctxBono.strokeStyle = frameGrad;
-    ctxBono.lineWidth = 8;
-    ctxBono.strokeRect(4,4,W-8,H-8);
+  // Degradado sutil para profundidad
+  const darkGrad = ctxBono.createLinearGradient(0,0,W,H);
+  darkGrad.addColorStop(0,'rgba(0,0,0,0.8)');
+  darkGrad.addColorStop(1,'rgba(0,0,0,1)');
+  ctxBono.fillStyle = darkGrad;
+  ctxBono.fillRect(0,0,W,H);
 
-    // Marco interior sutil
-    ctxBono.strokeStyle = "#daa520";
-    ctxBono.lineWidth = 2;
-    ctxBono.strokeRect(20,20,W-40,H-40);
+  // === Marco dorado doble brillante ===
+  const frameGrad = ctxBono.createLinearGradient(0,0,W,0);
+  frameGrad.addColorStop(0,'#b8860b');
+  frameGrad.addColorStop(0.5,'#ffd700');
+  frameGrad.addColorStop(1,'#b8860b');
+  ctxBono.strokeStyle = frameGrad;
+  ctxBono.lineWidth = 8;
+  ctxBono.strokeRect(4,4,W-8,H-8);
 
-    // Logo en esquina superior derecha
-    const logo = new Image();
-    logo.crossOrigin = "anonymous";
-    logo.src = "https://i.ibb.co/2wp1vDb/logo.jpg";
-    logo.onload = ()=>{
-      const logoW = 90, logoH = 90;
-      ctxBono.drawImage(logo, W - logoW - 40, 35, logoW, logoH);
+  ctxBono.strokeStyle = '#daa520';
+  ctxBono.lineWidth = 2;
+  ctxBono.strokeRect(20,20,W-40,H-40);
 
-      // Texto dorado principal
+  // === Imagen de la termofijadora de fondo (semi transparente) ===
+  const machine = new Image();
+  machine.crossOrigin = "anonymous";
+  machine.src = "https://www.impoequipos.com/wp-content/uploads/2025/07/17-TERMOFIJADORA-60x80-1.png";
+
+  // === Logo superior derecho ===
+  const logo = new Image();
+  logo.crossOrigin = "anonymous";
+  logo.src = "https://i.ibb.co/2wp1vDb/logo.jpg";
+
+  logo.onload = ()=>{
+    const logoW = 90, logoH = 90;
+    ctxBono.drawImage(logo, W - logoW - 45, 35, logoW, logoH);
+
+    // Esperar a que cargue la termofijadora y luego dibujar el resto
+    machine.onload = ()=>{
+      ctxBono.globalAlpha = 0.25;
+      const mW = 350, mH = 250;
+      ctxBono.drawImage(machine, W - mW - 50, H - mH - 20, mW, mH);
+      ctxBono.globalAlpha = 1;
+
+      // === Texto principal ===
       const goldGrad = ctxBono.createLinearGradient(0,0,W,0);
       goldGrad.addColorStop(0,"#ffe680");
       goldGrad.addColorStop(0.5,"#ffd700");
       goldGrad.addColorStop(1,"#e5c100");
       ctxBono.fillStyle = goldGrad;
-      ctxBono.font = "bold 32px Segoe UI";
+      ctxBono.font = "bold 34px 'Segoe UI'";
       ctxBono.textAlign = "left";
-      ctxBono.fillText("BONO CASHBACK DTF $20.000", 40, 90);
+      ctxBono.fillText("BONO CASHBACK DTF $20.000", 50, 90);
 
-      // Datos del cliente
-      ctxBono.font = "20px Segoe UI";
-      ctxBono.fillText("Cliente: " + name, 40, 150);
-      ctxBono.fillText("Producto: " + product, 40, 180);
-      ctxBono.fillText("ID Bono: " + id, 40, 210);
-      ctxBono.fillText("Redimible en impresiones DTF", 40, 240);
+      // === Datos del cliente ===
+      ctxBono.font = "20px 'Segoe UI'";
+      ctxBono.fillText("Cliente: " + name, 50, 150);
+      ctxBono.fillText("Producto: " + product, 50, 180);
+      ctxBono.fillText("ID Bono: " + id, 50, 210);
+      ctxBono.fillText("Redimible en impresiones DTF", 50, 240);
 
-      // Código de barras
+      // === Código de barras visible y dorado ===
       const barcodeCanvas = document.createElement('canvas');
       JsBarcode(barcodeCanvas, id, {
         format: 'CODE128',
@@ -2171,25 +2197,18 @@ syncDesignsRef();
         background: "#000000",
         lineColor: "#FFD700"
       });
-      ctxBono.drawImage(barcodeCanvas, 40, 260);
+      ctxBono.drawImage(barcodeCanvas, 50, 270);
 
-      // Firma o crédito
-      ctxBono.font = "italic 16px Segoe UI";
+      // === Pie de firma ===
+      ctxBono.font = "italic 16px 'Segoe UI'";
       ctxBono.fillStyle = "#c0a060";
       ctxBono.textAlign = "right";
-      ctxBono.fillText("By: David Munive", W - 40, H - 35);
+      ctxBono.fillText("By: David Munive", W - 50, H - 35);
     };
-  }
-
-  // --- Modifica la parte donde se genera el bono (dentro del addEventListener del formulario) ---
-  // Busca donde está esta línea dentro del submit:
-  //   drawBono(name, product, BONO_ID);
-  // Reemplázala por esto:
-  const generatedID = generateBonoID();
-  drawBono(name, product, generatedID);
-  record.id = generatedID;
-  localStorage.setItem('oc_records', JSON.stringify(records));
+  };
+}
 </script>
+
 
 
 </body>
