@@ -120,6 +120,35 @@
       .floating-tools{ right: 6px; left: 6px; justify-content: center; flex-wrap: wrap; }
     }
 
+/* === Crear OC Termofijadoras === */
+.oc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  color: #2d3748;
+}
+.oc-card {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  width: min(90vw, 450px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.oc-card h2 { color: #2c5282; margin-bottom: 1rem; }
+.oc-card label { display:block; margin-top: .8rem; font-weight:500; }
+.oc-card input, .oc-card select {
+  width:100%; padding:.6rem; border:1px solid #cbd5e0;
+  border-radius:6px; margin-top:.3rem;
+}
+.oc-card button { margin-top:1rem; }
+
+
 /* === MOCKUPS === */
 #mock-layer-host{ position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; }
 .mock-design{
@@ -158,6 +187,8 @@
 .mock-btn:hover{ background:#3182ce }
 .mock-select, .mock-input{ padding:.45rem .6rem;border:1px solid #cbd5e0;border-radius:6px;background:#fff }
 .mock-slider{ width:160px }
+
+
   </style>
 </head>
 <body>
@@ -171,6 +202,57 @@
       <button id="lock-btn">Acceder</button>
     </div>
   </div>
+
+<!-- === SECCIÓN: Crear OC Termofijadoras === -->
+<div class="oc-overlay" id="oc-overlay" style="display:none;">
+  <div class="oc-card" id="oc-form-card">
+    <h2>🧾 Crear Orden de Compra - Termofijadoras</h2>
+    <p>Completa los datos para generar tu bono con cashback DTF de $20.000.</p>
+
+    <form id="oc-form">
+      <label>Nombre completo</label>
+      <input type="text" id="oc-name" required>
+
+      <label>Correo electrónico</label>
+      <input type="email" id="oc-email" required>
+
+      <label>Teléfono</label>
+      <input type="tel" id="oc-phone" required>
+
+      <label>Ciudad</label>
+      <input type="text" id="oc-city" required>
+
+      <label>Producto</label>
+      <select id="oc-product" required>
+        <option value="">Selecciona...</option>
+        <option>Termofijadora 38x38</option>
+        <option>Termofijadora 40x60</option>
+        <option>Termofijadora Combo 8 en 1</option>
+        <option>Otra</option>
+      </select>
+
+      <label>Cantidad</label>
+      <input type="number" id="oc-qty" value="1" min="1" required>
+
+      <button type="submit" class="btn">Generar Bono</button>
+      <button type="button" class="btn btn-clear" id="oc-cancel">Cancelar</button>
+    </form>
+  </div>
+
+  <!-- Tarjeta del bono generado -->
+  <div class="oc-card" id="oc-result-card" style="display:none; text-align:center;">
+    <h2>🎁 Bono Cashback DTF</h2>
+    <canvas id="oc-bono-canvas" width="600" height="350"></canvas>
+    <p>¡Gracias por tu compra! Guarda tu bono digital y redímelo en tus próximas impresiones.</p>
+    <button id="oc-download" class="btn btn-download">Descargar Bono PNG</button>
+    <button id="oc-new" class="btn">Nueva Orden</button>
+  </div>
+</div>
+
+<!-- Botón para abrir el formulario -->
+<div style="text-align:center; margin-top:20px;">
+  <button id="open-oc-btn" class="btn btn-download">🧾 Crear OC Termofijadoras</button>
+</div>
 
   <div class="container" id="app-root" style="visibility:hidden;">
     <header>
@@ -1955,6 +2037,99 @@ syncDesignsRef();
     place();
   })();
 </script>
+
+<!-- Librería para código de barras -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+<script>
+  const openOcBtn = document.getElementById('open-oc-btn');
+  const ocOverlay = document.getElementById('oc-overlay');
+  const ocFormCard = document.getElementById('oc-form-card');
+  const ocResultCard = document.getElementById('oc-result-card');
+  const ocForm = document.getElementById('oc-form');
+  const ocCancel = document.getElementById('oc-cancel');
+  const ocDownload = document.getElementById('oc-download');
+  const ocNew = document.getElementById('oc-new');
+  const bonoCanvas = document.getElementById('oc-bono-canvas');
+  const ctxBono = bonoCanvas.getContext('2d');
+  const BONO_ID = "2712202227";
+
+  openOcBtn.addEventListener('click', ()=>{
+    ocOverlay.style.display='flex';
+    ocFormCard.style.display='block';
+    ocResultCard.style.display='none';
+  });
+
+  ocCancel.addEventListener('click', ()=> ocOverlay.style.display='none');
+  ocNew.addEventListener('click', ()=>{
+    ocForm.reset();
+    ocFormCard.style.display='block';
+    ocResultCard.style.display='none';
+  });
+
+  ocForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const name = ocForm.querySelector('#oc-name').value.trim();
+    const email = ocForm.querySelector('#oc-email').value.trim();
+    const phone = ocForm.querySelector('#oc-phone').value.trim();
+    const city = ocForm.querySelector('#oc-city').value.trim();
+    const product = ocForm.querySelector('#oc-product').value;
+    const qty = ocForm.querySelector('#oc-qty').value;
+
+    // Guardar en localStorage
+    const record = { name, email, phone, city, product, qty, date: new Date().toLocaleString() };
+    let records = JSON.parse(localStorage.getItem('oc_records')||'[]');
+    records.push(record);
+    localStorage.setItem('oc_records', JSON.stringify(records));
+
+    // Mostrar tarjeta bono
+    ocFormCard.style.display='none';
+    ocResultCard.style.display='block';
+    drawBono(name, product, BONO_ID);
+  });
+
+  function drawBono(name, product, id){
+    ctxBono.clearRect(0,0,bonoCanvas.width,bonoCanvas.height);
+
+    // Fondo
+    const gradient = ctxBono.createLinearGradient(0,0,600,350);
+    gradient.addColorStop(0,'#2b6cb0');
+    gradient.addColorStop(1,'#63b3ed');
+    ctxBono.fillStyle = gradient;
+    ctxBono.fillRect(0,0,600,350);
+
+    // Texto principal
+    ctxBono.fillStyle='#fff';
+    ctxBono.font='bold 28px Segoe UI';
+    ctxBono.fillText('BONO CASHBACK DTF $20.000', 50, 60);
+
+    ctxBono.font='20px Segoe UI';
+    ctxBono.fillText('Cliente: ' + name, 50, 110);
+    ctxBono.fillText('Producto: ' + product, 50, 140);
+    ctxBono.fillText('ID Bono: ' + id, 50, 170);
+    ctxBono.fillText('Redimible en impresiones DTF', 50, 200);
+
+    // Dibujar código de barras
+    const barcodeCanvas = document.createElement('canvas');
+    JsBarcode(barcodeCanvas, id, {format:'CODE128', width:2, height:60, displayValue:false});
+    ctxBono.drawImage(barcodeCanvas, 50, 220);
+
+    // Logo
+    ctxBono.font='italic 16px Segoe UI';
+    ctxBono.fillText('By: David Munive', 420, 330);
+  }
+
+  ocDownload.addEventListener('click', ()=>{
+    const link = document.createElement('a');
+    link.download = 'bono_cashback.png';
+    bonoCanvas.toBlob(blob=>{
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+  });
+</script>
+
 
 </body>
 </html>
