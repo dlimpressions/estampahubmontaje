@@ -2041,6 +2041,8 @@ syncDesignsRef();
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 <script>
+  <script>
+document.addEventListener('DOMContentLoaded', ()=>{
   const openOcBtn = document.getElementById('open-oc-btn');
   const ocOverlay = document.getElementById('oc-overlay');
   const ocFormCard = document.getElementById('oc-form-card');
@@ -2051,21 +2053,25 @@ syncDesignsRef();
   const ocNew = document.getElementById('oc-new');
   const bonoCanvas = document.getElementById('oc-bono-canvas');
   const ctxBono = bonoCanvas.getContext('2d');
-  const BONO_ID = "2712202227";
 
+  // --- Mostrar formulario
   openOcBtn.addEventListener('click', ()=>{
-    ocOverlay.style.display='flex';
-    ocFormCard.style.display='block';
-    ocResultCard.style.display='none';
+    ocOverlay.style.display = 'flex';
+    ocFormCard.style.display = 'block';
+    ocResultCard.style.display = 'none';
   });
 
-  ocCancel.addEventListener('click', ()=> ocOverlay.style.display='none');
+  // --- Cancelar
+  ocCancel.addEventListener('click', ()=> ocOverlay.style.display = 'none');
+
+  // --- Nueva orden
   ocNew.addEventListener('click', ()=>{
     ocForm.reset();
-    ocFormCard.style.display='block';
-    ocResultCard.style.display='none';
+    ocFormCard.style.display = 'block';
+    ocResultCard.style.display = 'none';
   });
 
+  // --- Enviar formulario
   ocForm.addEventListener('submit', e=>{
     e.preventDefault();
     const name = ocForm.querySelector('#oc-name').value.trim();
@@ -2075,11 +2081,30 @@ syncDesignsRef();
     const product = ocForm.querySelector('#oc-product').value;
     const qty = ocForm.querySelector('#oc-qty').value;
 
-    // Guardar en localStorage
-    const record = { name, email, phone, city, product, qty, date: new Date().toLocaleString() };
+    const generatedID = generateBonoID();
+    const record = { name, email, phone, city, product, qty, id: generatedID, date: new Date().toLocaleString() };
     let records = JSON.parse(localStorage.getItem('oc_records')||'[]');
     records.push(record);
     localStorage.setItem('oc_records', JSON.stringify(records));
+
+    ocFormCard.style.display = 'none';
+    ocResultCard.style.display = 'block';
+    drawBono(name, product, generatedID);
+  });
+
+  // --- Descargar bono
+  ocDownload.addEventListener('click', ()=>{
+    const link = document.createElement('a');
+    link.download = 'bono_cashback.png';
+    bonoCanvas.toBlob(blob=>{
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+  });
+});
+</script>
+
 
     // Generar ID único
 const generatedID = generateBonoID();
