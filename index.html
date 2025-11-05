@@ -2113,15 +2113,14 @@ function drawBono(name, product, id){
   bonoCanvas.height = H;
   ctxBono.clearRect(0,0,W,H);
 
-  // === Fondo negro con textura ===
+  // === Fondo negro sólido con textura ===
   const patternCanvas = document.createElement('canvas');
   patternCanvas.width = 25; patternCanvas.height = 25;
   const pctx = patternCanvas.getContext('2d');
   pctx.fillStyle = '#000';
   pctx.fillRect(0,0,25,25);
   pctx.strokeStyle = '#111';
-  pctx.lineWidth = 1;
-  for (let i = -25; i < 50; i+=6){
+  for (let i = -25; i < 50; i += 6) {
     pctx.beginPath();
     pctx.moveTo(i,25);
     pctx.lineTo(i+25,0);
@@ -2131,14 +2130,7 @@ function drawBono(name, product, id){
   ctxBono.fillStyle = pattern;
   ctxBono.fillRect(0,0,W,H);
 
-  // Capa de brillo metálico sutil
-  const shine = ctxBono.createLinearGradient(0,0,W,H);
-  shine.addColorStop(0,'rgba(255,255,255,0.06)');
-  shine.addColorStop(1,'rgba(255,215,0,0.08)');
-  ctxBono.fillStyle = shine;
-  ctxBono.fillRect(0,0,W,H);
-
-  // === Marco dorado doble ===
+  // === Marco dorado ===
   const frameGrad = ctxBono.createLinearGradient(0,0,W,0);
   frameGrad.addColorStop(0,'#b8860b');
   frameGrad.addColorStop(0.5,'#ffd700');
@@ -2146,7 +2138,6 @@ function drawBono(name, product, id){
   ctxBono.strokeStyle = frameGrad;
   ctxBono.lineWidth = 8;
   ctxBono.strokeRect(4,4,W-8,H-8);
-
   ctxBono.strokeStyle = '#daa520';
   ctxBono.lineWidth = 2;
   ctxBono.strokeRect(20,20,W-40,H-40);
@@ -2161,40 +2152,45 @@ function drawBono(name, product, id){
   machine.crossOrigin = "anonymous";
   machine.src = "https://www.impoequipos.com/wp-content/uploads/2025/07/17-TERMOFIJADORA-60x80-1.png";
 
-  // Fecha de emisión
   const now = new Date();
   const fechaStr = now.toLocaleDateString("es-CO", { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+  // === Cargar logo ===
   logo.onload = ()=>{
     ctxBono.drawImage(logo, W - 130, 35, 80, 80);
 
+    // === Cargar termofijadora ===
     machine.onload = ()=>{
-      // Imagen visible, centrada hacia el fondo
-      ctxBono.globalAlpha = 0.5;
-      ctxBono.drawImage(machine, W - 360, H - 270, 320, 220);
+      ctxBono.globalAlpha = 0.35;
+      ctxBono.drawImage(machine, W - 370, H - 260, 320, 210);
       ctxBono.globalAlpha = 1;
 
-      // === Texto principal (ahora blanco) ===
-      ctxBono.fillStyle = "#FFFFFF";
+      // === TEXTO PRINCIPAL (BLANCO + BRILLO) ===
+      ctxBono.save();
+      ctxBono.fillStyle = "#ffffff";
+      ctxBono.shadowColor = "#ffd700";
+      ctxBono.shadowBlur = 10;
       ctxBono.font = "bold 34px 'Segoe UI'";
-      ctxBono.textAlign = "left";
-      ctxBono.shadowColor = "rgba(0,0,0,0.9)";
-      ctxBono.shadowBlur = 4;
-      ctxBono.fillText("BONO CASHBACK DTF $20.000", 50, 90);
+      ctxBono.textAlign = "center";
+      ctxBono.fillText("BONO CASHBACK DTF $20.000", W/2, 90);
+      ctxBono.restore();
 
-      // === Fecha de emisión ===
+      // === FECHA DE EMISIÓN ===
+      ctxBono.fillStyle = "#ffffff";
       ctxBono.font = "18px 'Segoe UI'";
-      ctxBono.shadowBlur = 0;
-      ctxBono.fillText("Emitido el: " + fechaStr, 50, 120);
+      ctxBono.textAlign = "center";
+      ctxBono.fillText("Emitido el: " + fechaStr, W/2, 120);
 
-      // === Datos del cliente ===
+      // === DATOS DEL CLIENTE ===
+      ctxBono.textAlign = "left";
       ctxBono.font = "20px 'Segoe UI'";
+      ctxBono.fillStyle = "#ffffff";
       ctxBono.fillText("Cliente: " + name, 50, 160);
       ctxBono.fillText("Producto: " + product, 50, 190);
       ctxBono.fillText("ID Bono: " + id, 50, 220);
       ctxBono.fillText("Redimible en impresiones DTF", 50, 250);
 
-      // === Código de barras visible ===
+      // === CÓDIGO DE BARRAS ===
       const barcodeCanvas = document.createElement('canvas');
       JsBarcode(barcodeCanvas, id, {
         format: 'CODE128',
@@ -2206,16 +2202,16 @@ function drawBono(name, product, id){
       });
       ctxBono.drawImage(barcodeCanvas, 50, 280);
 
-      // === ID único centrado abajo ===
+      // === ID CENTRADO ABAJO ===
       ctxBono.textAlign = "center";
       ctxBono.font = "18px 'Segoe UI'";
-      ctxBono.fillStyle = "#FFFFFF";
+      ctxBono.fillStyle = "#ffffff";
       ctxBono.fillText(`BONO ID: ${id}`, W/2, H - 20);
 
-      // === Firma o crédito ===
+      // === FIRMA ===
       ctxBono.textAlign = "right";
       ctxBono.font = "italic 16px 'Segoe UI'";
-      ctxBono.fillStyle = "#CCCCCC";
+      ctxBono.fillStyle = "#dddddd";
       ctxBono.fillText("By: David Munive", W - 45, H - 40);
     };
   };
