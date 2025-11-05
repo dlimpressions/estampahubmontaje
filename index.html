@@ -2081,11 +2081,20 @@ syncDesignsRef();
     records.push(record);
     localStorage.setItem('oc_records', JSON.stringify(records));
 
-    // Mostrar tarjeta bono
-    ocFormCard.style.display='none';
-    ocResultCard.style.display='block';
-    drawBono(name, product, BONO_ID);
-  });
+    // Generar ID único
+const generatedID = generateBonoID();
+
+// Guardar datos
+const record = { name, email, phone, city, product, qty, id: generatedID, date: new Date().toLocaleString() };
+let records = JSON.parse(localStorage.getItem('oc_records')||'[]');
+records.push(record);
+localStorage.setItem('oc_records', JSON.stringify(records));
+
+// Mostrar bono
+ocFormCard.style.display='none';
+ocResultCard.style.display='block';
+drawBono(name, product, generatedID);
+
 
   ocDownload.addEventListener('click', ()=>{
     const link = document.createElement('a');
@@ -2099,13 +2108,13 @@ syncDesignsRef();
 </script>
  
 <script>
-  // --- Generador de ID único por bono ---
   function generateBonoID() {
-    const base = "2712202227"; // raíz fija
-    const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos aleatorios
-    const datePart = new Date().toISOString().slice(2,10).replace(/-/g,""); // fecha compacta
-    return `${base}-${datePart}-${randomPart}`;
-  }
+  const base = "2712202227"; // raíz fija de tus bonos
+  const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos aleatorios
+  const datePart = new Date().toISOString().slice(2,10).replace(/-/g,""); // fecha YYMMDD
+  return `${base}-${datePart}-${randomPart}`;
+}
+
 
 function drawBono(name, product, id){
   const W = 700, H = 400;
@@ -2192,8 +2201,9 @@ function drawBono(name, product, id){
     ctxBono.font = "20px 'Segoe UI'";
     ctxBono.fillText("Cliente: " + name, 50, 160);
     ctxBono.fillText("Producto: " + product, 50, 190);
-    ctxBono.fillText("ID Bono: " + id, 50, 220);
+    ctxBono.fillText("ID Bono: 2712202227", 50, 220); // fijo
     ctxBono.fillText("Redimible en impresiones DTF", 50, 250);
+
 
     // Código de barras
     const barcodeCanvas = document.createElement('canvas');
@@ -2217,7 +2227,7 @@ function drawBono(name, product, id){
     ctxBono.textAlign = "right";
     ctxBono.font = "italic 16px 'Segoe UI'";
     ctxBono.fillStyle = "#cccccc";
-    ctxBono.fillText("By: David Munive", W - 45, H - 40);
+    ctxBono.fillText("By: L.D IMPRESSIONS", W - 45, H - 40);
   }
 }
 </script>
