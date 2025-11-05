@@ -2145,7 +2145,7 @@ function drawBono(name, product, id){
   // === Dibujar termofijadora ===
   const machine = new Image();
   machine.crossOrigin = "anonymous";
-  machine.src = "https://www.impoequipos.com/wp-content/uploads/2025/07/17-TERMOFIJADORA-60x80-1.png";
+  machine.src = "https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png";
   machine.onload = ()=> {
     ctxBono.globalAlpha = 0.35;
     ctxBono.drawImage(machine, W - 370, H - 270, 320, 210);
@@ -2161,7 +2161,7 @@ function drawBono(name, product, id){
     logo.crossOrigin = "anonymous";
     logo.src = "https://i.ibb.co/2wp1vDb/logo.jpg";
     logo.onload = ()=>{
-      ctxBono.drawImage(logo, W - 130, 35, 80, 80);
+      ctxBono.drawImage(logo, W - 120, 130, 70, 70);
       drawText();
     };
     logo.onerror = ()=> drawText();
