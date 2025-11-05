@@ -2097,60 +2097,100 @@ syncDesignsRef();
     });
   });
 </script>
- <script>
+ 
+<script>
+  // --- Generador de ID único por bono ---
+  function generateBonoID() {
+    const base = "2712202227"; // raíz fija
+    const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos aleatorios
+    const datePart = new Date().toISOString().slice(2,10).replace(/-/g,""); // fecha compacta
+    return `${base}-${datePart}-${randomPart}`;
+  }
+
+  // --- Nuevo diseño premium del bono ---
   function drawBono(name, product, id){
-    ctxBono.clearRect(0,0,bonoCanvas.width,bonoCanvas.height);
+    const W = 700, H = 400;
+    bonoCanvas.width = W; 
+    bonoCanvas.height = H;
+    ctxBono.clearRect(0,0,W,H);
 
-    // === Fondo negro con textura y degradado elegante ===
-    const gradient = ctxBono.createLinearGradient(0,0,600,350);
-    gradient.addColorStop(0,'#000000');
-    gradient.addColorStop(1,'#1a1a1a');
-    ctxBono.fillStyle = gradient;
-    ctxBono.fillRect(0,0,600,350);
+    // Fondo negro con textura y brillo dorado
+    const bgGradient = ctxBono.createLinearGradient(0,0,W,H);
+    bgGradient.addColorStop(0,"#0a0a0a");
+    bgGradient.addColorStop(0.5,"#111111");
+    bgGradient.addColorStop(1,"#1a1a1a");
+    ctxBono.fillStyle = bgGradient;
+    ctxBono.fillRect(0,0,W,H);
 
-    // === Borde dorado brillante ===
-    const borderGradient = ctxBono.createLinearGradient(0,0,600,0);
-    borderGradient.addColorStop(0,'#b8860b');
-    borderGradient.addColorStop(1,'#ffd700');
-    ctxBono.strokeStyle = borderGradient;
-    ctxBono.lineWidth = 6;
-    ctxBono.strokeRect(5,5,590,340);
+    // Marco exterior dorado
+    const frameGrad = ctxBono.createLinearGradient(0,0,W,0);
+    frameGrad.addColorStop(0,"#b8860b");
+    frameGrad.addColorStop(0.5,"#ffd700");
+    frameGrad.addColorStop(1,"#b8860b");
+    ctxBono.strokeStyle = frameGrad;
+    ctxBono.lineWidth = 8;
+    ctxBono.strokeRect(4,4,W-8,H-8);
 
-    // === Cargar y dibujar logo ===
+    // Marco interior sutil
+    ctxBono.strokeStyle = "#daa520";
+    ctxBono.lineWidth = 2;
+    ctxBono.strokeRect(20,20,W-40,H-40);
+
+    // Logo en esquina superior derecha
     const logo = new Image();
     logo.crossOrigin = "anonymous";
     logo.src = "https://i.ibb.co/2wp1vDb/logo.jpg";
     logo.onload = ()=>{
-      const logoW = 100, logoH = 100;
-      ctxBono.drawImage(logo, 480, 25, logoW, logoH);
+      const logoW = 90, logoH = 90;
+      ctxBono.drawImage(logo, W - logoW - 40, 35, logoW, logoH);
 
-      // === Texto principal dorado ===
-      const goldGradient = ctxBono.createLinearGradient(0,0,600,0);
-      goldGradient.addColorStop(0,'#ffec8b');
-      goldGradient.addColorStop(1,'#ffd700');
-      ctxBono.fillStyle = goldGradient;
+      // Texto dorado principal
+      const goldGrad = ctxBono.createLinearGradient(0,0,W,0);
+      goldGrad.addColorStop(0,"#ffe680");
+      goldGrad.addColorStop(0.5,"#ffd700");
+      goldGrad.addColorStop(1,"#e5c100");
+      ctxBono.fillStyle = goldGrad;
+      ctxBono.font = "bold 32px Segoe UI";
+      ctxBono.textAlign = "left";
+      ctxBono.fillText("BONO CASHBACK DTF $20.000", 40, 90);
 
-      ctxBono.font='bold 30px Segoe UI';
-      ctxBono.fillText('BONO CASHBACK DTF $20.000', 40, 70);
+      // Datos del cliente
+      ctxBono.font = "20px Segoe UI";
+      ctxBono.fillText("Cliente: " + name, 40, 150);
+      ctxBono.fillText("Producto: " + product, 40, 180);
+      ctxBono.fillText("ID Bono: " + id, 40, 210);
+      ctxBono.fillText("Redimible en impresiones DTF", 40, 240);
 
-      ctxBono.font='20px Segoe UI';
-      ctxBono.fillText('Cliente: ' + name, 40, 130);
-      ctxBono.fillText('Producto: ' + product, 40, 160);
-      ctxBono.fillText('ID Bono: ' + id, 40, 190);
-      ctxBono.fillText('Redimible en impresiones DTF', 40, 220);
-
-      // === Código de barras ===
+      // Código de barras
       const barcodeCanvas = document.createElement('canvas');
-      JsBarcode(barcodeCanvas, id, {format:'CODE128', width:2, height:60, displayValue:false, background:"#000"});
-      ctxBono.drawImage(barcodeCanvas, 40, 240);
+      JsBarcode(barcodeCanvas, id, {
+        format: 'CODE128',
+        width: 2,
+        height: 70,
+        displayValue: false,
+        background: "#000000",
+        lineColor: "#FFD700"
+      });
+      ctxBono.drawImage(barcodeCanvas, 40, 260);
 
-      // === Pie de firma ===
-      ctxBono.font='italic 16px Segoe UI';
-      ctxBono.fillStyle='#c0a060';
-      ctxBono.fillText('By: David Munive', 430, 325);
+      // Firma o crédito
+      ctxBono.font = "italic 16px Segoe UI";
+      ctxBono.fillStyle = "#c0a060";
+      ctxBono.textAlign = "right";
+      ctxBono.fillText("By: David Munive", W - 40, H - 35);
     };
   }
+
+  // --- Modifica la parte donde se genera el bono (dentro del addEventListener del formulario) ---
+  // Busca donde está esta línea dentro del submit:
+  //   drawBono(name, product, BONO_ID);
+  // Reemplázala por esto:
+  const generatedID = generateBonoID();
+  drawBono(name, product, generatedID);
+  record.id = generatedID;
+  localStorage.setItem('oc_records', JSON.stringify(records));
 </script>
+
 
 </body>
 </html>
