@@ -2087,7 +2087,17 @@ syncDesignsRef();
     drawBono(name, product, BONO_ID);
   });
 
-  <script>
+  ocDownload.addEventListener('click', ()=>{
+    const link = document.createElement('a');
+    link.download = 'bono_cashback.png';
+    bonoCanvas.toBlob(blob=>{
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+  });
+</script>
+ <script>
   function drawBono(name, product, id){
     ctxBono.clearRect(0,0,bonoCanvas.width,bonoCanvas.height);
 
@@ -2141,19 +2151,6 @@ syncDesignsRef();
     };
   }
 </script>
-
-
-  ocDownload.addEventListener('click', ()=>{
-    const link = document.createElement('a');
-    link.download = 'bono_cashback.png';
-    bonoCanvas.toBlob(blob=>{
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
-    });
-  });
-</script>
-
 
 </body>
 </html>
