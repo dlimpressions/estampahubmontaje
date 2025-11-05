@@ -2107,14 +2107,13 @@ syncDesignsRef();
     return `${base}-${datePart}-${randomPart}`;
   }
 
-
 function drawBono(name, product, id){
   const W = 700, H = 400;
   bonoCanvas.width = W; 
   bonoCanvas.height = H;
   ctxBono.clearRect(0,0,W,H);
 
-  // === Fondo negro con textura metálica ===
+  // === Fondo negro con textura ===
   const patternCanvas = document.createElement('canvas');
   patternCanvas.width = 25; patternCanvas.height = 25;
   const pctx = patternCanvas.getContext('2d');
@@ -2132,10 +2131,9 @@ function drawBono(name, product, id){
   ctxBono.fillStyle = pattern;
   ctxBono.fillRect(0,0,W,H);
 
-  // Capa de brillo dorado sutil
+  // Capa de brillo metálico sutil
   const shine = ctxBono.createLinearGradient(0,0,W,H);
-  shine.addColorStop(0,'rgba(255,215,0,0.08)');
-  shine.addColorStop(0.5,'rgba(255,255,255,0.04)');
+  shine.addColorStop(0,'rgba(255,255,255,0.06)');
   shine.addColorStop(1,'rgba(255,215,0,0.08)');
   ctxBono.fillStyle = shine;
   ctxBono.fillRect(0,0,W,H);
@@ -2171,26 +2169,22 @@ function drawBono(name, product, id){
     ctxBono.drawImage(logo, W - 130, 35, 80, 80);
 
     machine.onload = ()=>{
-      ctxBono.globalAlpha = 0.25;
-      ctxBono.drawImage(machine, W - 370, H - 270, 330, 220);
+      // Imagen visible, centrada hacia el fondo
+      ctxBono.globalAlpha = 0.5;
+      ctxBono.drawImage(machine, W - 360, H - 270, 320, 220);
       ctxBono.globalAlpha = 1;
 
-      // === Título principal ===
-      const goldGrad = ctxBono.createLinearGradient(0,0,W,0);
-      goldGrad.addColorStop(0,"#fff4b0");
-      goldGrad.addColorStop(0.5,"#ffd700");
-      goldGrad.addColorStop(1,"#e6c300");
-      ctxBono.fillStyle = goldGrad;
+      // === Texto principal (ahora blanco) ===
+      ctxBono.fillStyle = "#FFFFFF";
       ctxBono.font = "bold 34px 'Segoe UI'";
       ctxBono.textAlign = "left";
-      ctxBono.shadowColor = "rgba(0,0,0,0.8)";
+      ctxBono.shadowColor = "rgba(0,0,0,0.9)";
       ctxBono.shadowBlur = 4;
       ctxBono.fillText("BONO CASHBACK DTF $20.000", 50, 90);
 
       // === Fecha de emisión ===
       ctxBono.font = "18px 'Segoe UI'";
       ctxBono.shadowBlur = 0;
-      ctxBono.fillStyle = "#d4af37";
       ctxBono.fillText("Emitido el: " + fechaStr, 50, 120);
 
       // === Datos del cliente ===
@@ -2200,7 +2194,7 @@ function drawBono(name, product, id){
       ctxBono.fillText("ID Bono: " + id, 50, 220);
       ctxBono.fillText("Redimible en impresiones DTF", 50, 250);
 
-      // === Código de barras ===
+      // === Código de barras visible ===
       const barcodeCanvas = document.createElement('canvas');
       JsBarcode(barcodeCanvas, id, {
         format: 'CODE128',
@@ -2208,26 +2202,25 @@ function drawBono(name, product, id){
         height: 70,
         displayValue: false,
         background: "#000000",
-        lineColor: "#FFD700"
+        lineColor: "#FFFFFF"
       });
       ctxBono.drawImage(barcodeCanvas, 50, 280);
 
       // === ID único centrado abajo ===
       ctxBono.textAlign = "center";
       ctxBono.font = "18px 'Segoe UI'";
-      ctxBono.fillStyle = "#d4af37";
+      ctxBono.fillStyle = "#FFFFFF";
       ctxBono.fillText(`BONO ID: ${id}`, W/2, H - 20);
 
       // === Firma o crédito ===
       ctxBono.textAlign = "right";
       ctxBono.font = "italic 16px 'Segoe UI'";
-      ctxBono.fillStyle = "#c0a060";
+      ctxBono.fillStyle = "#CCCCCC";
       ctxBono.fillText("By: David Munive", W - 45, H - 40);
     };
   };
 }
 </script>
-
 
 </body>
 </html>
