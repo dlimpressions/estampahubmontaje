@@ -2087,36 +2087,61 @@ syncDesignsRef();
     drawBono(name, product, BONO_ID);
   });
 
+  <script>
   function drawBono(name, product, id){
     ctxBono.clearRect(0,0,bonoCanvas.width,bonoCanvas.height);
 
-    // Fondo
+    // === Fondo negro con textura y degradado elegante ===
     const gradient = ctxBono.createLinearGradient(0,0,600,350);
-    gradient.addColorStop(0,'#2b6cb0');
-    gradient.addColorStop(1,'#63b3ed');
+    gradient.addColorStop(0,'#000000');
+    gradient.addColorStop(1,'#1a1a1a');
     ctxBono.fillStyle = gradient;
     ctxBono.fillRect(0,0,600,350);
 
-    // Texto principal
-    ctxBono.fillStyle='#fff';
-    ctxBono.font='bold 28px Segoe UI';
-    ctxBono.fillText('BONO CASHBACK DTF $20.000', 50, 60);
+    // === Borde dorado brillante ===
+    const borderGradient = ctxBono.createLinearGradient(0,0,600,0);
+    borderGradient.addColorStop(0,'#b8860b');
+    borderGradient.addColorStop(1,'#ffd700');
+    ctxBono.strokeStyle = borderGradient;
+    ctxBono.lineWidth = 6;
+    ctxBono.strokeRect(5,5,590,340);
 
-    ctxBono.font='20px Segoe UI';
-    ctxBono.fillText('Cliente: ' + name, 50, 110);
-    ctxBono.fillText('Producto: ' + product, 50, 140);
-    ctxBono.fillText('ID Bono: ' + id, 50, 170);
-    ctxBono.fillText('Redimible en impresiones DTF', 50, 200);
+    // === Cargar y dibujar logo ===
+    const logo = new Image();
+    logo.crossOrigin = "anonymous";
+    logo.src = "https://i.ibb.co/2wp1vDb/logo.jpg";
+    logo.onload = ()=>{
+      const logoW = 100, logoH = 100;
+      ctxBono.drawImage(logo, 480, 25, logoW, logoH);
 
-    // Dibujar código de barras
-    const barcodeCanvas = document.createElement('canvas');
-    JsBarcode(barcodeCanvas, id, {format:'CODE128', width:2, height:60, displayValue:false});
-    ctxBono.drawImage(barcodeCanvas, 50, 220);
+      // === Texto principal dorado ===
+      const goldGradient = ctxBono.createLinearGradient(0,0,600,0);
+      goldGradient.addColorStop(0,'#ffec8b');
+      goldGradient.addColorStop(1,'#ffd700');
+      ctxBono.fillStyle = goldGradient;
 
-    // Logo
-    ctxBono.font='italic 16px Segoe UI';
-    ctxBono.fillText('By: David Munive', 420, 330);
+      ctxBono.font='bold 30px Segoe UI';
+      ctxBono.fillText('BONO CASHBACK DTF $20.000', 40, 70);
+
+      ctxBono.font='20px Segoe UI';
+      ctxBono.fillText('Cliente: ' + name, 40, 130);
+      ctxBono.fillText('Producto: ' + product, 40, 160);
+      ctxBono.fillText('ID Bono: ' + id, 40, 190);
+      ctxBono.fillText('Redimible en impresiones DTF', 40, 220);
+
+      // === Código de barras ===
+      const barcodeCanvas = document.createElement('canvas');
+      JsBarcode(barcodeCanvas, id, {format:'CODE128', width:2, height:60, displayValue:false, background:"#000"});
+      ctxBono.drawImage(barcodeCanvas, 40, 240);
+
+      // === Pie de firma ===
+      ctxBono.font='italic 16px Segoe UI';
+      ctxBono.fillStyle='#c0a060';
+      ctxBono.fillText('By: David Munive', 430, 325);
+    };
   }
+</script>
+
 
   ocDownload.addEventListener('click', ()=>{
     const link = document.createElement('a');
