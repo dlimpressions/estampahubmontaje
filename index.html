@@ -2041,249 +2041,150 @@ syncDesignsRef();
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 <script>
-  <script>
-document.addEventListener('DOMContentLoaded', ()=>{
-  const openOcBtn = document.getElementById('open-oc-btn');
-  const ocOverlay = document.getElementById('oc-overlay');
-  const ocFormCard = document.getElementById('oc-form-card');
-  const ocResultCard = document.getElementById('oc-result-card');
-  const ocForm = document.getElementById('oc-form');
-  const ocCancel = document.getElementById('oc-cancel');
-  const ocDownload = document.getElementById('oc-download');
-  const ocNew = document.getElementById('oc-new');
-  const bonoCanvas = document.getElementById('oc-bono-canvas');
-  const ctxBono = bonoCanvas.getContext('2d');
+document.addEventListener('DOMContentLoaded', () => {
+  // ====== OC: referencias ======
+  const openOcBtn   = document.getElementById('open-oc-btn');
+  const ocOverlay   = document.getElementById('oc-overlay');
+  const ocFormCard  = document.getElementById('oc-form-card');
+  const ocResultCard= document.getElementById('oc-result-card');
+  const ocForm      = document.getElementById('oc-form');
+  const ocCancel    = document.getElementById('oc-cancel');
+  const ocDownload  = document.getElementById('oc-download');
+  const ocNew       = document.getElementById('oc-new');
+  const bonoCanvas  = document.getElementById('oc-bono-canvas');
+  const ctxBono     = bonoCanvas.getContext('2d');
 
-  // --- Mostrar formulario
-  openOcBtn.addEventListener('click', ()=>{
-    ocOverlay.style.display = 'flex';
-    ocFormCard.style.display = 'block';
-    ocResultCard.style.display = 'none';
-  });
-
-  // --- Cancelar
-  ocCancel.addEventListener('click', ()=> ocOverlay.style.display = 'none');
-
-  // --- Nueva orden
-  ocNew.addEventListener('click', ()=>{
-    ocForm.reset();
-    ocFormCard.style.display = 'block';
-    ocResultCard.style.display = 'none';
-  });
-
-  // --- Enviar formulario
-  ocForm.addEventListener('submit', e=>{
-    e.preventDefault();
-    const name = ocForm.querySelector('#oc-name').value.trim();
-    const email = ocForm.querySelector('#oc-email').value.trim();
-    const phone = ocForm.querySelector('#oc-phone').value.trim();
-    const city = ocForm.querySelector('#oc-city').value.trim();
-    const product = ocForm.querySelector('#oc-product').value;
-    const qty = ocForm.querySelector('#oc-qty').value;
-
-    const generatedID = generateBonoID();
-    const record = { name, email, phone, city, product, qty, id: generatedID, date: new Date().toLocaleString() };
-    let records = JSON.parse(localStorage.getItem('oc_records')||'[]');
-    records.push(record);
-    localStorage.setItem('oc_records', JSON.stringify(records));
-
-    ocFormCard.style.display = 'none';
-    ocResultCard.style.display = 'block';
-    drawBono(name, product, generatedID);
-  });
-
-  // --- Descargar bono
-  ocDownload.addEventListener('click', ()=>{
-    const link = document.createElement('a');
-    link.download = 'bono_cashback.png';
-    bonoCanvas.toBlob(blob=>{
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
+  // ====== Abrir/Cerrar ======
+  if (openOcBtn) {
+    openOcBtn.addEventListener('click', () => {
+      ocOverlay.style.display = 'flex';
+      ocFormCard.style.display = 'block';
+      ocResultCard.style.display = 'none';
     });
-  });
-});
-</script>
-
-
-    // Generar ID único
-const generatedID = generateBonoID();
-
-// Guardar datos
-const record = { name, email, phone, city, product, qty, id: generatedID, date: new Date().toLocaleString() };
-let records = JSON.parse(localStorage.getItem('oc_records')||'[]');
-records.push(record);
-localStorage.setItem('oc_records', JSON.stringify(records));
-
-// Mostrar bono
-ocFormCard.style.display='none';
-ocResultCard.style.display='block';
-drawBono(name, product, generatedID);
-
-
-  ocDownload.addEventListener('click', ()=>{
-    const link = document.createElement('a');
-    link.download = 'bono_cashback.png';
-    bonoCanvas.toBlob(blob=>{
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
+  }
+  if (ocCancel) {
+    ocCancel.addEventListener('click', () => {
+      ocOverlay.style.display = 'none';
     });
-  });
-</script>
- 
-<script>
+  }
+  if (ocNew) {
+    ocNew.addEventListener('click', () => {
+      ocForm.reset();
+      ocFormCard.style.display = 'block';
+      ocResultCard.style.display = 'none';
+    });
+  }
+
+  // ====== Enviar formulario ======
+  if (ocForm) {
+    ocForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name    = ocForm.querySelector('#oc-name').value.trim();
+      const email   = ocForm.querySelector('#oc-email').value.trim();
+      const phone   = ocForm.querySelector('#oc-phone').value.trim();
+      const city    = ocForm.querySelector('#oc-city').value.trim();
+      const product = ocForm.querySelector('#oc-product').value;
+      const qty     = ocForm.querySelector('#oc-qty').value;
+
+      const id = generateBonoID();
+
+      // Guardar en localStorage
+      const record  = { name, email, phone, city, product, qty, id, date: new Date().toLocaleString() };
+      const records = JSON.parse(localStorage.getItem('oc_records') || '[]');
+      records.push(record);
+      localStorage.setItem('oc_records', JSON.stringify(records));
+
+      // Mostrar bono
+      ocFormCard.style.display = 'none';
+      ocResultCard.style.display = 'block';
+      drawBono(name, product, id);
+    });
+  }
+
+  // ====== Descargar bono ======
+  if (ocDownload) {
+    ocDownload.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'bono_cashback.png';
+      bonoCanvas.toBlob((blob) => {
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+    });
+  }
+
+  // ====== Helpers ======
   function generateBonoID() {
-  const base = "2712202227"; // raíz fija de tus bonos
-  const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos aleatorios
-  const datePart = new Date().toISOString().slice(2,10).replace(/-/g,""); // fecha YYMMDD
-  return `${base}-${datePart}-${randomPart}`;
-}
-
-
-function drawBono(name, product, id){
-  const W = 700, H = 400;
-  bonoCanvas.width = W; 
-  bonoCanvas.height = H;
-  ctxBono.clearRect(0,0,W,H);
-
-  // === Fondo negro con textura ===
-  const patternCanvas = document.createElement('canvas');
-  patternCanvas.width = 25; patternCanvas.height = 25;
-  const pctx = patternCanvas.getContext('2d');
-  pctx.fillStyle = '#000';
-  pctx.fillRect(0,0,25,25);
-  pctx.strokeStyle = '#111';
-  for (let i = -25; i < 50; i += 6){
-    pctx.beginPath();
-    pctx.moveTo(i,25);
-    pctx.lineTo(i+25,0);
-    pctx.stroke();
-  }
-  const pattern = ctxBono.createPattern(patternCanvas, 'repeat');
-  ctxBono.fillStyle = pattern;
-  ctxBono.fillRect(0,0,W,H);
-
-  // Marco dorado doble
-  const frameGrad = ctxBono.createLinearGradient(0,0,W,0);
-  frameGrad.addColorStop(0,'#b8860b');
-  frameGrad.addColorStop(0.5,'#ffd700');
-  frameGrad.addColorStop(1,'#b8860b');
-  ctxBono.strokeStyle = frameGrad;
-  ctxBono.lineWidth = 8;
-  ctxBono.strokeRect(4,4,W-8,H-8);
-  ctxBono.strokeStyle = '#daa520';
-  ctxBono.lineWidth = 2;
-  ctxBono.strokeRect(20,20,W-40,H-40);
-
-  // === Dibujar termofijadora ===
-  const machine = new Image();
-  machine.crossOrigin = "anonymous";
-  machine.src = "https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png";
-  machine.onload = ()=> {
-    ctxBono.globalAlpha = 0.35;
-    ctxBono.drawImage(machine, W - 370, H - 270, 320, 210);
-    ctxBono.globalAlpha = 1;
-    drawTextAndLogo(); // Dibujar texto cuando cargue
-  };
-  machine.onerror = ()=> drawTextAndLogo(); // Aun si falla, dibuja texto
-
-  // === Dibujar texto y logo ===
-  function drawTextAndLogo(){
-    // Logo
-    const logo = new Image();
-    logo.crossOrigin = "anonymous";
-    logo.src = "https://i.ibb.co/2wp1vDb/logo.jpg";
-    logo.onload = ()=>{
-      ctxBono.drawImage(logo, W - 120, 130, 70, 70);
-      drawText();
-    };
-    logo.onerror = ()=> drawText();
+    const base = '2712202227';
+    const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos
+    const datePart = new Date().toISOString().slice(2,10).replace(/-/g, ''); // YYMMDD
+    return `${base}-${datePart}-${randomPart}`;
   }
 
-  // === Texto ===
-  function drawText(){
-    const now = new Date();
-    const fechaStr = now.toLocaleDateString("es-CO", { day: '2-digit', month: '2-digit', year: 'numeric' });
+  function drawBono(name, product, id) {
+    const W = 700, H = 400;
+    bonoCanvas.width = W;
+    bonoCanvas.height = H;
+    ctxBono.clearRect(0, 0, W, H);
 
-    // Título dorado brillante
-    const goldGrad = ctxBono.createLinearGradient(0,0,W,0);
-    goldGrad.addColorStop(0,'#fff5b0');
-    goldGrad.addColorStop(0.5,'#ffd700');
-    goldGrad.addColorStop(1,'#e5c100');
-    ctxBono.fillStyle = goldGrad;
-    ctxBono.textAlign = "center";
-    ctxBono.font = "bold 34px 'Segoe UI'";
-    ctxBono.fillText("BONO CASHBACK DTF $20.000", W/2, 90);
+    // Fondo cuadriculado oscuro
+    const patternCanvas = document.createElement('canvas');
+    patternCanvas.width = 25; patternCanvas.height = 25;
+    const pctx = patternCanvas.getContext('2d');
+    pctx.fillStyle = '#111'; pctx.fillRect(0,0,25,25);
+    pctx.fillStyle = '#161616'; pctx.fillRect(0,0,12.5,12.5);
+    pctx.fillRect(12.5,12.5,12.5,12.5);
+    const pattern = ctxBono.createPattern(patternCanvas, 'repeat');
+    ctxBono.fillStyle = pattern;
+    ctxBono.fillRect(0,0,W,H);
 
-    // Fecha
-    ctxBono.font = "18px 'Segoe UI'";
-    ctxBono.fillStyle = "#ffffff";
-    ctxBono.fillText("Emitido el: " + fechaStr, W/2, 120);
+    // Cinta
+    const grad = ctxBono.createLinearGradient(0,0,W,0);
+    grad.addColorStop(0,'#3b82f6'); grad.addColorStop(1,'#06b6d4');
+    ctxBono.fillStyle = grad;
+    ctxBono.fillRect(0,40,W,70);
 
-    // Datos del cliente
-    ctxBono.textAlign = "left";
+    // Títulos
+    ctxBono.textAlign = 'center';
+    ctxBono.fillStyle = '#fff';
+    ctxBono.font = "bold 28px 'Segoe UI'";
+    ctxBono.fillText('Bono Cashback DTF $20.000', W/2, 70);
+    ctxBono.font = "600 18px 'Segoe UI'";
+    const fechaStr = new Date().toLocaleDateString();
+    ctxBono.fillText('Válido por compras de Termofijadoras', W/2, 95);
+    ctxBono.fillText('Emitido el: ' + fechaStr, W/2, 120);
+
+    // Datos
+    ctxBono.textAlign = 'left';
     ctxBono.font = "20px 'Segoe UI'";
-    ctxBono.fillText("Cliente: " + name, 50, 160);
-    ctxBono.fillText("Producto: " + product, 50, 190);
-    ctxBono.fillText("ID Bono: 2712202227", 50, 220); // fijo
-    ctxBono.fillText("Redimible en impresiones DTF", 50, 250);
-
+    ctxBono.fillText('Cliente: ' + name, 50, 160);
+    ctxBono.fillText('Producto: ' + product, 50, 190);
+    ctxBono.fillText('Redimible en impresiones DTF', 50, 220);
 
     // Código de barras
     const barcodeCanvas = document.createElement('canvas');
     JsBarcode(barcodeCanvas, id, {
-      format: 'CODE128',
-      width: 2,
-      height: 70,
-      displayValue: false,
-      background: "#000000",
-      lineColor: "#FFFFFF"
+      format: 'CODE128', width: 2, height: 70,
+      displayValue: false, background: '#000000', lineColor: '#FFFFFF'
     });
-    ctxBono.drawImage(barcodeCanvas, 50, 280);
+    ctxBono.drawImage(barcodeCanvas, 50, 260);
 
-    // ID centrado
-    ctxBono.textAlign = "center";
+    // ID y firma
+    ctxBono.textAlign = 'center';
     ctxBono.font = "18px 'Segoe UI'";
-    ctxBono.fillStyle = "#ffffff";
-    ctxBono.fillText(`BONO ID: ${id}`, W/2, H - 20);
+    ctxBono.fillStyle = '#ffffff';
+    ctxBono.fillText('BONO ID: ' + id, W/2, H - 20);
 
-    // Firma
-    ctxBono.textAlign = "right";
+    ctxBono.textAlign = 'right';
     ctxBono.font = "italic 16px 'Segoe UI'";
-    ctxBono.fillStyle = "#cccccc";
-    ctxBono.fillText("By: L.D IMPRESSIONS", W - 45, H - 40);
+    ctxBono.fillStyle = '#cccccc';
+    ctxBono.fillText('By: L.D IMPRESSIONS', W - 45, H - 40);
   }
-}
-    ... (tu código anterior aquí) ...
+});
+</script>
 
-    // aquí termina tu otro código del editor
-
-
-// ====== Formulario OC Termofijadoras ======
-const openOcBtn = document.getElementById('open-oc-btn');
-const ocOverlay = document.getElementById('oc-overlay');
-const ocForm = document.getElementById('oc-form');
-const ocCancel = document.getElementById('oc-cancel');
-const ocFormCard = document.getElementById('oc-form-card');
-const ocResultCard = document.getElementById('oc-result-card');
-const ocNew = document.getElementById('oc-new');
-
-if (openOcBtn) {
-  openOcBtn.addEventListener('click', () => {
-    ocOverlay.style.display = 'flex';
-    ocFormCard.style.display = 'block';
-    ocResultCard.style.display = 'none';
-  });
-}
-
-if (ocCancel) {
-  ocCancel.addEventListener('click', () => {
-    ocOverlay.style.display = 'none';
-  });
-}
-
-  </script>
 </body>
+
 </html>
 
