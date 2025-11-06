@@ -2163,21 +2163,28 @@ document.addEventListener('DOMContentLoaded', () => {
   ctxBono.fillText('Producto: ' + product, 50, 190);
   ctxBono.fillText('Redimible en impresiones DTF', 50, 220);
 
-  // Cargar y dibujar logo (arriba derecha)
-  const logoImg = new Image();
-  logoImg.crossOrigin = 'anonymous';
-  logoImg.src = 'https://i.ibb.co/2wp1vDb/logo.jpg';
-  logoImg.onload = () => {
-    ctxBono.drawImage(logoImg, W - 150, 15, 120, 70);
-  };
+  // --- Imágenes decorativas ---
+const termoImg = new Image();
+termoImg.crossOrigin = 'anonymous';
+termoImg.src = 'https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png';
+termoImg.onload = () => {
+  // Dibujar termofijadora como fondo semitransparente detrás del texto
+  ctxBono.save();
+  ctxBono.globalAlpha = 0.12; // transparencia
+  ctxBono.drawImage(termoImg, W - 330, H - 230, 300, 200);
+  ctxBono.restore();
+};
 
-  // Cargar y dibujar termofijadora (abajo derecha)
-  const termoImg = new Image();
-  termoImg.crossOrigin = 'anonymous';
-  termoImg.src = 'https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png';
-  termoImg.onload = () => {
-    ctxBono.drawImage(termoImg, W - 280, H - 210, 250, 170);
-  };
+// Dibujar logo pequeño arriba derecha
+const logoImg = new Image();
+logoImg.crossOrigin = 'anonymous';
+logoImg.src = 'https://i.ibb.co/2wp1vDb/logo.jpg';
+logoImg.onload = () => {
+  ctxBono.save();
+  ctxBono.globalAlpha = 0.9;
+  ctxBono.drawImage(logoImg, W - 160, 10, 130, 80);
+  ctxBono.restore();
+};
 
   // Código de barras
   const barcodeCanvas = document.createElement('canvas');
