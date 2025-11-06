@@ -2255,8 +2255,35 @@ function drawBono(name, product, id){
     ctxBono.fillText("By: L.D IMPRESSIONS", W - 45, H - 40);
   }
 }
-</script>
+    ... (tu código anterior aquí) ...
+
+    // aquí termina tu otro código del editor
 
 
+// ====== Formulario OC Termofijadoras ======
+const openOcBtn = document.getElementById('open-oc-btn');
+const ocOverlay = document.getElementById('oc-overlay');
+const ocForm = document.getElementById('oc-form');
+const ocCancel = document.getElementById('oc-cancel');
+const ocFormCard = document.getElementById('oc-form-card');
+const ocResultCard = document.getElementById('oc-result-card');
+const ocNew = document.getElementById('oc-new');
+
+if (openOcBtn) {
+  openOcBtn.addEventListener('click', () => {
+    ocOverlay.style.display = 'flex';
+    ocFormCard.style.display = 'block';
+    ocResultCard.style.display = 'none';
+  });
+}
+
+if (ocCancel) {
+  ocCancel.addEventListener('click', () => {
+    ocOverlay.style.display = 'none';
+  });
+}
+
+  </script>
 </body>
 </html>
+
