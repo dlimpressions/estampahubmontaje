@@ -2136,15 +2136,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${base}-${datePart}-${randomPart}`;
   }
 
- function drawBono(name, product, id) {
+function drawBono(name, product, id) {
   const W = 700, H = 400;
+  const bonoCanvas = document.getElementById('oc-bono-canvas');
+  const ctxBono = bonoCanvas.getContext('2d');
+
   bonoCanvas.width = W;
   bonoCanvas.height = H;
 
-  // 1) Fondo negro sólido (asegura que la PNG resultante NO tenga transparencia)
-  ctxBono.clearRect(0, 0, W, H);
+  // 🔲 Fondo negro sólido (elimina la transparencia desde el preview)
+  ctxBono.save();
+  ctxBono.globalAlpha = 1;
   ctxBono.fillStyle = '#000000';
   ctxBono.fillRect(0, 0, W, H);
+  ctxBono.restore();
 
   // 2) Imagen grande de la termofijadora en fondo con baja opacidad (detrás del texto)
   //    la colocamos primero para que el texto y el logo queden encima.
