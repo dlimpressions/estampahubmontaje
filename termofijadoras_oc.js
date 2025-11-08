@@ -1,7 +1,7 @@
 /* ============================================================
    termofijadoras_oc.js
    Módulo para generar y descargar bonos de cashback
-   por compra de termofijadoras.
+   por compra de termofijadoras, con fondo personalizado.
    ============================================================ */
 
 console.log('[OC Termofijadoras] cargado');
@@ -54,26 +54,47 @@ console.log('[OC Termofijadoras] cargado');
     });
   }
 
-  // ========== Dibujo del bono en canvas ==========
+  // ========== Dibujo del bono con imagen de fondo ==========
   function drawBono({ name, email, city, product, qty }) {
     const w = ocCanvas.width;
     const h = ocCanvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // Fondo degradado
-    const grad = ctx.createLinearGradient(0, 0, w, h);
-    grad.addColorStop(0, '#4299e1');
-    grad.addColorStop(1, '#2b6cb0');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
+    const bgImg = new Image();
+    bgImg.crossOrigin = 'anonymous'; // evitar error CORS
+    bgImg.onload = () => {
+      // dibujar fondo ajustado al lienzo
+      const aspect = bgImg.width / bgImg.height;
+      const canvasAspect = w / h;
+      let drawWidth, drawHeight;
+      if (aspect > canvasAspect) {
+        drawHeight = h;
+        drawWidth = h * aspect;
+      } else {
+        drawWidth = w;
+        drawHeight = w / aspect;
+      }
+      ctx.drawImage(bgImg, (w - drawWidth)/2, (h - drawHeight)/2, drawWidth, drawHeight);
 
-    // Marco
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 8;
+      // luego dibujar el contenido encima
+      drawBonoContent(ctx, w, h, { name, email, city, product, qty });
+    };
+    bgImg.src = 'https://i.ibb.co/LhbcjVGh/stylish-black-wavy-background-for-business-cards-presentations-banners-etc-vector.jpg';
+  }
+
+  // ========== Contenido del bono ==========
+  function drawBonoContent(ctx, w, h, { name, email, city, product, qty }) {
+    // Marco blanco
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
     ctx.strokeRect(15, 15, w - 30, h - 30);
 
-    // Texto principal
-    ctx.fillStyle = '#fff';
+    // Sombras suaves para destacar texto
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+
+    // Títulos principales
+    ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.font = 'bold 32px Segoe UI';
     ctx.fillText('🎁 BONO CASHBACK DTF', w / 2, 60);
@@ -81,7 +102,7 @@ console.log('[OC Termofijadoras] cargado');
     ctx.font = '22px Segoe UI';
     ctx.fillText('Por la compra de una Termofijadora', w / 2, 100);
 
-    // Datos
+    // Datos del cliente
     ctx.textAlign = 'left';
     ctx.font = '18px Segoe UI';
     const startY = 150;
@@ -92,11 +113,18 @@ console.log('[OC Termofijadoras] cargado');
     ctx.fillText(`🛠️ Producto: ${product}`, 60, startY + 3 * line);
     ctx.fillText(`🔢 Cantidad: ${qty}`, 60, startY + 4 * line);
 
-    // Valor y pie
-    ctx.font = 'bold 28px Segoe UI';
+    // Valor del bono
     ctx.textAlign = 'center';
-    ctx.fillText('Valor cashback: $20.000', w / 2, h - 80);
+    ctx.font = 'bold 28px Segoe UI';
+    ctx.fillStyle = '#FFD700';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 6;
+    ctx.fillText('Valor Cashback: $20.000', w / 2, h - 80);
+
+    // Pie de nota
     ctx.font = 'italic 16px Segoe UI';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 3;
     ctx.fillText('Redímelo en tu próxima compra DTF', w / 2, h - 40);
   }
 
