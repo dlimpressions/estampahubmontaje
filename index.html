@@ -2304,6 +2304,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }; // fin termoImg.onload
   }; // fin fondo.onload
 }
+
+// ====== FORMULARIO OC TERMOFIJADORAS ======
+const openOcBtn = document.getElementById('open-oc-btn');
+const ocOverlay = document.getElementById('oc-overlay');
+const ocForm = document.getElementById('oc-form');
+const ocCancel = document.getElementById('oc-cancel');
+const ocResultCard = document.getElementById('oc-result-card');
+const ocFormCard = document.getElementById('oc-form-card');
+const ocDownload = document.getElementById('oc-download');
+const ocNew = document.getElementById('oc-new');
+
+if (openOcBtn) {
+  openOcBtn.addEventListener('click', () => {
+    ocOverlay.style.display = 'flex';
+    ocFormCard.style.display = 'block';
+    ocResultCard.style.display = 'none';
+  });
+}
+
+if (ocCancel) {
+  ocCancel.addEventListener('click', () => {
+    ocOverlay.style.display = 'none';
+  });
+}
+
+if (ocNew) {
+  ocNew.addEventListener('click', () => {
+    ocResultCard.style.display = 'none';
+    ocFormCard.style.display = 'block';
+    ocForm.reset();
+  });
+}
+
+// Cuando se envía el formulario
+if (ocForm) {
+  ocForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('oc-name').value.trim();
+    const product = document.getElementById('oc-product').value.trim();
+    const id = Math.random().toString(36).substr(2, 9).toUpperCase();
+    drawBono(name, product, id);
+    ocFormCard.style.display = 'none';
+    ocResultCard.style.display = 'block';
+  });
+}
+
+if (ocDownload) {
+  ocDownload.addEventListener('click', () => {
+    const bonoCanvas = document.getElementById('oc-bono-canvas');
+    const link = document.createElement('a');
+    link.download = 'bono-cashback.png';
+    bonoCanvas.toBlob((blob) => {
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }, 'image/png');
+  });
+}
+
 </script>
 
 
