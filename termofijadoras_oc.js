@@ -97,7 +97,7 @@ console.log('[OC Termofijadoras] cargado');
     const wctx = wheelCanvas.getContext('2d');
     const segs = prizes.length;
     const segAngle = (2 * Math.PI) / segs;
-    const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1']; // 5k, 10k, 20k (VERDE), 30k
+    const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1']; // 5k, 10k, 20k (VERDE), 15k
 
     // Dibujar la ruleta (0° a la derecha, CCW positivo)
     for (let i = 0; i < segs; i++) {
