@@ -1,6 +1,6 @@
 /* ============================================================
    termofijadoras_oc.js
-   Ruleta con 🎁 centrado arriba. Premios 5k/10k/20k/30k.
+   Ruleta con 🎁 centrado arriba. Premios 5k / 10k / 20k / 15k.
    Siempre cae EXACTO en $20k (sector verde).
    ============================================================ */
 
@@ -18,7 +18,6 @@ console.log('[OC Termofijadoras] cargado');
   const ocNew       = document.getElementById('oc-new');
   const ctx         = ocCanvas?.getContext('2d');
 
-  // Valor fijo del cashback mostrado tras la ruleta
   const FIXED_CASHBACK = 20000;
 
   // ===== Mostrar / ocultar formulario =====
@@ -61,7 +60,7 @@ console.log('[OC Termofijadoras] cargado');
 
   // ===== Animación de ruleta =====
   function startRouletteAnimation(callback) {
-    const prizes = [5000, 10000, 20000, 30000]; // textos visibles
+    const prizes = [5000, 10000, 20000, 30000];
     const roulette = document.createElement('div');
     roulette.style.position = 'fixed';
     roulette.style.inset = '0';
@@ -72,22 +71,17 @@ console.log('[OC Termofijadoras] cargado');
     roulette.style.justifyContent = 'center';
     roulette.style.zIndex = '4000';
     roulette.innerHTML = `
-      <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px; box-shadow:0 0 20px rgba(0,0,0,0.5)">
-        <h2 style="color:#2b6cb0; margin-bottom:1rem;">🎡 ¡Gira para conocer tu premio!</h2>
-
-        <!-- Contenedor de ruleta con borde (232x232 = 220 + 6px de borde por lado) -->
+      <div style="background:#fff;border-radius:12px;padding:2rem;text-align:center;max-width:350px;box-shadow:0 0 20px rgba(0,0,0,0.5)">
+        <h2 style="color:#2b6cb0;margin-bottom:1rem;">🎡 ¡Gira para conocer tu premio!</h2>
         <div style="position:relative;width:232px;height:232px;margin:auto;border:6px solid #2b6cb0;border-radius:50%;box-sizing:border-box;">
-          <!-- Canvas centrado dentro del contenedor -->
           <canvas id="wheelCanvas" width="220" height="220"
             style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                   border-radius:50%;transition:transform 5s cubic-bezier(.17,.67,.83,.67);">
+                   border-radius:50%;">
           </canvas>
-
-          <!-- Indicador 🎁 centrado arriba, apuntando a la parte superior de la ruleta -->
+          <!-- Indicador 🎁 centrado arriba -->
           <div style="position:absolute;top:0;left:50%;transform:translate(-50%,-55%);
                       font-size:28px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.35));">🎁</div>
         </div>
-
         <button id="spinBtn" style="margin-top:1.5rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer;">Girar</button>
       </div>
     `;
@@ -97,17 +91,15 @@ console.log('[OC Termofijadoras] cargado');
     const wctx = wheelCanvas.getContext('2d');
     const segs = prizes.length;
     const segAngle = (2 * Math.PI) / segs;
-    const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1']; // 5k, 10k, 20k (VERDE), 15k
+    const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1'];
 
-    // Dibujar la ruleta (0° a la derecha, CCW positivo)
+    // Dibujar la ruleta
     for (let i = 0; i < segs; i++) {
       wctx.beginPath();
       wctx.moveTo(110, 110);
       wctx.arc(110, 110, 110, i * segAngle, (i + 1) * segAngle);
       wctx.fillStyle = colors[i];
       wctx.fill();
-
-      // Etiquetas
       wctx.save();
       wctx.translate(110, 110);
       wctx.rotate(i * segAngle + segAngle / 2);
@@ -122,34 +114,43 @@ console.log('[OC Termofijadoras] cargado');
     spinBtn.addEventListener('click', () => {
       spinBtn.disabled = true;
 
-      // Queremos que el segmento de $20k (índice 2) quede EXACTO bajo el 🎁 (parte superior).
-      const segIndex20k = prizes.indexOf(20000);   // 2
-      const segSize = 360 / segs;                  // 90°
-      const centerDeg = segIndex20k * segSize + segSize / 2; // 225°
+      // Calcular el ángulo exacto para que el sector 20k quede arriba
+      const segIndex20k = prizes.indexOf(20000);
+      const segSize = 360 / segs;
+      const centerDeg = segIndex20k * segSize + segSize / 2; // centro del sector
+      const targetDeg = 1080 + (270 - centerDeg); // 3 vueltas + ajuste a 270°
 
-      // El indicador está en la PARTE SUPERIOR (ángulo 270° tomando 0° a la derecha).
-      // CSS rotate gira en sentido horario: punto visible = theta + R.
-      // Necesitamos theta + R = 270°  =>  R = 270 - theta
-      const finalDeg = 1080 + (270 - centerDeg);   // 1080 = 3 vueltas completas
+      // Animación controlada con requestAnimationFrame
+      const duration = 5000;
+      const start = performance.now();
 
-      // Pequeña variación estética dentro del MISMO segmento (no afecta exactitud visual)
-      const jitter = 0; // déjalo en 0 para que sea exacto. Si quieres un leve margen usa ±4
-      wheelCanvas.style.transform = `rotate(${finalDeg + jitter}deg)`;
+      function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-      setTimeout(() => {
-        roulette.innerHTML = `
-          <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px;">
-            <h2 style="color:#2b6cb0;">🎉 ¡Felicidades!</h2>
-            <p style="font-size:20px;margin:.5rem 0;">Ganaste un Cashback de:</p>
-            <h1 style="color:#48bb78;font-size:32px;">$${FIXED_CASHBACK.toLocaleString()}</h1>
-            <button id="continueBtn" style="margin-top:1rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#4299E1;color:#fff;font-weight:600;cursor:pointer;">Continuar</button>
-          </div>
-        `;
-        roulette.querySelector('#continueBtn').addEventListener('click', () => {
-          roulette.remove();
-          callback();
-        });
-      }, 5200); // un poco más que la transición (5s)
+      function animate(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeOutCubic(progress);
+        const angle = targetDeg * eased;
+        wheelCanvas.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+        if (progress < 1) requestAnimationFrame(animate);
+        else {
+          setTimeout(() => {
+            roulette.innerHTML = `
+              <div style="background:#fff;border-radius:12px;padding:2rem;text-align:center;max-width:350px;">
+                <h2 style="color:#2b6cb0;">🎉 ¡Felicidades!</h2>
+                <p style="font-size:20px;margin:.5rem 0;">Ganaste un Cashback de:</p>
+                <h1 style="color:#48bb78;font-size:32px;">$${FIXED_CASHBACK.toLocaleString()}</h1>
+                <button id="continueBtn" style="margin-top:1rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#4299E1;color:#fff;font-weight:600;cursor:pointer;">Continuar</button>
+              </div>
+            `;
+            roulette.querySelector('#continueBtn').addEventListener('click', () => {
+              roulette.remove();
+              callback();
+            });
+          }, 600);
+        }
+      }
+      requestAnimationFrame(animate);
     });
   }
 
@@ -174,7 +175,7 @@ console.log('[OC Termofijadoras] cargado');
       }
       ctx.drawImage(bgImg, (w - drawWidth)/2, (h - drawHeight)/2, drawWidth, drawHeight);
 
-      // Logo centrado
+      // Logo centrado detrás del texto
       const logo = new Image();
       logo.crossOrigin = 'anonymous';
       logo.onload = () => {
@@ -192,12 +193,10 @@ console.log('[OC Termofijadoras] cargado');
     bgImg.src = 'https://i.ibb.co/LhbcjVGh/stylish-black-wavy-background-for-business-cards-presentations-banners-etc-vector.jpg';
   }
 
-  // ===== Contenido del bono =====
   function drawBonoContent(ctx, w, h, { name, email, city, product, qty, cashback }) {
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 6;
     ctx.strokeRect(15, 15, w - 30, h - 30);
-
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
     ctx.fillStyle = '#ffffff';
@@ -230,7 +229,6 @@ console.log('[OC Termofijadoras] cargado');
     ctx.fillText('Redímelo en tu próxima compra DTF', w / 2, h - 40);
   }
 
-  // ===== Descargar Bono =====
   if (ocDownload) {
     ocDownload.addEventListener('click', () => {
       ocCanvas.toBlob(blob => {
@@ -243,7 +241,6 @@ console.log('[OC Termofijadoras] cargado');
     });
   }
 
-  // ===== Nueva orden =====
   if (ocNew) {
     ocNew.addEventListener('click', () => {
       ocResultCard.style.display = 'none';
