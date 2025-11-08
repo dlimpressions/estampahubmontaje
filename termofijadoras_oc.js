@@ -1,6 +1,6 @@
 /* ============================================================
    termofijadoras_oc.js
-   Ruleta: 5k / 10k / 20k / 30k, cae siempre en 20k + flecha arriba
+   Ruleta: 5k / 10k / 20k / 30k, siempre cae en 20k + flecha apuntando hacia abajo
    ============================================================ */
 
 console.log('[OC Termofijadoras] cargado');
@@ -17,7 +17,7 @@ console.log('[OC Termofijadoras] cargado');
   const ocNew = document.getElementById('oc-new');
   const ctx = ocCanvas?.getContext('2d');
 
-  // Valor fijo del cashback mostrado tras la ruleta
+  // Valor fijo del cashback
   const FIXED_CASHBACK = 20000;
 
   // ===== Mostrar / ocultar formulario =====
@@ -50,7 +50,6 @@ console.log('[OC Termofijadoras] cargado');
         return;
       }
 
-      // Mostrar animación de ruleta
       startRouletteAnimation(() => {
         drawBono({ name, email, city, product, qty, cashback: FIXED_CASHBACK });
         ocFormCard.style.display = 'none';
@@ -61,7 +60,7 @@ console.log('[OC Termofijadoras] cargado');
 
   // ===== Animación de ruleta =====
   function startRouletteAnimation(callback) {
-    const prizes = [5000, 10000, 20000, 30000]; // visible
+    const prizes = [5000, 10000, 20000, 30000];
     const roulette = document.createElement('div');
     roulette.style.position = 'fixed';
     roulette.style.inset = '0';
@@ -75,10 +74,10 @@ console.log('[OC Termofijadoras] cargado');
       <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px; box-shadow:0 0 20px rgba(0,0,0,0.5)">
         <h2 style="color:#2b6cb0; margin-bottom:1rem;">🎡 ¡Gira para conocer tu premio!</h2>
         <div style="position:relative;width:220px;height:220px;margin:auto;">
-          <canvas id="wheelCanvas" width="220" height="220" style="border-radius:50%;border:6px solid #2b6cb0;"></canvas>
-          <!-- Flecha indicadora (arriba, apuntando hacia abajo) -->
-          <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);
-            width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:20px solid #e53e3e;">
+          <canvas id="wheelCanvas" width="220" height="220" style="border-radius:50%;border:6px solid #2b6cb0;transition:transform 5s cubic-bezier(.17,.67,.83,.67);"></canvas>
+          <!-- Flecha indicadora arriba apuntando hacia abajo -->
+          <div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+            width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:24px solid #e53e3e;">
           </div>
         </div>
         <button id="spinBtn" style="margin-top:1.5rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer;">Girar</button>
@@ -92,7 +91,7 @@ console.log('[OC Termofijadoras] cargado');
     const segAngle = (2 * Math.PI) / segs;
     const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1'];
 
-    // Dibujar la ruleta (0 rad = lado derecho; CCW)
+    // Dibujar la ruleta
     for (let i = 0; i < segs; i++) {
       wctx.beginPath();
       wctx.moveTo(110, 110);
@@ -115,55 +114,31 @@ console.log('[OC Termofijadoras] cargado');
     spinBtn.addEventListener('click', () => {
       spinBtn.disabled = true;
 
-      // Siempre ganar $20k (índice 2)
+      // Calcular ángulo exacto para que caiga en $20k (índice 2)
       const segIndex20k = prizes.indexOf(20000);
       const segSize = 360 / segs; // 90°
-      const centerDeg = segIndex20k * segSize + segSize / 2; // centro del segmento 20k
+      const targetDeg = segIndex20k * segSize + segSize / 2;
 
-      // Pequeña variación aleatoria dentro del segmento (para que no sea exacto al centro)
-      const margin = 6; // grados de margen para no tocar bordes
-      const jitter = (Math.random() - 0.5) * (segSize - 2 * margin);
+      // Flecha está arriba (270°), necesitamos que el segmento $20k quede en 270°
+      const finalDeg = 1080 + (270 - targetDeg); // 3 vueltas + ajuste
+      wheelCanvas.style.transition = 'transform 5s cubic-bezier(.17,.67,.83,.67)';
+      wheelCanvas.style.transform = `rotate(${finalDeg}deg)`;
 
-      // La flecha está ARRIBA (90°). Debemos llevar el centro del segmento a 90°.
-      // Rotación final (CW positivo en CSS): 90° - (centro + jitter)
-      const finalDegMod = 90 - (centerDeg + jitter);
-
-      const spinTarget = 1080 + finalDegMod; // 3 vueltas + ajuste a 20k
-      const duration = 5000;
-      const start = performance.now();
-
-      function animate(now) {
-        const elapsed = now - start;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = easeOutCubic(progress);
-        const angle = spinTarget * eased;
-        wheelCanvas.style.transform = `rotate(${angle}deg)`;
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          setTimeout(() => {
-            roulette.innerHTML = `
-              <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px;">
-                <h2 style="color:#2b6cb0;">🎉 ¡Felicidades!</h2>
-                <p style="font-size:20px;margin:.5rem 0;">Ganaste un Cashback de:</p>
-                <h1 style="color:#48bb78;font-size:32px;">$${FIXED_CASHBACK.toLocaleString()}</h1>
-                <button id="continueBtn" style="margin-top:1rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#4299E1;color:#fff;font-weight:600;cursor:pointer;">Continuar</button>
-              </div>
-            `;
-            roulette.querySelector('#continueBtn').addEventListener('click', () => {
-              roulette.remove();
-              callback();
-            });
-          }, 700);
-        }
-      }
-      requestAnimationFrame(animate);
+      setTimeout(() => {
+        roulette.innerHTML = `
+          <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px;">
+            <h2 style="color:#2b6cb0;">🎉 ¡Felicidades!</h2>
+            <p style="font-size:20px;margin:.5rem 0;">Ganaste un Cashback de:</p>
+            <h1 style="color:#48bb78;font-size:32px;">$${FIXED_CASHBACK.toLocaleString()}</h1>
+            <button id="continueBtn" style="margin-top:1rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#4299E1;color:#fff;font-weight:600;cursor:pointer;">Continuar</button>
+          </div>
+        `;
+        roulette.querySelector('#continueBtn').addEventListener('click', () => {
+          roulette.remove();
+          callback();
+        });
+      }, 5200);
     });
-
-    function easeOutCubic(t) {
-      return 1 - Math.pow(1 - t, 3);
-    }
   }
 
   // ===== Dibujo del bono =====
@@ -187,7 +162,7 @@ console.log('[OC Termofijadoras] cargado');
       }
       ctx.drawImage(bgImg, (w - drawWidth)/2, (h - drawHeight)/2, drawWidth, drawHeight);
 
-      // Logo centrado detrás del texto
+      // Logo centrado
       const logo = new Image();
       logo.crossOrigin = 'anonymous';
       logo.onload = () => {
@@ -266,4 +241,3 @@ console.log('[OC Termofijadoras] cargado');
   }
 
 })();
-
