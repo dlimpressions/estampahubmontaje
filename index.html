@@ -217,6 +217,35 @@
     </iframe>
   </div>
 </div>
+
+<section id="pedido-dtf" style="margin-top:3rem; text-align:center; color:#fff;">
+  <h2>📤 Enviar archivo para impresión DTF</h2>
+  <form id="dtfForm" style="max-width:400px;margin:auto;text-align:left;">
+    <label>Nombre:</label>
+    <input id="dtf-name" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
+
+    <label>Correo:</label>
+    <input id="dtf-email" type="email" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
+
+    <label>Teléfono / WhatsApp:</label>
+    <input id="dtf-phone" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
+
+    <label>Ciudad:</label>
+    <input id="dtf-city" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
+
+    <label>Mensaje (opcional):</label>
+    <textarea id="dtf-message" rows="3" style="width:100%;padding:.6rem;margin-bottom:.5rem;"></textarea>
+
+    <label>Archivo del montaje (.png / .pdf / .zip):</label>
+    <input id="dtf-file" type="file" accept=".png,.jpg,.jpeg,.pdf,.zip" required style="width:100%;margin-bottom:1rem;">
+
+    <button id="dtf-submit" type="submit" style="width:100%;padding:.8rem;background:#2b6cb0;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">
+      Enviar Pedido
+    </button>
+  </form>
+  <p id="dtf-status" style="margin-top:1rem;"></p>
+</section>
+
       </div>
     </div>
   </div>
@@ -2055,6 +2084,42 @@ syncDesignsRef();
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 <script src="termofijadoras_oc.js"></script>
+
+<script>
+document.getElementById('dtfForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const status = document.getElementById('dtf-status');
+  status.textContent = '⏳ Enviando pedido...';
+
+  const file = document.getElementById('dtf-file').files[0];
+  const reader = new FileReader();
+  reader.onload = async function() {
+    const base64File = reader.result.split(',')[1];
+    const payload = {
+      name: document.getElementById('dtf-name').value.trim(),
+      email: document.getElementById('dtf-email').value.trim(),
+      phone: document.getElementById('dtf-phone').value.trim(),
+      city: document.getElementById('dtf-city').value.trim(),
+      message: document.getElementById('dtf-message').value.trim(),
+      fileName: file.name,
+      fileData: base64File
+    };
+
+    try {
+      await fetch('https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec', {
+        method: 'POST',
+        body: new URLSearchParams(payload)
+      });
+      status.textContent = '✅ Pedido enviado correctamente. Te contactaremos pronto.';
+      e.target.reset();
+    } catch (err) {
+      console.error(err);
+      status.textContent = '❌ Error al enviar. Intenta nuevamente.';
+    }
+  };
+  reader.readAsDataURL(file);
+});
+</script>
 
 
 </body>
