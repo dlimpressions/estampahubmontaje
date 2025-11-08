@@ -61,7 +61,7 @@ console.log('[OC Termofijadoras] cargado');
 
   // ===== Animación de ruleta =====
   function startRouletteAnimation(callback) {
-    const prizes = [20000, 20000, 20000, 20000]; // todas las opciones = 20.000
+    const prizes = [15000, 20000, 10000, 30000]; // todas las opciones = 20.000
     const roulette = document.createElement('div');
     roulette.style.position = 'fixed';
     roulette.style.inset = '0';
@@ -111,7 +111,7 @@ console.log('[OC Termofijadoras] cargado');
       spinBtn.disabled = true;
       let angle = 0;
       const spinTarget = Math.random() * 360 + 1080; // 3 vueltas + aleatorio
-      const duration = 3000;
+      const duration = 5000;
       const start = performance.now();
 
       function animate(now) {
