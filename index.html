@@ -2218,85 +2218,75 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${base}-${datePart}-${randomPart}`;
   }
 
-     function drawBono(name, product, id) {
+  function drawBono(name, product, id) {
     const W = 700, H = 400;
     bonoCanvas.width = W;
     bonoCanvas.height = H;
     ctxBono.clearRect(0, 0, W, H);
 
-    // === Fondo con imagen ondulada negra ===
-    const bgImg = new Image();
-    bgImg.crossOrigin = 'anonymous';
-    bgImg.src = 'https://i.ibb.co/LhbcjVGh/stylish-black-wavy-background-for-business-cards-presentations-banners-etc-vector.jpg';
-    bgImg.onload = () => {
-      ctxBono.drawImage(bgImg, 0, 0, W, H);
+    const patternCanvas = document.createElement('canvas');
+    patternCanvas.width = 25; patternCanvas.height = 25;
+    const pctx = patternCanvas.getContext('2d');
+    pctx.fillStyle = '#111'; pctx.fillRect(0,0,25,25);
+    pctx.fillStyle = '#161616'; pctx.fillRect(0,0,12.5,12.5);
+    pctx.fillRect(12.5,12.5,12.5,12.5);
+    const pattern = ctxBono.createPattern(patternCanvas, 'repeat');
+    ctxBono.fillStyle = pattern;
+    ctxBono.fillRect(0,0,W,H);
 
-      // --- Franja superior azul ---
-      const grad = ctxBono.createLinearGradient(0, 0, W, 0);
-      grad.addColorStop(0, '#3b82f6');
-      grad.addColorStop(1, '#06b6d4');
-      ctxBono.fillStyle = grad;
-      ctxBono.fillRect(0, 40, W, 70);
+    const grad = ctxBono.createLinearGradient(0,0,W,0);
+    grad.addColorStop(0,'#3b82f6');
+    grad.addColorStop(1,'#06b6d4');
+    ctxBono.fillStyle = grad;
+    ctxBono.fillRect(0,40,W,70);
 
-      // --- Título ---
-      ctxBono.textAlign = 'center';
-      ctxBono.fillStyle = '#fff';
-      ctxBono.font = "bold 28px 'Segoe UI'";
-      ctxBono.fillText('Bono Cashback DTF $20.000', W / 2, 70);
-      ctxBono.font = "600 18px 'Segoe UI'";
-      const fechaStr = new Date().toLocaleDateString();
-      ctxBono.fillText('Válido por compras de Termofijadoras', W / 2, 95);
-      ctxBono.fillText('Emitido el: ' + fechaStr, W / 2, 120);
+    ctxBono.textAlign = 'center';
+    ctxBono.fillStyle = '#fff';
+    ctxBono.font = "bold 28px 'Segoe UI'";
+    ctxBono.fillText('Bono Cashback DTF $20.000', W/2, 70);
+    ctxBono.font = "600 18px 'Segoe UI'";
+    const fechaStr = new Date().toLocaleDateString();
+    ctxBono.fillText('Válido por compras de Termofijadoras', W/2, 95);
+    ctxBono.fillText('Emitido el: ' + fechaStr, W/2, 120);
 
-      // --- Datos del cliente ---
-      ctxBono.textAlign = 'left';
-      ctxBono.font = "20px 'Segoe UI'";
-      ctxBono.fillText('Cliente: ' + name, 50, 160);
-      ctxBono.fillText('Producto: ' + product, 50, 190);
-      ctxBono.fillText('Redimible en impresiones DTF', 50, 220);
+    ctxBono.textAlign = 'left';
+    ctxBono.font = "20px 'Segoe UI'";
+    ctxBono.fillText('Cliente: ' + name, 50, 160);
+    ctxBono.fillText('Producto: ' + product, 50, 190);
+    ctxBono.fillText('Redimible en impresiones DTF', 50, 220);
 
-      // --- Logo ---
-      const logoImg = new Image();
-      logoImg.crossOrigin = 'anonymous';
-      logoImg.src = 'https://i.ibb.co/2wp1vDb/logo.jpg';
-      logoImg.onload = () => {
-        ctxBono.drawImage(logoImg, W - 150, 140, 120, 70);
-      };
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    logoImg.src = 'https://i.ibb.co/2wp1vDb/logo.jpg';
+    logoImg.onload = () => {
+      ctxBono.drawImage(logoImg, W - 150, 140, 120, 70);
+    };
 
-      // --- Termofijadora ---
-      const termoImg = new Image();
-      termoImg.crossOrigin = 'anonymous';
-      termoImg.src = 'https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png';
-      termoImg.onload = () => {
-        ctxBono.drawImage(termoImg, W - 220, H - 210, 250, 170);
-      };
+    const termoImg = new Image();
+    termoImg.crossOrigin = 'anonymous';
+    termoImg.src = 'https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png';
+    termoImg.onload = () => {
+      ctxBono.drawImage(termoImg, W - 220, H - 210, 250, 170);
+    };
 
-      // --- Código de barras ---
-      const barcodeCanvas = document.createElement('canvas');
-      JsBarcode(barcodeCanvas, id, {
-        format: 'CODE128',
-        width: 2,
-        height: 70,
-        displayValue: false,
-        background: '#000000',
-        lineColor: '#FFFFFF'
-      });
-      ctxBono.drawImage(barcodeCanvas, 50, 260);
+    const barcodeCanvas = document.createElement('canvas');
+    JsBarcode(barcodeCanvas, id, {
+      format: 'CODE128', width: 2, height: 70,
+      displayValue: false, background: '#000000', lineColor: '#FFFFFF'
+    });
+    ctxBono.drawImage(barcodeCanvas, 50, 260);
 
-      // --- ID y firma ---
-      ctxBono.textAlign = 'center';
-      ctxBono.font = "18px 'Segoe UI'";
-      ctxBono.fillStyle = '#ffffff';
-      ctxBono.fillText('BONO ID: ' + id, W / 2, H - 20);
+    ctxBono.textAlign = 'center';
+    ctxBono.font = "18px 'Segoe UI'";
+    ctxBono.fillStyle = '#ffffff';
+    ctxBono.fillText('BONO ID: ' + id, W/2, H - 20);
 
-      ctxBono.textAlign = 'right';
-      ctxBono.font = "italic 16px 'Segoe UI'";
-      ctxBono.fillStyle = '#cccccc';
-      ctxBono.fillText('By: L.D IMPRESSIONS', W - 45, H - 40);
-    }; // 👈 cierre correcto de bgImg.onload y de la función
+    ctxBono.textAlign = 'right';
+    ctxBono.font = "italic 16px 'Segoe UI'";
+    ctxBono.fillStyle = '#cccccc';
+    ctxBono.fillText('By: L.D IMPRESSIONS', W - 45, H - 40);
   }
-
-
+});
 </script>
 
 
