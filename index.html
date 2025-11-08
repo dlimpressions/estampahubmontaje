@@ -2093,17 +2093,8 @@ syncDesignsRef();
 <!-- Librería para código de barras -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
+<!-- ===== Mostrar y ocultar formulario DTF ===== -->
 <script>
-// ===== Mostrar y ocultar formulario DTF =====
-const dtfOverlay = document.getElementById('dtf-overlay');
-const openDtfBtn = document.getElementById('open-dtf-btn');
-const closeDtfBtn = document.getElementById('dtf-close');
-
-openDtfBtn.addEventListener('click', () => dtfOverlay.style.display = 'flex');
-closeDtfBtn.addEventListener('click', () => dtfOverlay.style.display = 'none');
-
-<script>
-// ===== Mostrar y ocultar formulario DTF =====
 const dtfOverlay = document.getElementById('dtf-overlay');
 const openDtfBtn = document.getElementById('open-dtf-btn');
 const closeDtfBtn = document.getElementById('dtf-close');
@@ -2146,7 +2137,6 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   reader.readAsDataURL(file);
 });
 </script>
-
 
 
 <script src="termofijadoras_oc.js"></script>
