@@ -1,6 +1,6 @@
 /* ============================================================
    termofijadoras_oc.js
-   Versión: Ruleta interactiva fija ($20.000) + logo centrado.
+   Versión: Ruleta con varios valores pero siempre cae en $20.000 + flecha indicadora
    ============================================================ */
 
 console.log('[OC Termofijadoras] cargado');
@@ -61,7 +61,7 @@ console.log('[OC Termofijadoras] cargado');
 
   // ===== Animación de ruleta =====
   function startRouletteAnimation(callback) {
-    const prizes = [15000, 20000, 10000, 30000]; // todas las opciones = 20.000
+    const prizes = [5000, 10000, 20000, 30000];
     const roulette = document.createElement('div');
     roulette.style.position = 'fixed';
     roulette.style.inset = '0';
@@ -74,9 +74,12 @@ console.log('[OC Termofijadoras] cargado');
     roulette.innerHTML = `
       <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px; box-shadow:0 0 20px rgba(0,0,0,0.5)">
         <h2 style="color:#2b6cb0; margin-bottom:1rem;">🎡 ¡Gira para conocer tu premio!</h2>
-        <div id="wheel" style="width:220px;height:220px;border-radius:50%;border:6px solid #2b6cb0;position:relative;overflow:hidden;margin:auto;">
-          <canvas id="wheelCanvas" width="220" height="220"></canvas>
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;color:#2b6cb0;font-weight:bold;">🎁</div>
+        <div style="position:relative;width:220px;height:220px;margin:auto;">
+          <canvas id="wheelCanvas" width="220" height="220" style="border-radius:50%;border:6px solid #2b6cb0;"></canvas>
+          <!-- Flecha indicadora -->
+          <div style="position:absolute;top:-25px;left:50%;transform:translateX(-50%);width:0;height:0;
+            border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:20px solid #e53e3e;">
+          </div>
         </div>
         <button id="spinBtn" style="margin-top:1.5rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer;">Girar</button>
       </div>
@@ -89,7 +92,7 @@ console.log('[OC Termofijadoras] cargado');
     const segAngle = (2 * Math.PI) / segs;
     const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1'];
 
-    // Dibujar ruleta (aunque todas dicen 20k)
+    // Dibujar la ruleta
     for (let i = 0; i < segs; i++) {
       wctx.beginPath();
       wctx.moveTo(110, 110);
@@ -102,7 +105,7 @@ console.log('[OC Termofijadoras] cargado');
       wctx.fillStyle = '#fff';
       wctx.font = 'bold 16px Segoe UI';
       wctx.textAlign = 'right';
-      wctx.fillText(`$20k`, 90, 5);
+      wctx.fillText(`$${(prizes[i] / 1000)}k`, 90, 5);
       wctx.restore();
     }
 
@@ -110,7 +113,15 @@ console.log('[OC Termofijadoras] cargado');
     spinBtn.addEventListener('click', () => {
       spinBtn.disabled = true;
       let angle = 0;
-      const spinTarget = Math.random() * 360 + 1080; // 3 vueltas + aleatorio
+
+      // Calcular el ángulo para que SIEMPRE caiga en $20k
+      const segIndex20k = prizes.indexOf(20000);
+      const segSize = 360 / segs;
+      const targetFrom = segIndex20k * segSize;
+      const targetTo = targetFrom + segSize;
+      const targetAngle = Math.random() * (targetTo - targetFrom) + targetFrom;
+
+      const spinTarget = 1080 + targetAngle; // 3 vueltas + ángulo del premio
       const duration = 5000;
       const start = performance.now();
 
@@ -122,7 +133,6 @@ console.log('[OC Termofijadoras] cargado');
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Esperar un momento y mostrar resultado fijo
           setTimeout(() => {
             roulette.innerHTML = `
               <div style="background:#fff; border-radius:12px; padding:2rem; text-align:center; max-width:350px;">
