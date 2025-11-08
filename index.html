@@ -2122,89 +2122,84 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${base}-${datePart}-${randomPart}`;
   }
 
-  function drawBono(name, product, id) {
+ function drawBono(name, product, id) {
   const W = 700, H = 400;
   bonoCanvas.width = W;
   bonoCanvas.height = H;
+
+  // 1) Fondo negro sólido (asegura que la PNG resultante NO tenga transparencia)
   ctxBono.clearRect(0, 0, W, H);
+  ctxBono.fillStyle = '#000000';
+  ctxBono.fillRect(0, 0, W, H);
 
-  // Fondo cuadriculado oscuro
-  const patternCanvas = document.createElement('canvas');
-  patternCanvas.width = 25; patternCanvas.height = 25;
-  const pctx = patternCanvas.getContext('2d');
-  pctx.fillStyle = '#111'; pctx.fillRect(0,0,25,25);
-  pctx.fillStyle = '#161616'; pctx.fillRect(0,0,12.5,12.5);
-  pctx.fillRect(12.5,12.5,12.5,12.5);
-  const pattern = ctxBono.createPattern(patternCanvas, 'repeat');
-  ctxBono.fillStyle = pattern;
-  ctxBono.fillRect(0,0,W,H);
+  // 2) Imagen grande de la termofijadora en fondo con baja opacidad (detrás del texto)
+  //    la colocamos primero para que el texto y el logo queden encima.
+  const termoImg = new Image();
+  termoImg.crossOrigin = 'anonymous';
+  termoImg.src = 'https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png';
+  termoImg.onload = () => {
+    ctxBono.save();
+    ctxBono.globalAlpha = 0.10; // muy baja para que no tape nada
+    // colocación: parte inferior-derecha, tamaño controlado para no tapar el texto/logo
+    ctxBono.drawImage(termoImg, W - 280, H - 210, 260, 180);
+    ctxBono.restore();
 
-  // Cinta azul con gradiente
-  const grad = ctxBono.createLinearGradient(0,0,W,0);
-  grad.addColorStop(0,'#3b82f6');
-  grad.addColorStop(1,'#06b6d4');
-  ctxBono.fillStyle = grad;
-  ctxBono.fillRect(0,40,W,70);
+    // 3) Cinta azul con gradiente (como acento horizontal encima del fondo)
+    const grad = ctxBono.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, '#3b82f6');
+    grad.addColorStop(1, '#06b6d4');
+    ctxBono.fillStyle = grad;
+    ctxBono.fillRect(0, 40, W, 70);
 
-  // Títulos principales
-  ctxBono.textAlign = 'center';
-  ctxBono.fillStyle = '#fff';
-  ctxBono.font = "bold 28px 'Segoe UI'";
-  ctxBono.fillText('Bono Cashback DTF $20.000', W/2, 70);
-  ctxBono.font = "600 18px 'Segoe UI'";
-  const fechaStr = new Date().toLocaleDateString();
-  ctxBono.fillText('Válido por compras de Termofijadoras', W/2, 95);
-  ctxBono.fillText('Emitido el: ' + fechaStr, W/2, 120);
+    // 4) Títulos principales y textos (en blanco para contraste sobre el negro)
+    ctxBono.textAlign = 'center';
+    ctxBono.fillStyle = '#ffffff';
+    ctxBono.font = "bold 28px 'Segoe UI'";
+    ctxBono.fillText('Bono Cashback DTF $20.000', W / 2, 70);
+    ctxBono.font = "600 18px 'Segoe UI'";
+    const fechaStr = new Date().toLocaleDateString();
+    ctxBono.fillText('Válido por compras de Termofijadoras', W / 2, 95);
+    ctxBono.fillText('Emitido el: ' + fechaStr, W / 2, 120);
 
-  // Datos de usuario
-  ctxBono.textAlign = 'left';
-  ctxBono.font = "20px 'Segoe UI'";
-  ctxBono.fillText('Cliente: ' + name, 50, 160);
-  ctxBono.fillText('Producto: ' + product, 50, 190);
-  ctxBono.fillText('Redimible en impresiones DTF', 50, 220);
+    // Datos del usuario (izquierda)
+    ctxBono.textAlign = 'left';
+    ctxBono.font = "20px 'Segoe UI'";
+    ctxBono.fillText('Cliente: ' + name, 50, 160);
+    ctxBono.fillText('Producto: ' + product, 50, 190);
+    ctxBono.fillText('Redimible en impresiones DTF', 50, 220);
 
-  // --- Imágenes decorativas ---
-const termoImg = new Image();
-termoImg.crossOrigin = 'anonymous';
-termoImg.src = 'https://i.ibb.co/35yPVGrZ/17-TERMOFIJADORA-60x80-1.png';
-termoImg.onload = () => {
-  // Dibujar termofijadora como fondo semitransparente detrás del texto
-  ctxBono.save();
-  ctxBono.globalAlpha = 0.12; // transparencia
-  ctxBono.drawImage(termoImg, W - 100, H - 230, 300, 200);
-  ctxBono.restore();
-};
+    // 5) Logo (arriba-derecha) — lo dibujamos después del texto para que esté encima
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    logoImg.src = 'https://i.ibb.co/2wp1vDb/logo.jpg';
+    logoImg.onload = () => {
+      ctxBono.save();
+      ctxBono.globalAlpha = 0.95;
+      ctxBono.drawImage(logoImg, W - 160, 120, 130, 80);
+      ctxBono.restore();
 
-// Dibujar logo pequeño arriba derecha
-const logoImg = new Image();
-logoImg.crossOrigin = 'anonymous';
-logoImg.src = 'https://i.ibb.co/2wp1vDb/logo.jpg';
-logoImg.onload = () => {
-  ctxBono.save();
-  ctxBono.globalAlpha = 0.9;
-  ctxBono.drawImage(logoImg, W - 160, 80, 130, 80);
-  ctxBono.restore();
-};
+      // 6) Código de barras (lado inferior-izquierdo)
+      const barcodeCanvas = document.createElement('canvas');
+      JsBarcode(barcodeCanvas, id, {
+        format: 'CODE128', width: 2, height: 70,
+        displayValue: false, background: '#000000', lineColor: '#FFFFFF'
+      });
+      ctxBono.drawImage(barcodeCanvas, 50, 260);
 
-  // Código de barras
-  const barcodeCanvas = document.createElement('canvas');
-  JsBarcode(barcodeCanvas, id, {
-    format: 'CODE128', width: 2, height: 70,
-    displayValue: false, background: '#000000', lineColor: '#FFFFFF'
-  });
-  ctxBono.drawImage(barcodeCanvas, 50, 260);
+      // 7) ID y firma (centro / derecha)
+      ctxBono.textAlign = 'center';
+      ctxBono.font = "18px 'Segoe UI'";
+      ctxBono.fillStyle = '#ffffff';
+      ctxBono.fillText('BONO ID: ' + id, W / 2, H - 20);
 
-  // ID y firma
-  ctxBono.textAlign = 'center';
-  ctxBono.font = "18px 'Segoe UI'";
-  ctxBono.fillStyle = '#ffffff';
-  ctxBono.fillText('BONO ID: ' + id, W/2, H - 20);
-
-  ctxBono.textAlign = 'right';
-  ctxBono.font = "italic 16px 'Segoe UI'";
-  ctxBono.fillStyle = '#cccccc';
-  ctxBono.fillText('By: L.D IMPRESSIONS', W - 45, H - 40);
+      ctxBono.textAlign = 'right';
+      ctxBono.font = "italic 16px 'Segoe UI'";
+      ctxBono.fillStyle = '#cccccc';
+      ctxBono.fillText('By: L.D IMPRESSIONS', W - 45, H - 40);
+    }; // end logo.onload
+  }; // end termoImg.onload
 }
+
 
 </script>
 
