@@ -1,6 +1,7 @@
 /* ============================================================
    termofijadoras_oc.js
-   Ruleta: 5k / 10k / 20k / 30k, siempre cae en 20k + flecha apuntando hacia abajo
+   Ruleta con flecha centrada, apuntando hacia abajo.
+   Premios: 5k / 10k / 20k / 30k (siempre cae en 20k)
    ============================================================ */
 
 console.log('[OC Termofijadoras] cargado');
@@ -75,9 +76,10 @@ console.log('[OC Termofijadoras] cargado');
         <h2 style="color:#2b6cb0; margin-bottom:1rem;">🎡 ¡Gira para conocer tu premio!</h2>
         <div style="position:relative;width:220px;height:220px;margin:auto;">
           <canvas id="wheelCanvas" width="220" height="220" style="border-radius:50%;border:6px solid #2b6cb0;transition:transform 5s cubic-bezier(.17,.67,.83,.67);"></canvas>
-          <!-- Flecha indicadora arriba apuntando hacia abajo -->
-          <div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);
-            width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:24px solid #e53e3e;">
+          <!-- Flecha centrada arriba, apuntando hacia abajo -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-110px);
+            width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:28px solid #e53e3e;
+            filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));">
           </div>
         </div>
         <button id="spinBtn" style="margin-top:1.5rem;padding:.8rem 1.2rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer;">Girar</button>
@@ -119,8 +121,8 @@ console.log('[OC Termofijadoras] cargado');
       const segSize = 360 / segs; // 90°
       const targetDeg = segIndex20k * segSize + segSize / 2;
 
-      // Flecha está arriba (270°), necesitamos que el segmento $20k quede en 270°
-      const finalDeg = 1080 + (270 - targetDeg); // 3 vueltas + ajuste
+      // Flecha centrada apunta hacia abajo (90°), ajustamos para que 20k quede allí
+      const finalDeg = 1080 + (90 - targetDeg);
       wheelCanvas.style.transition = 'transform 5s cubic-bezier(.17,.67,.83,.67)';
       wheelCanvas.style.transform = `rotate(${finalDeg}deg)`;
 
