@@ -201,9 +201,12 @@
       <input type="password" id="lock-pass" placeholder="Contraseña" autocomplete="current-password">
       <div class="lock-error" id="lock-error"></div>
       <button id="lock-btn">Acceder</button>
-      <!-- Botón Crear OC Termofijadoras -->
-      <div style="text-align:center; margin-top:1rem;">
-        <button id="open-oc-btn" class="btn btn-download">🧾 Crear OC Termofijadoras</button>
+     
+ <!-- Botón Crear OC Termofijadoras -->
+<div style="text-align:center; margin-top:1rem;">
+  <button id="open-oc-btn" class="btn btn-download">🧾 Crear OC Termofijadoras</button>
+</div>
+
 <!-- 🎬 Video de presentación -->
 <div class="video-container" style="margin-top: 2rem; text-align: center;">
   <h3 style="color: #fff; margin-bottom: 0.5rem;">🎥 Invierte En Tu Futuro</h3>
@@ -218,37 +221,44 @@
   </div>
 </div>
 
-<section id="pedido-dtf" style="margin-top:3rem; text-align:center; color:#fff;">
-  <h2>📤 Enviar archivo para impresión DTF</h2>
-  <form id="dtfForm" style="max-width:400px;margin:auto;text-align:left;">
-    <label>Nombre:</label>
-    <input id="dtf-name" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
-
-    <label>Correo:</label>
-    <input id="dtf-email" type="email" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
-
-    <label>Teléfono / WhatsApp:</label>
-    <input id="dtf-phone" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
-
-    <label>Ciudad:</label>
-    <input id="dtf-city" required style="width:100%;padding:.6rem;margin-bottom:.5rem;">
-
-    <label>Mensaje (opcional):</label>
-    <textarea id="dtf-message" rows="3" style="width:100%;padding:.6rem;margin-bottom:.5rem;"></textarea>
-
-    <label>Archivo del montaje (.png / .pdf / .zip):</label>
-    <input id="dtf-file" type="file" accept=".png,.jpg,.jpeg,.pdf,.zip" required style="width:100%;margin-bottom:1rem;">
-
-    <button id="dtf-submit" type="submit" style="width:100%;padding:.8rem;background:#2b6cb0;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">
-      Enviar Pedido
-    </button>
-  </form>
-  <p id="dtf-status" style="margin-top:1rem;"></p>
-</section>
-
+<!-- Botón para abrir el formulario DTF -->
+<div style="text-align:center; margin-top:2rem;">
+  <button id="open-dtf-btn" class="btn btn-upload">📤 Enviar archivo DTF</button>
+</div>
       </div>
     </div>
   </div>
+
+<!-- === FORMULARIO DTF (oculto al inicio) === -->
+<div class="oc-overlay" id="dtf-overlay" style="display:none;">
+  <div class="oc-card" style="text-align:left;">
+    <h2>📤 Enviar archivo para impresión DTF</h2>
+    <form id="dtfForm">
+      <label>Nombre:</label>
+      <input id="dtf-name" required>
+
+      <label>Correo:</label>
+      <input id="dtf-email" type="email" required>
+
+      <label>Teléfono / WhatsApp:</label>
+      <input id="dtf-phone" required>
+
+      <label>Ciudad:</label>
+      <input id="dtf-city" required>
+
+      <label>Mensaje (opcional):</label>
+      <textarea id="dtf-message" rows="3"></textarea>
+
+      <label>Archivo del montaje (.png / .pdf / .zip):</label>
+      <input id="dtf-file" type="file" accept=".png,.jpg,.jpeg,.pdf,.zip" required>
+
+      <button id="dtf-submit" type="submit" class="btn btn-download">Enviar Pedido</button>
+      <button type="button" id="dtf-close" class="btn btn-clear">Cancelar</button>
+    </form>
+    <p id="dtf-status" style="margin-top:1rem;"></p>
+  </div>
+</div>
+
 
 <!-- === SECCIÓN: Crear OC Termofijadoras === -->
 <div class="oc-overlay" id="oc-overlay" style="display:none;">
@@ -2083,9 +2093,25 @@ syncDesignsRef();
 <!-- Librería para código de barras -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
-<script src="termofijadoras_oc.js"></script>
+<script>
+// ===== Mostrar y ocultar formulario DTF =====
+const dtfOverlay = document.getElementById('dtf-overlay');
+const openDtfBtn = document.getElementById('open-dtf-btn');
+const closeDtfBtn = document.getElementById('dtf-close');
+
+openDtfBtn.addEventListener('click', () => dtfOverlay.style.display = 'flex');
+closeDtfBtn.addEventListener('click', () => dtfOverlay.style.display = 'none');
 
 <script>
+// ===== Mostrar y ocultar formulario DTF =====
+const dtfOverlay = document.getElementById('dtf-overlay');
+const openDtfBtn = document.getElementById('open-dtf-btn');
+const closeDtfBtn = document.getElementById('dtf-close');
+
+openDtfBtn.addEventListener('click', () => dtfOverlay.style.display = 'flex');
+closeDtfBtn.addEventListener('click', () => dtfOverlay.style.display = 'none');
+
+// ===== Envío a Google Apps Script =====
 document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const status = document.getElementById('dtf-status');
@@ -2120,6 +2146,10 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   reader.readAsDataURL(file);
 });
 </script>
+
+
+
+<script src="termofijadoras_oc.js"></script>
 
 
 </body>
