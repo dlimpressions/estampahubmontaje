@@ -20,6 +20,7 @@ console.log('[OC Termofijadoras] cargado');
   const ctx         = ocCanvas?.getContext('2d');
 
   const FIXED_CASHBACK = 20000;
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec';
 
   // ===== Mostrar / ocultar formulario =====
   function showForm() {
@@ -33,7 +34,7 @@ console.log('[OC Termofijadoras] cargado');
   }
 
   if (openOCBtn) openOCBtn.addEventListener('click', showForm);
-  if (ocCancel)   ocCancel.addEventListener('click', hideForm);
+  if (ocCancel)  ocCancel.addEventListener('click', hideForm);
 
   // ===== Generar Bono (con animación de ruleta) =====
   if (ocForm) {
@@ -53,11 +54,9 @@ console.log('[OC Termofijadoras] cargado');
       }
 
       // === Enviar datos a Google Sheets ===
-      fetch('https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec', {
+      fetch(SHEET_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: new URLSearchParams({
           name,
           email,
           phone,
@@ -67,8 +66,13 @@ console.log('[OC Termofijadoras] cargado');
           cashback: FIXED_CASHBACK
         })
       })
-      .then(() => console.log('✅ Datos enviados a Google Sheets'))
-      .catch(err => console.error('❌ Error al enviar datos', err));
+      .then(() => {
+        console.log('✅ Datos enviados a Google Sheets');
+      })
+      .catch(err => {
+        console.error('❌ Error al enviar datos', err);
+        alert('❌ Error al registrar tu orden. Intenta nuevamente.');
+      });
 
       // Mostrar ruleta y luego el bono
       startRouletteAnimation(() => {
@@ -99,7 +103,6 @@ console.log('[OC Termofijadoras] cargado');
             style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
                    border-radius:50%;">
           </canvas>
-          <!-- Indicador 🎁 centrado arriba -->
           <div style="position:absolute;top:0;left:50%;transform:translate(-50%,-55%);
                       font-size:28px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.35));">🎁</div>
         </div>
@@ -114,7 +117,6 @@ console.log('[OC Termofijadoras] cargado');
     const segAngle = (2 * Math.PI) / segs;
     const colors = ['#F56565', '#ED8936', '#48BB78', '#4299E1'];
 
-    // Dibujar la ruleta
     for (let i = 0; i < segs; i++) {
       wctx.beginPath();
       wctx.moveTo(110, 110);
@@ -135,16 +137,13 @@ console.log('[OC Termofijadoras] cargado');
     spinBtn.addEventListener('click', () => {
       spinBtn.disabled = true;
 
-      // Calcular el ángulo exacto para que el sector 20k quede arriba
       const segIndex20k = prizes.indexOf(20000);
       const segSize = 360 / segs;
-      const centerDeg = segIndex20k * segSize + segSize / 2; // centro del sector
-      const targetDeg = 1080 + (270 - centerDeg); // 3 vueltas + ajuste a 270°
+      const centerDeg = segIndex20k * segSize + segSize / 2;
+      const targetDeg = 1080 + (270 - centerDeg);
 
-      // Animación controlada con requestAnimationFrame
       const duration = 5000;
       const start = performance.now();
-
       function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
       function animate(now) {
@@ -196,7 +195,6 @@ console.log('[OC Termofijadoras] cargado');
       }
       ctx.drawImage(bgImg, (w - drawWidth)/2, (h - drawHeight)/2, drawWidth, drawHeight);
 
-      // Logo centrado detrás del texto
       const logo = new Image();
       logo.crossOrigin = 'anonymous';
       logo.onload = () => {
