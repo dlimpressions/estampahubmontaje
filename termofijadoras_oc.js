@@ -53,7 +53,7 @@ console.log('[OC Termofijadoras] cargado');
       }
 
       // === Enviar datos a Google Sheets ===
-      fetch('https://script.google.com/macros/s/AKfycbxQmStMAwpNqYiayC0NlhLx95-miKgdnwwQTzfOJsN1BPzZ3Lyn_fCf2hcyo7rRGZeiyA/exec', {
+      fetch('https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec', {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
