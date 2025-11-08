@@ -2218,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${base}-${datePart}-${randomPart}`;
   }
 
-   function drawBono(name, product, id) {
+     function drawBono(name, product, id) {
     const W = 700, H = 400;
     bonoCanvas.width = W;
     bonoCanvas.height = H;
@@ -2293,8 +2293,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ctxBono.font = "italic 16px 'Segoe UI'";
       ctxBono.fillStyle = '#cccccc';
       ctxBono.fillText('By: L.D IMPRESSIONS', W - 45, H - 40);
-    };
+    }); // 👈 cierre correcto de bgImg.onload y de la función
   }
+
 
 </script>
 
