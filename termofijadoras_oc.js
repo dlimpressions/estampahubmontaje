@@ -1,7 +1,8 @@
-/* ============================================================
+/* ============================================================ 
    termofijadoras_oc.js
    Ruleta con 🎁 centrado arriba. Premios 5k / 10k / 20k / 15k.
    Siempre cae EXACTO en $20k (sector verde).
+   Envío automático a Google Sheets.
    ============================================================ */
 
 console.log('[OC Termofijadoras] cargado');
@@ -38,6 +39,7 @@ console.log('[OC Termofijadoras] cargado');
   if (ocForm) {
     ocForm.addEventListener('submit', e => {
       e.preventDefault();
+
       const name    = document.getElementById('oc-name').value.trim();
       const email   = document.getElementById('oc-email').value.trim();
       const phone   = document.getElementById('oc-phone').value.trim();
@@ -50,6 +52,25 @@ console.log('[OC Termofijadoras] cargado');
         return;
       }
 
+      // === Enviar datos a Google Sheets ===
+      fetch('https://script.google.com/macros/s/AKfycbxQmStMAwpNqYiayC0NlhLx95-miKgdnwwQTzfOJsN1BPzZ3Lyn_fCf2hcyo7rRGZeiyA/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          city,
+          product,
+          qty,
+          cashback: FIXED_CASHBACK
+        })
+      })
+      .then(() => console.log('✅ Datos enviados a Google Sheets'))
+      .catch(err => console.error('❌ Error al enviar datos', err));
+
+      // Mostrar ruleta y luego el bono
       startRouletteAnimation(() => {
         drawBono({ name, email, city, product, qty, cashback: FIXED_CASHBACK });
         ocFormCard.style.display = 'none';
@@ -60,7 +81,7 @@ console.log('[OC Termofijadoras] cargado');
 
   // ===== Animación de ruleta =====
   function startRouletteAnimation(callback) {
-    const prizes = [5000, 10000, 20000, 30000];
+    const prizes = [5000, 10000, 20000, 15000];
     const roulette = document.createElement('div');
     roulette.style.position = 'fixed';
     roulette.style.inset = '0';
