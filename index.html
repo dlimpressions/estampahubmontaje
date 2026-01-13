@@ -193,41 +193,40 @@
 </head>
 
 <body>
-  <!-- Overlay de contraseña -->
-  <div class="lock-overlay" id="lock-overlay" style="display:none;">
-    <div class="lock-card">
-      <h2>Acceso restringido</h2>
-      <p>Ingresa la contraseña para ver el editor.</p>
-      <input type="password" id="lock-pass" placeholder="Contraseña" autocomplete="current-password">
-      <div class="lock-error" id="lock-error"></div>
-      <button id="lock-btn">Acceder</button>
-     
- <!-- Botón Crear OC Termofijadoras -->
-<div style="text-align:center; margin-top:1rem;">
-  <button id="open-oc-btn" class="btn btn-download">🧾 Crear OC Termofijadoras</button>
-</div>
+ <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
+<div class="lock-overlay" id="lock-overlay" style="display:none;">
+  <div class="lock-card">
+    <h2>Acceso restringido</h2>
+    <p>Ingresa tus credenciales</p>
+    <input type="text" id="lock-user" placeholder="Usuario" autocomplete="username">
+    <input type="password" id="lock-pass" placeholder="Contraseña" autocomplete="current-password">
+    <div class="lock-error" id="lock-error"></div>
+    <button id="lock-btn">Acceder</button>
 
-<!-- 🎬 Video de presentación -->
-<div class="video-container" style="margin-top: 2rem; text-align: center;">
-  <h3 style="color: #fff; margin-bottom: 0.5rem;">🎥 Invierte En Tu Futuro</h3>
-  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.4);">
-    <iframe 
-      src="https://www.youtube.com/embed/xS-FLOw9oNs?rel=0&autoplay=0&controls=1"
-      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-      frameborder="0"
-      allowfullscreen
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-    </iframe>
-  </div>
-</div>
-
-<!-- Botón para abrir el formulario DTF -->
-<div style="text-align:center; margin-top:2rem;">
-  <button id="open-dtf-btn" class="btn btn-upload">📤 Enviar archivo DTF</button>
-</div>
+    <!-- Mantengo tus botones y video originales aquí abajo -->
+    <!-- Botón Crear OC Termofijadoras -->
+    <div style="text-align:center; margin-top:1rem;">
+      <button id="open-oc-btn" class="btn btn-download">🧾 Crear OC Termofijadoras</button>
+    </div>
+    <!-- 🎬 Video de presentación -->
+    <div class="video-container" style="margin-top: 2rem; text-align: center;">
+      <h3 style="color: #fff; margin-bottom: 0.5rem;">🎥 Invierte En Tu Futuro</h3>
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.4);">
+        <iframe 
+          src="https://www.youtube.com/embed/xS-FLOw9oNs?rel=0&autoplay=0&controls=1"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+          frameborder="0"
+          allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
       </div>
     </div>
+    <!-- Botón para abrir el formulario DTF -->
+    <div style="text-align:center; margin-top:2rem;">
+      <button id="open-dtf-btn" class="btn btn-upload">📤 Enviar archivo DTF</button>
+    </div>
   </div>
+</div>
 
 <!-- === FORMULARIO DTF (oculto al inicio) === -->
 <div class="oc-overlay" id="dtf-overlay" style="display:none;">
@@ -550,39 +549,77 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
-    // ====== Seguridad (Contraseña) ======
-    const ACCESS_PASSWORD = 'dtf2025';
-    const overlay = document.getElementById('lock-overlay');
-    const appRoot = document.getElementById('app-root');
-    const lockBtn = document.getElementById('lock-btn');
-    const lockPass = document.getElementById('lock-pass');
-    const lockError = document.getElementById('lock-error');
+   // ====== Seguridad (Usuario + Contraseña con Google Sheets) ======
+const overlay = document.getElementById('lock-overlay');
+const appRoot = document.getElementById('app-root');
+const lockUser = document.getElementById('lock-user');
+const lockPass = document.getElementById('lock-pass');
+const lockBtn = document.getElementById('lock-btn');
+const lockError = document.getElementById('lock-error');
 
-    function showLock(){
-      overlay.style.display = 'flex';
-      appRoot.style.visibility = 'hidden';
-      setTimeout(()=> lockPass && lockPass.focus(), 0);
+function showLock(){
+  overlay.style.display = 'flex';
+  appRoot.style.visibility = 'hidden';
+  setTimeout(()=> lockPass && lockPass.focus(), 0);
+}
+
+function unlock(){
+  overlay.style.display = 'none';
+  appRoot.style.visibility = 'visible';
+}
+
+if (sessionStorage.getItem('dtf_unlocked') === '1') {
+  unlock();
+} else {
+  showLock();
+}
+
+if (lockBtn) {
+  lockBtn.addEventListener('click', async () => {
+    const usuario = lockUser?.value?.trim() || '';
+    const password = lockPass?.value?.trim() || '';
+
+    if (!usuario || !password) {
+      lockError.textContent = 'Completa usuario y contraseña';
+      return;
     }
-    function unlock(){
-      overlay.style.display = 'none';
-      appRoot.style.visibility = 'visible';
-    }
-    if (sessionStorage.getItem('dtf_unlocked') === '1') {
-      unlock();
-    } else {
-      showLock();
-    }
-    if (lockBtn) lockBtn.addEventListener('click', tryUnlock);
-    if (lockPass) lockPass.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
-    function tryUnlock(){
-      if (!lockPass) return;
-      if (lockPass.value === ACCESS_PASSWORD){
-        sessionStorage.setItem('dtf_unlocked','1');
+
+    lockError.textContent = 'Verificando...';
+
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'validar_login',
+          usuario: usuario,
+          contrasena: password
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success === true) {
+        sessionStorage.setItem('dtf_unlocked', '1');
         unlock();
       } else {
-        lockError.textContent = 'Contraseña incorrecta';
+        lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
       }
+    } catch (err) {
+      lockError.textContent = 'Error al conectar. Intenta más tarde.';
+      console.error(err);
     }
+  });
+}
+
+// Permitir Enter para enviar
+if (lockPass) {
+  lockPass.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      lockBtn?.click();
+    }
+  });
+}
 
     // ====== Referencias DOM
     const canvas = document.getElementById('canvas');
