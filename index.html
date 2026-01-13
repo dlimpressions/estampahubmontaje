@@ -697,6 +697,43 @@ if (lockPass) {
     const stepForwardBtn = document.getElementById('step-forward');
     const stepBackBtn = document.getElementById('step-back');
 
+
+// ====== Cálculo de precio aproximado del montaje ======
+function calcularPrecioMontaje() {
+  const altoCm = parseFloat(document.getElementById('canvas-height-cm')?.value) || 100;
+  const altoMetros = altoCm / 100;
+  let precio = 10000; // mínimo
+
+  if (altoMetros > 1) {
+    precio = altoMetros * 15000;
+  }
+
+  const precioElement = document.getElementById('precio-montaje');
+  if (precioElement) {
+    precioElement.textContent = '$' + precio.toLocaleString('es-CO') + (altoMetros <= 1 ? ' (mínimo)' : '');
+  }
+}
+
+// Actualizar precio cuando cambie el alto (en tiempo real)
+const canvasHeightInput = document.getElementById('canvas-height-cm');
+if (canvasHeightInput) {
+  canvasHeightInput.addEventListener('input', calcularPrecioMontaje);
+}
+
+// Actualizar también al aplicar el alto (solo si el botón existe)
+if (applyCanvasHeightBtn) {
+  // Guardamos el evento original (si existía) para no perderlo
+  const originalClick = applyCanvasHeightBtn.onclick || function(){};
+  applyCanvasHeightBtn.addEventListener('click', () => {
+    originalClick.call(applyCanvasHeightBtn); // Ejecuta lo que ya hacía
+    calcularPrecioMontaje(); // ← Actualiza precio
+  });
+}
+
+// Calcular precio al cargar la página
+calcularPrecioMontaje();
+
+
     // ====== Constantes físicas
     const PIXELS_PER_CM = 10;
     const CANVAS_WIDTH_CM = 58;
@@ -2119,39 +2156,6 @@ window.PIXELS_PER_CM = PIXELS_PER_CM;
 function syncDesignsRef(){ window.designs = designs; }
 syncDesignsRef();
 
-// ====== Cálculo de precio aproximado del montaje ======
-function calcularPrecioMontaje() {
-  const altoCm = parseFloat(document.getElementById('canvas-height-cm')?.value) || 100;
-  const altoMetros = altoCm / 100;
-  let precio = 10000; // mínimo
-
-  if (altoMetros > 1) {
-    precio = altoMetros * 15000;
-  }
-
-  const precioElement = document.getElementById('precio-montaje');
-  if (precioElement) {
-    precioElement.textContent = '$' + precio.toLocaleString('es-CO') + (altoMetros <= 1 ? ' (mínimo)' : '');
-  }
-}
-
-// Actualizar precio cuando cambie el alto (en tiempo real)
-const canvasHeightInput = document.getElementById('canvas-height-cm');
-if (canvasHeightInput) {
-  canvasHeightInput.addEventListener('input', calcularPrecioMontaje);
-}
-
-// También actualizar al aplicar el alto
-if (applyCanvasHeightBtn) {
-  const originalApply = applyCanvasHeightBtn.onclick || function(){};
-  applyCanvasHeightBtn.addEventListener('click', () => {
-    originalApply(); // Ejecuta el código original si había
-    calcularPrecioMontaje();
-  });
-}
-
-// Calcular al iniciar la página
-calcularPrecioMontaje();
 
     // Iniciar controles
     updateControls();
