@@ -599,12 +599,37 @@ if (lockBtn) {
 
       const result = await response.json();
 
-      if (result.success === true) {
-        sessionStorage.setItem('dtf_unlocked', '1');
-        unlock();
-      } else {
-        lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
-      }
+    if (result.success === true) {
+  sessionStorage.setItem('dtf_unlocked', '1');
+
+  // OBTENER LA URL DEL FACTURADOR DESDE LA HOJA usactivos
+  try {
+    const params = new URLSearchParams();
+    params.append('action', 'get_facturador_url');
+    params.append('usuario', usuario);  // 'usuario' es la variable que ya tienes arriba
+
+    const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbyXg2frQnrPl0bSRNretUUBPrr2j4_-NZE9C4AsjMogOKlhA0Ck14IVM7RLq5hsMESsNQ/exec', {
+      method: 'POST',
+      body: params
+    });
+
+    const urlResult = await urlResponse.json();
+
+    if (urlResult.success) {
+      sessionStorage.setItem('facturador_url', urlResult.url);
+      showMessage('¡Bienvenido! Tu facturador está listo.', 'success', 3000);
+    } else {
+      showMessage('No se encontró URL de facturador para tu cuenta. Contacta al admin.', 'warning', 5000);
+    }
+  } catch (err) {
+    console.error('Error al obtener URL facturador:', err);
+    showMessage('Error al cargar configuración del facturador.', 'error');
+  }
+
+  unlock();
+} else {
+  lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
+}
     } catch (err) {
       lockError.textContent = 'Error al conectar. Intenta más tarde.';
       console.error('Error de conexión/login:', err);
