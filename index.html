@@ -700,18 +700,23 @@ if (lockPass) {
 // ====== Cálculo de precio aproximado del montaje ======
 function calcularPrecioMontaje() {
   const altoCm = parseFloat(canvasHeightInput?.value) || 100;
-  const altoMetros = altoCm / 100;
-  let precio = 10000; // mínimo fijo hasta 60 cm
+  let precio = 10000; // mínimo hasta 60 cm
 
-  if (altoCm > 60) {
+  if (altoCm >= 61 && altoCm <= 99) {
+    precio = 15000; // fijo entre 61 y 99 cm
+  } else if (altoCm >= 100) {
+    const altoMetros = altoCm / 100;
     precio = altoMetros * 15000;
   }
 
   const precioElement = document.getElementById('precio-montaje');
   if (precioElement) {
-    precioElement.textContent = '$' + precio.toLocaleString('es-CO') + (altoCm <= 60 ? ' (mínimo)' : '');
+    let texto = '$' + precio.toLocaleString('es-CO');
+    if (altoCm <= 60) texto += ' (mínimo)';
+    precioElement.textContent = texto;
   }
 }
+
   // Actualizar en tiempo real cuando cambie el input
   if (canvasHeightInput) {
     canvasHeightInput.addEventListener('input', calcularPrecioMontaje);
