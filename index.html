@@ -445,9 +445,14 @@
 
   <div class="container" id="app-root" style="visibility:hidden;">
     <header>
-      <div class="logo">Editor DTF <span>By: EstampaHub</span></div>
-      <div class="specs" id="specs-label">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
-    </header>
+  <div class="logo">Editor DTF <span>By: EstampaHub</span></div>
+  <div class="specs" id="specs-label">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
+  
+  <!-- Botón Cerrar Sesión -->
+  <button id="logout-btn" class="btn btn-clear" style="padding: 0.6rem 1.2rem; font-size: 0.95rem; margin-left: auto;">
+    🚪 Cerrar Sesión
+  </button>
+</header>
 
     <div class="main-content">
       <!-- Toolbar izquierda -->
@@ -2299,6 +2304,33 @@ syncDesignsRef();
     // Iniciar controles
     updateControls();
     setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
+
+// Botón Cerrar Sesión
+const logoutBtn = document.getElementById('logout-btn');
+
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    if (confirm('¿Seguro que quieres cerrar sesión?')) {
+      // Borramos la sesión guardada
+      sessionStorage.removeItem('dtf_unlocked');
+      sessionStorage.removeItem('facturador_url');
+      
+      // Mostramos de nuevo la pantalla de login
+      const overlay = document.getElementById('lock-overlay');
+      overlay.style.display = 'flex';
+      setTimeout(() => overlay.classList.add('visible'), 100);
+      
+      // Ocultamos el editor
+      document.getElementById('app-root').style.visibility = 'hidden';
+      
+      // Limpiamos los campos por seguridad
+      document.getElementById('lock-user').value = '';
+      document.getElementById('lock-pass').value = '';
+      
+      showMessage('Sesión cerrada. Ingresa de nuevo para continuar.', 'info', 4000);
+    }
+  });
+}
   </script>
 
 <script src="auto_pack_pro.js"></script>
