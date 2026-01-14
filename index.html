@@ -128,12 +128,94 @@
     @media (max-width:1024px){.main-content{flex-wrap:wrap}.toolbar,.controls{width:100%}.message-container{top:10px;right:10px;left:10px;max-width:none}}
 
     /* Overlay de contraseña */
-    .lock-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#2c3e50 0%,#4a5568 100%);display:flex;align-items:center;justify-content:center;z-index:2000;color:#fff}
-    .lock-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);padding:2rem;border-radius:12px;width:min(90vw,380px)}
-    .lock-card h2{margin-bottom:1rem}
-    .lock-card input{width:100%;padding:.8rem;border-radius:8px;border:none;margin:.5rem 0 1rem 0}
-    .lock-card button{width:100%;padding:.8rem;border:none;border-radius:8px;background:#48bb78;color:#fff;font-weight:600;cursor:pointer}
-    .lock-error{color:#fed7d7;min-height:1.2em;margin-bottom:.5rem}
+   /* Pantalla de login futurista */
+.lock-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  color: #e2e8f0;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.lock-overlay.visible {
+  opacity: 1;
+}
+
+.lock-card {
+  background: rgba(30, 30, 60, 0.7);
+  border: 1px solid rgba(66, 153, 225, 0.3);
+  backdrop-filter: blur(16px);
+  padding: 2.5rem 2rem;
+  border-radius: 20px;
+  width: min(90vw, 420px);
+  box-shadow: 0 0 60px rgba(66, 153, 225, 0.25);
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lock-card h2 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  color: #a5b4fc;
+  text-shadow: 0 0 15px rgba(165, 180, 252, 0.5);
+}
+
+.lock-card p {
+  margin-bottom: 1.5rem;
+  color: #cbd5e0;
+}
+
+.lock-card input {
+  width: 100%;
+  padding: 0.9rem;
+  margin: 0.8rem 0;
+  border-radius: 12px;
+  border: 1px solid rgba(66, 153, 225, 0.4);
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-size: 1rem;
+}
+
+.lock-card input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+.lock-card button {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(66, 153, 225, 0.5);
+  transition: all 0.3s ease;
+}
+
+.lock-card button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(66, 153, 225, 0.7);
+}
+
+.lock-error {
+  color: #fed7d7;
+  min-height: 1.5em;
+  margin: 0.8rem 0;
+  font-size: 0.95rem;
+}
 
     /* Pane derecho pegajoso */
     .controls{ position: sticky; top: 10px; max-height: calc(100vh - 40px); overflow: auto; }
@@ -257,7 +339,7 @@
     <input type="text" id="lock-user" placeholder="Usuario" autocomplete="username">
     <input type="password" id="lock-pass" placeholder="Contraseña" autocomplete="current-password">
     <div class="lock-error" id="lock-error"></div>
-    <button id="lock-btn">Acceder</button>
+    <button id="lock-btn" class="btn">Acceder</button>
 
     <!-- Mantengo tus botones y video originales aquí abajo -->
     <!-- Botón Crear OC Termofijadoras -->
@@ -625,9 +707,11 @@ const lockBtn = document.getElementById('lock-btn');
 const lockError = document.getElementById('lock-error');
 
 function showLock(){
+  const overlay = document.getElementById('lock-overlay');
   overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('visible'), 100); // Para que aparezca con animación
   appRoot.style.visibility = 'hidden';
-  setTimeout(()=> lockPass && lockPass.focus(), 0);
+  setTimeout(() => lockPass && lockPass.focus(), 300);
 }
 
 function unlock(){
@@ -684,7 +768,7 @@ if (lockBtn) {
 
     if (urlResult.success) {
       sessionStorage.setItem('facturador_url', urlResult.url);
-      showMessage('¡Bienvenido! Tu facturador está listo.', 'success', 3000);
+     showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
     } else {
       showMessage('No se encontró URL de facturador para tu cuenta. Contacta al admin.', 'warning', 5000);
     }
