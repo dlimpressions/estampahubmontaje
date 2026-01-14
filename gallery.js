@@ -1,9 +1,9 @@
-// gallery.js - Galería REAL desde Google Sheets
+// gallery.js - Galería REAL desde Google Sheets + carga en canvas
 
-console.log("gallery.js cargado - versión final con Sheets");
+console.log("gallery.js cargado - versión FINAL con carga en canvas");
 
 window.addEventListener('load', function() {
-  console.log("Página lista - inicializando galería real");
+  console.log("Página lista - inicializando galería");
 
   const galleryOverlay = document.getElementById('imgbb-gallery-overlay');
   const designsGrid = document.getElementById('imgbb-designs-grid');
@@ -12,10 +12,10 @@ window.addEventListener('load', function() {
 
   if (openGalleryBtn) {
     openGalleryBtn.addEventListener('click', () => {
-      console.log("Botón clicado - intentando cargar diseños desde Sheets");
+      console.log("Botón clicado - cargando diseños desde Sheets");
       if (galleryOverlay) {
         galleryOverlay.style.display = 'flex';
-        cargarGaleriaDesdeSheets(); // ¡Aquí carga los diseños reales!
+        cargarGaleriaDesdeSheets();
       }
     });
   }
@@ -29,7 +29,7 @@ window.addEventListener('load', function() {
   }
 });
 
-// Función que lee tu Google Sheet a través del Apps Script
+// Esta función carga los diseños desde tu Google Sheet
 async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if (!grid) {
@@ -37,14 +37,14 @@ async function cargarGaleriaDesdeSheets() {
     return;
   }
 
-  grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando diseños desde Google Sheets...</div>';
+  grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando tus diseños desde Google Sheets...</div>';
 
   try {
-    // ← REEMPLAZA ESTA URL con la tuya real del Apps Script (la que termina en /exec)
-    const response = await fetch('https://script.google.com/macros/s/AKfycbyJHoQbMyAyI8_kQ6-bSig_9QlSJL828ENWhx8O7kcXQoQsFlZ7GiKJAk87qlkopltI_g/exec'); // ← ¡Pega aquí tu URL!
+    // ← REEMPLAZA ESTA LÍNEA con la URL REAL de tu Apps Script (la que termina en /exec)
+    const response = await fetch('https://script.google.com/macros/s/AKfycbyJHoQbMyAyI8_kQ6-bSig_9QlSJL828ENWhx8O7kcXQoQsFlZ7GiKJAk87qlkopltI_g/exec');
 
     if (!response.ok) {
-      throw new Error('Error al conectar con Google Sheets');
+      throw new Error('No se pudo conectar con Google Sheets. Revisa la URL o permisos.');
     }
 
     const disenos = await response.json();
@@ -52,10 +52,11 @@ async function cargarGaleriaDesdeSheets() {
     grid.innerHTML = '';
 
     if (!disenos || disenos.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños en la hoja de Sheets</div>';
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños en tu hoja de Google Sheets</div>';
       return;
     }
 
+    // Mostramos cada diseño como miniatura
     disenos.forEach(d => {
       const item = document.createElement('div');
       item.style.cursor = 'pointer';
@@ -75,37 +76,52 @@ async function cargarGaleriaDesdeSheets() {
       item.addEventListener('mouseover', () => item.style.background = '#e2e8f0');
       item.addEventListener('mouseout', () => item.style.background = '#f8f9fa');
 
+      // ¡Aquí está la magia! Al clic, carga el diseño en el canvas
       item.addEventListener('click', () => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        img.crossOrigin = 'anonymous'; // Necesario para evitar errores de CORS
         img.onload = () => {
+          // Creamos un nuevo diseño usando la clase Design que ya tienes
           const id = 'sheet-' + Date.now();
           const design = new Design(id, img);
+          
+          // Ajustamos tamaño para que quepa bien en el canvas
           const maxW = canvas.width - 20;
           const maxH = canvas.height - 20;
           const scaleToFit = Math.min(maxW / design.width, maxH / design.height);
           design.scale = Math.min(1, scaleToFit);
+          
+          // Agregamos al array de diseños
           designs.push(design);
           selectedDesignId = id;
+          
+          // Actualizamos todo
           updateDesignsList();
           updateControls();
           drawCanvas();
-          showMessage(`Diseño "${d.nombre}" cargado desde Sheets`, 'success', 2000);
+          
+          showMessage(`¡Diseño "${d.nombre}" cargado en el canvas!`, 'success', 3000);
+          
+          // Cerramos el modal automáticamente
           galleryOverlay.style.display = 'none';
         };
-        img.onerror = () => showMessage('Error al cargar el diseño', 'error');
+
+        img.onerror = () => {
+          showMessage('Error al cargar el diseño (revisa que la URL sea pública y directa)', 'error');
+        };
+
         img.src = d.url;
       });
 
       grid.appendChild(item);
     });
 
-    console.log("Diseños cargados:", disenos.length);
+    console.log("Se cargaron", disenos.length, "diseños desde Sheets");
   } catch (err) {
     console.error("Error al cargar galería:", err);
     grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
-      Error al cargar diseños: ${err.message}<br>
-      Revisa la consola (F12) para más detalles.
+      Error al cargar: ${err.message}<br>
+      <small>Verifica la URL del Apps Script y que la sheet esté compartida como "Cualquiera".</small>
     </div>`;
   }
 }
