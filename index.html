@@ -316,6 +316,7 @@
       <div class="toolbar">
         <div class="tool-section">
           <h3>Gestión de Diseños</h3>
+          <button class="btn" id="open-imgbb-gallery">📁 Mis Diseños ImgBB</button>
           <input type="file" id="file-input" accept="image/*" style="display:none" multiple>
           <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
           <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
@@ -2249,6 +2250,26 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
 </script>
 
 <script src="termofijadoras_oc.js"></script>
+
+<script src="gallery.js"></script>
+
+<!-- === CONTENEDOR DE DISEÑOS ImgBB (modal) === -->
+<div class="oc-overlay" id="imgbb-gallery-overlay" style="display:none;">
+  <div class="oc-card" style="width:min(90vw, 900px); max-height:90vh; overflow-y:auto;">
+    <h2>📁 Mis Diseños en ImgBB</h2>
+    <p>Selecciona un diseño para cargarlo en el lienzo</p>
+    
+    <!-- Aquí aparecerán las miniaturas -->
+    <div id="imgbb-designs-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:15px; padding:10px;">
+      <div style="grid-column:1/-1; text-align:center; color:#666; padding:30px;">Cargando diseños desde Sheets...</div>
+    </div>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-clear" id="close-imgbb-gallery">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 
 </body>
 
