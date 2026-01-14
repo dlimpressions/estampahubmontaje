@@ -61,8 +61,27 @@
     .btn-clear{background:#f56565}.btn-clear:hover{background:#e53e3e}
     .canvas-container{flex:1;background:#f8f9fa;border-radius:10px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.05);padding:1rem;display:flex;flex-direction:column;position:relative}
     .canvas-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-    .canvas-area{flex:1;background:#fff;border-radius:8px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem;box-shadow:inset 0 0 10px rgba(0,0,0,.05);position:relative}
-    #canvas{background:#fff;box-shadow:0 0 20px rgba(0,0,0,.1);touch-action:none;cursor:default}
+    .canvas-area {
+  flex: 1;
+  background: rgba(10, 10, 30, 0.85);
+  border-radius: 16px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1.5rem;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.6);
+  position: relative;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(66,153,225,0.2);
+}
+    #canvas {
+  background: #ffffff;
+  box-shadow: 0 0 40px rgba(66,153,225,0.3), inset 0 0 20px rgba(0,0,0,0.15);
+  touch-action: none;
+  cursor: default;
+  border-radius: 4px; /* opcional, para que las esquinas queden suaves */
+}
     .control-group{margin-bottom:1.5rem}
     .control-group h4{margin-bottom:.8rem;color:#2d3748}
     .slider-container{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
@@ -842,7 +861,7 @@ function calcularPrecioMontaje() {
         ctx.fillStyle = '#e2e8f0';
         ctx.font = '20px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('BY: DAVID MUNIVE', canvas.width/2, canvas.height/2);
+        ctx.fillText('BY: Estampa Hub', canvas.width/2, canvas.height/2);
       }
       ctx.restore();
     }
