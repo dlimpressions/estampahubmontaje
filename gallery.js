@@ -1,180 +1,187 @@
-// gallery.js - Galería con CATEGORÍAS, BÚSQUEDA y CUADRÍCULA
-console.log("gallery.js cargado correctamente - v2026 con categorías y búsqueda");
+// gallery.js - Galería con CATEGORÍAS, BÚSQUEDA y CUADRÍCULA (versión final 2026)
+// Este archivo hace que al clic en "Mis Diseños ImgBB" se abra el modal con diseños en cuadrícula
+
+console.log("gallery.js cargado - versión FINAL con cuadrícula y nombres en negrita");
+
+let allDesigns = []; // Aquí guardamos todos los diseños para filtrar
 
 window.addEventListener('load', function() {
-  console.log("DOM listo - buscando elementos de galería");
+  console.log("Página lista - buscando botón y modal de galería");
 
   const galleryOverlay = document.getElementById('imgbb-gallery-overlay');
-  const designsGrid = document.getElementById('imgbb-designs-grid');
   const openGalleryBtn = document.getElementById('open-imgbb-gallery');
   const closeGalleryBtn = document.getElementById('close-imgbb-gallery');
 
-  if (!openGalleryBtn) {
-    console.error("ERROR: No se encontró el botón #open-imgbb-gallery");
-  } else {
-    console.log("Botón encontrado ✓ - agregando evento de clic");
+  if (openGalleryBtn) {
+    console.log("Botón encontrado ✓ - agregando clic");
     openGalleryBtn.addEventListener('click', () => {
-      console.log("¡Clic detectado! Abriendo galería...");
+      console.log("¡Clic en Mis Diseños ImgBB! Abriendo...");
       if (galleryOverlay) {
         galleryOverlay.style.display = 'flex';
         cargarGaleriaDesdeSheets();
       } else {
-        console.error("ERROR: No se encontró #imgbb-gallery-overlay");
+        console.log("ERROR: No se encontró el modal");
       }
     });
+  } else {
+    console.log("ERROR: No se encontró el botón #open-imgbb-gallery");
   }
 
   if (closeGalleryBtn) {
     closeGalleryBtn.addEventListener('click', () => {
-      console.log("Clic en Cerrar - ocultando galería");
       if (galleryOverlay) galleryOverlay.style.display = 'none';
     });
-  } else {
-    console.error("No se encontró botón de cerrar galería");
   }
 });
 
-let allDesigns = [];
-
 async function cargarGaleriaDesdeSheets() {
-  console.log("Iniciando carga desde Sheets...");
   const grid = document.getElementById('imgbb-designs-grid');
   if (!grid) {
-    console.error("No se encontró el grid #imgbb-designs-grid");
+    console.log("ERROR: No se encontró el contenedor de diseños");
     return;
   }
 
-  grid.innerHTML = `
-    <div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">
-      Cargando diseños...
-    </div>
-  `;
+  grid.innerHTML = '<div style="text-align:center; color:#666; padding:50px;">Cargando tus diseños...</div>';
 
   try {
+    // ← Tu URL real del Apps Script (cámbiala solo si es diferente)
     const response = await fetch('https://script.google.com/macros/s/AKfycbyJHoQbMyAyI8_kQ6-bSig_9QlSJL828ENWhx8O7kcXQoQsFlZ7GiKJAk87qlkopltI_g/exec');
     
-    if (!response.ok) throw new Error('Error al conectar con Sheets');
+    if (!response.ok) throw new Error('No se pudo conectar');
 
     allDesigns = await response.json();
     console.log("Diseños cargados:", allDesigns.length);
 
     renderGalleryUI();
-    filterAndRender('todos'); // Mostrar todos al inicio
+    filterAndRender('todos'); // Mostramos todos al abrir
 
   } catch (err) {
-    console.error("Error cargando galería:", err);
-    grid.innerHTML = `
-      <div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
-        Error: ${err.message}
-      </div>
-    `;
+    grid.innerHTML = `<div style="text-align:center; color:#e53e3e; padding:50px;">
+      Error: ${err.message}<br>Revisa la conexión o permisos.
+    </div>`;
   }
 }
 
+// Crea la interfaz (pestañas + búsqueda + cuadrícula)
 function renderGalleryUI() {
   const grid = document.getElementById('imgbb-designs-grid');
   grid.innerHTML = `
     <!-- Barra de búsqueda -->
-    <div style="grid-column:1/-1; margin-bottom:15px;">
-      <input type="text" id="searchInput" placeholder="Buscar por nombre..." 
-        style="width:100%; padding:10px; font-size:1rem; border-radius:8px; border:1px solid #cbd5e0; background:rgba(30,30,50,0.6); color:#e2e8f0;">
+    <div style="margin-bottom:20px;">
+      <input type="text" id="searchInput" placeholder="Buscar diseño..." 
+        style="width:100%; padding:12px; font-size:1rem; border-radius:10px; border:1px solid #4299e1; background:rgba(30,30,50,0.8); color:white; outline:none;">
     </div>
 
     <!-- Pestañas -->
-    <div style="grid-column:1/-1; display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; justify-content:center;">
-      <button class="category-tab active" data-cat="todos">Todos</button>
-      <button class="category-tab" data-cat="logos">Logos</button>
-      <button class="category-tab" data-cat="frases">Frases</button>
-      <button class="category-tab" data-cat="fondos">Fondos</button>
+    <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; justify-content:center;">
+      <button class="cat-tab active" data-cat="todos">Todos</button>
+      <button class="cat-tab" data-cat="logos">Logos</button>
+      <button class="cat-tab" data-cat="frases">Frases</button>
+      <button class="cat-tab" data-cat="fondos">Fondos</button>
     </div>
 
-    <!-- Grid en CUADRÍCULA -->
+    <!-- Cuadrícula de diseños -->
     <div id="designsContainer" style="
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px;
-      padding: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 25px;
+      padding: 15px;
     "></div>
   `;
 
-  // Estilos de pestañas
+  // Estilos rápidos (puedes mover a <style> del HTML si prefieres)
   const style = document.createElement('style');
   style.textContent = `
-    .category-tab {
-      padding: 10px 20px;
+    .cat-tab {
+      padding: 10px 24px;
       border: none;
       border-radius: 30px;
-      background: rgba(66,153,225,0.25);
-      color: #e2e8f0;
+      background: rgba(66,153,225,0.3);
+      color: white;
       cursor: pointer;
+      font-weight: 600;
       transition: all 0.3s;
     }
-    .category-tab:hover { background: rgba(66,153,225,0.5); transform: scale(1.05); }
-    .category-tab.active { background: #4299e1; color: white; box-shadow: 0 0 15px rgba(66,153,225,0.6); }
+    .cat-tab:hover { background: rgba(66,153,225,0.6); transform: scale(1.05); }
+    .cat-tab.active { background: #4299e1; box-shadow: 0 0 15px #4299e1; }
+    .design-item {
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .design-item:hover { transform: scale(1.08); }
+    .design-name {
+      font-weight: bold !important;
+      color: #e2e8f0;
+      margin-top: 10px;
+      font-size: 1rem;
+      display: block;
+    }
   `;
   document.head.appendChild(style);
 
   // Eventos
-  document.querySelectorAll('.category-tab').forEach(tab => {
+  document.querySelectorAll('.cat-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       filterAndRender(tab.dataset.cat, document.getElementById('searchInput').value);
     });
   });
 
   document.getElementById('searchInput').addEventListener('input', (e) => {
-    const active = document.querySelector('.category-tab.active')?.dataset.cat || 'todos';
-    filterAndRender(active, e.target.value);
+    const catActiva = document.querySelector('.cat-tab.active')?.dataset.cat || 'todos';
+    filterAndRender(catActiva, e.target.value);
   });
 }
 
-function filterAndRender(category = 'todos', search = '') {
+// Filtra y muestra en cuadrícula
+function filterAndRender(categoria = 'todos', busqueda = '') {
   const container = document.getElementById('designsContainer');
-  if (!container) return;
   container.innerHTML = '';
 
-  const filtered = allDesigns.filter(d => {
-    const catMatch = category === 'todos' || (d.categoria && d.categoria.toLowerCase() === category);
-    const searchMatch = !search || (d.nombre && d.nombre.toLowerCase().includes(search.toLowerCase()));
-    return catMatch && searchMatch;
+  const filtrados = allDesigns.filter(d => {
+    const coincideCat = (categoria === 'todos') || (d.categoria && d.categoria.toLowerCase() === categoria);
+    const coincideBusq = !busqueda || (d.nombre && d.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+    return coincideCat && coincideBusq;
   });
 
-  if (filtered.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No se encontraron diseños</div>';
+  if (filtrados.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:50px;">No hay diseños que coincidan</div>';
     return;
   }
 
-  filtered.forEach(d => {
+  filtrados.forEach(d => {
     const item = document.createElement('div');
-    item.style.cursor = 'pointer';
+    item.className = 'design-item';
     item.innerHTML = `
-      <div style="width:140px;height:140px;margin:auto;background:#222;border-radius:8px;overflow:hidden;">
-        <img src="${d.url}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
+      <div style="width:170px; height:170px; margin:auto; background:#1a1a2e; border-radius:12px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.5);">
+        <img src="${d.url}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
       </div>
-      <small style="color:#e2e8f0;">${d.nombre || 'Sin nombre'}</small>
+      <div class="design-name">${d.nombre || 'Sin nombre'}</div>
+      ${d.categoria ? `<small style="color:#a0aec0;">(${d.categoria})</small>` : ''}
     `;
-    item.onclick = () => loadDesignToCanvas(d);
+
+    item.onclick = () => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const id = 'design-' + Date.now();
+        const nuevo = new Design(id, img);
+        const maxW = canvas.width - 20;
+        const maxH = canvas.height - 20;
+        nuevo.scale = Math.min(1, Math.min(maxW / nuevo.width, maxH / nuevo.height));
+        designs.push(nuevo);
+        selectedDesignId = id;
+        updateDesignsList();
+        updateControls();
+        drawCanvas();
+        showMessage(`¡Diseño cargado!`, 'success', 2000);
+        document.getElementById('imgbb-gallery-overlay').style.display = 'none';
+      };
+      img.src = d.url;
+    };
+
     container.appendChild(item);
   });
-}
-
-function loadDesignToCanvas(d) {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const id = 'sheet-' + Date.now();
-    const design = new Design(id, img);
-    const maxW = canvas.width - 20;
-    const maxH = canvas.height - 20;
-    design.scale = Math.min(1, Math.min(maxW / design.width, maxH / design.height));
-    designs.push(design);
-    selectedDesignId = id;
-    updateDesignsList();
-    updateControls();
-    drawCanvas();
-    showMessage(`Diseño "${d.nombre}" cargado`, 'success', 2000);
-    document.getElementById('imgbb-gallery-overlay').style.display = 'none';
-  };
-  img.src = d.url;
 }
