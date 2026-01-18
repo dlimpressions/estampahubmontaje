@@ -1,5 +1,5 @@
 // gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + búsqueda por nombre y categoria
-console.log("gallery.js cargado - versión con búsqueda por nombre y Categoria");
+console.log("gallery.js cargado - versión con nueva URL");
 
 let allDesigns = [];
 
@@ -32,21 +32,16 @@ window.addEventListener('load', function() {
 
 async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
-  if (!grid) {
-    console.log("ERROR: No se encontró el grid");
-    return;
-  }
+  if (!grid) return;
 
   grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando tus diseños...</div>';
 
   try {
-    // ← Usa la NUEVA URL de tu Apps Script (la que acabas de desplegar)
-    const response = await fetch('https://script.google.com/macros/s/TU_NUEVA_URL_AQUI/exec');
+    const response = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
     if (!response.ok) throw new Error('No se pudo conectar');
 
     allDesigns = await response.json();
 
-    // Interfaz: barra de búsqueda + cuadrícula
     grid.innerHTML = `
       <div style="margin-bottom:20px;">
         <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
@@ -56,7 +51,6 @@ async function cargarGaleriaDesdeSheets() {
       <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
     `;
 
-    // Estilos para nombres en negrita
     const style = document.createElement('style');
     style.textContent = `
       .design-item { text-align:center; cursor:pointer; padding:10px; border-radius:8px; transition:background 0.2s; }
@@ -65,7 +59,6 @@ async function cargarGaleriaDesdeSheets() {
     `;
     document.head.appendChild(style);
 
-    // Búsqueda en tiempo real
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const busqueda = e.target.value.toLowerCase().trim();
       const filtrados = allDesigns.filter(d => {
@@ -76,7 +69,7 @@ async function cargarGaleriaDesdeSheets() {
       renderDesigns(filtrados);
     });
 
-    renderDesigns(allDesigns); // Mostramos todos al inicio
+    renderDesigns(allDesigns);
 
   } catch (err) {
     grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
