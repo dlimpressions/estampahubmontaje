@@ -71,20 +71,24 @@ async function cargarGaleriaDesdeSheets() {
 }
 
 function filterAndRender(categoria = 'todos', busqueda = '') {
-  const container = document.getElementById('imgbb-designs-grid');  // ← Corregido: usamos el ID correcto del grid
+  const container = document.getElementById('imgbb-designs-grid');
   if (!container) {
-    console.log("ERROR: No se encontró el grid en filterAndRender");
+    console.log("ERROR: No se encontró el grid");
     return;
   }
 
   container.innerHTML = '';
 
+  const busquedaLower = busqueda.toLowerCase().trim();
+
   const filtrados = allDesigns.filter(d => {
     const nombre = (d.nombre || d.Nombre || '').toLowerCase();
     const categoriaValor = (d.categoria || d.Categoria || '').toLowerCase();
-    const catMatch = (categoria === 'todos') || categoriaValor.includes(categoria.toLowerCase());
-    const nameMatch = !busqueda || nombre.includes(busqueda.toLowerCase());
-    return catMatch && nameMatch;
+    
+    const nameMatch = !busquedaLower || nombre.includes(busquedaLower);
+    const catMatch = !busquedaLower || categoriaValor.includes(busquedaLower);
+    
+    return nameMatch || catMatch;
   });
 
   const start = (currentPage - 1) * itemsPerPage;
@@ -92,7 +96,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
   const pageDesigns = filtrados.slice(start, end);
 
   if (pageDesigns.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños</div>';
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños que coincidan</div>';
     return;
   }
 
@@ -136,7 +140,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
     container.appendChild(item);
   });
 
-  // Paginación futurista (sin cambios)
+  // Paginación futurista
   const pagination = document.getElementById('pagination');
   pagination.innerHTML = '';
 
