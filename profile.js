@@ -59,30 +59,33 @@ function saveProfile() {
   // Actualizar visualmente
   openProfile();
 
-  // Guardar en Google Sheets (opcional, vía fetch)
-  fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec', {
-    method: 'POST',
-    body: JSON.stringify({
-      action: 'updateProfile',
-      usuario: userData.usuario,
-      token: userData.token,
-      nombre: nombre,
-      correo: correo,
-      fotoPerfil: foto,
-      edad: edad,
-      genero: genero
-    })
-  }).then(res => res.json()).then(data => {
-    if (data.success) {
-      alert('Perfil actualizado correctamente');
-    } else {
-      alert('Error al guardar en el servidor: ' + (data.message || 'Desconocido'));
-    }
-  }).catch(err => {
-    console.error(err);
-    alert('Error de conexión al guardar');
-  });
-}
+  // Guardar en Sheets con URLSearchParams (mismo método que login, sin CORS)
+fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec', {
+  method: 'POST',
+  body: new URLSearchParams({
+    action: 'updateProfile',
+    usuario: userData.usuario,
+    token: userData.token,
+    nombre: nombre,
+    correo: correo,
+    fotoPerfil: foto,
+    edad: edad,
+    genero: genero
+  })
+})
+.then(res => res.json())
+.then(data => {
+  if (data.success) {
+    showMessage('Perfil actualizado correctamente', 'success');
+    openProfile(); // Recargar visual
+  } else {
+    showMessage('Error al guardar en servidor: ' + (data.message || 'Desconocido'), 'error');
+  }
+})
+.catch(err => {
+  console.error('Error fetch:', err);
+  showMessage('Error de conexión al guardar. Verifica tu conexión.', 'error');
+});
 
 // Inicializar eventos del perfil
 document.addEventListener('DOMContentLoaded', () => {
