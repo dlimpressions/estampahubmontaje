@@ -476,6 +476,10 @@
   ">
     🚪 Salir
   </button>
+<!-- Botón de Perfil (futurista) -->
+<button id="open-profile-btn" class="btn" style="margin-left:10px; background: linear-gradient(135deg, #4299e1, #3182ce); box-shadow:0 0 15px rgba(66,153,225,0.5);">
+  👤 Mi Perfil
+</button>
 </header>
 
     <div class="main-content">
@@ -2448,6 +2452,8 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
 
 <script src="gallery.js"></script>
 
+<script src="profile.js"></script>
+
 <!-- === CONTENEDOR DE DISEÑOS ImgBB (modal futurista) === -->
 <div class="oc-overlay" id="imgbb-gallery-overlay" style="display:none; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
   <div class="oc-card" style="background: rgba(30,30,60,0.7); border:1px solid rgba(66,153,225,0.3); backdrop-filter: blur(16px); padding:2.5rem 2rem; border-radius:20px; width:min(90vw, 900px); max-height:90vh; overflow-y:auto; box-shadow:0 0 60px rgba(66,153,225,0.25); text-align:center; animation:fadeInUp 0.8s ease-out; position:relative;">
@@ -2484,6 +2490,60 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
 
     <!-- Paginación futurista -->
     <div id="pagination" style="margin-top:20px; text-align:center;"></div>
+  </div>
+</div>
+
+
+<!-- === MODAL DE PERFIL (futurista) === -->
+<div class="oc-overlay" id="profile-overlay" style="display:none; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
+  <div class="oc-card" style="background: rgba(30,30,60,0.7); border:1px solid rgba(66,153,225,0.3); backdrop-filter: blur(16px); padding:2.5rem; border-radius:20px; width:min(90vw, 600px); box-shadow:0 0 60px rgba(66,153,225,0.25); position:relative;">
+    
+    <!-- Botón cerrar -->
+    <button id="close-profile" style="position:absolute; top:15px; right:15px; padding:6px 12px; font-size:0.85rem; background:linear-gradient(135deg,#f56565,#e53e3e); color:white; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 15px rgba(245,101,101,0.4);">
+      Cerrar
+    </button>
+
+    <h2 style="color:#a5b4fc; text-align:center;">👤 Mi Perfil</h2>
+
+    <div style="text-align:center; margin:20px 0;">
+      <img id="profile-photo" src="https://via.placeholder.com/120" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #4299e1; box-shadow:0 0 20px rgba(66,153,225,0.5);">
+    </div>
+
+    <p><strong>Usuario:</strong> <span id="profile-user">Cargando...</span></p>
+    <p><strong>Nombre:</strong> <span id="profile-name">Cargando...</span></p>
+    <p><strong>Correo:</strong> <span id="profile-email">Cargando...</span></p>
+    <p><strong>Edad:</strong> <span id="profile-edad">Cargando...</span></p>
+    <p><strong>Género:</strong> <span id="profile-genero">Cargando...</span></p>
+    <p><strong>Plan actual:</strong> <span id="profile-plan" style="color:#48bb78; font-weight:bold;">Cargando...</span></p>
+    <p><strong>Fecha inicio plan:</strong> <span id="profile-inicio">Cargando...</span></p>
+    <p><strong>Fecha fin plan:</strong> <span id="profile-fin">Cargando...</span></p>
+
+    <!-- Formulario de edición -->
+    <form id="profile-form" style="margin-top:30px;">
+      <label style="color:#e2e8f0;">Nombre:</label>
+      <input type="text" id="edit-name" style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid #4299e1; background:rgba(255,255,255,0.1); color:white;">
+
+      <label style="color:#e2e8f0;">Correo:</label>
+      <input type="email" id="edit-email" style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid #4299e1; background:rgba(255,255,255,0.1); color:white;">
+
+      <label style="color:#e2e8f0;">Foto de perfil (URL):</label>
+      <input type="url" id="edit-photo" placeholder="https://i.ibb.co/..." style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid #4299e1; background:rgba(255,255,255,0.1); color:white;">
+
+      <label style="color:#e2e8f0;">Edad:</label>
+      <input type="number" id="edit-edad" style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid #4299e1; background:rgba(255,255,255,0.1); color:white;">
+
+      <label style="color:#e2e8f0;">Género:</label>
+      <select id="edit-genero" style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid #4299e1; background:rgba(255,255,255,0.1); color:white;">
+        <option value="">Selecciona</option>
+        <option value="Masculino">Masculino</option>
+        <option value="Femenino">Femenino</option>
+        <option value="Otro">Otro</option>
+      </select>
+
+      <button type="submit" style="width:100%; padding:12px; margin-top:15px; background:linear-gradient(135deg,#4299e1,#3182ce); color:white; border:none; border-radius:8px; font-weight:bold; box-shadow:0 4px 15px rgba(66,153,225,0.5); cursor:pointer;">
+        Guardar cambios
+      </button>
+    </form>
   </div>
 </div>
 
