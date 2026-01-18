@@ -71,7 +71,12 @@ async function cargarGaleriaDesdeSheets() {
 }
 
 function filterAndRender(categoria = 'todos', busqueda = '') {
-  const container = document.getElementById('designsContainer');
+  const container = document.getElementById('imgbb-designs-grid');  // ← Corregido: usamos el ID correcto del grid
+  if (!container) {
+    console.log("ERROR: No se encontró el grid en filterAndRender");
+    return;
+  }
+
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
@@ -88,6 +93,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
 
   if (pageDesigns.length === 0) {
     container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños</div>';
+    return;
   }
 
   pageDesigns.forEach(d => {
