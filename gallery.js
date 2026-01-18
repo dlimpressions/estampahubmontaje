@@ -1,7 +1,9 @@
-// gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + barra de búsqueda separada
-console.log("gallery.js cargado - barra de búsqueda fuera del grid para no romper cuadrícula");
+// gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + paginación para rendimiento
+console.log("gallery.js cargado - versión con paginación (20 por página)");
 
 let allDesigns = [];
+let currentPage = 1;
+const itemsPerPage = 20;
 
 window.addEventListener('load', function() {
   console.log("Página lista - inicializando galería");
@@ -34,7 +36,7 @@ async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if (!grid) return;
 
-  grid.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">Cargando diseños...</div>';
+  grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando tus diseños...</div>';
 
   try {
     const response = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
@@ -42,47 +44,31 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    // Creamos la barra de búsqueda ARRIBA del grid (separada para no romper nada)
-    const searchContainer = document.createElement('div');
-    searchContainer.style.marginBottom = '20px';
-    searchContainer.innerHTML = `
-      <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
-        style="width:100%; padding:12px; font-size:1rem; border-radius:10px; border:1px solid #4299e1; background:rgba(30,30,50,0.8); color:#e2e8f0; outline:none;">
-    `;
-    grid.parentNode.insertBefore(searchContainer, grid); // La ponemos antes del grid
-
-    // Limpiamos el grid y mostramos todos
-    grid.innerHTML = '';
-    renderDesigns(allDesigns);
-
-    // Evento de búsqueda (filtra mientras escribes)
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const busqueda = e.target.value.toLowerCase().trim();
-      const filtrados = allDesigns.filter(d => {
-        const nombre = (d.nombre || d.Nombre || '').toLowerCase();
-        const categoria = (d.categoria || d.Categoria || '').toLowerCase();
-        return !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda);
-      });
-      renderDesigns(filtrados);
-    });
+    // Limpiamos y mostramos la primera página
+    currentPage = 1;
+    renderPage(currentPage);
 
   } catch (err) {
-    grid.innerHTML = `<div style="text-align:center;color:#e53e3e;padding:40px;">
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
       Error al cargar: ${err.message}
     </div>`;
   }
 }
 
-function renderDesigns(disenos) {
-  const container = document.getElementById('imgbb-designs-grid');
-  container.innerHTML = '';
+// Renderiza una página específica (20 diseños)
+function renderPage(page) {
+  const grid = document.getElementById('imgbb-designs-grid');
+  grid.innerHTML = '';
 
-  if (disenos.length === 0) {
-    container.innerHTML = '<div style="text-align:center; color:#e53e3e; padding:40px;">No hay diseños que coincidan</div>';
-    return;
+  const start = (page - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const pageDesigns = allDesigns.slice(start, end);
+
+  if (pageDesigns.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños en esta página</div>';
   }
 
-  disenos.forEach(d => {
+  pageDesigns.forEach(d => {
     const item = document.createElement('div');
     item.style.cursor = 'pointer';
     item.style.textAlign = 'center';
@@ -93,10 +79,9 @@ function renderDesigns(disenos) {
 
     item.innerHTML = `
       <div style="width:120px; height:120px; margin:auto; background:#eee; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-        <img src="${d.url || d.URL || ''}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
+        <img src="${d.url}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
       </div>
-      <div style="font-weight:bold; color:#333; margin-top:8px; font-size:1rem;">${d.nombre || d.Nombre || 'Sin nombre'}</div>
-      ${d.categoria || d.Categoria ? `<small style="color:#666;">(${d.categoria || d.Categoria})</small>` : ''}
+      <small style="display:block; margin-top:8px; color:#333; font-weight:bold;">${d.nombre || 'Sin nombre'}</small>
     `;
 
     item.addEventListener('mouseover', () => item.style.background = '#e2e8f0');
@@ -116,12 +101,51 @@ function renderDesigns(disenos) {
         updateDesignsList();
         updateControls();
         drawCanvas();
-        showMessage(`¡Diseño cargado!`, 'success', 3000);
+        showMessage(`¡Diseño "${d.nombre}" cargado!`, 'success', 3000);
         document.getElementById('imgbb-gallery-overlay').style.display = 'none';
       };
-      img.src = d.url || d.URL || '';
+      img.src = d.url;
     });
 
-    container.appendChild(item);
+    grid.appendChild(item);
   });
+
+  // Agregamos botones de paginación abajo
+  const pagination = document.createElement('div');
+  pagination.style.gridColumn = '1/-1';
+  pagination.style.textAlign = 'center';
+  pagination.style.marginTop = '20px';
+
+  if (currentPage > 1) {
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = 'Anterior';
+    prevBtn.style.marginRight = '10px';
+    prevBtn.style.padding = '8px 16px';
+    prevBtn.style.borderRadius = '8px';
+    prevBtn.style.background = '#4299e1';
+    prevBtn.style.color = 'white';
+    prevBtn.style.cursor = 'pointer';
+    prevBtn.addEventListener('click', () => {
+      currentPage--;
+      renderPage(currentPage);
+    });
+    pagination.appendChild(prevBtn);
+  }
+
+  if (end < allDesigns.length) {
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Siguiente';
+    nextBtn.style.padding = '8px 16px';
+    nextBtn.style.borderRadius = '8px';
+    nextBtn.style.background = '#4299e1';
+    nextBtn.style.color = 'white';
+    nextBtn.style.cursor = 'pointer';
+    nextBtn.addEventListener('click', () => {
+      currentPage++;
+      renderPage(currentPage);
+    });
+    pagination.appendChild(nextBtn);
+  }
+
+  grid.appendChild(pagination);
 }
