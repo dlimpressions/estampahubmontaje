@@ -71,13 +71,14 @@ async function cargarGaleriaDesdeSheets() {
 }
 
 function filterAndRender(categoria = 'todos', busqueda = '') {
-  const container = document.getElementById('imgbb-designs-grid');
+  const container = document.getElementById('designsContainer');
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
-    const catValor = (d.categoria || '').toLowerCase();
-    const catMatch = (categoria === 'todos') || catValor.includes(categoria);
-    const nameMatch = !busqueda || (d.nombre || '').toLowerCase().includes(busqueda.toLowerCase());
+    const nombre = (d.nombre || d.Nombre || '').toLowerCase();
+    const categoriaValor = (d.categoria || d.Categoria || '').toLowerCase();
+    const catMatch = (categoria === 'todos') || categoriaValor.includes(categoria.toLowerCase());
+    const nameMatch = !busqueda || nombre.includes(busqueda.toLowerCase());
     return catMatch && nameMatch;
   });
 
@@ -129,7 +130,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
     container.appendChild(item);
   });
 
-  // Paginación futurista
+  // Paginación futurista (sin cambios)
   const pagination = document.getElementById('pagination');
   pagination.innerHTML = '';
 
