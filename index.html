@@ -332,6 +332,10 @@
   box-shadow: 0 4px 15px rgba(245, 101, 101, 0.6);
 }
 
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
   </style>
 </head>
@@ -2444,17 +2448,32 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
 
 <script src="gallery.js"></script>
 
-<!-- === CONTENEDOR DE DISEÑOS ImgBB (modal) === -->
+<!-- === CONTENEDOR DE DISEÑOS ImgBB (modal futurista) === -->
 <div class="oc-overlay" id="imgbb-gallery-overlay" style="display:none; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
-  <div class="oc-card" style="background: rgba(30,30,60,0.7); border:1px solid rgba(66,153,225,0.3); backdrop-filter: blur(16px); padding:2.5rem 2rem; border-radius:20px; width:min(90vw, 900px); max-height:90vh; overflow-y:auto; box-shadow:0 0 60px rgba(66,153,225,0.25); text-align:center; animation:fadeInUp 0.8s ease-out;">
-    <!-- Botón de cerrar arriba derecha -->
-    <button class="btn btn-clear" id="close-imgbb-gallery" style="position:absolute; top:20px; right:20px; padding:8px 16px; font-size:0.9rem; border-radius:8px; background:rgba(245,101,101,0.8); color:white; box-shadow:0 2px 10px rgba(245,101,101,0.4); transition:all 0.3s;">
+  <div class="oc-card" style="background: rgba(30,30,60,0.7); border:1px solid rgba(66,153,225,0.3); backdrop-filter: blur(16px); padding:2.5rem 2rem; border-radius:20px; width:min(90vw, 900px); max-height:90vh; overflow-y:auto; box-shadow:0 0 60px rgba(66,153,225,0.25); text-align:center; animation:fadeInUp 0.8s ease-out; position:relative;">
+    
+    <!-- Botón cerrar pequeño, futurista, arriba derecha -->
+    <button id="close-imgbb-gallery" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      background: linear-gradient(135deg, #f56565, #e53e3e);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245,101,101,0.4);
+      transition: all 0.3s ease;
+      z-index: 10;
+    ">
       Cerrar
     </button>
 
-    <h2 style="color:#a5b4fc; text-shadow:0 0 15px rgba(165,180,252,0.5);">📁 Mis Diseños en ImgBB</h2>
+    <h2 style="color:#a5b4fc; text-shadow:0 0 15px rgba(165,180,252,0.5); margin-bottom:1rem;">📁 Mis Diseños en ImgBB</h2>
     <p style="color:#cbd5e0; margin-bottom:1.5rem;">Selecciona un diseño para cargarlo en el lienzo</p>
-   
+    
     <!-- Aquí aparecerán las miniaturas -->
     <div id="imgbb-designs-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:15px; padding:10px;">
       <div style="grid-column:1/-1; text-align:center; color:#666; padding:30px;">Cargando Tus Diseños...</div>
