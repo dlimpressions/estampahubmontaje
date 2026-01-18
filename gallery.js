@@ -1,5 +1,6 @@
 // gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + categorías + búsqueda
-console.log("gallery.js cargado - versión FINAL con categorías y nombres en negrita");
+// Adaptado a tu Sheet con columnas: Nombre, URL, Acceso, categoría
+console.log("gallery.js cargado - versión FINAL para tu Sheet");
 
 let allDesigns = [];
 
@@ -13,7 +14,7 @@ window.addEventListener('load', function() {
 
   if (openGalleryBtn) {
     openGalleryBtn.addEventListener('click', () => {
-      console.log("Botón clicado - cargando diseños desde Sheets");
+      console.log("Botón clicado - cargando diseños");
       if (galleryOverlay) {
         galleryOverlay.style.display = 'flex';
         cargarGaleriaDesdeSheets();
@@ -47,7 +48,7 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    // Creamos la interfaz con pestañas y búsqueda (manteniendo tu cuadrícula)
+    // Creamos la interfaz con pestañas y búsqueda
     grid.innerHTML = `
       <!-- Barra de búsqueda -->
       <div style="grid-column:1/-1; margin-bottom:15px;">
@@ -67,7 +68,7 @@ async function cargarGaleriaDesdeSheets() {
       <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
     `;
 
-    // Estilos adicionales para pestañas y nombres en negrita
+    // Estilos para pestañas y nombres en negrita
     const style = document.createElement('style');
     style.textContent = `
       .cat-tab {
@@ -101,6 +102,7 @@ async function cargarGaleriaDesdeSheets() {
       filterAndRender(cat, e.target.value);
     });
 
+    // Mostramos todos al inicio
     filterAndRender('todos');
 
   } catch (err) {
@@ -115,9 +117,9 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
-    // Aceptamos "categoría" con tilde y minúscula (como en tu Sheet)
-    const catValor = d.categoría || d.Categoría || '';
-    const catMatch = (categoria === 'todos') || (catValor.toLowerCase() === categoria.toLowerCase());
+    // Usamos exactamente "categoría" con tilde como en tu Sheet
+    const catValor = d.categoría || '';
+    const catMatch = (categoria === 'todos') || (catValor.trim().toLowerCase() === categoria.toLowerCase());
     const nameMatch = !busqueda || (d.Nombre && d.Nombre.toLowerCase().includes(busqueda.toLowerCase()));
     return catMatch && nameMatch;
   });
@@ -152,7 +154,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
         updateDesignsList();
         updateControls();
         drawCanvas();
-        showMessage(`¡Diseño "${d.Nombre}" cargado!`, 'success', 3000);
+        showMessage(`¡Diseño "${d.Nombre || 'sin nombre'}" cargado!`, 'success', 3000);
         document.getElementById('imgbb-gallery-overlay').style.display = 'none';
       };
       img.src = d.URL;
