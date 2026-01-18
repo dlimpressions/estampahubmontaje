@@ -1,6 +1,6 @@
 // gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + categorías + búsqueda
-// Adaptado a tu Sheet: columnas Nombre, URL, Acceso, Categoria
-console.log("gallery.js cargado - versión FINAL para tu Sheet nueva");
+// Filtrado por palabras en el nombre (sin columna extra en Sheet)
+console.log("gallery.js cargado - versión con categorías por nombre y nombres en negrita");
 
 let allDesigns = [];
 
@@ -14,7 +14,7 @@ window.addEventListener('load', function() {
 
   if (openGalleryBtn) {
     openGalleryBtn.addEventListener('click', () => {
-      console.log("Botón clicado - cargando diseños");
+      console.log("Botón clicado - cargando diseños desde Sheets");
       if (galleryOverlay) {
         galleryOverlay.style.display = 'flex';
         cargarGaleriaDesdeSheets();
@@ -31,6 +31,7 @@ window.addEventListener('load', function() {
   }
 });
 
+// Esta función carga los diseños desde tu Google Sheet
 async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if (!grid) {
@@ -48,7 +49,7 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    // Interfaz con pestañas y búsqueda
+    // Agregamos interfaz de búsqueda y pestañas
     grid.innerHTML = `
       <!-- Barra de búsqueda -->
       <div style="grid-column:1/-1; margin-bottom:15px;">
@@ -64,7 +65,7 @@ async function cargarGaleriaDesdeSheets() {
         <button class="cat-tab" data-cat="fondos">Fondos</button>
       </div>
 
-      <!-- Grid en CUADRÍCULA (estilo probado que funciona) -->
+      <!-- Grid en CUADRÍCULA (tu estilo original) -->
       <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
     `;
 
@@ -118,10 +119,10 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
-    // Usamos "Categoria" con mayúscula inicial como en tu nueva Sheet
-    const catValor = d.Categoria || '';
-    const catMatch = (categoria === 'todos') || (catValor.trim().toLowerCase() === categoria.toLowerCase());
-    const nameMatch = !busqueda || (d.Nombre && d.Nombre.toLowerCase().includes(busqueda.toLowerCase()));
+    // Filtrado por palabra en el nombre (ej: si nombre contiene "logos", va a "Logos")
+    const nameLower = (d.nombre || d.Nombre || '').toLowerCase();
+    const catMatch = (categoria === 'todos') || nameLower.includes(categoria);
+    const nameMatch = !busqueda || nameLower.includes(busqueda.toLowerCase());
     return catMatch && nameMatch;
   });
 
@@ -135,10 +136,9 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
     item.className = 'design-item';
     item.innerHTML = `
       <div style="width:120px; height:120px; margin:auto; background:#eee; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-        <img src="${d.URL}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
+        <img src="${d.URL || d.url}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
       </div>
-      <div class="design-name">${d.Nombre || 'Sin nombre'}</div>
-      ${d.Categoria ? `<small style="color:#666;">(${d.Categoria})</small>` : ''}
+      <div class="design-name">${d.Nombre || d.nombre || 'Sin nombre'}</div>
     `;
 
     item.addEventListener('mouseover', () => item.style.background = '#e2e8f0');
@@ -158,10 +158,10 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
         updateDesignsList();
         updateControls();
         drawCanvas();
-        showMessage(`¡Diseño "${d.Nombre || 'sin nombre'}" cargado!`, 'success', 3000);
+        showMessage(`¡Diseño "${d.Nombre || d.nombre || 'sin nombre'}" cargado!`, 'success', 3000);
         document.getElementById('imgbb-gallery-overlay').style.display = 'none';
       };
-      img.src = d.URL;
+      img.src = d.URL || d.url;
     });
 
     container.appendChild(item);
