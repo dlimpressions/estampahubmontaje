@@ -1,5 +1,5 @@
-// gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + búsqueda por nombre y categoria
-console.log("gallery.js cargado - versión con nueva URL");
+// gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + barra de búsqueda separada
+console.log("gallery.js cargado - barra de búsqueda fuera del grid para no romper cuadrícula");
 
 let allDesigns = [];
 
@@ -34,7 +34,7 @@ async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if (!grid) return;
 
-  grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando tus diseños...</div>';
+  grid.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">Cargando diseños...</div>';
 
   try {
     const response = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
@@ -42,44 +42,39 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    grid.innerHTML = `
-      <div style="margin-bottom:20px;">
-        <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
-          style="width:100%; padding:12px; font-size:1rem; border-radius:10px; border:1px solid #4299e1; background:rgba(30,30,50,0.8); color:#e2e8f0;">
-      </div>
-
-      <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
+    // Creamos la barra de búsqueda ARRIBA del grid (separada para no romper nada)
+    const searchContainer = document.createElement('div');
+    searchContainer.style.marginBottom = '20px';
+    searchContainer.innerHTML = `
+      <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
+        style="width:100%; padding:12px; font-size:1rem; border-radius:10px; border:1px solid #4299e1; background:rgba(30,30,50,0.8); color:#e2e8f0; outline:none;">
     `;
+    grid.parentNode.insertBefore(searchContainer, grid); // La ponemos antes del grid
 
-    const style = document.createElement('style');
-    style.textContent = `
-      .design-item { text-align:center; cursor:pointer; padding:10px; border-radius:8px; transition:background 0.2s; }
-      .design-item:hover { background:#e2e8f0; }
-      .design-name { font-weight:bold !important; color:#333; margin-top:8px; font-size:1rem; display:block; }
-    `;
-    document.head.appendChild(style);
+    // Limpiamos el grid y mostramos todos
+    grid.innerHTML = '';
+    renderDesigns(allDesigns);
 
+    // Evento de búsqueda (filtra mientras escribes)
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const busqueda = e.target.value.toLowerCase().trim();
       const filtrados = allDesigns.filter(d => {
-        const nombre = (d.nombre || '').toLowerCase();
-        const categoria = (d.categoria || '').toLowerCase();
+        const nombre = (d.nombre || d.Nombre || '').toLowerCase();
+        const categoria = (d.categoria || d.Categoria || '').toLowerCase();
         return !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda);
       });
       renderDesigns(filtrados);
     });
 
-    renderDesigns(allDesigns);
-
   } catch (err) {
-    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
+    grid.innerHTML = `<div style="text-align:center;color:#e53e3e;padding:40px;">
       Error al cargar: ${err.message}
     </div>`;
   }
 }
 
 function renderDesigns(disenos) {
-  const container = document.getElementById('designsContainer');
+  const container = document.getElementById('imgbb-designs-grid');
   container.innerHTML = '';
 
   if (disenos.length === 0) {
@@ -89,13 +84,19 @@ function renderDesigns(disenos) {
 
   disenos.forEach(d => {
     const item = document.createElement('div');
-    item.className = 'design-item';
+    item.style.cursor = 'pointer';
+    item.style.textAlign = 'center';
+    item.style.padding = '10px';
+    item.style.borderRadius = '8px';
+    item.style.background = '#f8f9fa';
+    item.style.transition = 'background 0.2s';
+
     item.innerHTML = `
       <div style="width:120px; height:120px; margin:auto; background:#eee; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-        <img src="${d.url}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
+        <img src="${d.url || d.URL || ''}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
       </div>
-      <div class="design-name">${d.nombre || 'Sin nombre'}</div>
-      ${d.categoria ? `<small style="color:#666;">(${d.categoria})</small>` : ''}
+      <div style="font-weight:bold; color:#333; margin-top:8px; font-size:1rem;">${d.nombre || d.Nombre || 'Sin nombre'}</div>
+      ${d.categoria || d.Categoria ? `<small style="color:#666;">(${d.categoria || d.Categoria})</small>` : ''}
     `;
 
     item.addEventListener('mouseover', () => item.style.background = '#e2e8f0');
@@ -118,7 +119,7 @@ function renderDesigns(disenos) {
         showMessage(`¡Diseño cargado!`, 'success', 3000);
         document.getElementById('imgbb-gallery-overlay').style.display = 'none';
       };
-      img.src = d.url;
+      img.src = d.url || d.URL || '';
     });
 
     container.appendChild(item);
