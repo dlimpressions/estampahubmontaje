@@ -783,25 +783,39 @@ if (lockBtn) {
 
       const result = await response.json();
 
-    if (result.success === true) {
+if (result.success === true) {
   sessionStorage.setItem('dtf_unlocked', '1');
 
-  // OBTENER LA URL DEL FACTURADOR DESDE LA HOJA usactivos
+  // ¡Aquí guardamos TODOS los datos del usuario inmediatamente!
+  const userInfo = {
+    usuario: usuario,                      // el que ingresó
+    membresia: result.membresia || 'basica', // viene del Apps Script
+    nombre: result.nombre || 'Usuario',
+    correo: result.correo || '',
+    fotoPerfil: result.fotoPerfil || 'https://via.placeholder.com/120',
+    edad: result.edad || '',
+    genero: result.genero || '',
+    fechaInicio: result.fechaInicio || '',
+    fechaFin: result.fechaFin || '',
+    token: result.token || ''              // para sesión única después
+  };
+
+  localStorage.setItem('userData', JSON.stringify(userInfo));
+  console.log("Datos del usuario guardados:", userInfo);
+
+  // OBTENER LA URL DEL FACTURADOR (esto se mantiene igual)
   try {
     const params = new URLSearchParams();
     params.append('action', 'get_facturador_url');
-    params.append('usuario', usuario);  // 'usuario' es la variable que ya tienes arriba
-
+    params.append('usuario', usuario);
     const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbzybf9hUrvuBQl4RZQdQSmkghpiBnqkPcJ3w_JUY8VbDZfnS61RDkpb7Jh33A6NSp9kwA/exec', {
       method: 'POST',
       body: params
     });
-
     const urlResult = await urlResponse.json();
-
     if (urlResult.success) {
       sessionStorage.setItem('facturador_url', urlResult.url);
-     showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
+      showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
     } else {
       showMessage('No se encontró URL de facturador para tu cuenta. Contacta al admin.', 'warning', 5000);
     }
@@ -811,9 +825,11 @@ if (lockBtn) {
   }
 
   unlock();
+  showMessage('🔓 Bienvenido! Perfil cargado correctamente.', 'success', 4000);
 } else {
   lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
-}
+}    
+
     } catch (err) {
       lockError.textContent = 'Error al conectar. Intenta más tarde.';
       console.error('Error de conexión/login:', err);
