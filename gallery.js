@@ -1,5 +1,5 @@
-// gallery.js - Galería futurista con cuadrícula, búsqueda arriba, categorías, paginación
-console.log("gallery.js cargado - versión final futurista");
+// gallery.js - Galería futurista con cuadrícula, búsqueda, categorías y paginación
+console.log("gallery.js cargado - versión final sin error grid");
 
 let allDesigns = [];
 let currentPage = 1;
@@ -27,7 +27,10 @@ window.addEventListener('load', function() {
 
 async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
-  if (!grid) return;
+  if (!grid) {
+    console.log("ERROR: No se encontró el grid");
+    return;
+  }
 
   grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando diseños...</div>';
 
@@ -37,11 +40,11 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    // Limpiamos cualquier barra vieja
+    // Limpiamos barra vieja
     const oldSearch = document.getElementById('searchContainer');
     if (oldSearch) oldSearch.remove();
 
-    // Creamos barra de búsqueda separada arriba
+    // Creamos barra de búsqueda separada
     const searchContainer = document.createElement('div');
     searchContainer.id = 'searchContainer';
     searchContainer.style.marginBottom = '20px';
@@ -55,7 +58,6 @@ async function cargarGaleriaDesdeSheets() {
     currentCategoria = 'todos';
     filterAndRender(currentCategoria, '');
 
-    // Eventos de búsqueda
     document.getElementById('searchInput').addEventListener('input', (e) => {
       currentPage = 1;
       filterAndRender(currentCategoria, e.target.value);
@@ -129,12 +131,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
 
   // Paginación futurista
   const pagination = document.getElementById('pagination');
-  if (pagination) pagination.remove();
-  const newPagination = document.createElement('div');
-  newPagination.id = 'pagination';
-  newPagination.style.gridColumn = '1/-1';
-  newPagination.style.textAlign = 'center';
-  newPagination.style.marginTop = '20px';
+  pagination.innerHTML = '';
 
   if (currentPage > 1) {
     const prev = document.createElement('button');
@@ -151,7 +148,7 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
       currentPage--;
       filterAndRender(currentCategoria, document.getElementById('searchInput').value);
     });
-    newPagination.appendChild(prev);
+    pagination.appendChild(prev);
   }
 
   if (end < filtrados.length) {
@@ -169,8 +166,6 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
       currentPage++;
       filterAndRender(currentCategoria, document.getElementById('searchInput').value);
     });
-    newPagination.appendChild(next);
+    pagination.appendChild(next);
   }
-
-  grid.appendChild(newPagination);
 }
