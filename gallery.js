@@ -1,5 +1,5 @@
-// gallery.js - Galería con estilo futurista, paginación, búsqueda y categorías
-console.log("gallery.js cargado - versión futurista completa");
+// gallery.js - Galería futurista con cuadrícula, búsqueda arriba, categorías, paginación
+console.log("gallery.js cargado - versión final futurista");
 
 let allDesigns = [];
 let currentPage = 1;
@@ -37,71 +37,29 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    // Interfaz futurista
-    grid.innerHTML = `
-      <!-- Barra de búsqueda futurista -->
-      <div style="grid-column:1/-1; margin-bottom:20px;">
-        <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
-          style="width:100%; padding:12px; font-size:1rem; border-radius:12px; border:1px solid rgba(66,153,225,0.4); background:rgba(255,255,255,0.08); color:#e2e8f0; box-shadow:inset 0 0 10px rgba(66,153,225,0.2); outline:none;">
-      </div>
+    // Limpiamos cualquier barra vieja
+    const oldSearch = document.getElementById('searchContainer');
+    if (oldSearch) oldSearch.remove();
 
-      <!-- Pestañas neón -->
-      <div style="grid-column:1/-1; display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; justify-content:center;">
-        <button class="cat-tab active" data-cat="todos">Todos</button>
-        <button class="cat-tab" data-cat="logos">Logos</button>
-        <button class="cat-tab" data-cat="frases">Frases</button>
-        <button class="cat-tab" data-cat="fondos">Fondos</button>
-      </div>
-
-      <!-- Grid -->
-      <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px; padding:10px;"></div>
-
-      <!-- Paginación futurista -->
-      <div id="pagination" style="grid-column:1/-1; text-align:center; margin-top:20px;"></div>
+    // Creamos barra de búsqueda separada arriba
+    const searchContainer = document.createElement('div');
+    searchContainer.id = 'searchContainer';
+    searchContainer.style.marginBottom = '20px';
+    searchContainer.innerHTML = `
+      <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
+        style="width:100%; padding:12px; font-size:1rem; border-radius:12px; border:1px solid rgba(66,153,225,0.4); background:rgba(255,255,255,0.08); color:#e2e8f0; box-shadow:inset 0 0 10px rgba(66,153,225,0.2); outline:none;">
     `;
+    grid.parentNode.insertBefore(searchContainer, grid);
 
-    // Estilos futurista
-    const style = document.createElement('style');
-    style.textContent = `
-      .cat-tab {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 30px;
-        background: linear-gradient(135deg, #4299e1, #3182ce);
-        color: white;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 4px 20px rgba(66,153,225,0.5);
-        transition: all 0.3s ease;
-      }
-      .cat-tab:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(66,153,225,0.7); }
-      .cat-tab.active { background: linear-gradient(135deg, #4299e1, #3182ce); box-shadow: 0 8px 30px rgba(66,153,225,0.7); }
-      .design-item { text-align:center; cursor:pointer; padding:10px; border-radius:8px; background:rgba(30,30,60,0.7); transition:all 0.2s; }
-      .design-item:hover { background:rgba(66,153,225,0.3); transform:scale(1.05); }
-      .design-name { font-weight:bold !important; color:#e2e8f0; margin-top:8px; font-size:1rem; display:block; }
-      .page-btn { padding:8px 16px; border:none; border-radius:8px; background:linear-gradient(135deg,#4299e1,#3182ce); color:white; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(66,153,225,0.5); transition:all 0.3s; margin:0 5px; }
-      .page-btn:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(66,153,225,0.7); }
-      .page-btn.disabled { background:#4a5568; cursor:not-allowed; box-shadow:none; }
-    `;
-    document.head.appendChild(style);
+    currentPage = 1;
+    currentCategoria = 'todos';
+    filterAndRender(currentCategoria, '');
 
-    // Eventos
-    document.querySelectorAll('.cat-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentCategoria = tab.dataset.cat;
-        currentPage = 1;
-        filterAndRender(currentCategoria, document.getElementById('searchInput').value);
-      });
-    });
-
+    // Eventos de búsqueda
     document.getElementById('searchInput').addEventListener('input', (e) => {
       currentPage = 1;
       filterAndRender(currentCategoria, e.target.value);
     });
-
-    filterAndRender('todos', '');
 
   } catch (err) {
     grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
@@ -111,7 +69,7 @@ async function cargarGaleriaDesdeSheets() {
 }
 
 function filterAndRender(categoria = 'todos', busqueda = '') {
-  const container = document.getElementById('designsContainer');
+  const container = document.getElementById('imgbb-designs-grid');
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
@@ -121,8 +79,8 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
     return catMatch && nameMatch;
   });
 
-  const start = (currentPage - 1) * 20;
-  const end = start + 20;
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
   const pageDesigns = filtrados.slice(start, end);
 
   if (pageDesigns.length === 0) {
@@ -171,30 +129,48 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
 
   // Paginación futurista
   const pagination = document.getElementById('pagination');
-  pagination.innerHTML = '';
+  if (pagination) pagination.remove();
+  const newPagination = document.createElement('div');
+  newPagination.id = 'pagination';
+  newPagination.style.gridColumn = '1/-1';
+  newPagination.style.textAlign = 'center';
+  newPagination.style.marginTop = '20px';
 
-  const prev = document.createElement('button');
-  prev.className = 'page-btn';
-  prev.textContent = 'Anterior';
-  prev.disabled = currentPage === 1;
-  prev.addEventListener('click', () => {
-    if (currentPage > 1) {
+  if (currentPage > 1) {
+    const prev = document.createElement('button');
+    prev.textContent = 'Anterior';
+    prev.style.padding = '8px 16px';
+    prev.style.borderRadius = '8px';
+    prev.style.background = 'linear-gradient(135deg, #4299e1, #3182ce)';
+    prev.style.color = 'white';
+    prev.style.border = 'none';
+    prev.style.margin = '0 5px';
+    prev.style.cursor = 'pointer';
+    prev.style.boxShadow = '0 4px 15px rgba(66,153,225,0.5)';
+    prev.addEventListener('click', () => {
       currentPage--;
       filterAndRender(currentCategoria, document.getElementById('searchInput').value);
-    }
-  });
+    });
+    newPagination.appendChild(prev);
+  }
 
-  const next = document.createElement('button');
-  next.className = 'page-btn';
-  next.textContent = 'Siguiente';
-  next.disabled = end >= filtrados.length;
-  next.addEventListener('click', () => {
-    if (end < filtrados.length) {
+  if (end < filtrados.length) {
+    const next = document.createElement('button');
+    next.textContent = 'Siguiente';
+    next.style.padding = '8px 16px';
+    next.style.borderRadius = '8px';
+    next.style.background = 'linear-gradient(135deg, #4299e1, #3182ce)';
+    next.style.color = 'white';
+    next.style.border = 'none';
+    next.style.margin = '0 5px';
+    next.style.cursor = 'pointer';
+    next.style.boxShadow = '0 4px 15px rgba(66,153,225,0.5)';
+    next.addEventListener('click', () => {
       currentPage++;
       filterAndRender(currentCategoria, document.getElementById('searchInput').value);
-    }
-  });
+    });
+    newPagination.appendChild(next);
+  }
 
-  pagination.appendChild(prev);
-  pagination.appendChild(next);
+  grid.appendChild(newPagination);
 }
