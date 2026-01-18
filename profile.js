@@ -1,52 +1,50 @@
-// profile.js - Manejo del modal de perfil (versión corregida y segura)
+// profile.js - Versión estable para cargar perfil
 
-console.log("profile.js cargado correctamente");
+console.log("profile.js cargado");
 
-// Esperamos a que la página esté 100% cargada antes de agregar eventos
 window.addEventListener('load', function() {
-  console.log("Página completamente cargada - inicializando perfil");
-
   const openBtn = document.getElementById('open-profile-btn');
   const closeBtn = document.getElementById('close-profile');
-  const form = document.getElementById('profile-form');
   const overlay = document.getElementById('profile-overlay');
+  const form = document.getElementById('profile-form');
 
-  // Verificamos que existan los elementos
-  if (!openBtn) console.error("No se encontró el botón #open-profile-btn");
-  if (!closeBtn) console.error("No se encontró el botón #close-profile");
-  if (!form) console.error("No se encontró el formulario #profile-form");
-  if (!overlay) console.error("No se encontró el overlay #profile-overlay");
-
-  // Abrir modal
   if (openBtn) {
     openBtn.addEventListener('click', function() {
-      console.log("Botón Mi Perfil clicado");
-      if (overlay) {
-        overlay.style.display = 'flex';
-      }
+      console.log("Abriendo perfil");
+      if (overlay) overlay.style.display = 'flex';
+
+      // Cargar datos
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+      document.getElementById('profile-user').textContent = userData.usuario || 'Usuario';
+      document.getElementById('profile-name').textContent = userData.nombre || 'No configurado';
+      document.getElementById('profile-email').textContent = userData.correo || 'No configurado';
+      document.getElementById('profile-edad').textContent = userData.edad || 'No configurado';
+      document.getElementById('profile-genero').textContent = userData.genero || 'No configurado';
+      document.getElementById('profile-plan').textContent = userData.membresia || 'Básica';
+      document.getElementById('profile-inicio').textContent = userData.fechaInicio || 'N/A';
+      document.getElementById('profile-fin').textContent = userData.fechaFin || 'N/A';
+      document.getElementById('profile-photo').src = userData.fotoPerfil || 'https://via.placeholder.com/120';
+
+      // Llenar formulario
+      document.getElementById('edit-name').value = userData.nombre || '';
+      document.getElementById('edit-email').value = userData.correo || '';
+      document.getElementById('edit-photo').value = userData.fotoPerfil || '';
+      document.getElementById('edit-edad').value = userData.edad || '';
+      document.getElementById('edit-genero').value = userData.genero || '';
     });
   }
 
-  // Cerrar modal
   if (closeBtn) {
     closeBtn.addEventListener('click', function() {
-      console.log("Cerrando modal de perfil");
-      if (overlay) {
-        overlay.style.display = 'none';
-      }
+      if (overlay) overlay.style.display = 'none';
     });
   }
 
-  // Guardar cambios (sin fetch por ahora, para evitar errores)
   if (form) {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
-      console.log("Intentando guardar perfil");
-
-      // Solo actualizamos visualmente (para probar que el modal funciona)
-      alert("¡Perfil guardado! (Por ahora solo visual - pronto conectaremos con Sheets)");
-
-      // Cerramos el modal después de guardar
+      alert("¡Perfil guardado! (Próximamente se guardará en Google Sheets)");
       if (overlay) overlay.style.display = 'none';
     });
   }
