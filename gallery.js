@@ -1,6 +1,5 @@
-// gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + barra de búsqueda
-// La barra de búsqueda está SEPARADA para no romper la cuadrícula
-console.log("gallery.js cargado - versión con barra de búsqueda sin romper cuadrícula");
+// gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + búsqueda por nombre y categoria
+console.log("gallery.js cargado - versión con búsqueda por nombre y Categoria");
 
 let allDesigns = [];
 
@@ -38,40 +37,46 @@ async function cargarGaleriaDesdeSheets() {
     return;
   }
 
-  // Primero cargamos los diseños
   grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:40px;">Cargando tus diseños...</div>';
 
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbyJHoQbMyAyI8_kQ6-bSig_9QlSJL828ENWhx8O7kcXQoQsFlZ7GiKJAk87qlkopltI_g/exec');
-    if (!response.ok) {
-      throw new Error('No se pudo conectar con Google Sheets');
-    }
+    // ← Usa la NUEVA URL de tu Apps Script (la que acabas de desplegar)
+    const response = await fetch('https://script.google.com/macros/s/TU_NUEVA_URL_AQUI/exec');
+    if (!response.ok) throw new Error('No se pudo conectar');
 
     allDesigns = await response.json();
 
-    // Creamos la barra de búsqueda ARRIBA del grid (separada)
-    const searchDiv = document.createElement('div');
-    searchDiv.style.marginBottom = '20px';
-    searchDiv.innerHTML = `
-      <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
-        style="width:100%; padding:12px; font-size:1rem; border-radius:10px; border:1px solid #4299e1; background:rgba(30,30,50,0.8); color:#e2e8f0;">
+    // Interfaz: barra de búsqueda + cuadrícula
+    grid.innerHTML = `
+      <div style="margin-bottom:20px;">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre o categoría..." 
+          style="width:100%; padding:12px; font-size:1rem; border-radius:10px; border:1px solid #4299e1; background:rgba(30,30,50,0.8); color:#e2e8f0;">
+      </div>
+
+      <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
     `;
-    grid.parentNode.insertBefore(searchDiv, grid); // La ponemos antes del grid
 
-    // Limpiamos el grid y mostramos todos
-    grid.innerHTML = '';
-    renderDesigns(allDesigns);
+    // Estilos para nombres en negrita
+    const style = document.createElement('style');
+    style.textContent = `
+      .design-item { text-align:center; cursor:pointer; padding:10px; border-radius:8px; transition:background 0.2s; }
+      .design-item:hover { background:#e2e8f0; }
+      .design-name { font-weight:bold !important; color:#333; margin-top:8px; font-size:1rem; display:block; }
+    `;
+    document.head.appendChild(style);
 
-    // Evento de búsqueda (filtra mientras escribes)
+    // Búsqueda en tiempo real
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const busqueda = e.target.value.toLowerCase().trim();
       const filtrados = allDesigns.filter(d => {
-        const nombre = (d.nombre || d.Nombre || '').toLowerCase();
-        const categoria = (d.categoria || d.Categoria || '').toLowerCase();
+        const nombre = (d.nombre || '').toLowerCase();
+        const categoria = (d.categoria || '').toLowerCase();
         return !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda);
       });
       renderDesigns(filtrados);
     });
+
+    renderDesigns(allDesigns); // Mostramos todos al inicio
 
   } catch (err) {
     grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">
@@ -80,31 +85,24 @@ async function cargarGaleriaDesdeSheets() {
   }
 }
 
-// Función que renderiza los diseños en cuadrícula (tu estilo original que funcionaba)
 function renderDesigns(disenos) {
-  const container = document.getElementById('imgbb-designs-grid');
+  const container = document.getElementById('designsContainer');
   container.innerHTML = '';
 
   if (disenos.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#e53e3e; padding:40px;">No hay diseños que coincidan</div>';
+    container.innerHTML = '<div style="text-align:center; color:#e53e3e; padding:40px;">No hay diseños que coincidan</div>';
     return;
   }
 
   disenos.forEach(d => {
     const item = document.createElement('div');
-    item.style.cursor = 'pointer';
-    item.style.textAlign = 'center';
-    item.style.padding = '10px';
-    item.style.borderRadius = '8px';
-    item.style.background = '#f8f9fa';
-    item.style.transition = 'background 0.2s';
-
+    item.className = 'design-item';
     item.innerHTML = `
       <div style="width:120px; height:120px; margin:auto; background:#eee; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-        <img src="${d.url || d.URL || ''}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
+        <img src="${d.url}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
       </div>
-      <div style="font-weight:bold; color:#333; margin-top:8px; font-size:1rem;">${d.nombre || d.Nombre || 'Sin nombre'}</div>
-      ${d.categoria || d.Categoria ? `<small style="color:#666;">(${d.categoria || d.Categoria})</small>` : ''}
+      <div class="design-name">${d.nombre || 'Sin nombre'}</div>
+      ${d.categoria ? `<small style="color:#666;">(${d.categoria})</small>` : ''}
     `;
 
     item.addEventListener('mouseover', () => item.style.background = '#e2e8f0');
@@ -127,7 +125,7 @@ function renderDesigns(disenos) {
         showMessage(`¡Diseño cargado!`, 'success', 3000);
         document.getElementById('imgbb-gallery-overlay').style.display = 'none';
       };
-      img.src = d.url || d.URL || '';
+      img.src = d.url;
     });
 
     container.appendChild(item);
