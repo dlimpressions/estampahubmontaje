@@ -1,6 +1,6 @@
 // gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + categorías + búsqueda
-// Adaptado a tu Sheet con columnas: Nombre, URL, Acceso, categoría
-console.log("gallery.js cargado - versión FINAL para tu Sheet");
+// Adaptado a tu Sheet: columnas Nombre, URL, Acceso, categoría
+console.log("gallery.js cargado - versión FINAL para tu Sheet exacta");
 
 let allDesigns = [];
 
@@ -43,12 +43,12 @@ async function cargarGaleriaDesdeSheets() {
   try {
     const response = await fetch('https://script.google.com/macros/s/AKfycbyJHoQbMyAyI8_kQ6-bSig_9QlSJL828ENWhx8O7kcXQoQsFlZ7GiKJAk87qlkopltI_g/exec');
     if (!response.ok) {
-      throw new Error('No se pudo conectar con Google Sheets. Revisa la URL o permisos.');
+      throw new Error('No se pudo conectar con Google Sheets');
     }
 
     allDesigns = await response.json();
 
-    // Creamos la interfaz con pestañas y búsqueda
+    // Interfaz con pestañas y búsqueda
     grid.innerHTML = `
       <!-- Barra de búsqueda -->
       <div style="grid-column:1/-1; margin-bottom:15px;">
@@ -64,11 +64,11 @@ async function cargarGaleriaDesdeSheets() {
         <button class="cat-tab" data-cat="fondos">Fondos</button>
       </div>
 
-      <!-- Grid en CUADRÍCULA (tu estilo que funciona) -->
+      <!-- Grid en CUADRÍCULA -->
       <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
     `;
 
-    // Estilos para pestañas y nombres en negrita
+    // Estilos
     const style = document.createElement('style');
     style.textContent = `
       .cat-tab {
@@ -102,7 +102,6 @@ async function cargarGaleriaDesdeSheets() {
       filterAndRender(cat, e.target.value);
     });
 
-    // Mostramos todos al inicio
     filterAndRender('todos');
 
   } catch (err) {
@@ -117,9 +116,11 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
-    // Usamos exactamente "categoría" con tilde como en tu Sheet
+    // Usamos exactamente "categoría" con tilde y minúscula como en tu Sheet
     const catValor = d.categoría || '';
     const catMatch = (categoria === 'todos') || (catValor.trim().toLowerCase() === categoria.toLowerCase());
+
+    // Nombre con mayúscula inicial
     const nameMatch = !busqueda || (d.Nombre && d.Nombre.toLowerCase().includes(busqueda.toLowerCase()));
     return catMatch && nameMatch;
   });
