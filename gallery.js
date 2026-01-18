@@ -1,10 +1,10 @@
 // gallery.js - Galería con CATEGORÍAS, BÚSQUEDA y CUADRÍCULA FORZADA (versión FINAL)
-console.log("gallery.js cargado - versión con cuadrícula forzada y nombres en negrita");
+console.log("gallery.js cargado - CUADRÍCULA FORZADA + nombres en negrita");
 
 let allDesigns = [];
 
 window.addEventListener('load', function() {
-  console.log("DOM listo - inicializando galería");
+  console.log("DOM listo - buscando elementos");
 
   const galleryOverlay = document.getElementById('imgbb-gallery-overlay');
   const openGalleryBtn = document.getElementById('open-imgbb-gallery');
@@ -32,7 +32,7 @@ async function cargarGaleriaDesdeSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if (!grid) return;
 
-  grid.innerHTML = '<div style="text-align:center;color:#aaa;padding:50px;">Cargando diseños...</div>';
+  grid.innerHTML = '<div style="text-align:center;color:#aaa;padding:50px;">Cargando...</div>';
 
   try {
     const response = await fetch('https://script.google.com/macros/s/AKfycbyJHoQbMyAyI8_kQ6-bSig_9QlSJL828ENWhx8O7kcXQoQsFlZ7GiKJAk87qlkopltI_g/exec');
@@ -60,44 +60,61 @@ function renderGalleryUI() {
       <button class="cat-tab" data-cat="fondos">Fondos</button>
     </div>
 
-    <!-- FORZAMOS CUADRÍCULA -->
-    <div id="designsContainer" style="display:grid !important; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)) !important; gap:25px !important; padding:15px !important;"></div>
+    <!-- CUADRÍCULA FORZADA AL MÁXIMO -->
+    <div id="designsContainer"></div>
   `;
 
+  // Estilos FUERTES para forzar cuadrícula y nombres en negrita
   const style = document.createElement('style');
   style.textContent = `
     #designsContainer {
       display: grid !important;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
-      gap: 25px !important;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+      gap: 30px !important;
+      padding: 20px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
-    .design-item {
-      text-align:center;
-      cursor:pointer;
-      transition:transform 0.2s;
+    #designsContainer > div {
+      text-align: center !important;
+      cursor: pointer !important;
+      transition: transform 0.2s !important;
     }
-    .design-item:hover { transform:scale(1.08); }
+    #designsContainer > div:hover {
+      transform: scale(1.08) !important;
+    }
+    .design-thumb-container {
+      width: 180px !important;
+      height: 180px !important;
+      margin: 0 auto !important;
+      background: #1a1a2e !important;
+      border-radius: 12px !important;
+      overflow: hidden !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+    }
+    .design-thumb-container img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+    }
     .design-name {
-      font-weight:bold !important;
-      color:#ffffff !important;
-      margin-top:10px;
-      font-size:1rem;
-      display:block;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      font-weight: bold !important;
+      color: #ffffff !important;
+      margin-top: 10px !important;
+      font-size: 1.1rem !important;
+      display: block !important;
     }
     .cat-tab {
-      padding:10px 22px;
-      border:none;
-      border-radius:30px;
-      background:rgba(66,153,225,0.3);
-      color:white;
-      cursor:pointer;
-      transition:all 0.3s;
+      padding: 10px 22px;
+      border: none;
+      border-radius: 30px;
+      background: rgba(66,153,225,0.3);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
     }
-    .cat-tab:hover { background:rgba(66,153,225,0.6); }
-    .cat-tab.active { background:#4299e1; box-shadow:0 0 15px #4299e1; }
+    .cat-tab:hover { background: rgba(66,153,225,0.6); }
+    .cat-tab.active { background: #4299e1; box-shadow: 0 0 15px #4299e1; }
   `;
   document.head.appendChild(style);
 
@@ -132,13 +149,12 @@ function filterAndRender(cat = 'todos', search = '') {
 
   filtered.forEach(d => {
     const item = document.createElement('div');
-    item.className = 'design-item';
     item.innerHTML = `
-      <div style="width:170px;height:170px;margin:auto;background:#1a1a2e;border-radius:12px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.5);">
-        <img src="${d.url}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
+      <div class="design-thumb-container">
+        <img src="${d.url}" loading="lazy" alt="${d.nombre || 'Diseño'}">
       </div>
       <div class="design-name">${d.nombre || 'Sin nombre'}</div>
-      ${d.categoria ? `<small style="color:#a0aec0;">(${d.categoria})</small>` : ''}
+      ${d.categoria ? `<small style="color:#a0aec0; font-size:0.9rem;">(${d.categoria})</small>` : ''}
     `;
 
     item.onclick = () => {
