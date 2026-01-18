@@ -1,8 +1,8 @@
 // gallery.js - Galería REAL desde Google Sheets + CUADRÍCULA + categorías + búsqueda
-// Basado en la versión que SÍ funcionaba + mejoras solicitadas
-console.log("gallery.js cargado - versión mejorada con categorías y búsqueda");
+// Adaptado a tu Sheet: columnas Nombre, URL, Acceso, Categoria
+console.log("gallery.js cargado - versión FINAL para tu Sheet nueva");
 
-let allDesigns = []; // Guardamos todos para filtrar
+let allDesigns = [];
 
 window.addEventListener('load', function() {
   console.log("Página lista - inicializando galería");
@@ -14,7 +14,7 @@ window.addEventListener('load', function() {
 
   if (openGalleryBtn) {
     openGalleryBtn.addEventListener('click', () => {
-      console.log("Botón clicado - cargando diseños desde Sheets");
+      console.log("Botón clicado - cargando diseños");
       if (galleryOverlay) {
         galleryOverlay.style.display = 'flex';
         cargarGaleriaDesdeSheets();
@@ -48,7 +48,7 @@ async function cargarGaleriaDesdeSheets() {
 
     allDesigns = await response.json();
 
-    // Creamos la interfaz con pestañas y búsqueda (sin romper la cuadrícula)
+    // Interfaz con pestañas y búsqueda
     grid.innerHTML = `
       <!-- Barra de búsqueda -->
       <div style="grid-column:1/-1; margin-bottom:15px;">
@@ -64,7 +64,7 @@ async function cargarGaleriaDesdeSheets() {
         <button class="cat-tab" data-cat="fondos">Fondos</button>
       </div>
 
-      <!-- Grid en CUADRÍCULA (tu estilo original que funciona) -->
+      <!-- Grid en CUADRÍCULA (estilo probado que funciona) -->
       <div id="designsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px;"></div>
     `;
 
@@ -88,7 +88,7 @@ async function cargarGaleriaDesdeSheets() {
     `;
     document.head.appendChild(style);
 
-    // Eventos de pestañas y búsqueda
+    // Eventos
     document.querySelectorAll('.cat-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
@@ -118,10 +118,10 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
   container.innerHTML = '';
 
   const filtrados = allDesigns.filter(d => {
-    // Aceptamos "categoría" con tilde y minúscula como en tu Sheet
-    const catValor = d.categoría || d.Categoría || '';
+    // Usamos "Categoria" con mayúscula inicial como en tu nueva Sheet
+    const catValor = d.Categoria || '';
     const catMatch = (categoria === 'todos') || (catValor.trim().toLowerCase() === categoria.toLowerCase());
-    const nameMatch = !busqueda || (d.nombre || d.Nombre || '').toLowerCase().includes(busqueda.toLowerCase());
+    const nameMatch = !busqueda || (d.Nombre && d.Nombre.toLowerCase().includes(busqueda.toLowerCase()));
     return catMatch && nameMatch;
   });
 
@@ -132,19 +132,13 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
 
   filtrados.forEach(d => {
     const item = document.createElement('div');
-    item.style.cursor = 'pointer';
-    item.style.textAlign = 'center';
-    item.style.padding = '10px';
-    item.style.borderRadius = '8px';
-    item.style.background = '#f8f9fa';
-    item.style.transition = 'background 0.2s';
-
+    item.className = 'design-item';
     item.innerHTML = `
       <div style="width:120px; height:120px; margin:auto; background:#eee; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-        <img src="${d.URL || d.url || ''}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
+        <img src="${d.URL}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.src='https://via.placeholder.com/120?text=Error';">
       </div>
-      <div class="design-name">${d.Nombre || d.nombre || 'Sin nombre'}</div>
-      ${d.categoría ? `<small style="color:#666;">(${d.categoría})</small>` : ''}
+      <div class="design-name">${d.Nombre || 'Sin nombre'}</div>
+      ${d.Categoria ? `<small style="color:#666;">(${d.Categoria})</small>` : ''}
     `;
 
     item.addEventListener('mouseover', () => item.style.background = '#e2e8f0');
@@ -164,10 +158,10 @@ function filterAndRender(categoria = 'todos', busqueda = '') {
         updateDesignsList();
         updateControls();
         drawCanvas();
-        showMessage(`¡Diseño "${d.Nombre || d.nombre || 'sin nombre'}" cargado!`, 'success', 3000);
+        showMessage(`¡Diseño "${d.Nombre || 'sin nombre'}" cargado!`, 'success', 3000);
         document.getElementById('imgbb-gallery-overlay').style.display = 'none';
       };
-      img.src = d.URL || d.url || '';
+      img.src = d.URL;
     });
 
     container.appendChild(item);
