@@ -1,5 +1,4 @@
-// profile.js - Solo muestra datos (modo lectura)
-
+// profile.js - Modo solo lectura
 window.addEventListener('load', function() {
   const openBtn = document.getElementById('open-profile-btn');
   const closeBtn = document.getElementById('close-profile');
@@ -9,7 +8,7 @@ window.addEventListener('load', function() {
     openBtn.addEventListener('click', function() {
       overlay.style.display = 'flex';
 
-      // Cargar datos del login
+      // Cargar datos guardados en el login
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
 
       document.getElementById('profile-user').textContent = userData.usuario || 'Usuario';
