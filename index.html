@@ -823,10 +823,7 @@ if (lockBtn) {
 } else {
   lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
 }
- else {
-        lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
-      }
-    } catch (err) {
+      catch (err) {
       lockError.textContent = 'Error al conectar. Intenta más tarde.';
       console.error('Error de conexión/login:', err);
     }
