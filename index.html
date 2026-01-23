@@ -779,29 +779,51 @@ if (lockBtn) {
       const result = await response.json();
 
       if (result.success === true) {
-        sessionStorage.setItem('dtf_unlocked', '1');
-        // Aquí venía el fetch del facturador (lo dejamos igual)
-        try {
-          const paramsFact = new URLSearchParams();
-          paramsFact.append('action', 'get_facturador_url');
-          paramsFact.append('usuario', usuario);
-          const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbzybf9hUrvuBQl4RZQdQSmkghpiBnqkPcJ3w_JUY8VbDZfnS61RDkpb7Jh33A6NSp9kwA/exec', {
-            method: 'POST',
-            body: paramsFact
-          });
-          const urlResult = await urlResponse.json();
-          if (urlResult.success) {
-            sessionStorage.setItem('facturador_url', urlResult.url);
-            showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
-          } else {
-            showMessage('No se encontró URL de facturador. Contacta al admin.', 'warning', 5000);
-          }
-        } catch (err) {
-          console.error('Error facturador:', err);
-          showMessage('Error al cargar facturador.', 'error');
-        }
-        unlock();
-      } else {
+  sessionStorage.setItem('dtf_unlocked', '1');
+
+  // ¡Aquí guardamos TODOS los datos que devuelve el script!
+  const userInfo = {
+    usuario: usuario,                           // el que ingresó
+    membresia: result.membresia || 'Básica',    // viene del script (columna I)
+    nombre: result.nombre || 'Usuario',         // columna E
+    fotoPerfil: result.fotoPerfil || 'https://via.placeholder.com/120', // columna D
+    // Si tu script devuelve más campos (edad, genero, fechas, etc.), agrégalos aquí
+    correo: result.correo || 'No disponible',
+    edad: result.edad || 'No configurada',
+    genero: result.genero || 'No especificado',
+    fechaInicio: result.fechaInicio || 'N/A',
+    fechaFin: result.fechaFin || 'N/A'
+  };
+
+  localStorage.setItem('userData', JSON.stringify(userInfo));
+  console.log("Datos guardados en localStorage:", userInfo); // ← para depurar
+
+  // Mantén el fetch del facturador (si lo necesitas)
+  try {
+    const paramsFact = new URLSearchParams();
+    paramsFact.append('action', 'get_facturador_url');
+    paramsFact.append('usuario', usuario);
+    const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbzybf9hUrvuBQl4RZQdQSmkghpiBnqkPcJ3w_JUY8VbDZfnS61RDkpb7Jh33A6NSp9kwA/exec', {
+      method: 'POST',
+      body: paramsFact
+    });
+    const urlResult = await urlResponse.json();
+    if (urlResult.success) {
+      sessionStorage.setItem('facturador_url', urlResult.url);
+      showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
+    } else {
+      showMessage('No se encontró URL de facturador. Contacta al admin.', 'warning', 5000);
+    }
+  } catch (err) {
+    console.error('Error facturador:', err);
+    showMessage('Error al cargar facturador.', 'error');
+  }
+
+  unlock();
+} else {
+  lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
+}
+ else {
         lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
       }
     } catch (err) {
