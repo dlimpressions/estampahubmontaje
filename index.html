@@ -802,6 +802,16 @@ if (lockBtn) {
   localStorage.setItem('userData', JSON.stringify(userInfo));
   console.log("Datos guardados en localStorage:", userInfo);
 
+// AÑADE ESTAS LÍNEAS PARA DEPURAR:
+  console.log("RESULTADO DEL SERVIDOR:", result);
+  console.log("Datos que se guardan en localStorage:", userInfo);
+
+ // Verifica que los datos sean correctos
+  if (!result.nombre || result.nombre === 'Usuario') {
+    console.error("ERROR: El nombre no se cargó correctamente del servidor");
+    alert("⚠️ Los datos del perfil no se cargaron correctamente. Verifica la hoja de cálculo.");
+  }
+
   // Mantén el fetch del facturador (si lo necesitas)
   try {
     const paramsFact = new URLSearchParams();
