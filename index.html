@@ -772,7 +772,7 @@ if (lockBtn) {
       params.append('action', 'validar_login');
       params.append('usuario', usuario);
       params.append('contrasena', password);
-      const response = await fetch('https://script.google.com/macros/s/AKfycbwJOl_grF0Lp0Ff9aMc6v8qdc6olHirRsCw0UHnHbJDQX21qkOGksdn92lC_zgyW3o1/exec', {
+      const response = await fetch('https://api.allorigins.win/raw?url=https://script.google.com/macros/s/AKfycbwJOl_grF0Lp0Ff9aMc6v8qdc6olHirRsCw0UHnHbJDQX21qkOGksdn92lC_zgyW3o1/exec', {
   method: 'POST',
   body: params
 });
