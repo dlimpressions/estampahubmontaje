@@ -787,23 +787,20 @@ if (lockBtn) {
     if (result.success === true) {
   sessionStorage.setItem('dtf_unlocked', '1');
 
-  
-  // ¡Aquí guardamos TODOS los datos que devuelve el script!
+// Agrega esto para guardar los datos del perfil
   const userInfo = {
-    usuario: usuario,                           // el que ingresó
-    membresia: result.membresia || 'Básica',    // viene del script (columna I)
-    nombre: result.nombre || 'Usuario',         // columna E
-    fotoPerfil: result.fotoPerfil || 'https://via.placeholder.com/120', // columna D
-    // Si tu script devuelve más campos (edad, genero, fechas, etc.), agrégalos aquí
+    usuario: usuario,
+    membresia: result.membresia || 'Básica',
+    nombre: result.nombre || 'Usuario',
+    fotoPerfil: result.fotoPerfil || 'https://via.placeholder.com/120',
     correo: result.correo || 'No disponible',
     edad: result.edad || 'No configurada',
     genero: result.genero || 'No especificado',
     fechaInicio: result.fechaInicio || 'N/A',
     fechaFin: result.fechaFin || 'N/A'
   };
-
   localStorage.setItem('userData', JSON.stringify(userInfo));
-  console.log("Datos guardados en localStorage:", userInfo); // ← para depurar
+  console.log("Datos guardados en localStorage:", userInfo);
 
   // Mantén el fetch del facturador (si lo necesitas)
   try {
