@@ -3,338 +3,341 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <title>Editor DTF - Montaje para Impresión (sin removedor de fondo)</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
-    body {
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-  color: #e2e8f0;
-  line-height: 1.6;
-  min-height: 100vh;
-  padding: 20px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  overflow-x: hidden;
+  
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#06080f;--surface:#0b0d17;--surface-2:#0f1220;--surface-3:#141828;
+  --border:rgba(14,165,233,0.14);--border-md:rgba(14,165,233,0.26);--border-hi:rgba(14,165,233,0.52);
+  --accent:#0ea5e9;--accent-dim:rgba(14,165,233,0.1);--accent-glow:rgba(14,165,233,0.32);
+  --indigo:#6366f1;--emerald:#10b981;--rose:#f43f5e;--amber:#f59e0b;--purple:#a855f7;
+  --text:#e2e8f0;--text-muted:#64748b;--text-dim:#1e2a3a;
+  --font-ui:'Exo 2',sans-serif;--font-mono:'DM Mono',monospace;
 }
-    .container {
-  max-width: 1400px;
-  margin: 0 auto;
-  background: rgba(20, 20, 40, 0.85);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 0 60px rgba(66, 153, 225, 0.25);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(66, 153, 225, 0.2);
+body{
+  font-family:var(--font-ui);background:var(--bg);color:var(--text);
+  min-height:100vh;overflow:hidden;font-size:13px;line-height:1.4;
 }
-    header {
-  background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(74, 85, 104, 0.9) 100%);
-  color: #fff;
-  padding: 1.5rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  border-bottom: 1px solid rgba(66, 153, 225, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);
 }
 
-.logo {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(66, 153, 225, 0.7);
+/* APP SHELL */
+#app-root{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* HEADER */
+header{
+  height:58px;min-height:58px;background:var(--surface);
+  border-bottom:1px solid var(--border-md);display:flex;align-items:center;
+  gap:12px;padding:0 18px;flex-shrink:0;
+  box-shadow:0 2px 20px rgba(0,0,0,0.5);position:relative;z-index:100;
+}
+.logo-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.logo-mark{
+  width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--indigo));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:0.85rem;color:#fff;box-shadow:0 0 14px var(--accent-glow);flex-shrink:0;
+}
+.logo-text{line-height:1.1;}
+.logo-title{font-weight:800;font-size:1rem;letter-spacing:1.5px;text-transform:uppercase;}
+.logo-sub{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-muted);letter-spacing:0.5px;}
+.hdr-divider{width:1px;height:28px;background:var(--border-md);flex-shrink:0;}
+#specs-label{
+  font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);
+  background:var(--surface-2);padding:3px 9px;border-radius:4px;
+  border:1px solid var(--border);white-space:nowrap;
+}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.hdr-btn{
+  display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border:1px solid var(--border-md);border-radius:6px;background:var(--surface-2);
+  color:var(--text-muted);font-family:var(--font-ui);font-size:0.76rem;font-weight:500;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;
+}
+.hdr-btn:hover{background:var(--surface-3);border-color:var(--border-hi);color:var(--text);}
+.hdr-btn.danger{border-color:rgba(244,63,94,0.28);color:var(--rose);}
+.hdr-btn.danger:hover{background:rgba(244,63,94,0.1);}
+.hdr-btn.primary{
+  background:linear-gradient(135deg,rgba(14,165,233,0.2),rgba(99,102,241,0.15));
+  border-color:var(--border-hi);color:var(--accent);
+}
+.hdr-btn.primary:hover{box-shadow:0 0 14px var(--accent-glow);color:#fff;}
+
+/* ADOBE TOOLBAR */
+.adobe-toolbar{
+  flex-shrink:0;background:var(--surface);
+  border-bottom:1px solid var(--border-md);
+  box-shadow:0 3px 16px rgba(0,0,0,0.4);position:relative;z-index:90;
+}
+.toolbar-tabs{
+  display:flex;align-items:stretch;gap:1px;padding:5px 12px 0;
+  background:rgba(0,0,0,0.25);border-bottom:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;
+}
+.toolbar-tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  display:flex;align-items:center;gap:4px;padding:6px 13px;
+  background:transparent;border:none;border-bottom:2px solid transparent;
+  margin-bottom:-1px;color:var(--text-muted);font-family:var(--font-ui);
+  font-size:0.72rem;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;
+  border-radius:4px 4px 0 0;flex-shrink:0;
+}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(14,165,233,0.05);}
+.tab-icon{font-size:0.82rem;}
+.toolbar-panels{height:58px;display:flex;align-items:center;padding:0 12px;overflow:hidden;}
+.toolbar-panel{
+  display:none;align-items:center;gap:7px;width:100%;height:100%;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;
+  scrollbar-color:var(--border-md) transparent;
+}
+.toolbar-panel::-webkit-scrollbar{height:3px;}
+.toolbar-panel::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:2px;}
+.toolbar-panel.active{display:flex;}
+.tb-sep{width:1px;height:30px;background:var(--border-md);flex-shrink:0;margin:0 2px;}
+.tb-label{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
+.tb-val{font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);min-width:34px;text-align:center;flex-shrink:0;}
+.tb-info{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
+.tb-group{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.tb-btn{
+  display:flex;align-items:center;gap:4px;padding:5px 10px;
+  border:1px solid var(--border-md);border-radius:5px;background:var(--surface-2);
+  color:var(--text);font-family:var(--font-ui);font-size:0.74rem;font-weight:500;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0;
+}
+.tb-btn:hover:not(:disabled){background:var(--surface-3);border-color:var(--border-hi);color:#fff;}
+.tb-btn:disabled{opacity:0.28;cursor:not-allowed;}
+.tb-btn.accent{border-color:var(--border-hi);color:var(--accent);background:var(--accent-dim);}
+.tb-btn.accent:hover:not(:disabled){box-shadow:0 0 10px var(--accent-glow);}
+.tb-btn.success{border-color:rgba(16,185,129,0.35);color:var(--emerald);}
+.tb-btn.success:hover:not(:disabled){background:rgba(16,185,129,0.1);}
+.tb-btn.danger{border-color:rgba(244,63,94,0.35);color:var(--rose);}
+.tb-btn.danger:hover:not(:disabled){background:rgba(244,63,94,0.1);}
+.tb-btn.purple{border-color:rgba(168,85,247,0.35);color:var(--purple);}
+.tb-btn.purple:hover:not(:disabled){background:rgba(168,85,247,0.1);}
+.tb-input{
+  background:var(--surface-2);border:1px solid var(--border-md);border-radius:5px;
+  color:var(--text);font-family:var(--font-mono);font-size:0.73rem;
+  padding:5px 7px;transition:border-color 0.15s;flex-shrink:0;
+}
+.tb-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim);}
+.tb-input[type="range"]{
+  -webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
+  background:var(--surface-3);border:none;padding:0;cursor:pointer;
+}
+.tb-input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 6px var(--accent-glow);cursor:pointer;
+}
+.tb-input[type="range"]::-moz-range-thumb{
+  width:13px;height:13px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;
+}
+.tb-input[type="color"]{padding:2px;width:32px;height:28px;cursor:pointer;}
+.tb-select{
+  background:var(--surface-2);border:1px solid var(--border-md);border-radius:5px;
+  color:var(--text);font-family:var(--font-mono);font-size:0.72rem;
+  padding:5px 7px;cursor:pointer;flex-shrink:0;
+}
+.tb-select:focus{outline:none;border-color:var(--accent);}
+.tb-select option{background:var(--surface);}
+
+/* Designs horizontal thumbnails */
+.designs-inline{
+  display:flex;align-items:center;gap:5px;max-width:320px;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;
+  scrollbar-color:var(--border-md) transparent;flex-shrink:0;padding:2px;
+}
+.designs-inline::-webkit-scrollbar{height:3px;}
+.designs-inline .design-item{
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;
+  border:1px solid var(--border);border-radius:5px;background:var(--surface-2);
+  cursor:pointer;flex-shrink:0;transition:all 0.14s;min-width:50px;
+}
+.designs-inline .design-item:hover{border-color:var(--border-hi);}
+.designs-inline .design-item.active{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 8px var(--accent-glow);}
+.designs-inline .design-thumb{width:34px;height:34px;object-fit:cover;border-radius:3px;}
+.designs-inline .design-item div{font-size:0.56rem;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;}
+.designs-inline .no-designs{font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono);padding:0 8px;white-space:nowrap;}
+
+.prop-lock-label{display:flex;align-items:center;gap:5px;flex-shrink:0;font-size:0.72rem;color:var(--text-muted);cursor:pointer;user-select:none;}
+.prop-lock-label input[type="checkbox"]{accent-color:var(--accent);cursor:pointer;}
+
+.precio-badge{
+  display:flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,rgba(14,165,233,0.1),rgba(99,102,241,0.08));
+  border:1px solid var(--border-md);border-radius:6px;padding:4px 10px;flex-shrink:0;
+}
+.precio-label{font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;}
+.precio-val{font-size:0.88rem;font-weight:700;color:var(--accent);font-family:var(--font-mono);white-space:nowrap;}
+
+/* EDITOR AREA */
+.editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.canvas-container{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.canvas-titlebar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:4px 14px;background:rgba(11,13,23,0.8);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.canvas-titlebar h3{font-family:var(--font-mono);font-size:0.7rem;font-weight:400;color:var(--text-muted);}
+.canvas-titlebar h3 span{color:var(--accent);}
+.canvas-shortcuts{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);white-space:nowrap;}
+.canvas-area{
+  flex:1;
+  background:radial-gradient(ellipse 60% 50% at 25% 15%,rgba(14,165,233,0.04) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 60% at 75% 85%,rgba(99,102,241,0.04) 0%,transparent 70%),
+             var(--bg);
+  display:flex;justify-content:center;align-items:flex-start;
+  padding:20px;overflow:auto;position:relative;
+}
+.canvas-area::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(14,165,233,0.07) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.canvas-wrapper{position:relative;transform-origin:top center;flex-shrink:0;}
+#canvas{
+  display:block;background:#fff;touch-action:none;cursor:default;
+  box-shadow:0 0 0 1px rgba(14,165,233,0.25),0 0 40px rgba(14,165,233,0.12),0 16px 50px rgba(0,0,0,0.6);
 }
 
-.logo span {
-  color: #4299e1;
-  text-shadow: 0 0 15px #4299e1;
+/* FLOATING TOOLS */
+.floating-tools{
+  position:absolute;top:12px;right:12px;z-index:50;
+  display:flex;gap:3px;background:rgba(11,13,23,0.94);
+  border:1px solid var(--border-md);box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  border-radius:8px;padding:4px;backdrop-filter:blur(12px);
+  cursor:move;user-select:none;touch-action:none;
 }
-    .specs{background:#4a5568;color:#fff;padding:.8rem 1.5rem;border-radius:8px;font-size:.9rem}
-    .main-content{display:flex;padding:1rem;gap:1.5rem;min-height:70vh}
-    .toolbar,.controls{width:250px;background:#f8f9fa;border-radius:10px;padding:1.5rem;box-shadow:0 4px 6px rgba(0,0,0,.05)}
-    .tool-section{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #e9ecef}
-    .tool-section:last-child{border-bottom:none}
-    .tool-section h3{margin-bottom:1rem;color:#2d3748;font-size:1.1rem}
-    .btn{display:block;width:100%;padding:.8rem;margin-bottom:.8rem;border:none;border-radius:6px;background:#4299e1;color:#fff;font-weight:500;cursor:pointer;transition:background .3s;text-align:center}
-    .btn:hover{background:#3182ce}
-    .btn-upload{background:#48bb78}.btn-upload:hover{background:#38a169}
-    .btn-download{background:#9f7aea}.btn-download:hover{background:#805ad5}
-    .btn-clear{background:#f56565}.btn-clear:hover{background:#e53e3e}
-    .canvas-container{flex:1;background:#f8f9fa;border-radius:10px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.05);padding:1rem;display:flex;flex-direction:column;position:relative}
-    .canvas-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-    .canvas-area {
-  flex: 1;
-  background: rgba(10, 10, 30, 0.85);
-  border-radius: 16px;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 1.5rem;
-  box-shadow: inset 0 0 50px rgba(0,0,0,0.6);
-  position: relative;
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(66,153,225,0.2);
+.floating-tools .btn-mini{
+  border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);
+  padding:4px 7px;border-radius:4px;cursor:pointer;font-size:11px;
+  font-family:var(--font-ui);line-height:1;white-space:nowrap;transition:all 0.13s;
 }
-    #canvas {
-  background: #ffffff;
-  box-shadow: 0 0 40px rgba(66,153,225,0.3), inset 0 0 20px rgba(0,0,0,0.15);
-  touch-action: none;
-  cursor: default;
-  border-radius: 4px; /* opcional, para que las esquinas queden suaves */
-}
-    .control-group{margin-bottom:1.5rem}
-    .control-group h4{margin-bottom:.8rem;color:#2d3748}
-    .slider-container{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
-    .slider-container span{min-width:40px;text-align:center}
-    input[type="range"],input[type="number"]{width:100%}
-    .row{display:flex;gap:10px;align-items:center}
-    .row>*{flex:1}
-    .size-controls{display:flex;gap:10px;margin-bottom:1rem}
-    .size-input{flex:1}
-    .size-input input{width:100%;padding:.5rem;border:1px solid #cbd5e0;border-radius:4px;text-align:center}
-    .size-info{background:#edf2f7;padding:.8rem;border-radius:6px;margin-top:1rem;font-size:.9rem}
-    .size-info h4{margin-bottom:.5rem;color:#2d3748}
-    .help-section{margin-top:2rem;padding:1rem;background:#edf2f7;border-radius:8px}
-    footer{text-align:center;padding:1.5rem;background:#2d3748;color:#fff;margin-top:2rem}
-    .instructions{margin-top:1.5rem;padding:1.5rem;background:#edf2f7;border-radius:10px}
-    .instructions h3{margin-bottom:1rem;color:#2d3748}
-    .instructions ol{padding-left:1.5rem}
-    .instructions li{margin-bottom:.8rem}
-    .designs-list{max-height:200px;overflow-y:auto;margin-top:1rem;border:1px solid #e2e8f0;border-radius:6px;padding:.5rem}
-    .design-item{display:flex;align-items:center;padding:.5rem;margin-bottom:.5rem;background:#fff;border-radius:4px;cursor:pointer;transition:background .2s}
-    .design-item:hover{background:#edf2f7}
-    .design-item.active{background:#ebf8ff;border:1px solid #90cdf4}
-    .design-thumb{width:40px;height:40px;object-fit:cover;border-radius:3px;margin-right:.5rem}
-    .proportion-lock{display:flex;align-items:center;margin-bottom:1rem}
-    .proportion-lock input{margin-right:.5rem}
-    .quality-options{margin-top:1rem}
-    .quality-options label{display:block;margin-bottom:.5rem}
-    .quality-options select{width:100%;padding:.5rem;border:1px solid #cbd5e0;border-radius:4px}
-    .canvas-background{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
-    .canvas-background label{white-space:nowrap}
-    .canvas-background input{width:30px;height:30px;padding:0;border:1px solid #cbd5e0;border-radius:4px;cursor:pointer}
-    .message-container{position:fixed;top:20px;right:20px;z-index:1000;max-width:350px}
-    .message{padding:12px 16px;margin-bottom:10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:slideIn .3s ease-out;display:flex;align-items:center}
-    .message.info{background:#bee3f8;color:#2c5282;border-left:4px solid #2c5282}
-    .message.success{background:#c6f6d5;color:#22543d;border-left:4px solid #22543d}
-    .message.error{background:#fed7d7;color:#742a2a;border-left:4px solid #742a2a}
-    .message.warning{background:#feebcb;color:#744210;border-left:4px solid #744210}
-    .message.loading{background:#e9d8fd;color:#553c9a;border-left:4px solid #553c9a}
-    .message-icon{margin-right:10px;font-size:18px}
-    .close-message{margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;opacity:.7}
-    .close-message:hover{opacity:1}
-    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-    @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
-    @media (max-width:1024px){.main-content{flex-wrap:wrap}.toolbar,.controls{width:100%}.message-container{top:10px;right:10px;left:10px;max-width:none}}
+.floating-tools .btn-mini:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-hi);}
+.floating-tools .sep{width:1px;background:var(--border);margin:0 1px;}
 
-    /* Overlay de contraseña */
-   /* Pantalla de login futurista */
-.lock-overlay {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  color: #e2e8f0;
-  opacity: 0;
-  transition: opacity 0.8s ease;
-}
-
-.lock-overlay.visible {
-  opacity: 1;
-}
-
-.lock-card {
-  background: rgba(30, 30, 60, 0.7);
-  border: 1px solid rgba(66, 153, 225, 0.3);
-  backdrop-filter: blur(16px);
-  padding: 2.5rem 2rem;
-  border-radius: 20px;
-  width: min(90vw, 420px);
-  box-shadow: 0 0 60px rgba(66, 153, 225, 0.25);
-  text-align: center;
-  animation: fadeInUp 0.8s ease-out;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.lock-card h2 {
-  margin-bottom: 1.5rem;
-  font-size: 2rem;
-  color: #a5b4fc;
-  text-shadow: 0 0 15px rgba(165, 180, 252, 0.5);
-}
-
-.lock-card p {
-  margin-bottom: 1.5rem;
-  color: #cbd5e0;
-}
-
-.lock-card input {
-  width: 100%;
-  padding: 0.9rem;
-  margin: 0.8rem 0;
-  border-radius: 12px;
-  border: 1px solid rgba(66, 153, 225, 0.4);
-  background: rgba(255,255,255,0.08);
-  color: white;
-  font-size: 1rem;
-}
-
-.lock-card input::placeholder {
-  color: rgba(255,255,255,0.5);
-}
-
-.lock-card button {
-  width: 100%;
-  padding: 1rem;
-  margin-top: 1rem;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #4299e1, #3182ce);
-  color: white;
-  font-weight: 600;
-  font-size: 1.1rem;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(66, 153, 225, 0.5);
-  transition: all 0.3s ease;
-}
-
-.lock-card button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(66, 153, 225, 0.7);
-}
-
-.lock-error {
-  color: #fed7d7;
-  min-height: 1.5em;
-  margin: 0.8rem 0;
-  font-size: 0.95rem;
-}
-
-    /* Pane derecho pegajoso */
-    .controls{ position: sticky; top: 10px; max-height: calc(100vh - 40px); overflow: auto; }
-
-    /* Variable para altura del título */
-    :root { --title-h: 0px; }
-
-    /* Barra flotante sobre el lienzo */
-    .floating-tools{
-      position: absolute;
-      top: calc(10px + var(--title-h));
-      right: 10px;
-      z-index: 50;
-      display: flex;
-      gap: 6px;
-      background: rgba(255,255,255,.9);
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 12px rgba(0,0,0,.08);
-      border-radius: 8px;
-      padding: 6px;
-      backdrop-filter: blur(6px);
-      cursor: move;
-      user-select: none;
-      touch-action: none;
-    }
-    .floating-tools .btn-mini{
-      border: 1px solid #cbd5e0;
-      background: #edf2f7;
-      color: #2d3748;
-      padding: 6px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .floating-tools .btn-mini:hover{ background:#e2e8f0; }
-    .floating-tools .sep{ width:1px; background:#e2e8f0; margin:0 4px; }
-    @media (max-width: 768px){
-      .floating-tools{ right: 6px; left: 6px; justify-content: center; flex-wrap: wrap; }
-    }
-
-/* === Crear OC Termofijadoras === */
-.oc-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3000;
-  color: #2d3748;
-}
-.oc-card {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  width: min(90vw, 450px);
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.oc-card h2 { color: #2c5282; margin-bottom: 1rem; }
-.oc-card label { display:block; margin-top: .8rem; font-weight:500; }
-.oc-card input, .oc-card select {
-  width:100%; padding:.6rem; border:1px solid #cbd5e0;
-  border-radius:6px; margin-top:.3rem;
-}
-.oc-card button { margin-top:1rem; }
-
-
-/* === MOCKUPS === */
-#mock-layer-host{ position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; }
-.mock-design{
-  position:absolute; left:50%; top:50%;
-  transform:translate(-50%,-50%);
-  max-width:95%; max-height:95%;
-  mix-blend-mode:multiply; opacity:.95;
-  cursor:grab; pointer-events:auto; touch-action: none;
-}
-.mock-design:active{ cursor:grabbing; }
-.mock-design.selected{ outline: 2px dashed #4299e1; outline-offset: 2px; border-radius: 4px; }
-.mockup-pane{ display:none; background:#f8f9fa; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,.05); padding:1rem; margin-top:1rem; }
-.mockup-header{ display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px }
-.mockup-controls{ display:flex;flex-wrap:wrap;gap:10px;align-items:center }
-.mockup-controls > *{ margin:3px 0; }
+/* MOCKUP PANE */
+.mockup-pane{display:none;background:var(--surface);border-top:1px solid var(--border-md);padding:12px;max-height:60vh;overflow-y:auto;}
+.mockup-header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.mockup-header h3{font-size:0.84rem;color:var(--text);font-weight:600;}
+.mockup-controls{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
 .mockup-stage{
-  position:relative; width:min(900px, 100%); margin:0 auto;
-  background:
-    linear-gradient(45deg,#eee 25%,transparent 25%),
-    linear-gradient(-45deg,#eee 25%,transparent 25%),
-    linear-gradient(45deg,transparent 75%,#eee 75%),
-    linear-gradient(-45deg,transparent 75%,#eee 75%);
-  background-size:20px 20px;
-  background-position:0 0,0 10px,10px -10px,-10px 0px;
-  border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;
+  position:relative;width:min(900px,100%);margin:0 auto;
+  background:linear-gradient(45deg,#0f1220 25%,transparent 25%),linear-gradient(-45deg,#0f1220 25%,transparent 25%),
+             linear-gradient(45deg,transparent 75%,#0f1220 75%),linear-gradient(-45deg,transparent 75%,#0f1220 75%);
+  background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0;
+  background-color:var(--surface-2);border:1px solid var(--border-md);border-radius:8px;overflow:hidden;
 }
-#mock-template{ display:block;width:100%;height:auto;user-select:none;pointer-events:none; }
-#mock-design{
-  position:absolute;left:50%;top:50%;
-  transform:translate(-50%,-50%);
-  max-width:95%;
-  pointer-events:auto; mix-blend-mode:multiply; opacity:0.95; cursor:grab;
-}
-#mock-design:active{ cursor:grabbing; }
-.mock-btn{ padding:.6rem .8rem;border:none;border-radius:6px;background:#4299e1;color:#fff;cursor:pointer }
-.mock-btn:hover{ background:#3182ce }
-.mock-select, .mock-input{ padding:.45rem .6rem;border:1px solid #cbd5e0;border-radius:6px;background:#fff }
-.mock-slider{ width:160px }
+#mock-template{display:block;width:100%;height:auto;user-select:none;pointer-events:none;}
+#mock-layer-host{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;}
+.mock-design{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:95%;max-height:95%;mix-blend-mode:multiply;opacity:.95;cursor:grab;pointer-events:auto;touch-action:none;}
+.mock-design:active{cursor:grabbing;}
+.mock-design.selected{outline:2px dashed var(--accent);outline-offset:2px;border-radius:4px;}
+.mock-btn{padding:5px 10px;border:1px solid var(--border-md);border-radius:5px;background:var(--surface-2);color:var(--text);font-family:var(--font-ui);font-size:0.73rem;cursor:pointer;transition:all 0.13s;}
+.mock-btn:hover{background:var(--surface-3);border-color:var(--border-hi);}
+.mock-select,.mock-input{padding:4px 7px;border:1px solid var(--border-md);border-radius:5px;background:var(--surface-2);color:var(--text);font-family:var(--font-mono);font-size:0.72rem;}
+.mock-slider{width:110px;}
+#mock-layers-list{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0;}
+#mock-layers-list .design-item{display:flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface-2);cursor:pointer;font-size:0.72rem;transition:all 0.13s;}
+#mock-layers-list .design-item.active{border-color:var(--accent);background:var(--accent-dim);}
+#mock-layers-list .design-thumb{width:30px;height:30px;object-fit:cover;border-radius:3px;}
+#mock-layers-list .no-designs{font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);}
 
-#logout-btn:hover {
-  background: rgba(245, 101, 101, 1);
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.6);
+/* STATUS BAR */
+.status-bar{
+  height:30px;min-height:30px;background:var(--surface-2);
+  border-top:1px solid var(--border);display:flex;align-items:center;
+  padding:0 14px;flex-shrink:0;gap:0;
 }
+.status-item{display:flex;align-items:center;gap:4px;padding:0 12px;border-right:1px solid var(--border);font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);}
+.status-item:first-child{padding-left:0;}
+.status-item .val{color:var(--accent);font-weight:500;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);box-shadow:0 0 5px var(--emerald);flex-shrink:0;}
+.status-spacer{flex:1;}
+.status-keys{font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);white-space:nowrap;}
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+/* LOCK OVERLAY */
+.lock-overlay{
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at 40% 35%,#0b1833 0%,#06080f 65%);
+  display:flex;align-items:center;justify-content:center;
+  z-index:2000;opacity:0;transition:opacity 0.7s;
+}
+.lock-overlay.visible{opacity:1;}
+.lock-card{
+  background:rgba(11,13,23,0.88);border:1px solid var(--border-md);backdrop-filter:blur(24px);
+  padding:2.2rem 1.8rem;border-radius:16px;width:min(92vw,420px);
+  box-shadow:0 0 60px rgba(14,165,233,0.18),0 0 100px rgba(99,102,241,0.08);
+  text-align:center;animation:fadeInUp 0.65s ease-out;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.lock-card h2{font-size:1.55rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);text-shadow:0 0 18px var(--accent-glow);margin-bottom:0.4rem;}
+.lock-card>p{color:var(--text-muted);font-size:0.82rem;margin-bottom:1.2rem;font-family:var(--font-mono);}
+.lock-card input{width:100%;padding:0.75rem 0.9rem;margin:0.4rem 0;border-radius:8px;border:1px solid var(--border-md);background:var(--surface-2);color:var(--text);font-family:var(--font-mono);font-size:0.88rem;transition:border-color 0.18s;}
+.lock-card input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim);}
+.lock-card input::placeholder{color:var(--text-muted);}
+.lock-card>button{
+  width:100%;padding:0.85rem;margin-top:0.8rem;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),#0284c7);color:#fff;
+  font-family:var(--font-ui);font-weight:700;font-size:0.88rem;letter-spacing:1px;
+  text-transform:uppercase;cursor:pointer;box-shadow:0 4px 18px var(--accent-glow);transition:all 0.25s;
+}
+.lock-card>button:hover{transform:translateY(-2px);box-shadow:0 8px 28px var(--accent-glow);}
+.lock-error{color:var(--rose);min-height:1.4em;margin:0.5rem 0;font-size:0.8rem;font-family:var(--font-mono);}
+
+/* OC OVERLAY */
+.oc-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:3000;}
+.oc-card{background:var(--surface);border:1px solid var(--border-md);padding:1.8rem;border-radius:12px;box-shadow:0 0 40px rgba(0,0,0,0.6);width:min(92vw,460px);max-height:90vh;overflow-y:auto;}
+.oc-card h2{color:var(--accent);margin-bottom:0.8rem;font-size:1.1rem;font-weight:700;}
+.oc-card p{color:var(--text-muted);font-size:0.82rem;margin-bottom:0.8rem;}
+.oc-card label{display:block;margin-top:0.7rem;font-weight:500;font-size:0.8rem;color:var(--text-muted);}
+.oc-card input,.oc-card select,.oc-card textarea{width:100%;padding:0.55rem 0.8rem;margin-top:0.25rem;border:1px solid var(--border-md);border-radius:6px;background:var(--surface-2);color:var(--text);font-family:var(--font-mono);font-size:0.8rem;}
+.oc-card input:focus,.oc-card select:focus,.oc-card textarea:focus{outline:none;border-color:var(--accent);}
+.oc-card select option{background:var(--surface);}
+.oc-card button{margin-top:0.7rem;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 13px;border:1px solid var(--border-md);border-radius:6px;background:var(--surface-2);color:var(--text);font-family:var(--font-ui);font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.13s;text-align:center;width:100%;}
+.btn:hover{background:var(--surface-3);border-color:var(--border-hi);color:#fff;}
+.btn-upload{border-color:rgba(16,185,129,0.35);color:var(--emerald);}
+.btn-upload:hover{background:rgba(16,185,129,0.08);}
+.btn-download{border-color:rgba(168,85,247,0.35);color:var(--purple);}
+.btn-download:hover{background:rgba(168,85,247,0.08);}
+.btn-clear{border-color:rgba(244,63,94,0.35);color:var(--rose);}
+.btn-clear:hover{background:rgba(244,63,94,0.08);}
+.modal-close-btn{position:absolute;top:13px;right:13px;padding:4px 11px;font-size:0.76rem;background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.3);color:var(--rose);border-radius:6px;cursor:pointer;transition:all 0.15s;z-index:10;}
+.modal-close-btn:hover{background:rgba(244,63,94,0.22);}
+
+/* MESSAGES */
+.message-container{position:fixed;top:14px;right:14px;z-index:10000;max-width:320px;display:flex;flex-direction:column;gap:5px;}
+.message{padding:9px 13px;border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,0.45);animation:slideIn 0.25s ease-out;display:flex;align-items:center;gap:7px;font-size:0.8rem;backdrop-filter:blur(12px);border:1px solid;}
+.message.info{background:rgba(14,165,233,0.1);color:#7dd3fc;border-color:rgba(14,165,233,0.28);}
+.message.success{background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.28);}
+.message.error{background:rgba(244,63,94,0.1);color:#fda4af;border-color:rgba(244,63,94,0.28);}
+.message.warning{background:rgba(245,158,11,0.1);color:#fcd34d;border-color:rgba(245,158,11,0.28);}
+.message.loading{background:rgba(168,85,247,0.1);color:#d8b4fe;border-color:rgba(168,85,247,0.28);}
+.message-icon{font-size:13px;flex-shrink:0;}
+.close-message{margin-left:auto;background:none;border:none;font-size:15px;cursor:pointer;opacity:0.55;color:inherit;}
+.close-message:hover{opacity:1;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+
+footer{text-align:center;padding:6px;background:var(--surface-2);border-top:1px solid var(--border);font-size:0.6rem;color:var(--text-dim);font-family:var(--font-mono);letter-spacing:1px;flex-shrink:0;}
+
+@media(max-width:768px){
+  .toolbar-tabs{overflow-x:auto;}
+  .tab-btn{padding:5px 9px;font-size:0.66rem;}
+  .toolbar-panels{height:auto;min-height:56px;}
+  .toolbar-panel.active{flex-wrap:wrap;padding:4px 0;height:auto;}
+  .canvas-area{padding:10px;}
+  .floating-tools{right:5px;left:5px;justify-content:center;flex-wrap:wrap;}
+  .header-right .hdr-btn span{display:none;}
+  .status-keys{display:none;}
 }
 
   </style>
@@ -454,120 +457,177 @@
 </div>
 
   <div class="container" id="app-root" style="visibility:hidden;">
-   <header style="position: relative;">
-  <div class="logo">Editor DTF <span>By: EstampaHub</span></div>
-  <div class="specs" id="specs-label">Lienzo: 58cm × 100cm | Formato: PNG/PDF</div>
-  
-  <!-- Botón Cerrar Sesión pequeño, superior derecha -->
-  <button id="logout-btn" title="Cerrar Sesión" style="
-    position: absolute;
-    top: 20px;
-    right: 380px;
-    padding: 8px 14px;
-    font-size: 0.85rem;
-    background: rgba(245, 101, 101, 0.8);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(245, 101, 101, 0.4);
-    transition: all 0.3s ease;
-    z-index: 10;
-  ">
-    🚪 Salir
-  </button>
-<!-- Botón de Perfil (futurista) -->
-<button id="open-profile-btn" class="btn" style="margin-left:10px; background: linear-gradient(135deg, #4299e1, #3182ce); box-shadow:0 0 15px rgba(66,153,225,0.5);">
-  👤 Mi Perfil
-</button>
-</header>
 
-    <div class="main-content">
-      <!-- Toolbar izquierda -->
-      <div class="toolbar">
-        <div class="tool-section">
-          <h3>Gestión de Diseños</h3>
-          <button class="btn" id="open-imgbb-gallery">📁 Mis Diseños ImgBB</button>
-          <input type="file" id="file-input" accept="image/*" style="display:none" multiple>
-          <button class="btn btn-upload" id="upload-btn">⬆️ Subir Diseño(s)</button>
-          <button class="btn" id="add-text-btn">✏️ Agregar Texto</button>
-          <button class="btn" id="open-mockups">🧥 Abrir Mockups</button>
+  <!-- HEADER -->
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-mark">DTF</div>
+      <div class="logo-text">
+        <div class="logo-title">Editor Pro</div>
+        <div class="logo-sub">by EstampaHub</div>
+      </div>
+    </div>
+    <div class="hdr-divider"></div>
+    <div id="specs-label">Lienzo: 58cm × 100cm · PNG/PDF</div>
+    <div class="header-right">
+      <button id="logout-btn" class="hdr-btn danger">🚪 <span>Salir</span></button>
+      <button id="open-profile-btn" class="hdr-btn primary">👤 <span>Mi Perfil</span></button>
+    </div>
+  </header>
 
-          <div class="canvas-background">
-            <label for="canvas-color">Color de fondo:</label>
-            <input type="color" id="canvas-color" value="#ffffff">
-          </div>
+  <!-- BARRA SUPERIOR ESTILO ADOBE -->
+  <div class="adobe-toolbar">
 
-          <div class="designs-list" id="designs-list">
-            <div class="no-designs">No hay diseños cargados</div>
-          </div>
-        </div>
+    <!-- Pestañas -->
+    <div class="toolbar-tabs">
+      <button class="tab-btn active" data-panel="panel-disenos"><span class="tab-icon">📁</span>Diseños</button>
+      <button class="tab-btn" data-panel="panel-transform"><span class="tab-icon">⚙️</span>Transformar</button>
+      <button class="tab-btn" data-panel="panel-size"><span class="tab-icon">📐</span>Tamaño</button>
+      <button class="tab-btn" data-panel="panel-order"><span class="tab-icon">🗂️</span>Orden Z</button>
+      <button class="tab-btn" data-panel="panel-canvas-tab"><span class="tab-icon">🖼️</span>Lienzo</button>
+      <button class="tab-btn" data-panel="panel-export"><span class="tab-icon">💾</span>Exportar</button>
+      <button class="tab-btn" data-panel="panel-mockups-tab"><span class="tab-icon">🧥</span>Mockups</button>
+    </div>
 
-        <div class="tool-section">
-          <h3>Opciones de Exportación</h3>
-          <div class="quality-options">
-            <label for="quality-select">Resolución de exportación:</label>
-            <select id="quality-select">
-              <option value="300">Alta (300 DPI)</option>
-              <option value="150" selected>Media (150 DPI)</option>
-              <option value="72">Baja (72 DPI)</option>
-            </select>
-          </div>
-          <button class="btn btn-download" id="download-png">💾 Descargar PNG</button>
-          <button class="btn btn-download" id="download-pdf">📄 Descargar PDF</button>
-          <button class="btn btn-clear" id="clear-btn">🧹 Limpiar Lienzo</button>
-        </div>
+    <!-- Paneles -->
+    <div class="toolbar-panels">
 
-        <div class="instructions">
-          <h3>Instrucciones</h3>
-          <ol>
-            <li>Sube tus diseños con el botón "Subir Diseño"</li>
-            <li>Selecciona un diseño de la lista para editarlo</li>
-            <li>Arrastra para mover, usa los controles para redimensionar y rotar</li>
-            <li>Las dimensiones se muestran en centímetros</li>
-            <li>Descarga tu montaje en PNG o PDF</li>
-          </ol>
-          <p class="help-section">
-            <strong>Nota:</strong> El color de fondo es solo para visualización.
-            Las exportaciones mantendrán la transparencia.
-          </p>
+      <!-- Diseños -->
+      <div class="toolbar-panel active" id="panel-disenos">
+        <button class="tb-btn accent" id="upload-btn">⬆️ Subir</button>
+        <button class="tb-btn" id="add-text-btn">✏️ Texto</button>
+        <button class="tb-btn" id="open-imgbb-gallery">📁 ImgBB</button>
+        <div class="tb-sep"></div>
+        <span class="tb-label">Fondo</span>
+        <input type="color" id="canvas-color" class="tb-input" value="#ffffff">
+        <div class="tb-sep"></div>
+        <span class="tb-label">Diseños:</span>
+        <div class="designs-inline" id="designs-list">
+          <div class="no-designs">Sin diseños cargados</div>
         </div>
       </div>
 
-      <!-- Canvas central -->
-      <div class="canvas-container">
-        <!-- Barra flotante (accesos rápidos) -->
-        <div class="floating-tools" id="floating-tools" title="Doble click para volver a posición inicial">
-          <button class="btn-mini" data-target="mirror-btn">🪞 Espejo</button>
-          <span class="sep"></span>
-          <button class="btn-mini" data-target="send-back" title="Al fondo">⤵️ Fondo</button>
-          <button class="btn-mini" data-target="step-back" title="Un paso atrás">⬇️ Atrás</button>
-          <button class="btn-mini" data-target="step-forward" title="Un paso adelante">⬆️ Adelante</button>
-          <button class="btn-mini" data-target="bring-front" title="Al frente">⤴️ Frente</button>
-          <span class="sep"></span>
-          <button class="btn-mini" data-target="remove-btn" title="Eliminar">🗑️ Eliminar</button>
+      <!-- Transformar -->
+      <div class="toolbar-panel" id="panel-transform">
+        <div class="tb-group">
+          <span class="tb-label">Rotación</span>
+          <input type="range" id="rotation-slider" class="tb-input" min="0" max="360" value="0" style="width:100px">
+          <span class="tb-val" id="rotation-value">0°</span>
+          <input type="number" id="rotation-input" class="tb-input" min="0" max="360" step="1" value="0" style="width:58px">
         </div>
+        <div class="tb-sep"></div>
+        <div class="tb-group">
+          <span class="tb-label">Opacidad</span>
+          <input type="range" id="opacity-slider" class="tb-input" min="10" max="100" value="100" style="width:90px">
+          <span class="tb-val" id="opacity-value">100%</span>
+        </div>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" id="mirror-btn">🪞 Espejo H</button>
+      </div>
 
-        <div class="canvas-title">
-          <h3>Área de Montaje (<span id="canvas-size-label">58cm × 100cm</span>)</h3>
-          <div id="zoom-level">Zoom: 100%</div>
-        </div>
-        <div class="canvas-area">
-          <div class="canvas-wrapper" id="canvas-wrapper" style="width:580px; height:1000px; 
-  background: rgba(15, 15, 35, 0.92); 
-  border-radius: 16px; 
-  overflow: hidden; 
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.7), 0 0 50px rgba(66,153,225,0.25); 
-  border: 1px solid rgba(66,153,225,0.4); 
-  position: relative;">
-  <canvas id="canvas" width="580" height="1000"></canvas>
-</div>
+      <!-- Tamaño -->
+      <div class="toolbar-panel" id="panel-size">
+        <label class="prop-lock-label">
+          <input type="checkbox" id="lock-proportion" checked>🔒 Proporción
+        </label>
+        <div class="tb-sep"></div>
+        <span class="tb-label">W (cm)</span>
+        <input type="number" id="width-input" class="tb-input" min="1" step="0.1" value="0" style="width:68px">
+        <span class="tb-label">H (cm)</span>
+        <input type="number" id="height-input" class="tb-input" min="1" step="0.1" value="0" style="width:68px">
+        <button class="tb-btn accent" id="apply-size">Aplicar</button>
+        <div class="tb-sep"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+          <div id="size-info" class="tb-val" style="text-align:left;min-width:90px;">0cm × 0cm</div>
+          <div id="original-size" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-muted);white-space:nowrap;">Original: 0 × 0</div>
         </div>
       </div>
 
-<!-- ===== MOCKUPS: panel ===== -->
-<div class="mockup-pane" id="mockup-pane">
-  <div class="mockup-header">
+      <!-- Orden Z -->
+      <div class="toolbar-panel" id="panel-order">
+        <button class="tb-btn" id="send-back">⤵️ Al Fondo</button>
+        <button class="tb-btn" id="step-back">⬇️ Atrás</button>
+        <button class="tb-btn" id="step-forward">⬆️ Adelante</button>
+        <button class="tb-btn" id="bring-front">⤴️ Al Frente</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn danger" id="remove-btn">🗑️ Eliminar</button>
+      </div>
+
+      <!-- Lienzo -->
+      <div class="toolbar-panel" id="panel-canvas-tab">
+        <span class="tb-label">Alto (cm)</span>
+        <input type="number" id="canvas-height-cm" class="tb-input" min="10" max="100" step="0.5" value="100" style="width:72px">
+        <button class="tb-btn accent" id="apply-canvas-height">Aplicar</button>
+        <div class="tb-sep"></div>
+        <span class="tb-label">Zoom</span>
+        <input type="range" id="zoom-slider" class="tb-input" min="20" max="200" value="100" style="width:95px">
+        <span class="tb-val" id="zoom-value">100%</span>
+        <div id="zoom-level" style="display:none"></div>
+        <div class="tb-sep"></div>
+        <div class="precio-badge">
+          <div>
+            <div class="precio-label">Precio aprox. impresión</div>
+            <div class="precio-val" id="precio-montaje">$10.000 (mín.)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exportar -->
+      <div class="toolbar-panel" id="panel-export">
+        <span class="tb-label">Resolución</span>
+        <select id="quality-select" class="tb-select">
+          <option value="300">Alta — 300 DPI</option>
+          <option value="150" selected>Media — 150 DPI</option>
+          <option value="72">Baja — 72 DPI</option>
+        </select>
+        <div class="tb-sep"></div>
+        <button class="tb-btn purple" id="download-png">💾 PNG</button>
+        <button class="tb-btn purple" id="download-pdf">📄 PDF</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn danger" id="clear-btn">🧹 Limpiar</button>
+      </div>
+
+      <!-- Mockups -->
+      <div class="toolbar-panel" id="panel-mockups-tab">
+        <button class="tb-btn accent" id="open-mockups">🧥 Abrir Panel de Mockups</button>
+        <div class="tb-sep"></div>
+        <span class="tb-info">Visualiza tus diseños en camisetas</span>
+      </div>
+
+    </div>
+  </div><!-- /adobe-toolbar -->
+
+  <!-- ÁREA DEL EDITOR -->
+  <div class="editor-area">
+    <div class="canvas-container">
+
+      <!-- Barra flotante rápida (se puede arrastrar) -->
+      <div class="floating-tools" id="floating-tools" title="Doble clic para resetear posición">
+        <button class="btn-mini" data-target="mirror-btn" title="Espejo">🪞</button>
+        <span class="sep"></span>
+        <button class="btn-mini" data-target="send-back">⤵️</button>
+        <button class="btn-mini" data-target="step-back">⬇️</button>
+        <button class="btn-mini" data-target="step-forward">⬆️</button>
+        <button class="btn-mini" data-target="bring-front">⤴️</button>
+        <span class="sep"></span>
+        <button class="btn-mini" data-target="remove-btn">🗑️</button>
+      </div>
+
+      <div class="canvas-titlebar">
+        <h3>Área de montaje — <span id="canvas-size-label">58cm × 100cm</span></h3>
+        <div class="canvas-shortcuts">Ctrl+Rueda: zoom · Flechas: mover · Ctrl+D: duplicar · Supr: eliminar</div>
+      </div>
+
+      <div class="canvas-area">
+        <div class="canvas-wrapper" id="canvas-wrapper" style="width:580px;height:1000px;">
+          <canvas id="canvas" width="580" height="1000"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel mockups (se despliega abajo) -->
+    <div class="mockup-pane" id="mockup-pane">
+      <div class="mockup-header">
     <h3>Mockups de Camiseta</h3>
     <div class="mockup-controls">
       <select id="mock-template-select" class="mock-select" title="Plantilla de camiseta"></select>
@@ -599,130 +659,18 @@
     </div>
   </div>
 
-  <div id="mock-layers-list" class="designs-list" style="margin:10px 0">
-    <div class="no-designs">No hay capas aún</div>
+  <!-- BARRA DE ESTADO -->
+  <div class="status-bar">
+    <div class="status-item"><span class="status-dot"></span><span>Listo</span></div>
+    <div class="status-item"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
+    <div class="status-item"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
+    <div class="status-item"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
+    <div class="status-spacer"></div>
+    <div class="status-keys">Ctrl+D duplicar · Supr eliminar · Flechas mover</div>
   </div>
-  <div class="mockup-stage" id="mock-stage">
-    <img id="mock-template" alt="Plantilla camiseta">
-    <div id="mock-layer-host"></div>
-  </div>
+
+  <footer>EDITOR DTF · ESTAMPAHUB · TODOS LOS DERECHOS RESERVADOS</footer>
 </div>
-<!-- ===== /MOCKUPS: panel ===== -->
-
-      <!-- Panel derecho (controles) -->
-      <div class="controls">
-        <div class="control-group">
-          <h4>Alto del lienzo (cm)</h4>
-          <div class="row">
-            <input type="number" id="canvas-height-cm" min="10" max="100" step="0.5" value="100" title="Alto en cm (máx. 100)">
-            <button class="btn" id="apply-canvas-height">Aplicar alto</button>
-          </div>
-          <small>El ancho permanece en 58 cm. Máximo 100 cm de alto.</small>
-        </div>
-
-<div class="control-group" style="margin-top:1rem; background:#edf2f7; padding:10px; border-radius:8px;">
-  <h4>Precio aproximado de impresion</h4>
-  <div id="precio-montaje" style="font-size:1.3rem; font-weight:bold; color:#2c5282; text-align:center;">
-    $10.000 (mínimo)
-  </div>
-  <small style="display:block; text-align:center; margin-top:5px; color:#666;">
-    Calculado por metro lineal ($15.000/m) - Mínimo $10.000
-  </small>
-</div>
-
-
-        <div class="control-group">
-          <h4>Zoom del Lienzo</h4>
-          <div class="slider-container">
-            <span id="zoom-value">100%</span>
-            <input type="range" id="zoom-slider" min="20" max="200" value="100">
-          </div>
-          <small>Tip: Ctrl (Win/Linux) o ⌘ (Mac) + rueda.</small>
-        </div>
-
-        <div class="tool-section">
-          <h3>Controles de Diseño</h3>
-
-          <div class="control-group">
-            <h4>Rotación</h4>
-            <div class="row">
-              <div>
-                <div class="slider-container">
-                  <span id="rotation-value">0°</span>
-                  <input type="range" id="rotation-slider" min="0" max="360" value="0">
-                </div>
-              </div>
-              <input type="number" id="rotation-input" min="0" max="360" step="1" value="0" title="Rotación (°)">
-            </div>
-          </div>
-
-          <div class="control-group">
-            <h4>Opacidad</h4>
-            <div class="slider-container">
-              <span id="opacity-value">100%</span>
-              <input type="range" id="opacity-slider" min="10" max="100" value="100">
-            </div>
-          </div>
-
-          <div class="control-group">
-            <h4>Tamaño Manual (cm)</h4>
-            <div class="proportion-lock">
-              <input type="checkbox" id="lock-proportion" checked>
-              <label for="lock-proportion">Mantener proporción</label>
-            </div>
-            <div class="size-controls">
-              <div class="size-input">
-                <label>Ancho</label>
-                <input type="number" id="width-input" min="1" step="0.1" value="0">
-              </div>
-              <div class="size-input">
-                <label>Alto</label>
-                <input type="number" id="height-input" min="1" step="0.1" value="0">
-              </div>
-            </div>
-            <button class="btn" id="apply-size">Aplicar Tamaño</button>
-          </div>
-
-          <div class="size-info">
-            <h4>Dimensiones del diseño</h4>
-            <div id="size-info">0cm × 0cm</div>
-            <div id="original-size">Tamaño original: 0cm × 0cm</div>
-          </div>
-
-          <div class="control-group">
-            <h4>Herramientas</h4>
-            <button class="btn" id="mirror-btn">🪞 Espejo (Horizontal)</button>
-          </div>
-
-          <div class="control-group">
-            <h4>Orden (Z-order)</h4>
-            <div class="row">
-              <button class="btn" id="send-back">⤵️ Al fondo</button>
-              <button class="btn" id="step-back">⬇️ Atrás</button>
-            </div>
-            <div class="row" style="margin-top:.5rem">
-              <button class="btn" id="step-forward">⬆️ Adelante</button>
-              <button class="btn" id="bring-front">⤴️ Al frente</button>
-            </div>
-          </div>
-
-          <button class="btn btn-clear" id="remove-btn">🗑️ Eliminar Diseño</button>
-        </div>
-
-        <div class="help-section">
-          <h4>Atajos</h4>
-          <p>• Supr/Backspace: eliminar seleccionado</p>
-          <p>• Flechas: mover (Shift = 10 px)</p>
-          <p>• Ctrl/Cmd + D: duplicar seleccionado</p>
-          <p>• Ctrl o ⌘ + rueda: zoom</p>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      <p>Editor de Montajes para Impresión DTF</p>
-    </footer>
-  </div>
 
   <!-- Mensajes -->
   <div class="message-container" id="message-container"></div>
