@@ -675,6 +675,22 @@ footer{text-align:center;padding:6px;background:var(--surface-2);border-top:1px 
   <!-- Mensajes -->
   <div class="message-container" id="message-container"></div>
 
+<script>
+(function(){
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.toolbar-panel');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const t = document.getElementById(btn.dataset.panel);
+      if(t) t.classList.add('active');
+    });
+  });
+})();
+</script>
+
   <!-- Librerías -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
