@@ -361,6 +361,159 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── ADOBE TOOLBAR ── */
+.adobe-toolbar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border-md);box-shadow:0 3px 16px rgba(0,0,0,0.4);}
+.toolbar-tabs{display:flex;align-items:stretch;gap:1px;padding:5px 12px 0;background:rgba(0,0,0,0.25);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.toolbar-tabs::-webkit-scrollbar{display:none;}
+.tab-btn{display:flex;align-items:center;gap:4px;padding:6px 13px;background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;color:#8fafc9;font-family:var(--font-ui);font-size:0.72rem;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;border-radius:4px 4px 0 0;flex-shrink:0;}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(14,165,233,0.05);}
+.toolbar-panels{height:58px;display:flex;align-items:center;padding:0 12px;overflow:hidden;}
+.toolbar-panel{display:none;align-items:center;gap:7px;width:100%;height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--border-md) transparent;}
+.toolbar-panel::-webkit-scrollbar{height:3px;}
+.toolbar-panel::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:2px;}
+.toolbar-panel.active{display:flex;}
+.tb-sep{width:1px;height:30px;background:var(--border-md);flex-shrink:0;margin:0 2px;}
+.tb-label{font-family:var(--font-mono);font-size:0.63rem;color:#94a3b8;white-space:nowrap;flex-shrink:0;}
+.tb-val{font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);min-width:34px;text-align:center;flex-shrink:0;}
+.tb-info{font-family:var(--font-mono);font-size:0.65rem;color:#94a3b8;white-space:nowrap;flex-shrink:0;}
+.tb-group{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.tb-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--border-md);border-radius:5px;background:var(--surface-2);color:var(--text);font-family:var(--font-ui);font-size:0.74rem;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0;}
+.tb-btn:hover:not(:disabled){background:var(--surface-3);border-color:var(--border-hi);color:#fff;}
+.tb-btn:disabled{opacity:0.28;cursor:not-allowed;}
+.tb-btn.accent{border-color:var(--border-hi);color:var(--accent);background:var(--accent-dim);}
+.tb-btn.danger{border-color:rgba(244,63,94,0.35);color:var(--rose);}
+.tb-btn.danger:hover:not(:disabled){background:rgba(244,63,94,0.1);}
+.tb-btn.purple{border-color:rgba(168,85,247,0.35);color:var(--purple);}
+.tb-btn.purple:hover:not(:disabled){background:rgba(168,85,247,0.1);}
+.tb-input-t{background:var(--surface-2);border:1px solid var(--border-md);border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:0.73rem;padding:5px 7px;transition:border-color 0.15s;flex-shrink:0;}
+.tb-input-t:focus{outline:none;border-color:var(--accent);}
+.tb-input-t[type="range"]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--surface-3);border:none;padding:0;cursor:pointer;}
+.tb-input-t[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-glow);cursor:pointer;}
+.tb-input-t[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;}
+.tb-input-t[type="color"]{padding:2px;width:32px;height:28px;cursor:pointer;}
+.tb-select-t{background:var(--surface-2);border:1px solid var(--border-md);border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:0.72rem;padding:5px 7px;cursor:pointer;flex-shrink:0;}
+.tb-select-t option{background:var(--surface);}
+.prop-lock-label{display:flex;align-items:center;gap:5px;flex-shrink:0;font-size:0.72rem;color:#94a3b8;cursor:pointer;user-select:none;}
+.prop-lock-label input[type="checkbox"]{accent-color:var(--accent);cursor:pointer;}
+.precio-badge{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(14,165,233,0.1),rgba(99,102,241,0.08));border:1px solid var(--border-md);border-radius:6px;padding:4px 10px;flex-shrink:0;}
+.precio-label{font-size:0.58rem;color:#94a3b8;font-family:var(--font-mono);white-space:nowrap;display:block;}
+.precio-val{font-size:0.88rem;font-weight:700;color:var(--accent);font-family:var(--font-mono);white-space:nowrap;}
+.designs-inline{display:flex;align-items:center;gap:5px;max-width:300px;overflow-x:auto;overflow-y:hidden;flex-shrink:0;padding:2px;}
+.designs-inline .design-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;border:1px solid var(--border);border-radius:5px;background:var(--surface-2);cursor:pointer;flex-shrink:0;transition:all 0.14s;min-width:50px;}
+.designs-inline .design-item:hover{border-color:var(--border-hi);}
+.designs-inline .design-item.active{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 8px var(--accent-glow);}
+.designs-inline .design-thumb{width:34px;height:34px;object-fit:cover;border-radius:3px;}
+.designs-inline .design-item div{font-size:0.56rem;color:#94a3b8;font-family:var(--font-mono);white-space:nowrap;}
+.designs-inline .no-designs{font-size:0.68rem;color:#94a3b8;font-family:var(--font-mono);padding:0 8px;white-space:nowrap;}
+
+/* ── OCULTAR SIDEBARS ORIGINALES ── */
+.toolbar, .controls, .instructions, .help-section { display:none !important; }
+
+/* ── NUEVO LAYOUT MAIN ── */
+.main-content {
+  flex-direction: column !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  min-height: calc(100vh - 58px - 116px) !important;
+}
+.canvas-container {
+  width: 100% !important;
+  flex: 1 !important;
+}
+
+/* ── FONDO DEL ÁREA DE CANVAS ── */
+.canvas-area {
+  background:
+    radial-gradient(ellipse 60% 50% at 25% 15%, rgba(14,165,233,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 75% 85%, rgba(99,102,241,0.04) 0%, transparent 70%),
+    #06080f !important;
+  position: relative;
+}
+.canvas-area::before {
+  content:'';
+  position:absolute; inset:0; pointer-events:none;
+  background-image: radial-gradient(circle, rgba(14,165,233,0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── CANVAS ── */
+#canvas {
+  box-shadow:
+    0 0 0 1px rgba(14,165,233,0.25),
+    0 0 40px rgba(14,165,233,0.12),
+    0 16px 50px rgba(0,0,0,0.6) !important;
+}
+
+/* ── BARRA DE ESTADO ── */
+.status-bar-new {
+  height:30px; background:var(--surface-2);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center;
+  padding:0 14px; gap:0; flex-shrink:0;
+}
+.status-item-n {
+  display:flex; align-items:center; gap:4px;
+  padding:0 12px; border-right:1px solid var(--border);
+  font-family:var(--font-mono); font-size:0.62rem; color:#94a3b8;
+}
+.status-item-n .val { color:var(--accent); font-weight:500; }
+.status-dot-n {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--emerald); box-shadow:0 0 5px var(--emerald); flex-shrink:0;
+}
+.status-spacer-n { flex:1; }
+.status-keys-n {
+  font-family:var(--font-mono); font-size:0.58rem; color:#475569; white-space:nowrap;
+}
+
+<!-- BARRA DE ESTADO -->
+<div class="status-bar-new">
+  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
+  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
+  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
+  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
+  <div class="status-spacer-n"></div>
+  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
+</div>
+
+/* ── FOOTER ── */
+footer {
+  background: var(--surface-2) !important;
+  border-top: 1px solid var(--border) !important;
+  color: var(--text-dim) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 1px !important;
+  padding: 6px !important;
+}
+
+/* ── TITULO CANVAS ── */
+.canvas-title {
+  background: rgba(11,13,23,0.8) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 4px 14px !important;
+}
+.canvas-title h3 {
+  font-family: var(--font-mono) !important;
+  font-size: 0.7rem !important;
+  font-weight: 400 !important;
+  color: #94a3b8 !important;
+}
+#canvas-size-label { color: var(--accent) !important; }
+#zoom-level {
+  font-family: var(--font-mono) !important;
+  font-size: 0.7rem !important;
+  color: #94a3b8 !important;
+}
+
+/* ── MOCKUP PANE ── */
+.mockup-pane {
+  background: var(--surface) !important;
+  border-top: 1px solid var(--border-md) !important;
+}
+.mockup-header h3 { color: var(--text) !important; }
+
   </style>
 </head>
 
@@ -531,6 +684,124 @@
     ">👤 Mi Perfil</button>
   </div>
 </header>
+
+<!-- BARRA ADOBE -->
+<div class="adobe-toolbar">
+  <div class="toolbar-tabs">
+    <button class="tab-btn active" data-panel="panel-disenos">📁 Diseños</button>
+    <button class="tab-btn" data-panel="panel-transform">⚙️ Transformar</button>
+    <button class="tab-btn" data-panel="panel-size">📐 Tamaño</button>
+    <button class="tab-btn" data-panel="panel-order">🗂️ Orden Z</button>
+    <button class="tab-btn" data-panel="panel-canvas-tab">🖼️ Lienzo</button>
+    <button class="tab-btn" data-panel="panel-export">💾 Exportar</button>
+    <button class="tab-btn" data-panel="panel-mockups-tab">🧥 Mockups</button>
+  </div>
+  <div class="toolbar-panels">
+
+    <!-- Diseños -->
+    <div class="toolbar-panel active" id="panel-disenos">
+      <button class="tb-btn accent" id="tb-upload-btn">⬆️ Subir</button>
+      <button class="tb-btn" id="tb-add-text-btn">✏️ Texto</button>
+      <button class="tb-btn" id="tb-imgbb-btn">📁 ImgBB</button>
+      <div class="tb-sep"></div>
+      <span class="tb-label">Fondo</span>
+      <input type="color" id="tb-canvas-color" class="tb-input-t" value="#ffffff">
+      <div class="tb-sep"></div>
+      <span class="tb-label">Diseños:</span>
+      <div class="designs-inline" id="tb-designs-list">
+        <div class="no-designs">Sin diseños</div>
+      </div>
+    </div>
+
+    <!-- Transformar -->
+    <div class="toolbar-panel" id="panel-transform">
+      <div class="tb-group">
+        <span class="tb-label">Rotación</span>
+        <input type="range" id="tb-rotation-slider" class="tb-input-t" min="0" max="360" value="0" style="width:100px">
+        <span class="tb-val" id="tb-rotation-value">0°</span>
+        <input type="number" id="tb-rotation-input" class="tb-input-t" min="0" max="360" step="1" value="0" style="width:58px">
+      </div>
+      <div class="tb-sep"></div>
+      <div class="tb-group">
+        <span class="tb-label">Opacidad</span>
+        <input type="range" id="tb-opacity-slider" class="tb-input-t" min="10" max="100" value="100" style="width:90px">
+        <span class="tb-val" id="tb-opacity-value">100%</span>
+      </div>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="tb-mirror-btn">🪞 Espejo H</button>
+    </div>
+
+    <!-- Tamaño -->
+    <div class="toolbar-panel" id="panel-size">
+      <label class="prop-lock-label">
+        <input type="checkbox" id="tb-lock-proportion" checked> 🔒 Proporción
+      </label>
+      <div class="tb-sep"></div>
+      <span class="tb-label">W (cm)</span>
+      <input type="number" id="tb-width-input" class="tb-input-t" min="1" step="0.1" value="0" style="width:68px">
+      <span class="tb-label">H (cm)</span>
+      <input type="number" id="tb-height-input" class="tb-input-t" min="1" step="0.1" value="0" style="width:68px">
+      <button class="tb-btn accent" id="tb-apply-size">Aplicar</button>
+      <div class="tb-sep"></div>
+      <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+        <div id="tb-size-info" class="tb-val" style="text-align:left;min-width:90px;">0cm × 0cm</div>
+        <div id="tb-original-size" style="font-family:var(--font-mono);font-size:0.6rem;color:#94a3b8;white-space:nowrap;">Original: 0 × 0</div>
+      </div>
+    </div>
+
+    <!-- Orden Z -->
+    <div class="toolbar-panel" id="panel-order">
+      <button class="tb-btn" id="tb-send-back">⤵️ Al Fondo</button>
+      <button class="tb-btn" id="tb-step-back">⬇️ Atrás</button>
+      <button class="tb-btn" id="tb-step-forward">⬆️ Adelante</button>
+      <button class="tb-btn" id="tb-bring-front">⤴️ Al Frente</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn danger" id="tb-remove-btn">🗑️ Eliminar</button>
+    </div>
+
+    <!-- Lienzo -->
+    <div class="toolbar-panel" id="panel-canvas-tab">
+      <span class="tb-label">Alto (cm)</span>
+      <input type="number" id="tb-canvas-height-cm" class="tb-input-t" min="10" max="100" step="0.5" value="100" style="width:72px">
+      <button class="tb-btn accent" id="tb-apply-canvas-height">Aplicar</button>
+      <div class="tb-sep"></div>
+      <span class="tb-label">Zoom</span>
+      <input type="range" id="tb-zoom-slider" class="tb-input-t" min="20" max="200" value="100" style="width:95px">
+      <span class="tb-val" id="tb-zoom-value">100%</span>
+      <div class="tb-sep"></div>
+      <div class="precio-badge">
+        <div>
+          <span class="precio-label">Precio aprox. impresión</span>
+          <div class="precio-val" id="tb-precio-montaje">$10.000 (mín.)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exportar -->
+    <div class="toolbar-panel" id="panel-export">
+      <span class="tb-label">Resolución</span>
+      <select id="tb-quality-select" class="tb-select-t">
+        <option value="300">Alta — 300 DPI</option>
+        <option value="150" selected>Media — 150 DPI</option>
+        <option value="72">Baja — 72 DPI</option>
+      </select>
+      <div class="tb-sep"></div>
+      <button class="tb-btn purple" id="tb-download-png">💾 PNG</button>
+      <button class="tb-btn purple" id="tb-download-pdf">📄 PDF</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn danger" id="tb-clear-btn">🧹 Limpiar</button>
+    </div>
+
+    <!-- Mockups -->
+    <div class="toolbar-panel" id="panel-mockups-tab">
+      <button class="tb-btn accent" id="tb-open-mockups">🧥 Abrir Panel de Mockups</button>
+      <div class="tb-sep"></div>
+      <span class="tb-info">Visualiza tus diseños en camisetas</span>
+    </div>
+
+  </div>
+</div>
+<!-- /BARRA ADOBE -->
 
     <div class="main-content">
       <!-- Toolbar izquierda -->
@@ -2596,6 +2867,124 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
     </p>
   </div>
 </div>
+
+<script>
+/* ── Sistema de pestañas toolbar ── */
+(function(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.toolbar-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const t = document.getElementById(btn.dataset.panel);
+      if(t) t.classList.add('active');
+    });
+  });
+})();
+
+/* ── Conectar controles toolbar con los originales ── */
+(function(){
+  function mirror(tbId, origId, event='click'){
+    const tb = document.getElementById(tbId);
+    const orig = document.getElementById(origId);
+    if(!tb || !orig) return;
+    if(event === 'click'){
+      tb.addEventListener('click', () => orig.click());
+    } else if(event === 'input'){
+      tb.addEventListener('input', () => {
+        orig.value = tb.value;
+        orig.dispatchEvent(new Event('input'));
+      });
+      orig.addEventListener('input', () => {
+        tb.value = orig.value;
+      });
+    } else if(event === 'change'){
+      tb.addEventListener('change', () => {
+        orig.value = tb.value;
+        orig.dispatchEvent(new Event('change'));
+      });
+    }
+  }
+
+  // Botones simples
+  mirror('tb-upload-btn',        'upload-btn');
+  mirror('tb-add-text-btn',      'add-text-btn');
+  mirror('tb-imgbb-btn',         'open-imgbb-gallery');
+  mirror('tb-mirror-btn',        'mirror-btn');
+  mirror('tb-apply-size',        'apply-size');
+  mirror('tb-send-back',         'send-back');
+  mirror('tb-step-back',         'step-back');
+  mirror('tb-step-forward',      'step-forward');
+  mirror('tb-bring-front',       'bring-front');
+  mirror('tb-remove-btn',        'remove-btn');
+  mirror('tb-apply-canvas-height','apply-canvas-height');
+  mirror('tb-download-png',      'download-png');
+  mirror('tb-download-pdf',      'download-pdf');
+  mirror('tb-clear-btn',         'clear-btn');
+  mirror('tb-open-mockups',      'open-mockups');
+
+  // Sliders e inputs (bidireccional)
+  mirror('tb-rotation-slider',   'rotation-slider',   'input');
+  mirror('tb-rotation-input',    'rotation-input',    'input');
+  mirror('tb-opacity-slider',    'opacity-slider',    'input');
+  mirror('tb-zoom-slider',       'zoom-slider',       'input');
+  mirror('tb-canvas-height-cm',  'canvas-height-cm',  'input');
+  mirror('tb-width-input',       'width-input',       'input');
+  mirror('tb-height-input',      'height-input',      'input');
+  mirror('tb-canvas-color',      'canvas-color',      'input');
+  mirror('tb-quality-select',    'quality-select',    'change');
+  mirror('tb-lock-proportion',   'lock-proportion',   'change');
+
+  // Sincronizar valores de display (rotation-value, opacity-value, zoom-value)
+  function syncDisplay(tbId, origId){
+    const tb = document.getElementById(tbId);
+    const orig = document.getElementById(origId);
+    if(!tb || !orig) return;
+    const observer = new MutationObserver(() => tb.textContent = orig.textContent);
+    observer.observe(orig, {childList:true, characterData:true, subtree:true});
+  }
+  syncDisplay('tb-rotation-value', 'rotation-value');
+  syncDisplay('tb-opacity-value',  'opacity-value');
+  syncDisplay('tb-zoom-value',     'zoom-level');
+  syncDisplay('tb-size-info',      'size-info');
+  syncDisplay('tb-original-size',  'original-size');
+  syncDisplay('tb-precio-montaje', 'precio-montaje');
+
+  // Sincronizar lista de diseños
+  const tbList = document.getElementById('tb-designs-list');
+  const origList = document.getElementById('designs-list');
+  if(tbList && origList){
+    const obs = new MutationObserver(() => tbList.innerHTML = origList.innerHTML);
+    obs.observe(origList, {childList:true, subtree:true});
+    // Reenviar clicks al original
+    tbList.addEventListener('click', e => {
+      const item = e.target.closest('.design-item');
+      if(!item) return;
+      const id = item.dataset.id;
+      const origItem = origList.querySelector(`.design-item[data-id="${id}"]`);
+      if(origItem) origItem.click();
+    });
+  }
+})();
+
+/* ── Sincronizar barra de estado ── */
+(function(){
+  function syncStatus(){
+    const count = document.getElementById('status-design-count');
+    const size  = document.getElementById('status-design-size');
+    const canvSize = document.getElementById('status-canvas-size');
+    const origSize = document.getElementById('size-info');
+    const origCanvas = document.getElementById('canvas-size-label');
+    if(count && window.designs !== undefined)
+      count.textContent = window.designs.length;
+    if(size && origSize)
+      size.textContent = origSize.textContent || '—';
+    if(canvSize && origCanvas)
+      canvSize.textContent = origCanvas.textContent;
+  }
+  setInterval(syncStatus, 500);
+})();
+</script>
 
 </body>
 
