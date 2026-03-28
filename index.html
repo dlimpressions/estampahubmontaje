@@ -1328,6 +1328,41 @@ function calcularPrecioMontaje() {
     }
     initCanvas();
 
+// ====== Recorte automático de transparencia
+function trimTransparentPixels(img) {
+  const tc = document.createElement('canvas');
+  tc.width = img.width;
+  tc.height = img.height;
+  const tctx = tc.getContext('2d');
+  tctx.drawImage(img, 0, 0);
+
+  const { data } = tctx.getImageData(0, 0, tc.width, tc.height);
+  let top = tc.height, left = tc.width, right = 0, bottom = 0;
+  let found = false;
+
+  for (let y = 0; y < tc.height; y++) {
+    for (let x = 0; x < tc.width; x++) {
+      if (data[(y * tc.width + x) * 4 + 3] > 10) {
+        if (y < top)    top    = y;
+        if (y > bottom) bottom = y;
+        if (x < left)   left   = x;
+        if (x > right)  right  = x;
+        found = true;
+      }
+    }
+  }
+
+  if (!found) return tc;
+
+  const w = right - left + 1;
+  const h = bottom - top + 1;
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  out.getContext('2d').drawImage(tc, left, top, w, h, 0, 0, w, h);
+  return out;
+}
+
    // ====== Clase Design
 class Design {
   constructor(id, image, x, y) {
@@ -1562,7 +1597,8 @@ class Design {
               const img = new Image();
               img.onload = function(){
                 const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
-                const d = new Design(id, img);
+                const trimmed = trimTransparentPixels(img);
+                const d = new Design(id, trimmed);
 
                 const maxW = canvas.width - 20;
                 const maxH = canvas.height - 20;
