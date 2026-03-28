@@ -514,6 +514,39 @@ footer {
 }
 .mockup-header h3 { color: var(--text) !important; }
 
+/* ── PANEL FLOTANTE DE DISEÑOS ── */
+.designs-dropdown {
+  position:absolute; top:calc(100% + 6px); left:0;
+  width:320px; max-height:340px;
+  background:var(--surface-2);
+  border:1px solid var(--border-hi);
+  border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(14,165,233,0.15);
+  z-index:999; overflow-y:auto;
+  padding:10px; display:none;
+  scrollbar-width:thin; scrollbar-color:var(--border-md) transparent;
+}
+.designs-dropdown.open { display:block; }
+.designs-dropdown-grid {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:7px;
+}
+.designs-dropdown .design-item {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:5px; border:1px solid var(--border);
+  border-radius:6px; background:var(--surface);
+  cursor:pointer; transition:all 0.14s;
+}
+.designs-dropdown .design-item:hover { border-color:var(--border-hi); background:var(--surface-3); }
+.designs-dropdown .design-item.active { border-color:var(--accent); background:var(--accent-dim); box-shadow:0 0 8px var(--accent-glow); }
+.designs-dropdown .design-thumb { width:56px; height:56px; object-fit:cover; border-radius:4px; }
+.designs-dropdown .design-item div { font-size:0.58rem; color:#94a3b8; font-family:var(--font-mono); white-space:nowrap; }
+.designs-dropdown .no-designs { font-size:0.72rem; color:#64748b; font-family:var(--font-mono); padding:12px; text-align:center; }
+.tb-designs-counter {
+  font-family:var(--font-mono); font-size:0.68rem;
+  background:var(--accent-dim); color:var(--accent);
+  border:1px solid var(--border-hi);
+  border-radius:4px; padding:2px 7px; min-width:20px; text-align:center;
+}
   </style>
 </head>
 
@@ -707,10 +740,17 @@ footer {
       <span class="tb-label">Fondo</span>
       <input type="color" id="tb-canvas-color" class="tb-input-t" value="#ffffff">
       <div class="tb-sep"></div>
-      <span class="tb-label">Diseños:</span>
-      <div class="designs-inline" id="tb-designs-list">
-        <div class="no-designs">Sin diseños</div>
-      </div>
+      <div class="tb-sep"></div>
+<div style="position:relative; flex-shrink:0;">
+  <button class="tb-btn accent" id="tb-designs-toggle" style="gap:6px;">
+    🖼️ Diseños <span class="tb-designs-counter" id="tb-designs-count">0</span>
+  </button>
+  <div class="designs-dropdown" id="tb-designs-dropdown">
+    <div class="designs-dropdown-grid" id="tb-designs-grid">
+      <div class="no-designs">Sin diseños cargados</div>
+    </div>
+  </div>
+</div>
     </div>
 
     <!-- Transformar -->
@@ -757,6 +797,8 @@ footer {
       <button class="tb-btn" id="tb-bring-front">⤴️ Al Frente</button>
       <div class="tb-sep"></div>
       <button class="tb-btn danger" id="tb-remove-btn">🗑️ Eliminar</button>
+<div class="tb-sep"></div>
+<button class="tb-btn" id="tb-auto-pack-btn" style="border-color:rgba(168,85,247,0.35);color:var(--purple);">🧠 Auto-ordenar</button>
     </div>
 
     <!-- Lienzo -->
@@ -3020,6 +3062,83 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   }
   setInterval(syncStatus, 500);
 })();
+
+/* ── Panel flotante de diseños ── */
+(function(){
+  const toggleBtn = document.getElementById('tb-designs-toggle');
+  const dropdown  = document.getElementById('tb-designs-dropdown');
+  const grid      = document.getElementById('tb-designs-grid');
+  const counter   = document.getElementById('tb-designs-count');
+  const origList  = document.getElementById('designs-list');
+
+  if(!toggleBtn || !dropdown || !grid) return;
+
+  // Abrir / cerrar
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  // Cerrar al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if(!dropdown.contains(e.target) && e.target !== toggleBtn)
+      dropdown.classList.remove('open');
+  });
+
+  // Sincronizar grid con la lista original
+  function syncGrid() {
+    if(!origList) return;
+    const items = origList.querySelectorAll('.design-item');
+    counter.textContent = items.length;
+
+    grid.innerHTML = '';
+    if(items.length === 0){
+      grid.innerHTML = '<div class="no-designs">Sin diseños cargados</div>';
+      return;
+    }
+    items.forEach(origItem => {
+      const clone = document.createElement('div');
+      clone.className = origItem.className; // copia active si aplica
+      clone.dataset.id = origItem.dataset.id;
+      const thumb = origItem.querySelector('.design-thumb');
+      const label = origItem.querySelector('div');
+      clone.innerHTML = `
+        <img class="design-thumb" src="${thumb ? thumb.src : ''}">
+        <div>${label ? label.textContent : ''}</div>
+      `;
+      clone.addEventListener('click', () => {
+        origItem.click();
+        dropdown.classList.remove('open');
+        syncGrid();
+      });
+      grid.appendChild(clone);
+    });
+  }
+
+  // Observar cambios en la lista original
+  if(origList){
+    new MutationObserver(syncGrid).observe(origList, { childList:true, subtree:true });
+  }
+  setInterval(syncGrid, 800);
+
+  /* ── Auto-Pack PRO desde toolbar ── */
+  const packBtn = document.getElementById('tb-auto-pack-btn');
+  if(packBtn){
+    packBtn.addEventListener('click', () => {
+      if(typeof window.__autoPackDesignsPRO__ !== 'function'){
+        alert('Motor PRO no disponible. Verifica que auto_pack_pro.js está cargado.');
+        return;
+      }
+      const val = prompt('Espacio entre diseños (cm):', '0.8');
+      if(val === null) return;
+      const cm = Math.max(0, parseFloat(val) || 0.8);
+      const rot = prompt('¿Permitir rotación 90° automática? (si/no)', 'si');
+      const allowRot = (rot||'').trim().toLowerCase().startsWith('s');
+      window.__autoPackDesignsPRO__(cm * (window.PIXELS_PER_CM || 10), allowRot);
+    });
+  }
+})();
+
 </script>
 
 </body>
