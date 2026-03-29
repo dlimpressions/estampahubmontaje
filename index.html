@@ -3158,23 +3158,26 @@ const cropModal = document.getElementById('crop-modal');
 const cropImage = document.getElementById('crop-image');
 const btnDoCrop = document.getElementById('btn-do-crop');
 
-// Función para abrir la herramienta de recorte
+// Función corregida para activar el recorte
 document.getElementById('tb-crop-btn')?.addEventListener('click', () => {
-  const design = getSelectedDesign(); // Obtiene el diseño seleccionado
-  if (!design) {
-    showMessage('Selecciona un diseño primero', 'warning');
+  // Intentamos obtener el diseño seleccionado del editor
+  const design = typeof getSelectedDesign === 'function' ? getSelectedDesign() : (window.selectedDesign || null);
+  
+  if (!design || !design.image) {
+    alert('Por favor, selecciona una imagen en el lienzo primero.');
     return;
   }
 
   cropImage.src = design.image.src;
   cropModal.style.display = 'flex';
 
-  // Inicializar Cropper.js
   if (cropper) cropper.destroy();
+  
+  // Configuramos el recortador
   cropper = new Cropper(cropImage, {
     viewMode: 1,
     dragMode: 'move',
-    autoCropArea: 1,
+    autoCropArea: 0.8,
     restore: false,
     guides: true,
     center: true,
@@ -3185,43 +3188,42 @@ document.getElementById('tb-crop-btn')?.addEventListener('click', () => {
   });
 });
 
-// Función para cerrar
-function closeCropModal() {
-  cropModal.style.display = 'none';
-  if (cropper) cropper.destroy();
-}
-
-// Aplicar el recorte
+// Botón de Aplicar Recorte
 btnDoCrop.addEventListener('click', () => {
   if (!cropper) return;
 
-  const canvasResult = cropper.getCroppedCanvas({
-    imageSmoothingEnabled: true,
-    imageSmoothingQuality: 'high',
-  });
-
+  const canvasResult = cropper.getCroppedCanvas();
   const croppedDataUrl = canvasResult.toDataURL('image/png');
-  const design = getSelectedDesign();
+  const design = typeof getSelectedDesign === 'function' ? getSelectedDesign() : (window.selectedDesign || null);
 
   if (design) {
     const newImg = new Image();
     newImg.onload = () => {
-      // Actualizamos la imagen y sus dimensiones
       design.image = newImg;
-      design.width = newImg.width;
-      design.height = newImg.height;
-      design.aspectRatio = newImg.width / newImg.height;
-      design.originalWidth = newImg.width;
-      design.originalHeight = newImg.height;
+      // Recalcular dimensiones para que no se deforme
+      const oldW = design.width;
+      design.width = oldW; 
+      design.height = oldW / (newImg.width / newImg.height);
       
-      drawCanvas(); // Redibuja el lienzo
-      updateSizeInfo(); // Actualiza la info de tamaño
-      showMessage('Diseño recortado', 'success');
-      closeCropModal();
+      if(typeof drawCanvas === 'function') drawCanvas();
+      if(typeof updateSizeInfo === 'function') updateSizeInfo();
+      
+      cropModal.style.display = 'none';
+      cropper.destroy();
+      cropper = null;
     };
     newImg.src = croppedDataUrl;
   }
 });
+
+// Función para cerrar
+function closeCropModal() {
+  cropModal.style.display = 'none';
+  if (cropper) {
+    cropper.destroy();
+    cropper = null;
+  }
+}
 
 </script>
 
