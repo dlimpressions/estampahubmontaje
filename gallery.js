@@ -321,8 +321,13 @@ function loadSingleDesign(url) {
       updateDesignsList(); updateControls(); drawCanvas();
       lm.remove();
       showMessage('✅ Diseño cargado', 'success', 2000);
-      document.getElementById('imgbb-gallery-overlay').style.display = 'none';
-      selectedGalleryItems.clear();
+document.getElementById('imgbb-gallery-overlay').style.display = 'none';
+selectedGalleryItems.clear();
+// Enfocar el canvas automáticamente
+setTimeout(() => {
+  document.querySelector('.canvas-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, 100);
+
     } catch(e) { lm.remove(); showMessage('Error al procesar', 'error', 3000); }
   };
   img.onerror = () => { lm.remove(); showMessage('No se pudo cargar la imagen', 'error', 3000); };
