@@ -467,6 +467,15 @@
   font-family:var(--font-mono); font-size:0.58rem; color:#475569; white-space:nowrap;
 }
 
+<!-- BARRA DE ESTADO -->
+<div class="status-bar-new">
+  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
+  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
+  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
+  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
+  <div class="status-spacer-n"></div>
+  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
+</div>
 
 /* ── FOOTER ── */
 footer {
@@ -523,7 +532,6 @@ footer {
 </head>
 
 <body>
-
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
   <div class="lock-card">
@@ -691,16 +699,6 @@ footer {
   </div>
 </header>
 
-<!-- BARRA DE ESTADO -->
-<div class="status-bar-new">
-  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
-  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
-  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
-  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
-  <div class="status-spacer-n"></div>
-  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
-</div>
-
 <!-- BARRA ADOBE -->
 <div class="adobe-toolbar">
   <div class="toolbar-tabs">
@@ -752,8 +750,6 @@ footer {
       </div>
       <div class="tb-sep"></div>
       <button class="tb-btn" id="tb-mirror-btn">🪞 Espejo H</button>
-<div class="tb-sep"></div>
-<button class="tb-btn" id="tb-trim-btn" style="border-color:rgba(245,158,11,0.35);color:var(--amber);">✂️ Recortar</button>
     </div>
 
     <!-- Tamaño -->
@@ -1241,19 +1237,6 @@ if (lockPass) {
     const stepForwardBtn = document.getElementById('step-forward');
     const stepBackBtn = document.getElementById('step-back');
 
-// ====== Recorte manual de transparencia ======
-const trimBtn = document.getElementById('tb-trim-btn');
-if(trimBtn){
-  trimBtn.addEventListener('click', () => {
-    const d = getSelectedDesign();
-    if(!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
-    if(typeof window.openCropTool === 'function') {
-      window.openCropTool(d);
-    }
-  });
-}
-
-
 // ====== Cálculo de precio aproximado de impresion ======
 function calcularPrecioMontaje() {
   const altoCm = parseFloat(canvasHeightInput?.value) || 100;
@@ -1432,7 +1415,7 @@ class Design {
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(getCachedImage(this), -width/2, -height/2, width, height);
+    ctx.drawImage(this.image, -width/2, -height/2, width, height);
 
     if (this.id === selectedDesignId) {
       ctx.strokeStyle = '#4299e1';
@@ -1535,32 +1518,25 @@ class Design {
   }
 }
 
-    // ── Canvas offscreen para cada diseño (cache) ──
-const designCache = new WeakMap();
+    // ====== Dibujo general
+    function drawCanvas() {
+      initCanvas();
+      designs.forEach(d => d.draw());
+      updateSizeInfo();
+    }
 
-function getCachedImage(design) {
-  if(designCache.has(design.image)) return designCache.get(design.image);
-  // Solo cachear imágenes pequeñas/medianas
-  if(design.image.width * design.image.height > 4000000) return design.image;
-  const oc = document.createElement('canvas');
-  oc.width = design.image.width;
-  oc.height = design.image.height;
-  oc.getContext('2d').drawImage(design.image, 0, 0);
-  designCache.set(design.image, oc);
-  return oc;
-}
-
-let _drawPending = false;
-function drawCanvas() {
-  if(_drawPending) return;
-  _drawPending = true;
-  requestAnimationFrame(() => {
-    _drawPending = false;
-    initCanvas();
-    designs.forEach(d => d.draw());
-    updateSizeInfo();
-  });
-}
+    function updateSizeInfo() {
+      const d = getSelectedDesign();
+      if (d) {
+        const c = d.getDimensionsInCm();
+        const o = d.getOriginalDimensionsInCm();
+        sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
+        originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
+      } else {
+        sizeInfo.textContent = '0cm × 0cm';
+        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+      }
+    }
 
     // ====== Exportación
     function getPixelDimensions(dpi) {
@@ -1715,7 +1691,7 @@ function drawCanvas() {
     }
 
     // ====== Controles
-   function updateControls(){
+    function updateControls(){
       const d = getSelectedDesign();
       if (d){
         rotationSlider.value = Math.round(d.rotation);
@@ -1724,33 +1700,26 @@ function drawCanvas() {
         opacitySlider.value = Math.round(d.opacity*100);
         opacityValue.textContent = Math.round(d.opacity*100) + '%';
         d.updateInputs();
+
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
          widthInput, heightInput, applySizeBtn, lockProportion,
          mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
         ].forEach(el=> el && (el.disabled=false));
-        
-        updateSizeInfo();   // ←←← LLAMADA a la función global
+
+        updateSizeInfo();
       } else {
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
          widthInput, heightInput, applySizeBtn, lockProportion,
          mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
         ].forEach(el=> el && (el.disabled=true));
+        sizeInfo.textContent = '0cm × 0cm';
+        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
       }
     }
-     
 
-function updateSizeInfo() {
-  const d = getSelectedDesign();
-  if (d) {
-    const c = d.getDimensionsInCm();
-    const o = d.getOriginalDimensionsInCm();
-    sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
-    originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
-  } else {
-    sizeInfo.textContent = '0cm × 0cm';
-    originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
-  }
-}
+    function getSelectedDesign(){
+      return designs.find(d=> d.id===selectedDesignId);
+    }
 
     // tamaño manual
     if (applySizeBtn){
@@ -3160,269 +3129,6 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   }
 })();
 
-</script>
-
-<!-- MODAL RECORTE MANUAL -->
-<div id="crop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;align-items:center;justify-content:center;flex-direction:column;">
-  <div style="background:#0b0d17;border:1px solid rgba(14,165,233,0.4);border-radius:14px;padding:20px;max-width:92vw;max-height:92vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 40px rgba(14,165,233,0.2);">
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <h3 style="color:#0ea5e9;font-family:monospace;margin:0;font-size:1rem;">✂️ Recorte Manual</h3>
-      <span style="color:#475569;font-family:monospace;font-size:0.72rem;">Arrastra las esquinas · Doble clic para auto-recortar</span>
-    </div>
-    <canvas id="crop-canvas" style="border:1px solid rgba(14,165,233,0.3);border-radius:6px;cursor:crosshair;max-width:100%;"></canvas>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span id="crop-coords" style="font-family:monospace;font-size:0.7rem;color:#475569;flex:1;"></span>
-      <button id="crop-reset" style="padding:7px 14px;border-radius:6px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);color:#f59e0b;font-family:monospace;font-size:0.78rem;cursor:pointer;">↺ Resetear</button>
-      <button id="crop-cancel" style="padding:7px 14px;border-radius:6px;border:1px solid rgba(244,63,94,0.4);background:rgba(244,63,94,0.08);color:#f43f5e;font-family:monospace;font-size:0.78rem;cursor:pointer;">Cancelar</button>
-      <button id="crop-apply" style="padding:7px 18px;border-radius:6px;border:1px solid rgba(14,165,233,0.5);background:rgba(14,165,233,0.15);color:#0ea5e9;font-family:monospace;font-size:0.78rem;cursor:pointer;font-weight:600;">✅ Aplicar</button>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ── Herramienta de Recorte Manual ── */
-(function(){
-  const overlay   = document.getElementById('crop-overlay');
-  const cc        = document.getElementById('crop-canvas');
-  const cctx      = cc.getContext('2d');
-  const applyBtn  = document.getElementById('crop-apply');
-  const cancelBtn = document.getElementById('crop-cancel');
-  const resetBtn  = document.getElementById('crop-reset');
-  const coordsEl  = document.getElementById('crop-coords');
-
-  const HANDLE = 10; // tamaño del handle en px
-  let srcImage = null;   // imagen original (canvas o Image)
-  let designRef = null;  // referencia al Design
-  let scale = 1;         // escala visual
-  let crop = { x:0, y:0, w:0, h:0 }; // coordenadas en píxeles de la imagen real
-  let drag = null;       // qué se está arrastrando
-
-  // Abrir modal
-  window.openCropTool = function(design) {
-    if(!design) return;
-    designRef = design;
-    srcImage  = design.image;
-
-    // Escalar para que quepa en pantalla
-    const maxW = Math.min(window.innerWidth  * 0.85, 900);
-    const maxH = Math.min(window.innerHeight * 0.7,  700);
-    scale = Math.min(maxW / srcImage.width, maxH / srcImage.height, 1);
-
-    cc.width  = Math.round(srcImage.width  * scale);
-    cc.height = Math.round(srcImage.height * scale);
-
-    // Crop inicial = auto-recorte por transparencia
-    const auto = getAutoCropBounds(srcImage);
-    crop = { ...auto };
-
-    overlay.style.display = 'flex';
-    render();
-  };
-
-  // Calcular bounds automáticos (igual que trimTransparentPixels pero solo bounds)
-  function getAutoCropBounds(img) {
-    const tc = document.createElement('canvas');
-    tc.width = img.width; tc.height = img.height;
-    const tx = tc.getContext('2d');
-    tx.drawImage(img, 0, 0);
-    const data = tx.getImageData(0,0,tc.width,tc.height).data;
-    let t=img.height, l=img.width, r=0, b=0, found=false;
-    for(let y=0;y<img.height;y++) for(let x=0;x<img.width;x++) {
-      if(data[(y*img.width+x)*4+3]>10){
-        if(y<t)t=y; if(y>b)b=y; if(x<l)l=x; if(x>r)r=x; found=true;
-      }
-    }
-    if(!found) return {x:0,y:0,w:img.width,h:img.height};
-    return {x:l, y:t, w:r-l+1, h:b-t+1};
-  }
-
-  function render() {
-    cctx.clearRect(0, 0, cc.width, cc.height);
-
-    // Imagen de fondo (cuadrícula + imagen)
-    // Cuadrícula
-    const gs = 16;
-    for(let y=0;y<cc.height;y+=gs) for(let x=0;x<cc.width;x+=gs) {
-      cctx.fillStyle = ((x/gs + y/gs) % 2 === 0) ? '#1a2035' : '#0f1220';
-      cctx.fillRect(x,y,gs,gs);
-    }
-
-    // Imagen completa atenuada
-    cctx.globalAlpha = 0.35;
-    cctx.drawImage(srcImage, 0, 0, cc.width, cc.height);
-    cctx.globalAlpha = 1;
-
-    // Área seleccionada
-    const sx = crop.x * scale, sy = crop.y * scale;
-    const sw = crop.w * scale, sh = crop.h * scale;
-
-    // Clip imagen en área seleccionada
-    cctx.save();
-    cctx.beginPath();
-    cctx.rect(sx, sy, sw, sh);
-    cctx.clip();
-    cctx.drawImage(srcImage, 0, 0, cc.width, cc.height);
-    cctx.restore();
-
-    // Borde del área
-    cctx.strokeStyle = '#0ea5e9';
-    cctx.lineWidth = 2;
-    cctx.setLineDash([]);
-    cctx.strokeRect(sx, sy, sw, sh);
-
-    // Regla de tercios (guías)
-    cctx.strokeStyle = 'rgba(14,165,233,0.2)';
-    cctx.lineWidth = 1;
-    cctx.setLineDash([4,4]);
-    for(let i=1;i<3;i++){
-      cctx.beginPath(); cctx.moveTo(sx+sw*i/3,sy); cctx.lineTo(sx+sw*i/3,sy+sh); cctx.stroke();
-      cctx.beginPath(); cctx.moveTo(sx,sy+sh*i/3); cctx.lineTo(sx+sw,sy+sh*i/3); cctx.stroke();
-    }
-    cctx.setLineDash([]);
-
-    // Handles en las 4 esquinas y 4 lados
-    const handles = getHandles(sx, sy, sw, sh);
-    handles.forEach(h => {
-      cctx.fillStyle = '#0ea5e9';
-      cctx.beginPath();
-      cctx.roundRect ? cctx.roundRect(h.x-HANDLE/2, h.y-HANDLE/2, HANDLE, HANDLE, 2)
-                     : cctx.rect(h.x-HANDLE/2, h.y-HANDLE/2, HANDLE, HANDLE);
-      cctx.fill();
-      cctx.strokeStyle = '#fff';
-      cctx.lineWidth = 1.5;
-      cctx.stroke();
-    });
-
-    // Coordenadas
-    const cm = (v) => (v / (window.PIXELS_PER_CM||10)).toFixed(1);
-    coordsEl.textContent = `Recorte: ${cm(crop.w)}cm × ${cm(crop.h)}cm  |  Pos: (${cm(crop.x)}, ${cm(crop.y)})cm`;
-  }
-
-  function getHandles(sx, sy, sw, sh) {
-    return [
-      {id:'tl',x:sx,     y:sy      },
-      {id:'tc',x:sx+sw/2,y:sy      },
-      {id:'tr',x:sx+sw,  y:sy      },
-      {id:'ml',x:sx,     y:sy+sh/2 },
-      {id:'mr',x:sx+sw,  y:sy+sh/2 },
-      {id:'bl',x:sx,     y:sy+sh   },
-      {id:'bc',x:sx+sw/2,y:sy+sh   },
-      {id:'br',x:sx+sw,  y:sy+sh   },
-    ];
-  }
-
-  function hitHandle(mx, my) {
-    const sx=crop.x*scale, sy=crop.y*scale, sw=crop.w*scale, sh=crop.h*scale;
-    const handles = getHandles(sx,sy,sw,sh);
-    for(const h of handles) {
-      if(Math.abs(mx-h.x)<=HANDLE && Math.abs(my-h.y)<=HANDLE) return h.id;
-    }
-    // Interior = mover todo
-    if(mx>=sx && mx<=sx+sw && my>=sy && my<=sy+sh) return 'move';
-    return null;
-  }
-
-  // Cursor
-  const cursorMap = { tl:'nwse-resize', tr:'nesw-resize', bl:'nesw-resize', br:'nwse-resize', tc:'ns-resize', bc:'ns-resize', ml:'ew-resize', mr:'ew-resize', move:'move' };
-  cc.addEventListener('mousemove', (e) => {
-    if(drag) return;
-    const r = cc.getBoundingClientRect();
-    const h = hitHandle(e.clientX-r.left, e.clientY-r.top);
-    cc.style.cursor = cursorMap[h] || 'default';
-  });
-
-  let startCrop, startMX, startMY;
-  cc.addEventListener('mousedown', (e) => {
-    const r = cc.getBoundingClientRect();
-    const mx = e.clientX-r.left, my = e.clientY-r.top;
-    drag = hitHandle(mx, my);
-    if(!drag) {
-      // Empezar nuevo crop arrastrando desde vacío
-      drag = 'new';
-      startMX = mx; startMY = my;
-      crop = { x: mx/scale, y: my/scale, w:0, h:0 };
-    }
-    startCrop = { ...crop };
-    startMX = mx; startMY = my;
-    e.preventDefault();
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if(!drag) return;
-    const r = cc.getBoundingClientRect();
-    const mx = e.clientX-r.left, my = e.clientY-r.top;
-    const dx = (mx-startMX)/scale, dy = (my-startMY)/scale;
-    const MIN = 5;
-    let c = { ...startCrop };
-
-    const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
-    const imgW = srcImage.width, imgH = srcImage.height;
-
-    if(drag === 'move') {
-      c.x = clamp(c.x+dx, 0, imgW-c.w);
-      c.y = clamp(c.y+dy, 0, imgH-c.h);
-    } else if(drag === 'new') {
-      const x1 = clamp(startMX/scale, 0, imgW);
-      const y1 = clamp(startMY/scale, 0, imgH);
-      const x2 = clamp(mx/scale, 0, imgW);
-      const y2 = clamp(my/scale, 0, imgH);
-      c.x = Math.min(x1,x2); c.y = Math.min(y1,y2);
-      c.w = Math.abs(x2-x1); c.h = Math.abs(y2-y1);
-    } else {
-      if(drag.includes('l')) { const nx=clamp(c.x+dx,0,c.x+c.w-MIN); c.w+=c.x-nx; c.x=nx; }
-      if(drag.includes('r')) { c.w=clamp(c.w+dx,MIN,imgW-c.x); }
-      if(drag.includes('t')) { const ny=clamp(c.y+dy,0,c.y+c.h-MIN); c.h+=c.y-ny; c.y=ny; }
-      if(drag.includes('b')) { c.h=clamp(c.h+dy,MIN,imgH-c.y); }
-      if(drag.includes('m')&&drag.includes('l')){ const nx=clamp(c.x+dx,0,c.x+c.w-MIN); c.w+=c.x-nx; c.x=nx; }
-      if(drag==='mr') { c.w=clamp(c.w+dx,MIN,imgW-c.x); }
-    }
-    crop = c;
-    render();
-  });
-
-  window.addEventListener('mouseup', () => { drag=null; });
-
-  // Doble clic = auto-recortar
-  cc.addEventListener('dblclick', () => {
-    crop = getAutoCropBounds(srcImage);
-    render();
-    showMessage('Auto-recorte aplicado','info',1200);
-  });
-
-  // Reset = imagen completa
-  resetBtn.addEventListener('click', () => {
-    crop = { x:0, y:0, w:srcImage.width, h:srcImage.height };
-    render();
-  });
-
-  // Cancelar
-  cancelBtn.addEventListener('click', () => {
-    overlay.style.display = 'none';
-  });
-
-  // Aplicar
-  applyBtn.addEventListener('click', () => {
-    if(!designRef || crop.w < 2 || crop.h < 2) return;
-    const out = document.createElement('canvas');
-    out.width  = Math.round(crop.w);
-    out.height = Math.round(crop.h);
-    out.getContext('2d').drawImage(srcImage, crop.x, crop.y, crop.w, crop.h, 0, 0, out.width, out.height);
-    const img = new Image();
-    img.onload = () => {
-      designRef.image = img;
-      designRef.width = img.width;
-      designRef.height = img.height;
-      designRef.originalWidth = img.width;
-      designRef.originalHeight = img.height;
-      designRef.aspectRatio = img.width / img.height;
-      designRef.updateInputs();
-      drawCanvas();
-      overlay.style.display = 'none';
-      showMessage(`✅ Recorte aplicado: ${(crop.w/10).toFixed(1)}cm × ${(crop.h/10).toFixed(1)}cm`, 'success', 2500);
-    };
-    img.src = out.toDataURL('image/png');
-  });
-})();
 </script>
 
 </body>
