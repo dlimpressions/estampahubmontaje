@@ -1715,7 +1715,7 @@ function drawCanvas() {
     }
 
     // ====== Controles
-    function updateControls(){
+   function updateControls(){
       const d = getSelectedDesign();
       if (d){
         rotationSlider.value = Math.round(d.rotation);
@@ -1724,13 +1724,23 @@ function drawCanvas() {
         opacitySlider.value = Math.round(d.opacity*100);
         opacityValue.textContent = Math.round(d.opacity*100) + '%';
         d.updateInputs();
-
         [rotationSlider, rotationInput, opacitySlider, removeBtn,
          widthInput, heightInput, applySizeBtn, lockProportion,
          mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
         ].forEach(el=> el && (el.disabled=false));
+        
+        updateSizeInfo();   // ←←← LLAMADA a la función global
+      } else {
+        [rotationSlider, rotationInput, opacitySlider, removeBtn,
+         widthInput, heightInput, applySizeBtn, lockProportion,
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
+        ].forEach(el=> el && (el.disabled=true));
+      }
+    }
+      return designs.find(d=> d.id===selectedDesignId);
+    }
 
-   function updateSizeInfo() {
+function updateSizeInfo() {
   const d = getSelectedDesign();
   if (d) {
     const c = d.getDimensionsInCm();
@@ -1741,17 +1751,7 @@ function drawCanvas() {
     sizeInfo.textContent = '0cm × 0cm';
     originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
   }
-  // Sincronizar directamente al toolbar (sin depender de MutationObserver)
-  const tbSI = document.getElementById('tb-size-info');
-  const tbOS = document.getElementById('tb-original-size');
-  if (tbSI) tbSI.textContent = sizeInfo.textContent;
-  if (tbOS) tbOS.textContent = originalSizeInfo.textContent;
 }
-    }
-
-    function getSelectedDesign(){
-      return designs.find(d=> d.id===selectedDesignId);
-    }
 
     // tamaño manual
     if (applySizeBtn){
