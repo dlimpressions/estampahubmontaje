@@ -529,6 +529,10 @@ footer {
 }
 .designs-dropdown.open { display:block; }
   </style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 </head>
 
 <body>
@@ -771,6 +775,7 @@ footer {
     </div>
 
     <!-- Orden Z -->
+    <button class="tb-btn purple" id="tb-crop-btn">✂️ Recortar</button>
     <div class="toolbar-panel" id="panel-order">
       <button class="tb-btn" id="tb-send-back">⤵️ Al Fondo</button>
       <button class="tb-btn" id="tb-step-back">⬇️ Atrás</button>
@@ -3148,7 +3153,90 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   }
 })();
 
+let cropper = null;
+const cropModal = document.getElementById('crop-modal');
+const cropImage = document.getElementById('crop-image');
+const btnDoCrop = document.getElementById('btn-do-crop');
+
+// Función para abrir la herramienta de recorte
+document.getElementById('tb-crop-btn')?.addEventListener('click', () => {
+  const design = getSelectedDesign(); // Obtiene el diseño seleccionado
+  if (!design) {
+    showMessage('Selecciona un diseño primero', 'warning');
+    return;
+  }
+
+  cropImage.src = design.image.src;
+  cropModal.style.display = 'flex';
+
+  // Inicializar Cropper.js
+  if (cropper) cropper.destroy();
+  cropper = new Cropper(cropImage, {
+    viewMode: 1,
+    dragMode: 'move',
+    autoCropArea: 1,
+    restore: false,
+    guides: true,
+    center: true,
+    highlight: false,
+    cropBoxMovable: true,
+    cropBoxResizable: true,
+    toggleDragModeOnDblclick: false,
+  });
+});
+
+// Función para cerrar
+function closeCropModal() {
+  cropModal.style.display = 'none';
+  if (cropper) cropper.destroy();
+}
+
+// Aplicar el recorte
+btnDoCrop.addEventListener('click', () => {
+  if (!cropper) return;
+
+  const canvasResult = cropper.getCroppedCanvas({
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high',
+  });
+
+  const croppedDataUrl = canvasResult.toDataURL('image/png');
+  const design = getSelectedDesign();
+
+  if (design) {
+    const newImg = new Image();
+    newImg.onload = () => {
+      // Actualizamos la imagen y sus dimensiones
+      design.image = newImg;
+      design.width = newImg.width;
+      design.height = newImg.height;
+      design.aspectRatio = newImg.width / newImg.height;
+      design.originalWidth = newImg.width;
+      design.originalHeight = newImg.height;
+      
+      drawCanvas(); // Redibuja el lienzo
+      updateSizeInfo(); // Actualiza la info de tamaño
+      showMessage('Diseño recortado', 'success');
+      closeCropModal();
+    };
+    newImg.src = croppedDataUrl;
+  }
+});
+
 </script>
+
+<div id="crop-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--surface); border:1px solid var(--border-hi); border-radius:12px; width:90%; max-width:800px; padding:20px; display:flex; flex-direction:column; gap:15px;">
+    <h3 style="color:var(--accent); font-family:var(--font-ui);">Recortar Diseño</h3>
+    <div style="max-height:60vh; overflow:hidden; background:#000; border-radius:8px;">
+      <img id="crop-image" style="max-width:100%;">
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="tb-btn" onclick="closeCropModal()">Cancelar</button>
+      <button class="tb-btn accent" id="btn-do-crop">Aplicar Recorte</button>
+    </div>
+  </div>
+</div>
 
 </body>
 
