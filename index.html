@@ -750,6 +750,8 @@ footer {
       </div>
       <div class="tb-sep"></div>
       <button class="tb-btn" id="tb-mirror-btn">🪞 Espejo H</button>
+<div class="tb-sep"></div>
+<button class="tb-btn" id="tb-trim-btn" style="border-color:rgba(245,158,11,0.35);color:var(--amber);">✂️ Recortar</button>
     </div>
 
     <!-- Tamaño -->
@@ -1237,6 +1239,30 @@ if (lockPass) {
     const stepForwardBtn = document.getElementById('step-forward');
     const stepBackBtn = document.getElementById('step-back');
 
+// ====== Recorte manual de transparencia ======
+const trimBtn = document.getElementById('tb-trim-btn');
+if(trimBtn){
+  trimBtn.addEventListener('click', () => {
+    const d = getSelectedDesign();
+    if(!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
+    const trimmed = trimTransparentPixels(d.image);
+    const img = new Image();
+    img.onload = () => {
+      d.image = img;
+      d.width = img.width;
+      d.height = img.height;
+      d.originalWidth = img.width;
+      d.originalHeight = img.height;
+      d.aspectRatio = img.width / img.height;
+      d.updateInputs();
+      drawCanvas();
+      showMessage('✂️ Transparencia recortada','success',2000);
+    };
+    img.src = trimmed.toDataURL('image/png');
+  });
+}
+
+
 // ====== Cálculo de precio aproximado de impresion ======
 function calcularPrecioMontaje() {
   const altoCm = parseFloat(canvasHeightInput?.value) || 100;
@@ -1415,7 +1441,7 @@ class Design {
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(this.image, -width/2, -height/2, width, height);
+    ctx.drawImage(getCachedImage(this), -width/2, -height/2, width, height);
 
     if (this.id === selectedDesignId) {
       ctx.strokeStyle = '#4299e1';
@@ -1518,25 +1544,33 @@ class Design {
   }
 }
 
-    // ====== Dibujo general
-    function drawCanvas() {
-      initCanvas();
-      designs.forEach(d => d.draw());
-      updateSizeInfo();
-    }
+    // ── Canvas offscreen para cada diseño (cache) ──
+const designCache = new WeakMap();
 
-    function updateSizeInfo() {
-      const d = getSelectedDesign();
-      if (d) {
-        const c = d.getDimensionsInCm();
-        const o = d.getOriginalDimensionsInCm();
-        sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
-        originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
-      } else {
-        sizeInfo.textContent = '0cm × 0cm';
-        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
-      }
-    }
+function getCachedImage(design) {
+  if(designCache.has(design.image)) return designCache.get(design.image);
+  // Solo cachear imágenes pequeñas/medianas
+  if(design.image.width * design.image.height > 4000000) return design.image;
+  const oc = document.createElement('canvas');
+  oc.width = design.image.width;
+  oc.height = design.image.height;
+  oc.getContext('2d').drawImage(design.image, 0, 0);
+  designCache.set(design.image, oc);
+  return oc;
+}
+
+let _drawPending = false;
+function drawCanvas() {
+  if(_drawPending) return;
+  _drawPending = true;
+  requestAnimationFrame(() => {
+    _drawPending = false;
+    initCanvas();
+    designs.forEach(d => d.draw());
+    updateSizeInfo();
+    updateStatusBar();
+  });
+}
 
     // ====== Exportación
     function getPixelDimensions(dpi) {
