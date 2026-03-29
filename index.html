@@ -467,15 +467,6 @@
   font-family:var(--font-mono); font-size:0.58rem; color:#475569; white-space:nowrap;
 }
 
-<!-- BARRA DE ESTADO -->
-<div class="status-bar-new">
-  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
-  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
-  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
-  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
-  <div class="status-spacer-n"></div>
-  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
-</div>
 
 /* ── FOOTER ── */
 footer {
@@ -532,6 +523,7 @@ footer {
 </head>
 
 <body>
+
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
   <div class="lock-card">
@@ -698,6 +690,16 @@ footer {
     ">👤 Mi Perfil</button>
   </div>
 </header>
+
+<!-- BARRA DE ESTADO -->
+<div class="status-bar-new">
+  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
+  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
+  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
+  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
+  <div class="status-spacer-n"></div>
+  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
+</div>
 
 <!-- BARRA ADOBE -->
 <div class="adobe-toolbar">
