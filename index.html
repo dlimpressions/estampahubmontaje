@@ -749,9 +749,7 @@ footer {
         <span class="tb-val" id="tb-opacity-value">100%</span>
       </div>
       <div class="tb-sep"></div>
-<button class="tb-btn" id="tb-trim-btn" style="border-color:#f59e0b;color:#f59e0b;">✂️ Recortar</button>
       <button class="tb-btn" id="tb-mirror-btn">🪞 Espejo H</button>
-      
     </div>
 
     <!-- Tamaño -->
@@ -1251,19 +1249,7 @@ if (lockPass) {
     const canvasSizeLabel = document.getElementById('canvas-size-label');
     const canvasHeightInput = document.getElementById('canvas-height-cm');
     const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
-// Botón de Recorte Manual
-const cropBtn = document.getElementById('crop-btn');
-if (cropBtn) {
-    cropBtn.addEventListener('click', () => {
-        const activeObject = canvas.getActiveObject();
-        if (!activeObject || activeObject.type !== 'image') {
-            mostrarMensaje("Selecciona una imagen para recortar", "error");
-            return;
-        }
-        // Llamamos a la función de recorte (asegúrate de que esté definida)
-        iniciarRecorteManual(activeObject);
-    });
-}
+
     const mirrorBtn = document.getElementById('mirror-btn');
     const bringFrontBtn = document.getElementById('bring-front');
     const sendBackBtn = document.getElementById('send-back');
@@ -2888,180 +2874,6 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
 
 <script src="gallery.js"></script>
 
-<script>
-// ====== HERRAMIENTA DE RECORTE MANUAL ======
-(function(){
-  const overlay = document.getElementById('crop-overlay');
-  const cc = document.getElementById('crop-canvas');
-  const cctx = cc.getContext('2d');
-  let srcImage = null;
-  let designRef = null;
-  let crop = { x:0, y:0, w:0, h:0 };
-  let drag = null;
-  let startCrop = null;
-  let scale = 1;
-
-  window.openCropTool = function(design) {
-    if (!design) return;
-    designRef = design;
-    srcImage = design.image;  // imagen original
-
-    // Escalar para que quepa en pantalla
-    const maxW = Math.min(window.innerWidth * 0.85, 920);
-    scale = Math.min(maxW / srcImage.width, 1);
-    cc.width = Math.round(srcImage.width * scale);
-    cc.height = Math.round(srcImage.height * scale);
-
-    // Crop inicial = todo el diseño
-    crop = { x:0, y:0, w:srcImage.width, h:srcImage.height };
-
-    overlay.style.display = 'flex';
-    renderCrop();
-  };
-
-  function renderCrop() {
-    cctx.clearRect(0, 0, cc.width, cc.height);
-    // Fondo con cuadrícula sutil
-    cctx.fillStyle = '#111827';
-    cctx.fillRect(0, 0, cc.width, cc.height);
-    // Imagen original
-    cctx.drawImage(srcImage, 0, 0, cc.width, cc.height);
-
-    const sx = crop.x * scale;
-    const sy = crop.y * scale;
-    const sw = crop.w * scale;
-    const sh = crop.h * scale;
-
-    // Resaltar área seleccionada
-    cctx.save();
-    cctx.beginPath();
-    cctx.rect(sx, sy, sw, sh);
-    cctx.clip();
-    cctx.drawImage(srcImage, 0, 0, cc.width, cc.height);
-    cctx.restore();
-
-    // Borde del recorte
-    cctx.strokeStyle = '#0ea5e9';
-    cctx.lineWidth = 3;
-    cctx.strokeRect(sx, sy, sw, sh);
-
-    // Handles (esquinas y lados)
-    const handles = [
-      {x:sx, y:sy}, {x:sx+sw/2, y:sy}, {x:sx+sw, y:sy},
-      {x:sx, y:sy+sh/2}, {x:sx+sw, y:sy+sh/2},
-      {x:sx, y:sy+sh}, {x:sx+sw/2, y:sy+sh}, {x:sx+sw, y:sy+sh}
-    ];
-    handles.forEach(h => {
-      cctx.fillStyle = '#0ea5e9';
-      cctx.fillRect(h.x-6, h.y-6, 12, 12);
-      cctx.strokeStyle = '#fff';
-      cctx.lineWidth = 2;
-      cctx.strokeRect(h.x-6, h.y-6, 12, 12);
-    });
-  }
-
-  // Eventos de arrastre
-  cc.addEventListener('mousedown', e => {
-    const rect = cc.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    drag = getHandle(mx, my);
-    startCrop = {...crop};
-  });
-
-  window.addEventListener('mousemove', e => {
-    if (!drag) return;
-    const rect = cc.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const dx = (mx - (startCrop.x * scale)) / scale;
-    const dy = (my - (startCrop.y * scale)) / scale;
-
-    if (drag === 'move') {
-      crop.x = Math.max(0, Math.min(startCrop.x + dx, srcImage.width - crop.w));
-      crop.y = Math.max(0, Math.min(startCrop.y + dy, srcImage.height - crop.h));
-    } else {
-      // Lógica de arrastre de handles (esquinas y lados)
-      if (drag.includes('l')) crop.x = Math.max(0, startCrop.x + dx);
-      if (drag.includes('r')) crop.w = Math.max(10, startCrop.w + dx);
-      if (drag.includes('t')) crop.y = Math.max(0, startCrop.y + dy);
-      if (drag.includes('b')) crop.h = Math.max(10, startCrop.h + dy);
-    }
-    renderCrop();
-  });
-
-  window.addEventListener('mouseup', () => { drag = null; });
-
-  function getHandle(mx, my) {
-    const sx = crop.x * scale, sy = crop.y * scale, sw = crop.w * scale, sh = crop.h * scale;
-    const size = 12;
-    if (Math.abs(mx - sx) < size && Math.abs(my - sy) < size) return 'tl';
-    if (Math.abs(mx - (sx+sw)) < size && Math.abs(my - sy) < size) return 'tr';
-    if (Math.abs(mx - sx) < size && Math.abs(my - (sy+sh)) < size) return 'bl';
-    if (Math.abs(mx - (sx+sw)) < size && Math.abs(my - (sy+sh)) < size) return 'br';
-    if (Math.abs(mx - sx) < size) return 'ml';
-    if (Math.abs(mx - (sx+sw)) < size) return 'mr';
-    if (Math.abs(my - sy) < size) return 'tc';
-    if (Math.abs(my - (sy+sh)) < size) return 'bc';
-    if (mx > sx && mx < sx+sw && my > sy && my < sy+sh) return 'move';
-    return null;
-  }
-
-  // Botones
-  document.getElementById('crop-reset').addEventListener('click', () => {
-    crop = { x:0, y:0, w:srcImage.width, h:srcImage.height };
-    renderCrop();
-  });
-
-  document.getElementById('crop-auto').addEventListener('click', () => {
-    crop = getAutoCropBounds(srcImage);
-    renderCrop();
-  });
-
-  document.getElementById('crop-cancel').addEventListener('click', () => {
-    overlay.style.display = 'none';
-  });
-
-  document.getElementById('crop-apply').addEventListener('click', () => {
-    if (!designRef || crop.w < 5 || crop.h < 5) return;
-    const out = document.createElement('canvas');
-    out.width = Math.round(crop.w);
-    out.height = Math.round(crop.h);
-    out.getContext('2d').drawImage(srcImage, crop.x, crop.y, crop.w, crop.h, 0, 0, out.width, out.height);
-    
-    const newImg = new Image();
-    newImg.onload = () => {
-      designRef.image = newImg;
-      designRef.width = newImg.width;
-      designRef.height = newImg.height;
-      designRef.originalWidth = newImg.width;
-      designRef.originalHeight = newImg.height;
-      designRef.aspectRatio = newImg.width / newImg.height;
-      designRef.updateInputs();
-      drawCanvas();
-      overlay.style.display = 'none';
-      showMessage(`✅ Recorte aplicado (${(crop.w/10).toFixed(1)}cm × ${(crop.h/10).toFixed(1)}cm)`, 'success', 2500);
-    };
-    newImg.src = out.toDataURL('image/png');
-  });
-
-  function getAutoCropBounds(img) {
-    const tc = document.createElement('canvas');
-    tc.width = img.width; tc.height = img.height;
-    const tx = tc.getContext('2d');
-    tx.drawImage(img, 0, 0);
-    const data = tx.getImageData(0,0,tc.width,tc.height).data;
-    let t=img.height, l=img.width, r=0, b=0;
-    for(let y=0;y<img.height;y++) for(let x=0;x<img.width;x++) {
-      if(data[(y*img.width+x)*4+3] > 10){
-        if(y<t)t=y; if(y>b)b=y; if(x<l)l=x; if(x>r)r=x;
-      }
-    }
-    return {x:l, y:t, w:r-l+1, h:b-t+1};
-  }
-})();
-</script>
-
 <script src="profile.js"></script>
 
 <!-- === CONTENEDOR DE DISEÑOS ImgBB (modal futurista) === -->
@@ -3335,54 +3147,6 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
     });
   }
 })();
-
-function iniciarRecorteManual(obj) {
-    // Creamos un área visual de recorte (un rectángulo semi-transparente)
-    const rect = new fabric.Rect({
-        left: obj.left,
-        top: obj.top,
-        width: obj.getScaledWidth() / 2,
-        height: obj.getScaledHeight() / 2,
-        fill: 'rgba(0,0,0,0.3)',
-        stroke: '#4299e1',
-        strokeDashArray: [5, 5],
-        cornerColor: '#4299e1',
-        hasRotatingPoint: false
-    });
-
-    canvas.add(rect);
-    canvas.setActiveObject(rect);
-    mostrarMensaje("Ajusta el recuadro y presiona 'Enter' para confirmar", "info");
-
-    // Escuchar la tecla Enter para ejecutar el recorte
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            confirmarRecorte(obj, rect);
-            window.removeEventListener('keydown', handleKeyDown);
-        }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-}
-
-function confirmarRecorte(obj, mask) {
-    // Cálculo de las coordenadas relativas
-    const left = (mask.left - obj.left) / obj.scaleX;
-    const top = (mask.top - obj.top) / obj.scaleY;
-    const width = mask.width * (mask.scaleX / obj.scaleX);
-    const height = mask.height * (mask.scaleY / obj.scaleY);
-
-    // Aplicar el recorte usando la propiedad clipPath de FabricJS o cropX/cropY
-    obj.set({
-        cropX: left,
-        cropY: top,
-        width: width,
-        height: height
-    });
-
-    canvas.remove(mask);
-    canvas.renderAll();
-    mostrarMensaje("Recorte aplicado", "success");
-}
 
 </script>
 
