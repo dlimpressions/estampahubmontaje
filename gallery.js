@@ -50,15 +50,18 @@ async function cargarGaleriaDesdeSheets() {
         background:rgba(14,165,233,0.07);color:#e2e8f0;outline:none;">`;
 
     document.getElementById('searchInput').addEventListener('input', e => {
-      currentPage = 1;
-      filterAndRender(e.target.value);
-    });
+  currentPage = 1;  // ← reset página al buscar
+  filterAndRender(e.target.value);
+});
 
     filterAndRender('');
   } catch (err) {
     grid.innerHTML = `<div style="color:#f43f5e;padding:40px;text-align:center;">❌ Error al cargar</div>`;
   }
 }
+
+let currentPage = 1;
+const itemsPerPage = 20;
 
 function filterAndRender(busqueda = '') {
   const grid = document.getElementById('imgbb-designs-grid');
@@ -67,55 +70,80 @@ function filterAndRender(busqueda = '') {
   const term = busqueda.toLowerCase().trim();
   const filtrados = allDesigns.filter(d => {
     const nombre = (d.nombre || d.Nombre || '').toLowerCase();
-    return !term || nombre.includes(term);
+    const cat    = (d.categoria || d.Categoria || '').toLowerCase();
+    return !term || nombre.includes(term) || cat.includes(term);
   });
 
-  filtrados.forEach(d => {
-    const url = d.url;
-    const isSelected = selectedGalleryItems.has(url);
+  const totalPages = Math.ceil(filtrados.length / itemsPerPage);
+  const start = (currentPage - 1) * itemsPerPage;
+  const pagina = filtrados.slice(start, start + itemsPerPage);
 
+  if(pagina.length === 0){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:60px;">Sin resultados</div>`;
+    renderPagination(totalPages, busqueda);
+    return;
+  }
+
+  pagina.forEach(d => {
+    const url = d.url;
+    const isSel = selectedGalleryItems.has(url);
     const item = document.createElement('div');
     item.style.cssText = `
-      cursor:pointer; padding:8px; border-radius:8px;
-      border:2px solid ${isSelected ? '#0ea5e9' : 'rgba(14,165,233,0.15)'};
-      background:${isSelected ? 'rgba(14,165,233,0.12)' : 'rgba(14,165,233,0.03)'};
-      transition:all 0.2s; position:relative;
+      cursor:pointer;padding:8px;border-radius:8px;position:relative;
+      border:2px solid ${isSel?'#0ea5e9':'rgba(14,165,233,0.15)'};
+      background:${isSel?'rgba(14,165,233,0.12)':'rgba(14,165,233,0.03)'};
+      transition:all 0.18s;
     `;
-
     item.innerHTML = `
-      <div style="width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;background:#111827;position:relative;">
-        <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s;">
-        <div class="gal-check" style="position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;border:2px solid #0ea5e9;background:${isSelected?'#0ea5e9':'transparent'};color:white;display:flex;align-items:center;justify-content:center;font-size:13px;">${isSelected?'✓':''}</div>
+      <div style="width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;background:#111827;">
+        <img src="${url}" loading="lazy" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s;">
+        <div class="gal-check" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid #0ea5e9;background:${isSel?'#0ea5e9':'transparent'};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;">${isSel?'✓':''}</div>
       </div>
-      <small style="display:block;margin-top:6px;color:#94a3b8;font-size:0.68rem;text-align:center;">${d.nombre || 'Sin nombre'}</small>`;
+      <small style="display:block;margin-top:5px;color:#94a3b8;font-size:0.66rem;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.nombre||'Sin nombre'}</small>`;
 
-    // Clic simple = toggle selección
+    const img = item.querySelector('img');
+    img.onload = () => img.style.opacity = '1';
+    img.onerror = () => { img.style.opacity='1'; img.src=''; };
+
     item.addEventListener('click', () => {
-      if (selectedGalleryItems.has(url)) {
-        selectedGalleryItems.delete(url);
-      } else {
-        selectedGalleryItems.add(url);
-      }
+      selectedGalleryItems.has(url) ? selectedGalleryItems.delete(url) : selectedGalleryItems.add(url);
       filterAndRender(document.getElementById('searchInput')?.value || '');
       updateMultiSelectBar();
     });
-
-    // Doble clic = cargar solo este
-    item.addEventListener('dblclick', (e) => {
-      e.stopImmediatePropagation();
-      loadSingleDesign(url);
-    });
-
-    // Lazy load de miniatura
-    const img = item.querySelector('img');
-    img.onload = () => img.style.opacity = '1';
-    img.onerror = () => img.style.opacity = '1';
-
+    item.addEventListener('dblclick', e => { e.stopImmediatePropagation(); loadSingleDesign(url); });
     grid.appendChild(item);
   });
 
-  if (filtrados.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:60px;">Sin resultados</div>`;
+  renderPagination(totalPages, busqueda);
+}
+
+function renderPagination(totalPages, busqueda) {
+  let pag = document.getElementById('pagination');
+  if(!pag) return;
+  pag.innerHTML = '';
+  if(totalPages <= 1) return;
+
+  const bs = `padding:6px 14px;border-radius:6px;margin:0 4px;cursor:pointer;
+    font-size:0.78rem;border:1px solid rgba(14,165,233,0.35);
+    background:rgba(14,165,233,0.08);color:#0ea5e9;`;
+
+  if(currentPage > 1){
+    const b = document.createElement('button');
+    b.style.cssText = bs; b.textContent = '← Anterior';
+    b.onclick = () => { currentPage--; filterAndRender(busqueda); document.getElementById('imgbb-designs-grid')?.scrollIntoView({behavior:'smooth',block:'start'}); };
+    pag.appendChild(b);
+  }
+
+  const info = document.createElement('span');
+  info.style.cssText = 'font-size:0.72rem;color:#475569;margin:0 10px;';
+  info.textContent = `Pág. ${currentPage} / ${totalPages}`;
+  pag.appendChild(info);
+
+  if(currentPage < totalPages){
+    const b = document.createElement('button');
+    b.style.cssText = bs; b.textContent = 'Siguiente →';
+    b.onclick = () => { currentPage++; filterAndRender(busqueda); document.getElementById('imgbb-designs-grid')?.scrollIntoView({behavior:'smooth',block:'start'}); };
+    pag.appendChild(b);
   }
 }
 
