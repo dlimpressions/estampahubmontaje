@@ -2,9 +2,9 @@
 console.log("✅ gallery.js v7 - Multi-selección agregada al código estable");
 
 let allDesigns = [];
+let selectedGalleryItems = new Set();   // ← Multi-selección
 let currentPage = 1;
 const itemsPerPage = 20;
-let selectedGalleryItems = new Set();   // ← Multi-selección
 
 window.addEventListener('load', function() {
   const galleryOverlay = document.getElementById('imgbb-gallery-overlay');
@@ -60,8 +60,7 @@ async function cargarGaleriaDesdeSheets() {
   }
 }
 
-let currentPage = 1;
-const itemsPerPage = 20;
+
 
 function filterAndRender(busqueda = '') {
   const grid = document.getElementById('imgbb-designs-grid');
