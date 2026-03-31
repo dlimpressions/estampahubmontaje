@@ -750,7 +750,10 @@ footer {
       </div>
       <div class="tb-sep"></div>
       <button class="tb-btn" id="tb-mirror-btn">🪞 Espejo H</button>
-    </div>
+<div class="tb-sep"></div>
+<button class="tb-btn" id="tb-trim-btn" style="border-color:rgba(245,158,11,0.4);color:#f59e0b;">✂️ Recortar</button>
+</div>
+      
 
     <!-- Tamaño -->
     <div class="toolbar-panel" id="panel-size">
@@ -1567,43 +1570,41 @@ class Design {
     }
 
     function createHighQualityCanvas() {
-      const dpi = parseInt(qualitySelect.value);
-      const dim = getPixelDimensions(dpi);
+  const dpi = parseInt(qualitySelect.value);
+  const dim = getPixelDimensions(dpi);
 
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = dim.width;
-      exportCanvas.height = dim.height;
-      const ectx = exportCanvas.getContext('2d');
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width  = dim.width;
+  exportCanvas.height = dim.height;
+  const ectx = exportCanvas.getContext('2d');
 
-      ectx.imageSmoothingEnabled = true;
-      ectx.imageSmoothingQuality = 'high';
+  ectx.imageSmoothingEnabled = true;
+  ectx.imageSmoothingQuality = 'high';
+  ectx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-      const scaleX = exportCanvas.width / canvas.width;
-      const scaleY = exportCanvas.height / canvas.height;
+  // Escalas INDEPENDIENTES para X e Y
+  const scaleX = exportCanvas.width  / canvas.width;
+  const scaleY = exportCanvas.height / canvas.height;
 
-      ectx.clearRect(0,0,exportCanvas.width,exportCanvas.height);
+  designs.forEach(design => {
+    ectx.save();
+    ectx.globalAlpha = design.opacity;
 
-      designs.forEach(design => {
-        ectx.save();
-        ectx.globalAlpha = design.opacity;
+    const ex = design.x * scaleX;
+    const ey = design.y * scaleY;
 
-        const x = design.x * scaleX;
-        const y = design.y * scaleY;
-        const scale = design.scale * Math.min(scaleX, scaleY);
+    ectx.translate(ex, ey);
+    ectx.rotate(design.rotation * Math.PI / 180);
+    // Escalar usando scaleX e scaleY independientes
+    ectx.scale(design.scale * scaleX, design.scale * scaleY);
 
-        ectx.translate(x, y);
-        ectx.rotate(design.rotation * Math.PI/180);
-        ectx.scale(scale, scale);
+    ectx.drawImage(design.image, -design.width / 2, -design.height / 2, design.width, design.height);
+    ectx.restore();
+  });
 
-        const w = design.width;
-        const h = design.height;
-        ectx.drawImage(design.image, -w/2, -h/2, w, h);
+  return exportCanvas;
+}
 
-        ectx.restore();
-      });
-
-      return exportCanvas;
-    }
 
     // ====== UI: color de fondo
     if (canvasColor){
@@ -1941,37 +1942,70 @@ class Design {
     }
 
     // Exportar PDF
-    if (downloadPdfBtn){
-      downloadPdfBtn.addEventListener('click', function(){
-        if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
-        const loading = showMessage('Preparando descarga PDF...','loading',0);
-        setTimeout(()=>{
-          try{
-            const exportCanvas = createHighQualityCanvas();
-            exportCanvas.toBlob(function(blob){
-              const reader = new FileReader();
-              reader.onload = function(){
-                const imgData = reader.result;
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                  orientation: 'portrait',
-                  unit: 'mm',
-                  format: [CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10]
-                });
-                doc.addImage(imgData, 'PNG', 0, 0, CANVAS_WIDTH_CM*10, CANVAS_HEIGHT_CM*10, undefined, 'FAST');
-                doc.save('montaje-dtf.pdf');
-                loading.remove();
-                showMessage('Descarga PDF completada','success');
-              };
-              reader.readAsDataURL(blob);
-            }, 'image/png', 1.0);
-          } catch(err){
-            loading.remove();
-            showMessage('Error al generar PDF: ' + err.message, 'error');
-          }
-        }, 200);
-      });
-    }
+   if (downloadPdfBtn){
+  downloadPdfBtn.addEventListener('click', function(){
+    if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+    const loading = showMessage('Preparando PDF...','loading',0);
+    setTimeout(()=>{
+      try{
+        // Para PDF usamos 96 DPI para evitar imágenes demasiado grandes
+        const pdfDpi = Math.min(parseInt(qualitySelect.value), 150);
+        const pdfW = Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * pdfDpi);
+        const pdfH = Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * pdfDpi);
+
+        const pdfCanvas = document.createElement('canvas');
+        pdfCanvas.width  = pdfW;
+        pdfCanvas.height = pdfH;
+        const pctx = pdfCanvas.getContext('2d');
+        pctx.imageSmoothingEnabled = true;
+        pctx.imageSmoothingQuality = 'high';
+        pctx.clearRect(0, 0, pdfW, pdfH);
+
+        const sX = pdfW / canvas.width;
+        const sY = pdfH / canvas.height;
+
+        designs.forEach(design => {
+          pctx.save();
+          pctx.globalAlpha = design.opacity;
+          pctx.translate(design.x * sX, design.y * sY);
+          pctx.rotate(design.rotation * Math.PI / 180);
+          pctx.scale(design.scale * sX, design.scale * sY);
+          pctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+          pctx.restore();
+        });
+
+        pdfCanvas.toBlob(function(blob){
+          const reader = new FileReader();
+          reader.onload = function(){
+            try{
+              const { jsPDF } = window.jspdf;
+              // Dimensiones en mm (1cm = 10mm)
+              const pageW = CANVAS_WIDTH_CM  * 10;
+              const pageH = CANVAS_HEIGHT_CM * 10;
+              const doc = new jsPDF({
+                orientation: pageW < pageH ? 'portrait' : 'landscape',
+                unit: 'mm',
+                format: [pageW, pageH]
+              });
+              doc.addImage(reader.result, 'PNG', 0, 0, pageW, pageH, undefined, 'SLOW');
+              doc.save('montaje-dtf.pdf');
+              loading.remove();
+              showMessage('✅ PDF descargado completo','success',3000);
+            } catch(e){
+              loading.remove();
+              showMessage('Error al generar PDF: ' + e.message,'error');
+            }
+          };
+          reader.readAsDataURL(blob);
+        }, 'image/png', 0.92);
+
+      } catch(err){
+        loading.remove();
+        showMessage('Error: ' + err.message,'error');
+      }
+    }, 200);
+  });
+}
 
     // Limpiar lienzo
     if (clearBtn){
