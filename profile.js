@@ -1,25 +1,13 @@
-// profile.js - Modo solo lectura
+// profile.js - Modo solo lectura con diagnóstico
 window.addEventListener('load', function() {
-  const openBtn = document.getElementById('open-profile-btn');
+  const openBtn  = document.getElementById('open-profile-btn');
   const closeBtn = document.getElementById('close-profile');
-  const overlay = document.getElementById('profile-overlay');
+  const overlay  = document.getElementById('profile-overlay');
 
   if (openBtn) {
     openBtn.addEventListener('click', function() {
       overlay.style.display = 'flex';
-
-      // Cargar datos guardados en el login
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-
-      document.getElementById('profile-user').textContent = userData.usuario || 'Usuario';
-      document.getElementById('profile-name').textContent = userData.nombre || 'No disponible';
-      document.getElementById('profile-email').textContent = userData.correo || 'No disponible';
-      document.getElementById('profile-edad').textContent = userData.edad || 'No disponible';
-      document.getElementById('profile-genero').textContent = userData.genero || 'No disponible';
-      document.getElementById('profile-plan').textContent = userData.membresia || 'Básica';
-      document.getElementById('profile-inicio').textContent = userData.fechaInicio || 'N/A';
-      document.getElementById('profile-fin').textContent = userData.fechaFin || 'N/A';
-      document.getElementById('profile-photo').src = userData.fotoPerfil || 'https://via.placeholder.com/120';
+      cargarPerfil();
     });
   }
 
@@ -29,3 +17,43 @@ window.addEventListener('load', function() {
     });
   }
 });
+
+function cargarPerfil() {
+  let userData = {};
+  try {
+    userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  } catch(e) {
+    console.error('Error leyendo userData:', e);
+  }
+
+  console.log('Cargando perfil con datos:', userData);
+
+  // Helper: asignar texto al elemento si existe
+  function set(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value || 'No disponible';
+  }
+
+  set('profile-user',    userData.usuario);
+  set('profile-name',    userData.nombre);
+  set('profile-email',   userData.correo);
+  set('profile-edad',    userData.edad);
+  set('profile-genero',  userData.genero);
+  set('profile-plan',    userData.membresia || 'Básica');
+  set('profile-inicio',  userData.fechaInicio);
+  set('profile-fin',     userData.fechaFin);
+
+  // Foto de perfil
+  const foto = document.getElementById('profile-photo');
+  if (foto) {
+    foto.src = userData.fotoPerfil || 'https://via.placeholder.com/120';
+    foto.onerror = () => { foto.src = 'https://via.placeholder.com/120'; };
+  }
+
+  // Si no hay datos, mostrar advertencia
+  if (!userData.usuario) {
+    console.warn('userData vacío — el login no guardó datos correctamente');
+    const el = document.getElementById('profile-user');
+    if (el) el.textContent = '⚠️ Inicia sesión de nuevo';
+  }
+}
