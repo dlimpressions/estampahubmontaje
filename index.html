@@ -1156,29 +1156,26 @@ if (lockBtn) {
   sessionStorage.setItem('dtf_unlocked', '1');
 
 // Agrega esto para guardar los datos del perfil
+ // Normalizar campos del servidor (el sheet puede tener nombres distintos)
+  const r = result;
   const userInfo = {
-    usuario: usuario,
-    membresia: result.membresia || 'Básica',
-    nombre: result.nombre || 'Usuario',
-    fotoPerfil: result.fotoPerfil || 'https://via.placeholder.com/120',
-    correo: result.correo || 'No disponible',
-    edad: result.edad || 'No configurada',
-    genero: result.genero || 'No especificado',
-    fechaInicio: result.fechaInicio || 'N/A',
-    fechaFin: result.fechaFin || 'N/A'
+    usuario:     usuario,
+    nombre:      r.nombre      || r.Nombre      || 'No disponible',
+    correo:      r.correo      || r.Correo      || 'No disponible',
+    edad:        r.edad        || r.Edad        || 'No disponible',
+    genero:      r.genero      || r.Genero      || r.género || 'No disponible',
+    membresia:   r.membresia   || r.Membresia   || r.membresía || 'Básica',
+    fotoPerfil:  r.fotoPerfil  || r.fotoperfil  || r.FotoPerfil || 'https://via.placeholder.com/120',
+    fechaInicio: r.fechaInicio || r['fecha de inicio del plan'] || r.fechaInicioPlan || 'N/A',
+    fechaFin:    r.fechaFin    || r['fecha final del plan']     || r.fechaFinPlan    || 'N/A'
   };
-  localStorage.setItem('userData', JSON.stringify(userInfo));
-  console.log("Datos guardados en localStorage:", userInfo);
+  console.log("Respuesta completa del servidor:", JSON.stringify(r));
+  console.log("userData guardado:", userInfo);
 
 // AÑADE ESTAS LÍNEAS PARA DEPURAR:
   console.log("RESULTADO DEL SERVIDOR:", result);
   console.log("Datos que se guardan en localStorage:", userInfo);
 
- // Verifica que los datos sean correctos
-  if (!result.nombre || result.nombre === 'Usuario') {
-    console.error("ERROR: El nombre no se cargó correctamente del servidor");
-    alert("⚠️ Los datos del perfil no se cargaron correctamente. Verifica la hoja de cálculo.");
-  }
 
   // Mantén el fetch del facturador (si lo necesitas)
   try {
