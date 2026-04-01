@@ -2902,188 +2902,308 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
   reader.readAsDataURL(file);
 });
 </script>
+
 <script>
-/* ══ HERRAMIENTA DE RECORTE MANUAL ══ */
+/* ══ HERRAMIENTA DE RECORTE MANUAL v2 ══ */
 (function(){
   const overlay  = document.getElementById('crop-overlay');
   const cc       = document.getElementById('crop-canvas');
-  if(!overlay || !cc) return;
+  if(!overlay || !cc){ console.warn('Crop: elementos no encontrados'); return; }
   const cctx     = cc.getContext('2d');
   const applyBtn = document.getElementById('crop-apply');
   const cancelBtn= document.getElementById('crop-cancel');
   const resetBtn = document.getElementById('crop-reset');
   const autoBtn  = document.getElementById('crop-auto');
 
-  const H = 10; // handle size px
-  let src = null, dRef = null, sc = 1;
-  let crop = {x:0,y:0,w:0,h:0};
-  let drag = null, startCrop, sMX, sMY;
+  const HS = 9; // radio del handle en px lógicos del canvas
+  let srcCanvas = null; // siempre trabajamos con un canvas intermedio
+  let dRef = null, sc = 1;
+  let crop = {x:0, y:0, w:0, h:0};
+  let drag = null, startCrop = null, sMX = 0, sMY = 0;
 
-  /* Abrir modal */
-  window.openCropTool = function(design){
+  /* ── Convertir cualquier imagen a canvas para poder re-recortar ── */
+  function toCanvas(imgOrCanvas) {
+    if(imgOrCanvas instanceof HTMLCanvasElement) return imgOrCanvas;
+    const c = document.createElement('canvas');
+    c.width  = imgOrCanvas.naturalWidth  || imgOrCanvas.width;
+    c.height = imgOrCanvas.naturalHeight || imgOrCanvas.height;
+    c.getContext('2d').drawImage(imgOrCanvas, 0, 0);
+    return c;
+  }
+
+  /* ── Calcular escala CSS (el canvas puede estar achicado por max-width CSS) ── */
+  function getCSSScale() {
+    const r = cc.getBoundingClientRect();
+    return {
+      x: cc.width  / (r.width  || 1),
+      y: cc.height / (r.height || 1)
+    };
+  }
+
+  /* ── Coordenadas de mouse a lógicas del canvas ── */
+  function toLogical(e) {
+    const r  = cc.getBoundingClientRect();
+    const cs = getCSSScale();
+    return {
+      mx: (e.clientX - r.left) * cs.x,
+      my: (e.clientY - r.top)  * cs.y
+    };
+  }
+
+  /* ── Auto-bounds por transparencia ── */
+  function autoBounds(c) {
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let t = c.height, l = c.width, r = 0, b = 0, found = false;
+    for(let y = 0; y < c.height; y++) {
+      for(let x = 0; x < c.width; x++) {
+        if(d[(y * c.width + x) * 4 + 3] > 10) {
+          if(y < t) t = y; if(y > b) b = y;
+          if(x < l) l = x; if(x > r) r = x;
+          found = true;
+        }
+      }
+    }
+    return found
+      ? {x: l, y: t, w: r - l + 1, h: b - t + 1}
+      : {x: 0, y: 0, w: c.width, h: c.height};
+  }
+
+  /* ── Abrir modal ── */
+  window.openCropTool = function(design) {
     if(!design) return;
     dRef = design;
-    src  = design.image;
-    const maxW = Math.min(window.innerWidth*0.88, 960);
-    const maxH = Math.min(window.innerHeight*0.72, 720);
-    sc = Math.min(maxW/src.width, maxH/src.height, 1);
-    cc.width  = Math.round(src.width  * sc);
-    cc.height = Math.round(src.height * sc);
-    crop = autoBounds(src);
+
+    // Convertir a canvas (funciona tanto con canvas como con Image)
+    srcCanvas = toCanvas(design.image);
+
+    // Calcular escala visual disponible:
+    // Restar el espacio del modal (header ~50px + botones ~55px + gaps ~40px + padding ~40px)
+    const chromeH = 185;
+    const chromeW = 48;
+    const availW = Math.min(window.innerWidth  * 0.93 - chromeW, 1000);
+    const availH = Math.min(window.innerHeight * 0.95 - chromeH, 800);
+
+    sc = Math.min(availW / srcCanvas.width, availH / srcCanvas.height, 1);
+    // Mínimo que se vea razonable
+    sc = Math.max(sc, 0.1);
+
+    cc.width  = Math.round(srcCanvas.width  * sc);
+    cc.height = Math.round(srcCanvas.height * sc);
+    // Limitar explícitamente el canvas al espacio disponible
+    cc.style.maxWidth  = availW + 'px';
+    cc.style.maxHeight = availH + 'px';
+    cc.style.width  = cc.width  + 'px';
+    cc.style.height = cc.height + 'px';
+
+    crop = autoBounds(srcCanvas);
     overlay.style.display = 'flex';
     render();
   };
 
-  /* Calcular bounds por transparencia */
-  function autoBounds(img){
-    const tc=document.createElement('canvas');
-    tc.width=img.width; tc.height=img.height;
-    const tx=tc.getContext('2d'); tx.drawImage(img,0,0);
-    const d=tx.getImageData(0,0,tc.width,tc.height).data;
-    let t=img.height,l=img.width,r=0,b=0,found=false;
-    for(let y=0;y<img.height;y++) for(let x=0;x<img.width;x++){
-      if(d[(y*img.width+x)*4+3]>10){
-        if(y<t)t=y; if(y>b)b=y; if(x<l)l=x; if(x>r)r=x; found=true;
-      }
-    }
-    return found ? {x:l,y:t,w:r-l+1,h:b-t+1} : {x:0,y:0,w:img.width,h:img.height};
-  }
-
-  /* Handles: esquinas + lados */
-  function handles(sx,sy,sw,sh){
+  /* ── Handles ── */
+  function getHandles() {
+    const sx = crop.x * sc, sy = crop.y * sc;
+    const sw = crop.w * sc, sh = crop.h * sc;
     return [
-      {id:'tl',x:sx,       y:sy      },
-      {id:'tc',x:sx+sw/2,  y:sy      },
-      {id:'tr',x:sx+sw,    y:sy      },
-      {id:'ml',x:sx,       y:sy+sh/2 },
-      {id:'mr',x:sx+sw,    y:sy+sh/2 },
-      {id:'bl',x:sx,       y:sy+sh   },
-      {id:'bc',x:sx+sw/2,  y:sy+sh   },
-      {id:'br',x:sx+sw,    y:sy+sh   },
+      {id:'tl', x:sx,       y:sy      },
+      {id:'tc', x:sx+sw/2,  y:sy      },
+      {id:'tr', x:sx+sw,    y:sy      },
+      {id:'ml', x:sx,       y:sy+sh/2 },
+      {id:'mr', x:sx+sw,    y:sy+sh/2 },
+      {id:'bl', x:sx,       y:sy+sh   },
+      {id:'bc', x:sx+sw/2,  y:sy+sh   },
+      {id:'br', x:sx+sw,    y:sy+sh   },
     ];
   }
 
-  function hitHandle(mx,my){
-    const sx=crop.x*sc, sy=crop.y*sc, sw=crop.w*sc, sh=crop.h*sc;
-    for(const h of handles(sx,sy,sw,sh)){
-      if(Math.abs(mx-h.x)<=H+2 && Math.abs(my-h.y)<=H+2) return h.id;
+  function hitHandle(lx, ly) {
+    for(const h of getHandles()) {
+      if(Math.abs(lx - h.x) <= HS + 4 && Math.abs(ly - h.y) <= HS + 4) return h.id;
     }
-    if(mx>=sx&&mx<=sx+sw&&my>=sy&&my<=sy+sh) return 'move';
+    const sx = crop.x * sc, sy = crop.y * sc;
+    const sw = crop.w * sc, sh = crop.h * sc;
+    if(lx >= sx && lx <= sx + sw && ly >= sy && ly <= sy + sh) return 'move';
     return null;
   }
 
-  function render(){
-    cctx.clearRect(0,0,cc.width,cc.height);
-    /* Cuadrícula */
-    for(let y=0;y<cc.height;y+=16) for(let x=0;x<cc.width;x+=16){
-      cctx.fillStyle=((x/16+y/16)%2===0)?'#1a2035':'#0f1220';
-      cctx.fillRect(x,y,16,16);
+  /* ── Render ── */
+  function render() {
+    cctx.clearRect(0, 0, cc.width, cc.height);
+
+    // Cuadrícula de fondo
+    const gs = 14;
+    for(let y = 0; y < cc.height; y += gs) {
+      for(let x = 0; x < cc.width; x += gs) {
+        cctx.fillStyle = ((x / gs + y / gs) % 2 === 0) ? '#1a2035' : '#0f1220';
+        cctx.fillRect(x, y, gs, gs);
+      }
     }
-    /* Imagen completa atenuada */
-    cctx.globalAlpha=0.3;
-    cctx.drawImage(src,0,0,cc.width,cc.height);
-    cctx.globalAlpha=1;
-    /* Área recortada nítida */
-    const sx=crop.x*sc, sy=crop.y*sc, sw=crop.w*sc, sh=crop.h*sc;
+
+    // Imagen completa atenuada
+    cctx.globalAlpha = 0.28;
+    cctx.drawImage(srcCanvas, 0, 0, cc.width, cc.height);
+    cctx.globalAlpha = 1;
+
+    // Área de recorte nítida
+    const sx = crop.x * sc, sy = crop.y * sc;
+    const sw = crop.w * sc, sh = crop.h * sc;
     cctx.save();
-    cctx.beginPath(); cctx.rect(sx,sy,sw,sh); cctx.clip();
-    cctx.drawImage(src,0,0,cc.width,cc.height);
+    cctx.beginPath(); cctx.rect(sx, sy, sw, sh); cctx.clip();
+    cctx.drawImage(srcCanvas, 0, 0, cc.width, cc.height);
     cctx.restore();
-    /* Borde */
-    cctx.strokeStyle='#0ea5e9'; cctx.lineWidth=2; cctx.setLineDash([]);
-    cctx.strokeRect(sx,sy,sw,sh);
-    /* Guías de tercios */
-    cctx.strokeStyle='rgba(14,165,233,0.25)'; cctx.lineWidth=1; cctx.setLineDash([4,4]);
-    for(let i=1;i<3;i++){
-      cctx.beginPath(); cctx.moveTo(sx+sw*i/3,sy); cctx.lineTo(sx+sw*i/3,sy+sh); cctx.stroke();
-      cctx.beginPath(); cctx.moveTo(sx,sy+sh*i/3); cctx.lineTo(sx+sw,sy+sh*i/3); cctx.stroke();
+
+    // Sombra fuera del área de recorte
+    cctx.fillStyle = 'rgba(0,0,0,0.45)';
+    cctx.fillRect(0,   0,   cc.width, sy);           // top
+    cctx.fillRect(0,   sy+sh, cc.width, cc.height);  // bottom
+    cctx.fillRect(0,   sy,   sx,       sh);           // left
+    cctx.fillRect(sx+sw, sy, cc.width, sh);           // right
+
+    // Borde del área
+    cctx.strokeStyle = '#0ea5e9'; cctx.lineWidth = 2; cctx.setLineDash([]);
+    cctx.strokeRect(sx, sy, sw, sh);
+
+    // Guías de tercios
+    cctx.strokeStyle = 'rgba(14,165,233,0.3)'; cctx.lineWidth = 1; cctx.setLineDash([3,4]);
+    for(let i = 1; i < 3; i++) {
+      cctx.beginPath(); cctx.moveTo(sx + sw*i/3, sy); cctx.lineTo(sx + sw*i/3, sy+sh); cctx.stroke();
+      cctx.beginPath(); cctx.moveTo(sx, sy + sh*i/3); cctx.lineTo(sx+sw, sy + sh*i/3); cctx.stroke();
     }
     cctx.setLineDash([]);
-    /* Handles */
-    handles(sx,sy,sw,sh).forEach(h=>{
-      cctx.fillStyle='#0ea5e9';
-      cctx.strokeStyle='#fff'; cctx.lineWidth=1.5;
-      cctx.beginPath(); cctx.arc(h.x,h.y,H/2+1,0,Math.PI*2); cctx.fill(); cctx.stroke();
+
+    // Handles (cuadrados con borde blanco)
+    getHandles().forEach(h => {
+      cctx.fillStyle   = '#0ea5e9';
+      cctx.strokeStyle = '#fff';
+      cctx.lineWidth   = 2;
+      cctx.beginPath();
+      cctx.roundRect
+        ? cctx.roundRect(h.x - HS, h.y - HS, HS*2, HS*2, 3)
+        : cctx.rect(h.x - HS, h.y - HS, HS*2, HS*2);
+      cctx.fill(); cctx.stroke();
     });
-    /* Info */
-    const cm=v=>(v/(window.PIXELS_PER_CM||10)).toFixed(1);
-    cctx.fillStyle='rgba(14,165,233,0.9)';
-    cctx.font='12px monospace';
-    cctx.fillText(`${cm(crop.w)}cm × ${cm(crop.h)}cm`, sx+4, sy>14?sy-4:sy+sh+14);
+
+    // Info de tamaño
+    const cm = v => (v / (window.PIXELS_PER_CM || 10)).toFixed(1);
+    const label = `${cm(crop.w)}cm × ${cm(crop.h)}cm`;
+    const labelY = sy > 20 ? sy - 6 : sy + sh + 16;
+    cctx.font = 'bold 12px monospace';
+    cctx.fillStyle = 'rgba(0,0,0,0.6)';
+    cctx.fillRect(sx, labelY - 13, cctx.measureText(label).width + 8, 16);
+    cctx.fillStyle = '#0ea5e9';
+    cctx.fillText(label, sx + 4, labelY);
   }
 
-  /* Cursor */
-  const curMap={tl:'nwse-resize',tr:'nesw-resize',bl:'nesw-resize',br:'nwse-resize',tc:'ns-resize',bc:'ns-resize',ml:'ew-resize',mr:'ew-resize',move:'move'};
-  cc.addEventListener('mousemove', e=>{
+  /* ── Cursor según posición ── */
+  const curMap = {
+    tl:'nwse-resize', tr:'nesw-resize', bl:'nesw-resize', br:'nwse-resize',
+    tc:'ns-resize',   bc:'ns-resize',   ml:'ew-resize',   mr:'ew-resize',
+    move:'move'
+  };
+
+  cc.addEventListener('mousemove', e => {
     if(drag) return;
-    const r=cc.getBoundingClientRect();
-    const h=hitHandle(e.clientX-r.left, e.clientY-r.top);
-    cc.style.cursor=curMap[h]||'crosshair';
+    const {mx, my} = toLogical(e);
+    const h = hitHandle(mx, my);
+    cc.style.cursor = curMap[h] || 'crosshair';
   });
 
-  cc.addEventListener('mousedown', e=>{
-    const r=cc.getBoundingClientRect();
-    const mx=e.clientX-r.left, my=e.clientY-r.top;
-    drag=hitHandle(mx,my);
-    if(!drag){ drag='new'; }
-    startCrop={...crop}; sMX=mx; sMY=my;
+  cc.addEventListener('mousedown', e => {
+    const {mx, my} = toLogical(e);
+    drag = hitHandle(mx, my) || 'new';
+    startCrop = {...crop};
+    sMX = mx; sMY = my;
     e.preventDefault();
   });
 
-  window.addEventListener('mousemove', e=>{
-    if(!drag) return;
-    const r=cc.getBoundingClientRect();
-    const mx=e.clientX-r.left, my=e.clientY-r.top;
-    const dx=(mx-sMX)/sc, dy=(my-sMY)/sc;
-    const iW=src.width, iH=src.height;
-    const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-    let c={...startCrop};
-    if(drag==='new'){
-      const x1=cl(sMX/sc,0,iW), y1=cl(sMY/sc,0,iH);
-      const x2=cl(mx/sc,0,iW), y2=cl(my/sc,0,iH);
-      c={x:Math.min(x1,x2),y:Math.min(y1,y2),w:Math.abs(x2-x1),h:Math.abs(y2-y1)};
-    } else if(drag==='move'){
-      c.x=cl(c.x+dx,0,iW-c.w); c.y=cl(c.y+dy,0,iH-c.h);
+  window.addEventListener('mousemove', e => {
+    if(!drag || !srcCanvas) return;
+    const {mx, my} = toLogical(e);
+    const dx = (mx - sMX) / sc;
+    const dy = (my - sMY) / sc;
+    const iW = srcCanvas.width, iH = srcCanvas.height;
+    const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    let c = {...startCrop};
+
+    if(drag === 'new') {
+      const x1 = cl(sMX / sc, 0, iW), y1 = cl(sMY / sc, 0, iH);
+      const x2 = cl(mx  / sc, 0, iW), y2 = cl(my  / sc, 0, iH);
+      c = {x: Math.min(x1,x2), y: Math.min(y1,y2), w: Math.abs(x2-x1), h: Math.abs(y2-y1)};
+    } else if(drag === 'move') {
+      c.x = cl(c.x + dx, 0, iW - c.w);
+      c.y = cl(c.y + dy, 0, iH - c.h);
     } else {
-      if(drag.includes('l')){ const nx=cl(c.x+dx,0,c.x+c.w-5); c.w+=c.x-nx; c.x=nx; }
-      if(drag.includes('r')){ c.w=cl(c.w+dx,5,iW-c.x); }
-      if(drag.includes('t')){ const ny=cl(c.y+dy,0,c.y+c.h-5); c.h+=c.y-ny; c.y=ny; }
-      if(drag.includes('b')){ c.h=cl(c.h+dy,5,iH-c.y); }
-      if(drag==='ml'){ const nx=cl(c.x+dx,0,c.x+c.w-5); c.w+=c.x-nx; c.x=nx; }
-      if(drag==='mr'){ c.w=cl(c.w+dx,5,iW-c.x); }
+      // Esquinas y lados
+      if(drag === 'tl' || drag === 'ml') { const nx = cl(c.x+dx, 0, c.x+c.w-5); c.w += c.x-nx; c.x = nx; }
+      if(drag === 'tl' || drag === 'tc') { const ny = cl(c.y+dy, 0, c.y+c.h-5); c.h += c.y-ny; c.y = ny; }
+      if(drag === 'tr') { c.w = cl(c.w+dx, 5, iW-c.x); const ny = cl(c.y+dy, 0, c.y+c.h-5); c.h += c.y-ny; c.y = ny; }
+      if(drag === 'bl') { const nx = cl(c.x+dx, 0, c.x+c.w-5); c.w += c.x-nx; c.x = nx; c.h = cl(c.h+dy, 5, iH-c.y); }
+      if(drag === 'br') { c.w = cl(c.w+dx, 5, iW-c.x); c.h = cl(c.h+dy, 5, iH-c.y); }
+      if(drag === 'mr') { c.w = cl(c.w+dx, 5, iW-c.x); }
+      if(drag === 'bc') { c.h = cl(c.h+dy, 5, iH-c.y); }
     }
-    crop=c; render();
+
+    crop = c;
+    render();
   });
 
-  window.addEventListener('mouseup', ()=>{ drag=null; });
+  window.addEventListener('mouseup',    () => { drag = null; });
+  window.addEventListener('mouseleave', () => { drag = null; });
 
-  /* Doble clic = auto-recortar */
-  cc.addEventListener('dblclick', ()=>{
-    crop=autoBounds(src); render();
-    showMessage('Auto-recorte por transparencia aplicado','info',1500);
+  // Doble clic = auto-recortar
+  cc.addEventListener('dblclick', () => {
+    if(!srcCanvas) return;
+    crop = autoBounds(srcCanvas);
+    render();
+    showMessage('Auto-recorte aplicado', 'info', 1200);
   });
 
-  /* Botones */
-  resetBtn?.addEventListener('click', ()=>{ crop={x:0,y:0,w:src.width,h:src.height}; render(); });
-  autoBtn?.addEventListener('click',  ()=>{ crop=autoBounds(src); render(); showMessage('Auto-recorte aplicado','info',1200); });
-  cancelBtn?.addEventListener('click',()=>{ overlay.style.display='none'; });
+  // Botones
+  resetBtn?.addEventListener('click', () => {
+    if(!srcCanvas) return;
+    crop = {x:0, y:0, w:srcCanvas.width, h:srcCanvas.height};
+    render();
+  });
+  autoBtn?.addEventListener('click', () => {
+    if(!srcCanvas) return;
+    crop = autoBounds(srcCanvas);
+    render();
+    showMessage('Auto-recorte por transparencia', 'info', 1200);
+  });
+  cancelBtn?.addEventListener('click', () => { overlay.style.display = 'none'; });
 
-  applyBtn?.addEventListener('click', ()=>{
-    if(!dRef||crop.w<2||crop.h<2) return;
-    const out=document.createElement('canvas');
-    out.width=Math.round(crop.w); out.height=Math.round(crop.h);
-    out.getContext('2d').drawImage(src, crop.x,crop.y,crop.w,crop.h, 0,0,out.width,out.height);
-    const img=new Image();
-    img.onload=()=>{
-      dRef.image=img; dRef.width=img.width; dRef.height=img.height;
-      dRef.originalWidth=img.width; dRef.originalHeight=img.height;
-      dRef.aspectRatio=img.width/img.height;
-      dRef.updateInputs(); drawCanvas();
-      overlay.style.display='none';
-      const cm=v=>(v/(window.PIXELS_PER_CM||10)).toFixed(1);
-      showMessage(`✅ Recorte: ${cm(crop.w)}cm × ${cm(crop.h)}cm`,'success',2500);
-    };
-    img.src=out.toDataURL('image/png');
+  // Aplicar
+  applyBtn?.addEventListener('click', () => {
+    if(!dRef || !srcCanvas || crop.w < 2 || crop.h < 2) return;
+
+    const out = document.createElement('canvas');
+    out.width  = Math.round(crop.w);
+    out.height = Math.round(crop.h);
+    out.getContext('2d').drawImage(
+      srcCanvas,
+      crop.x, crop.y, crop.w, crop.h,
+      0, 0, out.width, out.height
+    );
+
+    // Guardar como canvas directamente (no como Image) para poder re-recortar
+    dRef.image        = out;
+    dRef.width        = out.width;
+    dRef.height       = out.height;
+    dRef.originalWidth  = out.width;
+    dRef.originalHeight = out.height;
+    dRef.aspectRatio  = out.width / out.height;
+    dRef.updateInputs();
+
+    // Limpiar cache de drawCanvas para esta imagen
+    if(typeof designCache !== 'undefined') {
+      try { designCache.delete(out); } catch(e){}
+    }
+
+    drawCanvas();
+    overlay.style.display = 'none';
+
+    const cm = v => (v / (window.PIXELS_PER_CM || 10)).toFixed(1);
+    showMessage(`✅ Recorte aplicado: ${cm(out.width)}cm × ${cm(out.height)}cm`, 'success', 2500);
   });
 })();
 
@@ -3095,11 +3215,11 @@ if(tbDtfBtn){
   });
 }
 
-/* ── Botón ✂️ Recortar apunta a openCropTool ── */
+/* ── Botón ✂️ Recortar ── */
 (function(){
   const trimBtn = document.getElementById('tb-trim-btn');
   if(!trimBtn) return;
-  trimBtn.addEventListener('click', ()=>{
+  trimBtn.addEventListener('click', () => {
     const d = getSelectedDesign();
     if(!d){ showMessage('Selecciona un diseño primero','warning',1800); return; }
     window.openCropTool(d);
