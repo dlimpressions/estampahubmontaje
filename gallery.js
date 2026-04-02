@@ -256,14 +256,13 @@ async function runVisualSearch(file) {
 
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => {
+            img.onload = () => {
         if (searchAbortFlag) { resolve(); return; }
 
         // 2. Filtro rápido con histograma ultra (8x8, 4 bins)
         const ultraHist = getUltraFastHistogram(img);
         if (ultraHist) {
           const ultraDist = histogramDistance(queryHist, ultraHist);
-          // Si la distancia rápida es > 0.5, descartamos (asignamos 999)
           if (ultraDist > 0.6) {
             vsScores.set(d.url, 999);
             done++;
@@ -278,11 +277,30 @@ async function runVisualSearch(file) {
         const finalDist = fullHist ? histogramDistance(queryHist, fullHist) : 999;
         histCache.set(d.url, fullHist);
         vsScores.set(d.url, finalDist);
-        if (finalDist === 0) perfectMatchFound = true;
+        
+        // Si es coincidencia exacta o casi exacta (distancia < 0.01)
+        if (finalDist < 0.01) {
+          vsScores.set(d.url, 0);        // forzar score 0
+          perfectMatchFound = true;
+          searchAbortFlag = true;
+          // Asignar score alto al resto de imágenes no comparadas
+          allDesigns.forEach(design => {
+            if (!vsScores.has(design.url)) vsScores.set(design.url, 999);
+          });
+          visualSearchMode = true;
+          currentPage = 1;
+          document.getElementById('vs-clear').style.display = 'inline-flex';
+          showModalProgress(`✨ ¡Coincidencia exacta! (100% similar)`, 100);
+          render();   // ordenar y mostrar inmediatamente
+          resolve();
+          return;
+        }
+        
         done++;
         updateProgress(done, total);
         resolve();
       };
+
       img.onerror = () => {
         vsScores.set(d.url, 999);
         done++;
