@@ -1,5 +1,5 @@
-// gallery.js - v13: búsqueda visual con rango ampliado y orden descendente por similitud
-console.log("✅ gallery.js v13 - rango ampliado y orden correcto");
+// gallery.js - v14: ultra optimizado con cache y miniaturas eficientes
+console.log("✅ gallery.js v14 - cache, decode async, placeholders");
 
 let allDesigns        = [];
 let currentPage       = 1;
@@ -7,7 +7,13 @@ const itemsPerPage    = 20;
 let selectedItems     = new Set();
 let currentSearch     = '';
 let visualSearchMode  = false;
-let vsScores          = new Map(); // distancia (menor = más similar)
+let vsScores          = new Map();
+
+// Cache de histogramas por URL (para no recalcular)
+const histCache = new Map();
+
+// Debounce para búsqueda por nombre
+let searchDebounceTimer;
 
 window.addEventListener('load', () => {
   const overlay     = document.getElementById('imgbb-gallery-overlay');
@@ -19,6 +25,7 @@ window.addEventListener('load', () => {
     selectedItems.clear();
     visualSearchMode = false;
     vsScores.clear();
+    histCache.clear(); // limpiar cache al abrir
     loadFromSheets();
   });
 
@@ -85,13 +92,17 @@ function buildSearchBar() {
       ✕ Quitar filtro visual
     </button>`;
 
-  document.getElementById('searchInput').addEventListener('input', e => {
-    currentPage = 1;
-    currentSearch = e.target.value;
-    visualSearchMode = false;
-    vsScores.clear();
-    document.getElementById('vs-clear').style.display = 'none';
-    render();
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', e => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      currentPage = 1;
+      currentSearch = e.target.value;
+      visualSearchMode = false;
+      vsScores.clear();
+      document.getElementById('vs-clear').style.display = 'none';
+      render();
+    }, 300); // debounce 300ms
   });
 
   document.getElementById('vs-input').addEventListener('change', e => {
@@ -125,7 +136,7 @@ function showModalProgress(text, percent) {
   `;
 }
 
-// ========== FUNCIONES DE HISTOGRAMA RÁPIDO ==========
+// ========== FUNCIONES DE HISTOGRAMA RÁPIDO CON CACHE ==========
 function getFastHistogram(img, size) {
   size = size || 16;
   try {
@@ -163,7 +174,7 @@ function histogramDistance(a, b) {
   return Math.sqrt(d);
 }
 
-// ========== BÚSQUEDA VISUAL CON RANGO AMPLIADO ==========
+// ========== BÚSQUEDA VISUAL CON CACHE Y RANGO AJUSTABLE ==========
 async function runVisualSearch(file) {
   vsScores.clear();
   showModalProgress('📷 Cargando imagen de búsqueda...', 5);
@@ -191,7 +202,7 @@ async function runVisualSearch(file) {
     return;
   }
 
-  // 🔥 RANGO AMPLIADO: puedes cambiar este número (ej: 300, 400)
+  // RANGO AMPLIADO (ajustable)
   const MAX_COMPARE = 200;
   const toCompare = allDesigns.slice(0, MAX_COMPARE);
   const total = toCompare.length;
@@ -203,11 +214,23 @@ async function runVisualSearch(file) {
   for (let i = 0; i < toCompare.length; i += BATCH) {
     const batch = toCompare.slice(i, i + BATCH);
     await Promise.all(batch.map(d => new Promise(resolve => {
+      // Verificar si ya tenemos el histograma en caché
+      if (histCache.has(d.url)) {
+        const hist = histCache.get(d.url);
+        vsScores.set(d.url, hist ? histogramDistance(queryHist, hist) : 999);
+        done++;
+        const percent = 15 + Math.floor((done / total) * 70);
+        showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
+        resolve();
+        return;
+      }
+
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
           const hist = getFastHistogram(img, 16);
+          histCache.set(d.url, hist);
           vsScores.set(d.url, hist ? histogramDistance(queryHist, hist) : 999);
         } catch(e) {
           vsScores.set(d.url, 999);
@@ -236,7 +259,6 @@ async function runVisualSearch(file) {
     return;
   }
 
-  // Asignar score alto a las imágenes no comparadas
   allDesigns.forEach(d => {
     if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
   });
@@ -297,12 +319,12 @@ function getFilteredList() {
   });
 
   if(visualSearchMode && vsScores.size > 0) {
-    // Orden ascendente por distancia (menor distancia = más similar)
     list = [...list].sort((a, b) => (vsScores.get(a.url) || 999) - (vsScores.get(b.url) || 999));
   }
   return list;
 }
 
+// ========== RENDER OPTIMIZADO CON PLACEHOLDERS ==========
 function render() {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -327,19 +349,26 @@ function render() {
     return;
   }
 
+  // IntersectionObserver para lazy loading
   const io = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if(!entry.isIntersecting) return;
       obs.unobserve(entry.target);
       const img = entry.target.querySelector('img[data-src]');
       if(img) {
-        img.src = img.dataset.src;
+        const src = img.dataset.src;
+        // Usar decode() asíncrono para no bloquear UI
+        const tempImg = new Image();
+        tempImg.onload = () => {
+          img.src = src;
+          img.style.opacity = '1';
+        };
+        tempImg.src = src;
         delete img.dataset.src;
       }
     });
-  }, { rootMargin: '120px' });
+  }, { rootMargin: '100px' });
 
-  // Distancia máxima observada empíricamente (~1.5) para calcular porcentaje
   const maxDistance = 1.5;
 
   page.forEach(d => {
@@ -368,12 +397,14 @@ function render() {
            ${similarityPercent}% similar
          </div>` : '';
 
+    // Placeholder de color mientras carga la imagen
     item.innerHTML = `
       ${scoreBadge}
-      <div style="width:100%;aspect-ratio:1/1;border-radius:5px;overflow:hidden;background:#0d1120;
+      <div style="width:100%;aspect-ratio:1/1;border-radius:5px;overflow:hidden;background:#1e293b;
         position:relative;">
+        <div style="position:absolute;inset:0;background:linear-gradient(110deg, #1e293b 0%, #334155 20%, #1e293b 40%); background-size:200% 100%; animation:shimmer 0.8s infinite;"></div>
         <img data-src="${url}" src=""
-          style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s;"
+          style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s;position:relative;z-index:1;"
           loading="lazy">
         <div class="gal-chk" style="
           position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
@@ -387,8 +418,6 @@ function render() {
         ${d.nombre || '—'}</small>`;
 
     const img = item.querySelector('img');
-    img.onload  = () => img.style.opacity = '1';
-    img.onerror = () => { img.style.opacity = '0.3'; };
     io.observe(item);
 
     item.addEventListener('mouseenter', () => {
@@ -406,6 +435,20 @@ function render() {
     item.addEventListener('dblclick', e => { e.stopImmediatePropagation(); loadOne(url); });
     grid.appendChild(item);
   });
+
+  // Añadir estilo del shimmer si no existe
+  if (!document.querySelector('#shimmer-style')) {
+    const style = document.createElement('style');
+    style.id = 'shimmer-style';
+    style.textContent = `
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   renderPagination(totalPages);
 }
 
@@ -507,7 +550,6 @@ async function loadSelected() {
   selectedItems.clear();
 }
 
-// Función auxiliar trimTransparentPixels
 if (typeof trimTransparentPixels !== 'function') {
   window.trimTransparentPixels = function(img) {
     const tc = document.createElement('canvas');
