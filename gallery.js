@@ -1,5 +1,5 @@
-// gallery.js - v14: ultra optimizado con cache y miniaturas eficientes
-console.log("✅ gallery.js v14 - cache, decode async, placeholders");
+// gallery.js - v15: detección temprana, cancelación al 100%, orden corregido
+console.log("✅ gallery.js v15 - búsqueda inteligente con abort temprano");
 
 let allDesigns        = [];
 let currentPage       = 1;
@@ -7,12 +7,11 @@ const itemsPerPage    = 20;
 let selectedItems     = new Set();
 let currentSearch     = '';
 let visualSearchMode  = false;
-let vsScores          = new Map();
+let vsScores          = new Map();    // distancia (menor = más similar)
+let searchAbortFlag   = false;        // para cancelar búsqueda si ya encontramos 100%
 
-// Cache de histogramas por URL (para no recalcular)
+// Cache de histogramas (por URL)
 const histCache = new Map();
-
-// Debounce para búsqueda por nombre
 let searchDebounceTimer;
 
 window.addEventListener('load', () => {
@@ -25,7 +24,7 @@ window.addEventListener('load', () => {
     selectedItems.clear();
     visualSearchMode = false;
     vsScores.clear();
-    histCache.clear(); // limpiar cache al abrir
+    histCache.clear();
     loadFromSheets();
   });
 
@@ -102,7 +101,7 @@ function buildSearchBar() {
       vsScores.clear();
       document.getElementById('vs-clear').style.display = 'none';
       render();
-    }, 300); // debounce 300ms
+    }, 300);
   });
 
   document.getElementById('vs-input').addEventListener('change', e => {
@@ -121,7 +120,7 @@ function buildSearchBar() {
   });
 }
 
-// ========== MOSTRAR PROGRESO DENTRO DEL MODAL ==========
+// ========== PROGRESO EN MODAL ==========
 function showModalProgress(text, percent) {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -136,17 +135,17 @@ function showModalProgress(text, percent) {
   `;
 }
 
-// ========== FUNCIONES DE HISTOGRAMA RÁPIDO CON CACHE ==========
-function getFastHistogram(img, size) {
-  size = size || 16;
+// ========== HISTOGRAMAS RÁPIDOS ==========
+// Versión ultra rápida (8x8, 4 bins) para descartar
+function getUltraFastHistogram(img) {
+  const size = 8;
+  const bins = 4;
   try {
     const c = document.createElement('canvas');
-    c.width = size;
-    c.height = size;
+    c.width = size; c.height = size;
     const ctx = c.getContext('2d');
     ctx.drawImage(img, 0, 0, size, size);
     const data = ctx.getImageData(0, 0, size, size).data;
-    const bins = 8;
     const hist = new Float32Array(bins * 3);
     const total = size * size;
     for (let i = 0; i < data.length; i += 4) {
@@ -158,10 +157,31 @@ function getFastHistogram(img, size) {
     }
     for (let i = 0; i < hist.length; i++) hist[i] /= total;
     return hist;
-  } catch(e) {
-    console.warn('Error en histograma rápido', e);
-    return null;
-  }
+  } catch(e) { return null; }
+}
+
+// Versión estándar (16x16, 8 bins) para comparación final
+function getFastHistogram(img) {
+  const size = 16;
+  const bins = 8;
+  try {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    const hist = new Float32Array(bins * 3);
+    const total = size * size;
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i+3];
+      if (a < 30) continue;
+      hist[Math.floor(data[i]   / 256 * bins)]          += 1;
+      hist[bins   + Math.floor(data[i+1] / 256 * bins)] += 1;
+      hist[bins*2 + Math.floor(data[i+2] / 256 * bins)] += 1;
+    }
+    for (let i = 0; i < hist.length; i++) hist[i] /= total;
+    return hist;
+  } catch(e) { return null; }
 }
 
 function histogramDistance(a, b) {
@@ -174,9 +194,11 @@ function histogramDistance(a, b) {
   return Math.sqrt(d);
 }
 
-// ========== BÚSQUEDA VISUAL CON CACHE Y RANGO AJUSTABLE ==========
+// ========== BÚSQUEDA VISUAL INTELIGENTE ==========
 async function runVisualSearch(file) {
+  // Resetear estado
   vsScores.clear();
+  searchAbortFlag = false;
   showModalProgress('📷 Cargando imagen de búsqueda...', 5);
 
   let queryImg;
@@ -195,32 +217,39 @@ async function runVisualSearch(file) {
   }
 
   showModalProgress('🎨 Analizando paleta de colores...', 15);
-  const queryHist = getFastHistogram(queryImg, 16);
+  const queryHist = getFastHistogram(queryImg);
   if (!queryHist) {
     showModalProgress('⚠️ No se pudo analizar la imagen', 0);
     setTimeout(() => render(), 1500);
     return;
   }
 
-  // RANGO AMPLIADO (ajustable)
-  const MAX_COMPARE = 80;
+  // RANGO AMPLIADO (puedes cambiarlo hasta 500 si el rendimiento lo permite)
+  const MAX_COMPARE = 200;
   const toCompare = allDesigns.slice(0, MAX_COMPARE);
   const total = toCompare.length;
   let done = 0;
   let failed = 0;
+  let perfectMatchFound = false;
 
   const BATCH = 5;
 
-  for (let i = 0; i < toCompare.length; i += BATCH) {
+  for (let i = 0; i < toCompare.length && !searchAbortFlag; i += BATCH) {
     const batch = toCompare.slice(i, i + BATCH);
     await Promise.all(batch.map(d => new Promise(resolve => {
-      // Verificar si ya tenemos el histograma en caché
+      if (searchAbortFlag) {
+        resolve();
+        return;
+      }
+
+      // 1. Revisar caché
       if (histCache.has(d.url)) {
         const hist = histCache.get(d.url);
-        vsScores.set(d.url, hist ? histogramDistance(queryHist, hist) : 999);
+        const dist = hist ? histogramDistance(queryHist, hist) : 999;
+        vsScores.set(d.url, dist);
+        if (dist === 0) perfectMatchFound = true;
         done++;
-        const percent = 15 + Math.floor((done / total) * 70);
-        showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
+        updateProgress(done, total);
         resolve();
         return;
       }
@@ -228,31 +257,60 @@ async function runVisualSearch(file) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        try {
-          const hist = getFastHistogram(img, 16);
-          histCache.set(d.url, hist);
-          vsScores.set(d.url, hist ? histogramDistance(queryHist, hist) : 999);
-        } catch(e) {
-          vsScores.set(d.url, 999);
-          failed++;
+        if (searchAbortFlag) { resolve(); return; }
+
+        // 2. Filtro rápido con histograma ultra (8x8, 4 bins)
+        const ultraHist = getUltraFastHistogram(img);
+        if (ultraHist) {
+          const ultraDist = histogramDistance(queryHist, ultraHist);
+          // Si la distancia rápida es > 0.5, descartamos (asignamos 999)
+          if (ultraDist > 0.6) {
+            vsScores.set(d.url, 999);
+            done++;
+            updateProgress(done, total);
+            resolve();
+            return;
+          }
         }
+
+        // 3. Cálculo detallado
+        const fullHist = getFastHistogram(img);
+        const finalDist = fullHist ? histogramDistance(queryHist, fullHist) : 999;
+        histCache.set(d.url, fullHist);
+        vsScores.set(d.url, finalDist);
+        if (finalDist === 0) perfectMatchFound = true;
         done++;
-        const percent = 15 + Math.floor((done / total) * 70);
-        showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
+        updateProgress(done, total);
         resolve();
       };
       img.onerror = () => {
         vsScores.set(d.url, 999);
-        failed++;
         done++;
-        const percent = 15 + Math.floor((done / total) * 70);
-        showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
+        updateProgress(done, total);
         resolve();
       };
       img.src = d.url;
     })));
+
+    // Si ya encontramos coincidencia perfecta, detenemos la búsqueda
+    if (perfectMatchFound) {
+      searchAbortFlag = true;
+      showModalProgress(`✨ ¡Coincidencia exacta encontrada! (100% similar)`, 100);
+      setTimeout(() => {
+        // Asignar score alto al resto de imágenes no comparadas
+        allDesigns.forEach(d => {
+          if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
+        });
+        visualSearchMode = true;
+        currentPage = 1;
+        document.getElementById('vs-clear').style.display = 'inline-flex';
+        render();
+      }, 500);
+      return;
+    }
   }
 
+  // Si terminó sin abortar
   if (done === 0 || failed === done) {
     showModalProgress('⚠️ No se pudo comparar ningún diseño (CORS)', 0);
     setTimeout(() => render(), 2000);
@@ -266,11 +324,13 @@ async function runVisualSearch(file) {
   visualSearchMode = true;
   currentPage = 1;
   document.getElementById('vs-clear').style.display = 'inline-flex';
-
   showModalProgress(`✅ Mostrando ${Math.min(total, MAX_COMPARE)} resultados similares...`, 100);
-  setTimeout(() => {
-    render();
-  }, 500);
+  setTimeout(() => render(), 500);
+}
+
+function updateProgress(done, total) {
+  const percent = 15 + Math.floor((done / total) * 70);
+  showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
 }
 // ========== FIN BÚSQUEDA VISUAL ==========
 
@@ -324,7 +384,7 @@ function getFilteredList() {
   return list;
 }
 
-// ========== RENDER OPTIMIZADO CON PLACEHOLDERS ==========
+// ========== RENDER CON MINIATURAS EFICIENTES ==========
 function render() {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -336,9 +396,7 @@ function render() {
   const page       = list.slice(start, start + itemsPerPage);
 
   if (visualSearchMode && list.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;font-family:monospace;">
-      🔍 No se encontraron diseños similares. Prueba con otra imagen o desactiva el filtro visual.
-    </div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;">🔍 No se encontraron diseños similares. Prueba con otra imagen.</div>`;
     renderPagination(totalPages);
     return;
   }
@@ -349,15 +407,14 @@ function render() {
     return;
   }
 
-  // IntersectionObserver para lazy loading
   const io = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if(!entry.isIntersecting) return;
       obs.unobserve(entry.target);
       const img = entry.target.querySelector('img[data-src]');
-      if(img) {
+      if(img && img.dataset.src) {
         const src = img.dataset.src;
-        // Usar decode() asíncrono para no bloquear UI
+        // Decodificación asíncrona para no bloquear UI
         const tempImg = new Image();
         tempImg.onload = () => {
           img.src = src;
@@ -397,14 +454,13 @@ function render() {
            ${similarityPercent}% similar
          </div>` : '';
 
-    // Placeholder de color mientras carga la imagen
+    // Placeholder más ligero (solo color, sin animación shimmer para ahorrar CPU)
     item.innerHTML = `
       ${scoreBadge}
       <div style="width:100%;aspect-ratio:1/1;border-radius:5px;overflow:hidden;background:#1e293b;
         position:relative;">
-        <div style="position:absolute;inset:0;background:linear-gradient(110deg, #1e293b 0%, #334155 20%, #1e293b 40%); background-size:200% 100%; animation:shimmer 0.8s infinite;"></div>
         <img data-src="${url}" src=""
-          style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s;position:relative;z-index:1;"
+          style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s;"
           loading="lazy">
         <div class="gal-chk" style="
           position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
@@ -417,7 +473,7 @@ function render() {
         text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${d.nombre || '—'}</small>`;
 
-    const img = item.querySelector('img');
+    const imgElem = item.querySelector('img');
     io.observe(item);
 
     item.addEventListener('mouseenter', () => {
@@ -435,19 +491,6 @@ function render() {
     item.addEventListener('dblclick', e => { e.stopImmediatePropagation(); loadOne(url); });
     grid.appendChild(item);
   });
-
-  // Añadir estilo del shimmer si no existe
-  if (!document.querySelector('#shimmer-style')) {
-    const style = document.createElement('style');
-    style.id = 'shimmer-style';
-    style.textContent = `
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
 
   renderPagination(totalPages);
 }
