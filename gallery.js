@@ -1,17 +1,14 @@
-// gallery.js - v9: sin crash, lazy real, búsqueda por imagen
-console.log("✅ gallery.js v9");
+// gallery.js - v10: con manejo de errores CORS y búsqueda visual mejorada
+console.log("✅ gallery.js v10 - con detección de CORS");
 
 let allDesigns        = [];
 let currentPage       = 1;
 const itemsPerPage    = 20;
 let selectedItems     = new Set();
 let currentSearch     = '';
-let visualSearchMode  = false;   // true = ordenado por similitud visual
-let vsScores          = new Map(); // url → score (menor = más similar)
+let visualSearchMode  = false;
+let vsScores          = new Map();
 
-/* ═══════════════════════════════════════
-   INIT
-═══════════════════════════════════════ */
 window.addEventListener('load', () => {
   const overlay     = document.getElementById('imgbb-gallery-overlay');
   const openBtn     = document.getElementById('open-imgbb-gallery');
@@ -31,15 +28,12 @@ window.addEventListener('load', () => {
   });
 });
 
-/* ═══════════════════════════════════════
-   CARGA DESDE SHEETS
-═══════════════════════════════════════ */
 async function loadFromSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
 
   grid.innerHTML = `
-    <div style="grid-column:1/-1;text-align:center;padding:50px;color:#475569;font-family:monospace;font-size:0.8rem;">
+    <div style="grid-column:1/-1;text-align:center;padding:50px;color:#475569;font-family:monospace;">
       <div style="display:inline-block;width:28px;height:28px;border:3px solid rgba(14,165,233,0.2);
         border-top-color:#0ea5e9;border-radius:50%;animation:gspin 0.7s linear infinite;margin-bottom:10px;"></div><br>
       Cargando diseños...
@@ -55,13 +49,10 @@ async function loadFromSheets() {
     buildMultiBar();
     render();
   } catch(e) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f43f5e;padding:40px;font-family:monospace;">❌ Error al cargar: ${e.message}</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f43f5e;padding:40px;">❌ Error al cargar: ${e.message}</div>`;
   }
 }
 
-/* ═══════════════════════════════════════
-   BARRA DE BÚSQUEDA + BÚSQUEDA POR IMAGEN
-═══════════════════════════════════════ */
 function buildSearchBar() {
   let sc = document.getElementById('searchContainer');
   if(!sc){
@@ -76,24 +67,18 @@ function buildSearchBar() {
     <input id="searchInput" type="text" placeholder="🔍 Buscar por nombre..." style="
       flex:1;min-width:180px;padding:9px 13px;border-radius:7px;
       border:1px solid rgba(14,165,233,0.3);background:rgba(14,165,233,0.06);
-      color:#e2e8f0;outline:none;font-family:monospace;font-size:0.85rem;box-sizing:border-box;"
-      onfocus="this.style.borderColor='#0ea5e9'"
-      onblur="this.style.borderColor='rgba(14,165,233,0.3)'">
-
-    <!-- Botón buscar por imagen -->
+      color:#e2e8f0;outline:none;font-family:monospace;font-size:0.85rem;">
+    
     <label id="vs-label" title="Buscar diseño similar por imagen" style="
       display:flex;align-items:center;gap:5px;padding:8px 12px;
       border-radius:7px;border:1px solid rgba(168,85,247,0.4);
       background:rgba(168,85,247,0.08);color:#a855f7;
-      font-size:0.8rem;font-family:monospace;cursor:pointer;white-space:nowrap;
-      transition:all 0.15s;"
-      onmouseenter="this.style.background='rgba(168,85,247,0.18)'"
-      onmouseleave="this.style.background='rgba(168,85,247,0.08)'">
+      font-size:0.8rem;font-family:monospace;cursor:pointer;
+      transition:all 0.15s;">
       🖼️ Buscar por imagen
       <input id="vs-input" type="file" accept="image/*" style="display:none;">
     </label>
 
-    <!-- Indicador de búsqueda visual activa -->
     <button id="vs-clear" style="display:none;padding:7px 12px;border-radius:7px;
       border:1px solid rgba(244,63,94,0.4);background:rgba(244,63,94,0.08);
       color:#f43f5e;font-size:0.78rem;font-family:monospace;cursor:pointer;">
@@ -125,35 +110,35 @@ function buildSearchBar() {
   });
 }
 
-/* ═══════════════════════════════════════
-   BÚSQUEDA VISUAL POR COLOR (histograma)
-═══════════════════════════════════════ */
+// Versión segura de histograma (retorna null si hay error CORS)
 function getColorHistogram(img, size) {
   size = size || 32;
-  const c = document.createElement('canvas');
-  c.width = size; c.height = size;
-  const ctx = c.getContext('2d');
-  ctx.drawImage(img, 0, 0, size, size);
-  const data = ctx.getImageData(0, 0, size, size).data;
-
-  // Histograma de 16 cubos por canal R, G, B
-  const bins = 16;
-  const hist = new Float32Array(bins * 3);
-  const total = size * size;
-
-  for(let i = 0; i < data.length; i += 4) {
-    const a = data[i+3];
-    if(a < 30) continue; // ignorar transparente
-    hist[Math.floor(data[i]   / 256 * bins)]           += 1;
-    hist[bins   + Math.floor(data[i+1] / 256 * bins)]  += 1;
-    hist[bins*2 + Math.floor(data[i+2] / 256 * bins)]  += 1;
+  try {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    const bins = 16;
+    const hist = new Float32Array(bins * 3);
+    const total = size * size;
+    for(let i = 0; i < data.length; i += 4) {
+      const a = data[i+3];
+      if(a < 30) continue;
+      hist[Math.floor(data[i]   / 256 * bins)]           += 1;
+      hist[bins   + Math.floor(data[i+1] / 256 * bins)]  += 1;
+      hist[bins*2 + Math.floor(data[i+2] / 256 * bins)]  += 1;
+    }
+    for(let i = 0; i < hist.length; i++) hist[i] /= total;
+    return hist;
+  } catch(e) {
+    console.warn('Error al obtener histograma (probablemente CORS)', e);
+    return null;
   }
-  // Normalizar
-  for(let i = 0; i < hist.length; i++) hist[i] /= total;
-  return hist;
 }
 
 function histogramDistance(a, b) {
+  if (!a || !b) return 999;
   let d = 0;
   for(let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]);
   return d;
@@ -164,21 +149,33 @@ async function runVisualSearch(file) {
   vsScores.clear();
 
   // Cargar imagen de consulta
-  const queryImg = await new Promise((res, rej) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => { URL.revokeObjectURL(url); res(img); };
-    img.onerror = rej;
-    img.src = url;
-  });
+  let queryImg;
+  try {
+    queryImg = await new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); rej(e); };
+      img.src = url;
+    });
+  } catch(e) {
+    msg.remove();
+    showMessage('Error al cargar la imagen de búsqueda', 'error');
+    return;
+  }
 
   const queryHist = getColorHistogram(queryImg);
+  if (!queryHist) {
+    msg.remove();
+    showMessage('No se pudo analizar la imagen (formato no soportado o CORS)', 'error');
+    return;
+  }
 
-  // Comparar contra los primeros 100 diseños (límite para no crashear)
-  const toCompare = allDesigns.slice(0, 200);
+  // Comparar contra TODOS los diseños
+  const toCompare = allDesigns;
   let done = 0;
+  let failed = 0;
 
-  // Comparar en lotes de 5 para no saturar
   const BATCH = 5;
   for(let i = 0; i < toCompare.length; i += BATCH) {
     const batch = toCompare.slice(i, i + BATCH);
@@ -188,33 +185,40 @@ async function runVisualSearch(file) {
       img.onload = () => {
         try {
           const hist = getColorHistogram(img);
-          vsScores.set(d.url, histogramDistance(queryHist, hist));
-        } catch(e) { vsScores.set(d.url, 999); }
+          vsScores.set(d.url, hist ? histogramDistance(queryHist, hist) : 999);
+        } catch(e) { 
+          vsScores.set(d.url, 999);
+          failed++;
+        }
         done++;
         res();
       };
-      img.onerror = () => { vsScores.set(d.url, 999); done++; res(); };
-      // Usar mismo URL pero browser cache lo reutilizará si ya cargó
+      img.onerror = () => { 
+        vsScores.set(d.url, 999);
+        failed++;
+        done++;
+        res();
+      };
       img.src = d.url;
     })));
   }
 
-  // Los que no comparamos les ponemos score neutro
-  allDesigns.forEach(d => {
-    if(!vsScores.has(d.url)) vsScores.set(d.url, 998);
-  });
-
   msg.remove();
+
+  if (done === 0 || failed === done) {
+    showMessage('⚠️ No se pudo comparar ningún diseño (posiblemente por CORS).', 'warning', 5000);
+    visualSearchMode = false;
+    render();
+    return;
+  }
+
   visualSearchMode = true;
   currentPage = 1;
   document.getElementById('vs-clear').style.display = 'inline-flex';
   render();
-  showMessage(`🎨 Mostrando diseños más similares (${done} comparados)`, 'success', 3000);
+  showMessage(`🎨 Mostrando diseños más similares (${done - failed} comparados, ${failed} fallaron por CORS)`, 'success', 4000);
 }
 
-/* ═══════════════════════════════════════
-   BARRA MULTI-SELECCIÓN
-═══════════════════════════════════════ */
 function buildMultiBar() {
   let bar = document.getElementById('gallery-multibar');
   if(!bar) {
@@ -243,7 +247,6 @@ function updateMultiBar() {
   document.getElementById('gal-clear-sel').onclick = () => {
     selectedItems.clear();
     updateMultiBar();
-    // Actualizar visual de items sin re-renderizar todo
     document.querySelectorAll('.gal-item').forEach(el => {
       el.dataset.sel = '0';
       applySelStyle(el, false);
@@ -251,9 +254,6 @@ function updateMultiBar() {
   };
 }
 
-/* ═══════════════════════════════════════
-   RENDER GRID
-═══════════════════════════════════════ */
 function getFilteredList() {
   const term = currentSearch.toLowerCase().trim();
   let list = allDesigns.filter(d => {
@@ -264,7 +264,6 @@ function getFilteredList() {
   });
 
   if(visualSearchMode && vsScores.size > 0) {
-    // Ordenar por similitud (menor distancia = más similar)
     list = [...list].sort((a, b) => (vsScores.get(a.url) || 999) - (vsScores.get(b.url) || 999));
   }
   return list;
@@ -280,13 +279,21 @@ function render() {
   const start      = (currentPage - 1) * itemsPerPage;
   const page       = list.slice(start, start + itemsPerPage);
 
-  if(page.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#475569;padding:50px;font-family:monospace;font-size:0.78rem;">Sin resultados</div>`;
+  // Mensaje especial si búsqueda visual no arroja resultados
+  if (visualSearchMode && list.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;font-family:monospace;">
+      🔍 No se encontraron diseños similares. Prueba con otra imagen o desactiva el filtro visual.
+    </div>`;
     renderPagination(totalPages);
     return;
   }
 
-  // IntersectionObserver para lazy load real
+  if(page.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#475569;padding:50px;">Sin resultados</div>`;
+    renderPagination(totalPages);
+    return;
+  }
+
   const io = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if(!entry.isIntersecting) return;
@@ -314,7 +321,6 @@ function render() {
       background:${isSel ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.025)'};
       transition:border-color 0.15s,background 0.15s,transform 0.12s;`;
 
-    // Badge de similitud visual
     const scoreBadge = (visualSearchMode && score !== undefined && score < 998)
       ? `<div style="position:absolute;top:4px;left:6px;font-size:0.55rem;font-family:monospace;
            background:rgba(168,85,247,0.8);color:#fff;padding:1px 5px;border-radius:4px;z-index:2;">
@@ -333,27 +339,22 @@ function render() {
           border:2px solid #0ea5e9;
           background:${isSel ? '#0ea5e9' : 'transparent'};
           color:#fff;display:flex;align-items:center;justify-content:center;
-          font-size:11px;z-index:2;transition:all 0.14s;">${isSel ? '✓' : ''}</div>
+          font-size:11px;z-index:2;">${isSel ? '✓' : ''}</div>
       </div>
       <small style="display:block;margin-top:4px;color:#64748b;font-size:0.62rem;
         text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${d.nombre || '—'}</small>`;
 
-    // Cargar imagen cuando sea visible
     const img = item.querySelector('img');
     img.onload  = () => img.style.opacity = '1';
     img.onerror = () => { img.style.opacity = '0.3'; };
     io.observe(item);
 
-    // Hover
     item.addEventListener('mouseenter', () => {
       if(item.dataset.sel !== '1') item.style.transform = 'translateY(-2px)';
     });
-    item.addEventListener('mouseleave', () => {
-      item.style.transform = 'none';
-    });
+    item.addEventListener('mouseleave', () => { item.style.transform = 'none'; });
 
-    // Clic simple = toggle selección (SIN re-render completo)
     item.addEventListener('click', () => {
       const sel = item.dataset.sel === '1';
       if(sel) { selectedItems.delete(url); item.dataset.sel = '0'; applySelStyle(item, false); }
@@ -361,26 +362,19 @@ function render() {
       updateMultiBar();
     });
 
-    // Doble clic = cargar solo este
     item.addEventListener('dblclick', e => { e.stopImmediatePropagation(); loadOne(url); });
-
     grid.appendChild(item);
   });
-
   renderPagination(totalPages);
 }
 
 function applySelStyle(item, sel) {
   item.style.borderColor = sel ? '#0ea5e9' : 'rgba(14,165,233,0.14)';
   item.style.background  = sel ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.025)';
-  item.style.transform   = 'none';
   const chk = item.querySelector('.gal-chk');
   if(chk) { chk.style.background = sel ? '#0ea5e9' : 'transparent'; chk.textContent = sel ? '✓' : ''; }
 }
 
-/* ═══════════════════════════════════════
-   PAGINACIÓN
-═══════════════════════════════════════ */
 function renderPagination(totalPages) {
   const pag = document.getElementById('pagination');
   if(!pag) return;
@@ -413,9 +407,6 @@ function renderPagination(totalPages) {
   }
 }
 
-/* ═══════════════════════════════════════
-   CARGAR AL CANVAS
-═══════════════════════════════════════ */
 function loadOne(url) {
   const m = showMessage('Cargando...', 'loading', 0);
   const img = new Image();
@@ -473,4 +464,45 @@ async function loadSelected() {
   showMessage(`✅ ${ok} diseño(s) cargados al canvas`, 'success', 2500);
   document.getElementById('imgbb-gallery-overlay').style.display = 'none';
   selectedItems.clear();
+}
+
+// Función auxiliar trimTransparentPixels (debe estar definida globalmente)
+if (typeof trimTransparentPixels !== 'function') {
+  window.trimTransparentPixels = function(img) {
+    const tc = document.createElement('canvas');
+    tc.width = img.width;
+    tc.height = img.height;
+    const tctx = tc.getContext('2d');
+    tctx.drawImage(img, 0, 0);
+    const { data } = tctx.getImageData(0, 0, tc.width, tc.height);
+    let top = tc.height, left = tc.width, right = 0, bottom = 0;
+    let found = false;
+    for (let y = 0; y < tc.height; y++) {
+      for (let x = 0; x < tc.width; x++) {
+        if (data[(y * tc.width + x) * 4 + 3] > 10) {
+          if (y < top) top = y;
+          if (y > bottom) bottom = y;
+          if (x < left) left = x;
+          if (x > right) right = x;
+          found = true;
+        }
+      }
+    }
+    if (!found) return tc;
+    const w = right - left + 1;
+    const h = bottom - top + 1;
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    out.getContext('2d').drawImage(tc, left, top, w, h, 0, 0, w, h);
+    return out;
+  };
+}
+
+// Exponer showMessage globalmente si no existe
+if (typeof showMessage !== 'function') {
+  window.showMessage = function(msg, type, duration) {
+    console.log(`[${type}] ${msg}`);
+    alert(msg); // fallback
+  };
 }
