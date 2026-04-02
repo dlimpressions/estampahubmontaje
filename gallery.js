@@ -450,11 +450,16 @@ function render() {
     const url   = d.url;
     const isSel = selectedItems.has(url);
     let score = vsScores.get(url);
-    let similarityPercent = 0;
-    if (score !== undefined && score < 998) {
-      let similarity = Math.max(0, 1 - (score / maxDistance));
-      similarityPercent = Math.round(similarity * 100);
-    }
+   let similarityPercent = 0;
+if (score !== undefined && score < 998) {
+  // Si la distancia es muy pequeña (< 0.05), consideramos 100% de similitud
+  if (score < 0.05) {
+    similarityPercent = 100;
+  } else {
+    let similarity = Math.max(0, 1 - (score / maxDistance));
+    similarityPercent = Math.round(similarity * 100);
+  }
+}
 
     const item = document.createElement('div');
     item.className    = 'gal-item';
