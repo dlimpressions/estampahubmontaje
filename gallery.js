@@ -450,12 +450,17 @@ function render() {
     const url   = d.url;
     const isSel = selectedItems.has(url);
     let score = vsScores.get(url);
-   let similarityPercent = 0;
+let similarityPercent = 0;
 if (score !== undefined && score < 998) {
-  // Si la distancia es muy pequeña (< 0.05), consideramos 100% de similitud
+  // Si la distancia es muy pequeña (< 0.05), lo consideramos 100%
   if (score < 0.05) {
     similarityPercent = 100;
   } else {
+    let similarity = Math.max(0, 1 - (score / maxDistance));
+    similarityPercent = Math.round(similarity * 100);
+  }
+}  
+ else {
     let similarity = Math.max(0, 1 - (score / maxDistance));
     similarityPercent = Math.round(similarity * 100);
   }
