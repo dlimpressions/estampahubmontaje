@@ -203,7 +203,7 @@ async function runVisualSearch(file) {
   }
 
   // RANGO AMPLIADO (ajustable)
-  const MAX_COMPARE = 200;
+  const MAX_COMPARE = 80;
   const toCompare = allDesigns.slice(0, MAX_COMPARE);
   const total = toCompare.length;
   let done = 0;
