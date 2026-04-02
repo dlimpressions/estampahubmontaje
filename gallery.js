@@ -1,5 +1,5 @@
-// gallery.js - v10: con manejo de errores CORS y búsqueda visual mejorada
-console.log("✅ gallery.js v10 - con detección de CORS");
+// gallery.js - v11: búsqueda visual optimizada (rápida, sin servidor)
+console.log("✅ gallery.js v11 - búsqueda visual rápida con límite y progreso");
 
 let allDesigns        = [];
 let currentPage       = 1;
@@ -110,29 +110,30 @@ function buildSearchBar() {
   });
 }
 
-// Versión segura de histograma (retorna null si hay error CORS)
-function getColorHistogram(img, size) {
-  size = size || 32;
+// ========== BÚSQUEDA VISUAL OPTIMIZADA (rápida, sin servidor) ==========
+function getFastHistogram(img, size) {
+  size = size || 16;
   try {
     const c = document.createElement('canvas');
-    c.width = size; c.height = size;
+    c.width = size;
+    c.height = size;
     const ctx = c.getContext('2d');
     ctx.drawImage(img, 0, 0, size, size);
     const data = ctx.getImageData(0, 0, size, size).data;
-    const bins = 16;
+    const bins = 8;  // menos bins = más rápido
     const hist = new Float32Array(bins * 3);
     const total = size * size;
-    for(let i = 0; i < data.length; i += 4) {
+    for (let i = 0; i < data.length; i += 4) {
       const a = data[i+3];
-      if(a < 30) continue;
-      hist[Math.floor(data[i]   / 256 * bins)]           += 1;
-      hist[bins   + Math.floor(data[i+1] / 256 * bins)]  += 1;
-      hist[bins*2 + Math.floor(data[i+2] / 256 * bins)]  += 1;
+      if (a < 30) continue;
+      hist[Math.floor(data[i]   / 256 * bins)]          += 1;
+      hist[bins   + Math.floor(data[i+1] / 256 * bins)] += 1;
+      hist[bins*2 + Math.floor(data[i+2] / 256 * bins)] += 1;
     }
-    for(let i = 0; i < hist.length; i++) hist[i] /= total;
+    for (let i = 0; i < hist.length; i++) hist[i] /= total;
     return hist;
   } catch(e) {
-    console.warn('Error al obtener histograma (probablemente CORS)', e);
+    console.warn('Error en histograma rápido', e);
     return null;
   }
 }
@@ -140,8 +141,11 @@ function getColorHistogram(img, size) {
 function histogramDistance(a, b) {
   if (!a || !b) return 999;
   let d = 0;
-  for(let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]);
-  return d;
+  for (let i = 0; i < a.length; i++) {
+    const diff = a[i] - b[i];
+    d += diff * diff;
+  }
+  return Math.sqrt(d);
 }
 
 async function runVisualSearch(file) {
@@ -164,60 +168,73 @@ async function runVisualSearch(file) {
     return;
   }
 
-  const queryHist = getColorHistogram(queryImg);
+  const queryHist = getFastHistogram(queryImg, 16);
   if (!queryHist) {
     msg.remove();
-    showMessage('No se pudo analizar la imagen (formato no soportado o CORS)', 'error');
+    showMessage('No se pudo analizar la imagen (formato no soportado)', 'error');
     return;
   }
 
-  // Comparar contra TODOS los diseños
-  const toCompare = allDesigns;
+  // Limitar a las primeras 80 imágenes para evitar saturación
+  const MAX_COMPARE = 80;
+  const toCompare = allDesigns.slice(0, MAX_COMPARE);
+  const total = toCompare.length;
   let done = 0;
   let failed = 0;
 
+  const progressMsg = showMessage(`Comparando 0/${total} imágenes...`, 'loading', 0);
   const BATCH = 5;
-  for(let i = 0; i < toCompare.length; i += BATCH) {
+
+  for (let i = 0; i < toCompare.length; i += BATCH) {
     const batch = toCompare.slice(i, i + BATCH);
-    await Promise.all(batch.map(d => new Promise(res => {
+    await Promise.all(batch.map(d => new Promise(resolve => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
-          const hist = getColorHistogram(img);
+          const hist = getFastHistogram(img, 16);
           vsScores.set(d.url, hist ? histogramDistance(queryHist, hist) : 999);
-        } catch(e) { 
+        } catch(e) {
           vsScores.set(d.url, 999);
           failed++;
         }
         done++;
-        res();
+        progressMsg.querySelector('span').textContent = `Comparando ${done}/${total} imágenes...`;
+        resolve();
       };
-      img.onerror = () => { 
+      img.onerror = () => {
         vsScores.set(d.url, 999);
         failed++;
         done++;
-        res();
+        progressMsg.querySelector('span').textContent = `Comparando ${done}/${total} imágenes...`;
+        resolve();
       };
       img.src = d.url;
     })));
   }
 
+  progressMsg.remove();
   msg.remove();
 
   if (done === 0 || failed === done) {
-    showMessage('⚠️ No se pudo comparar ningún diseño (posiblemente por CORS).', 'warning', 5000);
+    showMessage('⚠️ No se pudo comparar ningún diseño. Posible problema CORS.', 'warning', 5000);
     visualSearchMode = false;
     render();
     return;
   }
 
+  // Asignar score alto al resto de imágenes (no se compararon)
+  allDesigns.forEach(d => {
+    if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
+  });
+
   visualSearchMode = true;
   currentPage = 1;
   document.getElementById('vs-clear').style.display = 'inline-flex';
   render();
-  showMessage(`🎨 Mostrando diseños más similares (${done - failed} comparados, ${failed} fallaron por CORS)`, 'success', 4000);
+  showMessage(`🎨 Mostrando los ${Math.min(total, MAX_COMPARE)} diseños más similares (${done - failed} comparados)`, 'success', 4000);
 }
+// ========== FIN BÚSQUEDA VISUAL ==========
 
 function buildMultiBar() {
   let bar = document.getElementById('gallery-multibar');
@@ -279,7 +296,6 @@ function render() {
   const start      = (currentPage - 1) * itemsPerPage;
   const page       = list.slice(start, start + itemsPerPage);
 
-  // Mensaje especial si búsqueda visual no arroja resultados
   if (visualSearchMode && list.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;font-family:monospace;">
       🔍 No se encontraron diseños similares. Prueba con otra imagen o desactiva el filtro visual.
@@ -503,6 +519,6 @@ if (typeof trimTransparentPixels !== 'function') {
 if (typeof showMessage !== 'function') {
   window.showMessage = function(msg, type, duration) {
     console.log(`[${type}] ${msg}`);
-    alert(msg); // fallback
+    alert(msg);
   };
 }
