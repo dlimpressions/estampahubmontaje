@@ -460,13 +460,7 @@ if (score !== undefined && score < 998) {
     similarityPercent = Math.round(similarity * 100);
   }
 }  
- else {
-    let similarity = Math.max(0, 1 - (score / maxDistance));
-    similarityPercent = Math.round(similarity * 100);
-  }
-}
-
-    const item = document.createElement('div');
+     const item = document.createElement('div');
     item.className    = 'gal-item';
     item.dataset.url  = url;
     item.dataset.sel  = isSel ? '1' : '0';
