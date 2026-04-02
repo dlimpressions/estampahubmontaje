@@ -450,7 +450,6 @@ function render() {
     const url   = d.url;
     const isSel = selectedItems.has(url);
     let score = vsScores.get(url);
-    let score = vsScores.get(url);
 let similarityPercent = 0;
 if (score !== undefined && score < 998) {
   if (score < 0.05) {
@@ -461,6 +460,7 @@ if (score !== undefined && score < 998) {
     similarityPercent = Math.round(similarity * 100);
   }
 }
+
      const item = document.createElement('div');
     item.className    = 'gal-item';
     item.dataset.url  = url;
