@@ -1,5 +1,5 @@
-// gallery.js - v12: búsqueda visual con progreso dentro del modal y mayor rango
-console.log("✅ gallery.js v12 - búsqueda visual optimizada con progreso en modal");
+// gallery.js - v13: búsqueda visual con rango ampliado y orden descendente por similitud
+console.log("✅ gallery.js v13 - rango ampliado y orden correcto");
 
 let allDesigns        = [];
 let currentPage       = 1;
@@ -7,10 +7,7 @@ const itemsPerPage    = 20;
 let selectedItems     = new Set();
 let currentSearch     = '';
 let visualSearchMode  = false;
-let vsScores          = new Map();  // distancia (menor = más similar)
-
-// Elemento de progreso dentro del modal
-let progressContainer = null;
+let vsScores          = new Map(); // distancia (menor = más similar)
 
 window.addEventListener('load', () => {
   const overlay     = document.getElementById('imgbb-gallery-overlay');
@@ -61,8 +58,8 @@ function buildSearchBar() {
   if(!sc){
     sc = document.createElement('div');
     sc.id = 'searchContainer';
-    const grid = document.getElementById('imgbb-designs-grid');
-    grid.parentNode.insertBefore(sc, grid);
+    document.getElementById('imgbb-designs-grid').parentNode
+      .insertBefore(sc, document.getElementById('imgbb-designs-grid'));
   }
 
   sc.style.cssText = 'margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;';
@@ -113,51 +110,20 @@ function buildSearchBar() {
   });
 }
 
-// ========== BARRA DE PROGRESO DENTRO DEL MODAL ==========
-function ensureProgressContainer() {
-  if (progressContainer) return progressContainer;
+// ========== MOSTRAR PROGRESO DENTRO DEL MODAL ==========
+function showModalProgress(text, percent) {
   const grid = document.getElementById('imgbb-designs-grid');
-  if (!grid) return null;
-  progressContainer = document.createElement('div');
-  progressContainer.id = 'vs-progress-container';
-  progressContainer.style.cssText = `
-    margin: 12px 10px;
-    padding: 10px;
-    background: rgba(14,165,233,0.08);
-    border-radius: 8px;
-    border-left: 3px solid #0ea5e9;
-    font-family: monospace;
-    font-size: 0.75rem;
-    color: #0ea5e9;
-    text-align: center;
-    display: none;
-  `;
-  // Insertar justo debajo del grid
-  grid.parentNode.insertBefore(progressContainer, grid.nextSibling);
-  return progressContainer;
-}
-
-function updateProgress(current, total, status = 'Comparando') {
-  const container = ensureProgressContainer();
-  if (!container) return;
-  container.style.display = 'block';
-  const percent = total ? Math.round((current / total) * 100) : 0;
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-      <span>${status}</span>
-      <span>${current}/${total} (${percent}%)</span>
-    </div>
-    <div style="background:#1e293b; border-radius:4px; overflow:hidden;">
-      <div style="width:${percent}%; height:4px; background:#0ea5e9; transition:width 0.2s;"></div>
+  if(!grid) return;
+  grid.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#cbd5e0;">
+      <div style="width:80%;max-width:300px;margin:0 auto 20px auto;background:#1e293b;border-radius:30px;overflow:hidden;">
+        <div style="width:${percent}%;height:6px;background:#0ea5e9;transition:width 0.2s;"></div>
+      </div>
+      <div style="font-family:monospace;font-size:0.85rem;">${text}</div>
+      <div style="margin-top:12px;font-size:0.7rem;color:#94a3b8;">Analizando colores... por favor espera</div>
     </div>
   `;
 }
-
-function hideProgress() {
-  const container = ensureProgressContainer();
-  if (container) container.style.display = 'none';
-}
-// ========== FIN BARRA DE PROGRESO ==========
 
 // ========== FUNCIONES DE HISTOGRAMA RÁPIDO ==========
 function getFastHistogram(img, size) {
@@ -182,7 +148,7 @@ function getFastHistogram(img, size) {
     for (let i = 0; i < hist.length; i++) hist[i] /= total;
     return hist;
   } catch(e) {
-    console.warn('Error en histograma', e);
+    console.warn('Error en histograma rápido', e);
     return null;
   }
 }
@@ -196,16 +162,12 @@ function histogramDistance(a, b) {
   }
   return Math.sqrt(d);
 }
-// ========== FIN FUNCIONES DE HISTOGRAMA ==========
 
-// ========== BÚSQUEDA VISUAL CON PROGRESO Y MÁS RANGO ==========
+// ========== BÚSQUEDA VISUAL CON RANGO AMPLIADO ==========
 async function runVisualSearch(file) {
   vsScores.clear();
-  visualSearchMode = false;
-  hideProgress();
-  updateProgress(0, 1, 'Analizando imagen...');
+  showModalProgress('📷 Cargando imagen de búsqueda...', 5);
 
-  // Cargar imagen de consulta
   let queryImg;
   try {
     queryImg = await new Promise((res, rej) => {
@@ -216,28 +178,28 @@ async function runVisualSearch(file) {
       img.src = url;
     });
   } catch(e) {
-    hideProgress();
-    showMessage('Error al cargar la imagen de búsqueda', 'error');
+    showModalProgress('❌ Error al cargar la imagen', 0);
+    setTimeout(() => render(), 1500);
     return;
   }
 
+  showModalProgress('🎨 Analizando paleta de colores...', 15);
   const queryHist = getFastHistogram(queryImg, 16);
   if (!queryHist) {
-    hideProgress();
-    showMessage('No se pudo analizar la imagen', 'error');
+    showModalProgress('⚠️ No se pudo analizar la imagen', 0);
+    setTimeout(() => render(), 1500);
     return;
   }
 
-  // Aumentar rango de búsqueda (puedes subir hasta 300-400 si el rendimiento lo permite)
-  const MAX_COMPARE = 200;  // antes 80, ahora 200
+  // 🔥 RANGO AMPLIADO: puedes cambiar este número (ej: 300, 400)
+  const MAX_COMPARE = 200;
   const toCompare = allDesigns.slice(0, MAX_COMPARE);
   const total = toCompare.length;
   let done = 0;
   let failed = 0;
 
-  updateProgress(0, total, 'Comparando colores...');
-
   const BATCH = 5;
+
   for (let i = 0; i < toCompare.length; i += BATCH) {
     const batch = toCompare.slice(i, i + BATCH);
     await Promise.all(batch.map(d => new Promise(resolve => {
@@ -252,28 +214,29 @@ async function runVisualSearch(file) {
           failed++;
         }
         done++;
-        updateProgress(done, total, 'Comparando colores...');
+        const percent = 15 + Math.floor((done / total) * 70);
+        showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
         resolve();
       };
       img.onerror = () => {
         vsScores.set(d.url, 999);
         failed++;
         done++;
-        updateProgress(done, total, 'Comparando colores...');
+        const percent = 15 + Math.floor((done / total) * 70);
+        showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
         resolve();
       };
       img.src = d.url;
     })));
   }
 
-  hideProgress();
-
   if (done === 0 || failed === done) {
-    showMessage('⚠️ No se pudo comparar ningún diseño (CORS).', 'warning', 5000);
+    showModalProgress('⚠️ No se pudo comparar ningún diseño (CORS)', 0);
+    setTimeout(() => render(), 2000);
     return;
   }
 
-  // Asignar score alto a imágenes no comparadas
+  // Asignar score alto a las imágenes no comparadas
   allDesigns.forEach(d => {
     if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
   });
@@ -281,8 +244,11 @@ async function runVisualSearch(file) {
   visualSearchMode = true;
   currentPage = 1;
   document.getElementById('vs-clear').style.display = 'inline-flex';
-  render();
-  showMessage(`🎨 ${Math.min(total, MAX_COMPARE)} diseños comparados. Los más similares primero.`, 'success', 4000);
+
+  showModalProgress(`✅ Mostrando ${Math.min(total, MAX_COMPARE)} resultados similares...`, 100);
+  setTimeout(() => {
+    render();
+  }, 500);
 }
 // ========== FIN BÚSQUEDA VISUAL ==========
 
@@ -331,7 +297,7 @@ function getFilteredList() {
   });
 
   if(visualSearchMode && vsScores.size > 0) {
-    // Orden ascendente por distancia (menor = más similar)
+    // Orden ascendente por distancia (menor distancia = más similar)
     list = [...list].sort((a, b) => (vsScores.get(a.url) || 999) - (vsScores.get(b.url) || 999));
   }
   return list;
@@ -348,8 +314,8 @@ function render() {
   const page       = list.slice(start, start + itemsPerPage);
 
   if (visualSearchMode && list.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;">
-      🔍 No se encontraron diseños similares. Prueba con otra imagen.
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;font-family:monospace;">
+      🔍 No se encontraron diseños similares. Prueba con otra imagen o desactiva el filtro visual.
     </div>`;
     renderPagination(totalPages);
     return;
@@ -373,15 +339,17 @@ function render() {
     });
   }, { rootMargin: '120px' });
 
+  // Distancia máxima observada empíricamente (~1.5) para calcular porcentaje
+  const maxDistance = 1.5;
+
   page.forEach(d => {
     const url   = d.url;
     const isSel = selectedItems.has(url);
-    const score = vsScores.get(url);
-    // Calcular porcentaje de similitud (inverso a la distancia, normalizado)
+    let score = vsScores.get(url);
     let similarityPercent = 0;
     if (score !== undefined && score < 998) {
-      // score suele estar entre 0 y ~1.5, mapeamos a 100-0%
-      similarityPercent = Math.max(0, Math.min(100, Math.round((1 - Math.min(score, 1.5) / 1.5) * 100)));
+      let similarity = Math.max(0, 1 - (score / maxDistance));
+      similarityPercent = Math.round(similarity * 100);
     }
 
     const item = document.createElement('div');
@@ -396,7 +364,7 @@ function render() {
 
     const scoreBadge = (visualSearchMode && similarityPercent > 0)
       ? `<div style="position:absolute;top:4px;left:6px;font-size:0.55rem;font-family:monospace;
-           background:rgba(168,85,247,0.85);color:#fff;padding:1px 6px;border-radius:4px;z-index:2;">
+           background:rgba(168,85,247,0.8);color:#fff;padding:1px 5px;border-radius:4px;z-index:2;">
            ${similarityPercent}% similar
          </div>` : '';
 
@@ -539,7 +507,7 @@ async function loadSelected() {
   selectedItems.clear();
 }
 
-// Función auxiliar trimTransparentPixels (si no existe globalmente)
+// Función auxiliar trimTransparentPixels
 if (typeof trimTransparentPixels !== 'function') {
   window.trimTransparentPixels = function(img) {
     const tc = document.createElement('canvas');
@@ -575,6 +543,5 @@ if (typeof trimTransparentPixels !== 'function') {
 if (typeof showMessage !== 'function') {
   window.showMessage = function(msg, type, duration) {
     console.log(`[${type}] ${msg}`);
-    alert(msg);
   };
 }
