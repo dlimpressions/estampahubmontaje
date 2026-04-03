@@ -1431,6 +1431,15 @@ function calcularPrecioMontaje() {
     });
   }
 
+  // Precio inicial al cargar
+  calcularPrecioMontaje();
+
+    // ====== Constantes físicas
+    const PIXELS_PER_CM = 10;
+    const CANVAS_WIDTH_CM = 58;
+    let CANVAS_HEIGHT_CM = 100;
+    const INCHES_PER_CM = 0.3937007874;
+
 // ====== RECORTE AUTOMÁTICO DEL LIENZO ======
 function autoCropCanvasToContent(marginCm = 1) {
   if (!designs || designs.length === 0) {
@@ -1492,6 +1501,10 @@ newHeightCm = Math.min(100, Math.max(10, newHeightCm));
   
   // Actualizar el alto del lienzo
   CANVAS_HEIGHT_CM = newHeightCm;
+
+const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
+canvas.height = newPx;
+canvasWrapper.style.height = newPx + 'px';
   
   // Actualizar etiquetas visuales
   if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
@@ -1514,15 +1527,6 @@ if (autoCropBtn) {
   autoCropCanvasToContent(0.3); // margen de 0.3 cm (3 píxeles)
 });
 }
-
-  // Precio inicial al cargar
-  calcularPrecioMontaje();
-
-    // ====== Constantes físicas
-    const PIXELS_PER_CM = 10;
-    const CANVAS_WIDTH_CM = 58;
-    let CANVAS_HEIGHT_CM = 100;
-    const INCHES_PER_CM = 0.3937007874;
 
     // ====== Estado
     let designs = [];
