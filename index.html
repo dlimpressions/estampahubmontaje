@@ -534,36 +534,173 @@ footer {
 <body>
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
-  <div class="lock-card">
-    <h2>Acceso restringido</h2>
-    <p>Ingresa tus credenciales</p>
-    <input type="text" id="lock-user" placeholder="Usuario" autocomplete="username">
-    <input type="password" id="lock-pass" placeholder="Contraseña" autocomplete="current-password">
-    <div class="lock-error" id="lock-error"></div>
-    <button id="lock-btn" class="btn">Acceder</button>
 
-    <!-- Mantengo tus botones y video originales aquí abajo -->
-    <!-- Botón Crear OC Termofijadoras -->
-    <div style="text-align:center; margin-top:1rem;">
-      <button id="open-oc-btn" class="btn btn-download">🧾 Crear OC Termofijadoras</button>
-    </div>
-    <!-- 🎬 Video de presentación -->
-    <div class="video-container" style="margin-top: 2rem; text-align: center;">
-      <h3 style="color: #fff; margin-bottom: 0.5rem;">🎥 Invierte En Tu Futuro</h3>
-      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.4);">
-        <iframe 
-          src="https://www.youtube.com/embed/xS-FLOw9oNs?rel=0&autoplay=0&controls=1"
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-          frameborder="0"
-          allowfullscreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-        </iframe>
+  <!-- Partículas de fondo decorativas -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+    <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,0.08),transparent 70%);top:-100px;left:-100px;"></div>
+    <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,0.06),transparent 70%);bottom:-150px;right:-100px;"></div>
+  </div>
+
+  <div style="
+    display:flex; flex-direction:row; gap:0; max-width:900px; width:95vw;
+    background:rgba(11,13,23,0.92); border:1px solid rgba(14,165,233,0.2);
+    border-radius:20px; overflow:hidden; box-shadow:0 0 60px rgba(14,165,233,0.15);
+    backdrop-filter:blur(20px); animation:fadeInUp 0.6s ease-out; position:relative;
+    min-height:500px;
+  ">
+
+    <!-- ── COLUMNA IZQUIERDA: LOGIN ── -->
+    <div style="
+      flex:1; padding:2.5rem 2rem;
+      display:flex; flex-direction:column; justify-content:center;
+      border-right:1px solid rgba(14,165,233,0.12);
+      min-width:280px;
+    ">
+      <!-- Logo -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:2rem;">
+        <div style="
+          width:42px;height:42px;border-radius:10px;flex-shrink:0;
+          background:linear-gradient(135deg,#0ea5e9,#6366f1);
+          display:flex;align-items:center;justify-content:center;
+          font-weight:900;color:#fff;font-size:1rem;
+          box-shadow:0 0 16px rgba(14,165,233,0.4);
+          font-family:'Exo 2',sans-serif;
+        ">DTF</div>
+        <div>
+          <div style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:1.5px;text-transform:uppercase;color:#e2e8f0;">EstampaHub</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#475569;letter-spacing:0.5px;">Editor Pro · Plataforma DTF</div>
+        </div>
+      </div>
+
+      <h2 style="
+        font-family:'Exo 2',sans-serif;font-size:1.4rem;font-weight:700;
+        color:#e2e8f0;margin-bottom:0.3rem;
+      ">Bienvenido de nuevo</h2>
+      <p style="font-family:'DM Mono',monospace;font-size:0.72rem;color:#475569;margin-bottom:1.8rem;">
+        Ingresa tus credenciales para acceder
+      </p>
+
+      <!-- Inputs -->
+      <div style="margin-bottom:1rem;">
+        <label style="display:block;font-family:'DM Mono',monospace;font-size:0.68rem;color:#64748b;margin-bottom:5px;letter-spacing:0.5px;">USUARIO</label>
+        <input type="text" id="lock-user" placeholder="tu_usuario" autocomplete="username" style="
+          width:100%;padding:0.75rem 0.9rem;border-radius:8px;
+          border:1px solid rgba(14,165,233,0.25);background:rgba(14,165,233,0.05);
+          color:#e2e8f0;font-family:'DM Mono',monospace;font-size:0.88rem;
+          outline:none;transition:border-color 0.2s;box-sizing:border-box;
+        " onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='rgba(14,165,233,0.25)'">
+      </div>
+
+      <div style="margin-bottom:0.5rem;">
+        <label style="display:block;font-family:'DM Mono',monospace;font-size:0.68rem;color:#64748b;margin-bottom:5px;letter-spacing:0.5px;">CONTRASEÑA</label>
+        <input type="password" id="lock-pass" placeholder="••••••••" autocomplete="current-password" style="
+          width:100%;padding:0.75rem 0.9rem;border-radius:8px;
+          border:1px solid rgba(14,165,233,0.25);background:rgba(14,165,233,0.05);
+          color:#e2e8f0;font-family:'DM Mono',monospace;font-size:0.88rem;
+          outline:none;transition:border-color 0.2s;box-sizing:border-box;
+        " onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='rgba(14,165,233,0.25)'">
+      </div>
+
+      <div class="lock-error" id="lock-error" style="min-height:1.3em;margin:0.4rem 0;font-family:'DM Mono',monospace;font-size:0.78rem;color:#f43f5e;"></div>
+
+      <button id="lock-btn" style="
+        width:100%;padding:0.85rem;border:none;border-radius:8px;
+        background:linear-gradient(135deg,#0ea5e9,#0284c7);
+        color:#fff;font-family:'Exo 2',sans-serif;font-weight:700;
+        font-size:0.9rem;letter-spacing:1px;text-transform:uppercase;
+        cursor:pointer;box-shadow:0 4px 18px rgba(14,165,233,0.35);
+        transition:all 0.25s;margin-top:0.2rem;
+      " onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(14,165,233,0.5)'"
+         onmouseleave="this.style.transform='none';this.style.boxShadow='0 4px 18px rgba(14,165,233,0.35)'">
+        Acceder al Editor
+      </button>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin:1.4rem 0 1rem;">
+        <div style="flex:1;height:1px;background:rgba(14,165,233,0.12);"></div>
+        <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#334155;">también disponible</span>
+        <div style="flex:1;height:1px;background:rgba(14,165,233,0.12);"></div>
+      </div>
+
+      <!-- Botones secundarios -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button id="open-dtf-btn" style="
+          padding:0.7rem;border-radius:8px;width:100%;
+          border:1px solid rgba(16,185,129,0.35);
+          background:rgba(16,185,129,0.06);color:#10b981;
+          font-family:'Exo 2',sans-serif;font-size:0.8rem;font-weight:600;
+          cursor:pointer;transition:all 0.18s;
+        " onmouseenter="this.style.background='rgba(16,185,129,0.12)'"
+           onmouseleave="this.style.background='rgba(16,185,129,0.06)'">
+          📤 Enviar archivo DTF
+        </button>
+        <button id="open-oc-btn" style="
+          padding:0.7rem;border-radius:8px;width:100%;
+          border:1px solid rgba(168,85,247,0.35);
+          background:rgba(168,85,247,0.06);color:#a855f7;
+          font-family:'Exo 2',sans-serif;font-size:0.8rem;font-weight:600;
+          cursor:pointer;transition:all 0.18s;
+        " onmouseenter="this.style.background='rgba(168,85,247,0.12)'"
+           onmouseleave="this.style.background='rgba(168,85,247,0.06)'">
+          🧾 OC Termofijadoras
+        </button>
       </div>
     </div>
-    <!-- Botón para abrir el formulario DTF -->
-    <div style="text-align:center; margin-top:2rem;">
-      <button id="open-dtf-btn" class="btn btn-upload">📤 Enviar archivo DTF</button>
+
+    <!-- ── COLUMNA DERECHA: VIDEO + INFO ── -->
+    <div style="
+      flex:1.1; padding:2rem 1.8rem;
+      display:flex; flex-direction:column; justify-content:space-between;
+      background:rgba(6,8,15,0.6);
+      min-width:260px;
+    ">
+      <!-- Header derecho -->
+      <div>
+        <div style="
+          display:inline-flex;align-items:center;gap:6px;
+          background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.25);
+          border-radius:20px;padding:4px 12px;margin-bottom:1rem;
+        ">
+          <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;flex-shrink:0;"></span>
+          <span style="font-family:'DM Mono',monospace;font-size:0.62rem;color:#94a3b8;letter-spacing:0.5px;">PLATAFORMA ACTIVA</span>
+        </div>
+
+        <h3 style="
+          font-family:'Exo 2',sans-serif;font-size:1.1rem;font-weight:700;
+          color:#e2e8f0;margin-bottom:0.4rem;
+        ">🎥 Invierte en tu futuro</h3>
+        <p style="font-family:'DM Mono',monospace;font-size:0.7rem;color:#475569;margin-bottom:1rem;">
+          Descubre cómo la plataforma EstampaHub puede transformar tu negocio
+        </p>
+
+        <!-- Video -->
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;border:1px solid rgba(14,165,233,0.18);box-shadow:0 0 20px rgba(0,0,0,0.4);margin-bottom:1.2rem;">
+          <iframe
+            src="https://www.youtube.com/embed/xS-FLOw9oNs?rel=0&autoplay=0&controls=1"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;"
+            frameborder="0" allowfullscreen
+            allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(14,165,233,0.05);border-radius:8px;border:1px solid rgba(14,165,233,0.1);">
+          <span style="font-size:1rem;">🎨</span>
+          <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;">Editor de montajes DTF profesional</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(16,185,129,0.04);border-radius:8px;border:1px solid rgba(16,185,129,0.1);">
+          <span style="font-size:1rem;">🧥</span>
+          <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;">Mockups de camisetas en tiempo real</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(99,102,241,0.04);border-radius:8px;border:1px solid rgba(99,102,241,0.1);">
+          <span style="font-size:1rem;">📁</span>
+          <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;">Galería de diseños con búsqueda por imagen</span>
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
 
