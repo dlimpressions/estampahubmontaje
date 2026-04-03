@@ -1,5 +1,5 @@
-// gallery.js - v16: Búsqueda por similitud semántica con MobileNet (IA)
-console.log("✅ gallery.js v16 - Búsqueda por IA con TensorFlow.js");
+// gallery.js - v15: detección temprana, cancelación al 100%, orden corregido
+console.log("✅ gallery.js v15 - búsqueda inteligente con abort temprano");
 
 let allDesigns        = [];
 let currentPage       = 1;
@@ -7,58 +7,24 @@ const itemsPerPage    = 20;
 let selectedItems     = new Set();
 let currentSearch     = '';
 let visualSearchMode  = false;
-let vsScores          = new Map();     // distancia (menor = más similar)
+let vsScores          = new Map();    // distancia (menor = más similar)
+let searchAbortFlag   = false;        // para cancelar búsqueda si ya encontramos 100%
 
-// Variables para la IA
-let mobilenetModel = null;
-let isModelLoading = false;
-let modelLoadPromise = null;
+// Cache de histogramas (por URL)
+const histCache = new Map();
+let searchDebounceTimer;
 
-// Cargar el modelo MobileNet al inicio (en segundo plano)
-function loadMobileNet() {
-  if (mobilenetModel) return Promise.resolve(mobilenetModel);
-  if (modelLoadPromise) return modelLoadPromise;
-  
-  isModelLoading = true;
-  showMessage('🧠 Cargando inteligencia artificial (solo una vez)...', 'loading', 0);
-  
-  modelLoadPromise = new Promise((resolve, reject) => {
-    // Esperar a que tfjs y mobilenet estén disponibles
-    const checkReady = () => {
-      if (typeof mobilenet !== 'undefined') {
-        mobilenet.load().then(model => {
-          mobilenetModel = model;
-          isModelLoading = false;
-          showMessage('✅ IA lista. Ahora puedes buscar por imagen.', 'success', 3000);
-          resolve(model);
-        }).catch(err => {
-          isModelLoading = false;
-          showMessage('❌ Error al cargar la IA. Recarga la página.', 'error');
-          reject(err);
-        });
-      } else {
-        setTimeout(checkReady, 200);
-      }
-    };
-    checkReady();
-  });
-  
-  return modelLoadPromise;
-}
-
-// Iniciar carga silenciosa cuando se abre la galería
 window.addEventListener('load', () => {
-  const overlay = document.getElementById('imgbb-gallery-overlay');
-  const openBtn = document.getElementById('open-imgbb-gallery');
-  const closeBtn = document.getElementById('close-imgbb-gallery');
+  const overlay     = document.getElementById('imgbb-gallery-overlay');
+  const openBtn     = document.getElementById('open-imgbb-gallery');
+  const closeBtn    = document.getElementById('close-imgbb-gallery');
 
   openBtn?.addEventListener('click', () => {
     overlay.style.display = 'flex';
     selectedItems.clear();
     visualSearchMode = false;
     vsScores.clear();
-    // Cargar la IA en segundo plano al abrir la galería
-    loadMobileNet().catch(console.warn);
+    histCache.clear();
     loadFromSheets();
   });
 
@@ -68,7 +34,6 @@ window.addEventListener('load', () => {
   });
 });
 
-// Cargar diseños desde Google Sheets y pre-calcular sus "embeddings" (huellas digitales)
 async function loadFromSheets() {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -84,28 +49,6 @@ async function loadFromSheets() {
   try {
     const res = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
     allDesigns = await res.json();
-    
-    // Esperar a que la IA esté lista
-    await loadMobileNet();
-    
-    // Pre-calcular embeddings de cada diseño (solo una vez)
-    showModalProgress('🔍 Analizando diseños con IA...', 0);
-    let processed = 0;
-    const total = allDesigns.length;
-    
-    for (let design of allDesigns) {
-      try {
-        const embedding = await generateEmbeddingFromUrl(design.url);
-        design.embedding = embedding;
-      } catch(e) {
-        console.warn('Error al generar embedding para', design.url, e);
-        design.embedding = null;
-      }
-      processed++;
-      const percent = Math.floor((processed / total) * 100);
-      showModalProgress(`🔍 Analizando diseños con IA... ${processed}/${total}`, percent);
-    }
-    
     currentPage = 1;
     currentSearch = '';
     buildSearchBar();
@@ -115,122 +58,6 @@ async function loadFromSheets() {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f43f5e;padding:40px;">❌ Error al cargar: ${e.message}</div>`;
   }
 }
-
-// Generar embedding (huella digital) a partir de una URL de imagen
-async function generateEmbeddingFromUrl(url) {
-  if (!mobilenetModel) throw new Error('Modelo no cargado');
-  
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = async () => {
-      try {
-        // MobileNet espera una imagen en un tensor
-        const tensor = tf.browser.fromPixels(img);
-        const embedding = await mobilenetModel.infer(tensor, { embedding: true });
-        const array = await embedding.data();
-        tensor.dispose();
-        embedding.dispose();
-        resolve(Array.from(array));
-      } catch(err) {
-        reject(err);
-      }
-    };
-    img.onerror = () => reject(new Error('Error cargando imagen: ' + url));
-    img.src = url;
-  });
-}
-
-// Generar embedding a partir de un objeto File (imagen subida por el usuario)
-async function generateEmbeddingFromFile(file) {
-  if (!mobilenetModel) throw new Error('Modelo no cargado');
-  
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = async () => {
-      URL.revokeObjectURL(url);
-      try {
-        const tensor = tf.browser.fromPixels(img);
-        const embedding = await mobilenetModel.infer(tensor, { embedding: true });
-        const array = await embedding.data();
-        tensor.dispose();
-        embedding.dispose();
-        resolve(Array.from(array));
-      } catch(err) {
-        reject(err);
-      }
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Error al cargar la imagen'));
-    };
-    img.src = url;
-  });
-}
-
-// Calcular similitud por coseno (1 = idénticas, 0 = nada que ver)
-function cosineSimilarity(embA, embB) {
-  if (!embA || !embB) return 0;
-  let dot = 0, magA = 0, magB = 0;
-  for (let i = 0; i < embA.length; i++) {
-    dot += embA[i] * embB[i];
-    magA += embA[i] * embA[i];
-    magB += embB[i] * embB[i];
-  }
-  magA = Math.sqrt(magA);
-  magB = Math.sqrt(magB);
-  if (magA === 0 || magB === 0) return 0;
-  return dot / (magA * magB);
-}
-
-// Búsqueda visual usando embeddings (IA)
-async function runVisualSearch(file) {
-  if (!mobilenetModel) {
-    showModalProgress('⏳ Espera a que la IA termine de cargar...', 10);
-    await loadMobileNet();
-  }
-  
-  vsScores.clear();
-  showModalProgress('📷 Analizando tu imagen...', 5);
-  
-  let queryEmbedding;
-  try {
-    queryEmbedding = await generateEmbeddingFromFile(file);
-  } catch(e) {
-    showModalProgress('❌ Error al analizar la imagen', 0);
-    setTimeout(() => render(), 1500);
-    return;
-  }
-  
-  const total = allDesigns.length;
-  let done = 0;
-  
-  // Comparar con todos los diseños
-  for (let design of allDesigns) {
-    if (design.embedding) {
-      const similarity = cosineSimilarity(queryEmbedding, design.embedding);
-      // Guardamos distancia = 1 - similitud (para que menor sea mejor)
-      const distance = 1 - similarity;
-      vsScores.set(design.url, distance);
-    } else {
-      vsScores.set(design.url, 999);
-    }
-    done++;
-    const percent = 5 + Math.floor((done / total) * 90);
-    showModalProgress(`🖼️ Comparando ${done}/${total} diseños...`, percent);
-  }
-  
-  visualSearchMode = true;
-  currentPage = 1;
-  document.getElementById('vs-clear').style.display = 'inline-flex';
-  showModalProgress(`✅ Mostrando resultados por similitud visual`, 100);
-  setTimeout(() => render(), 300);
-}
-
-// ========== RESTO DE FUNCIONES (buildSearchBar, buildMultiBar, render, etc.) ==========
-// Mantén exactamente las mismas funciones que ya tenías, solo reemplaza runVisualSearch y agrega las nuevas.
-// Como el resto no cambia, las incluyo completas para que solo copies y pegues todo.
 
 function buildSearchBar() {
   let sc = document.getElementById('searchContainer');
@@ -265,7 +92,6 @@ function buildSearchBar() {
     </button>`;
 
   const searchInput = document.getElementById('searchInput');
-  let searchDebounceTimer;
   searchInput.addEventListener('input', e => {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
@@ -294,6 +120,7 @@ function buildSearchBar() {
   });
 }
 
+// ========== PROGRESO EN MODAL ==========
 function showModalProgress(text, percent) {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -303,10 +130,231 @@ function showModalProgress(text, percent) {
         <div style="width:${percent}%;height:6px;background:#0ea5e9;transition:width 0.2s;"></div>
       </div>
       <div style="font-family:monospace;font-size:0.85rem;">${text}</div>
-      <div style="margin-top:12px;font-size:0.7rem;color:#94a3b8;">Usando inteligencia artificial...</div>
+      <div style="margin-top:12px;font-size:0.7rem;color:#94a3b8;">Analizando colores... por favor espera</div>
     </div>
   `;
 }
+
+// ========== HISTOGRAMAS RÁPIDOS ==========
+// Versión ultra rápida (8x8, 4 bins) para descartar
+function getUltraFastHistogram(img) {
+  const size = 8;
+  const bins = 4;
+  try {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    const hist = new Float32Array(bins * 3);
+    const total = size * size;
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i+3];
+      if (a < 30) continue;
+      hist[Math.floor(data[i]   / 256 * bins)]          += 1;
+      hist[bins   + Math.floor(data[i+1] / 256 * bins)] += 1;
+      hist[bins*2 + Math.floor(data[i+2] / 256 * bins)] += 1;
+    }
+    for (let i = 0; i < hist.length; i++) hist[i] /= total;
+    return hist;
+  } catch(e) { return null; }
+}
+
+// Versión estándar (16x16, 8 bins) para comparación final
+function getFastHistogram(img) {
+  const size = 16;
+  const bins = 8;
+  try {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    const hist = new Float32Array(bins * 3);
+    const total = size * size;
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i+3];
+      if (a < 30) continue;
+      hist[Math.floor(data[i]   / 256 * bins)]          += 1;
+      hist[bins   + Math.floor(data[i+1] / 256 * bins)] += 1;
+      hist[bins*2 + Math.floor(data[i+2] / 256 * bins)] += 1;
+    }
+    for (let i = 0; i < hist.length; i++) hist[i] /= total;
+    return hist;
+  } catch(e) { return null; }
+}
+
+function histogramDistance(a, b) {
+  if (!a || !b) return 999;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) {
+    const diff = a[i] - b[i];
+    d += diff * diff;
+  }
+  return Math.sqrt(d);
+}
+
+// ========== BÚSQUEDA VISUAL INTELIGENTE ==========
+async function runVisualSearch(file) {
+  // Resetear estado
+  vsScores.clear();
+  searchAbortFlag = false;
+  showModalProgress('📷 Cargando imagen de búsqueda...', 5);
+
+  let queryImg;
+  try {
+    queryImg = await new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); rej(e); };
+      img.src = url;
+    });
+  } catch(e) {
+    showModalProgress('❌ Error al cargar la imagen', 0);
+    setTimeout(() => render(), 1500);
+    return;
+  }
+
+  showModalProgress('🎨 Analizando paleta de colores...', 15);
+ const queryHist     = getFastHistogram(queryImg);
+ const queryHistFast = getUltraFastHistogram(queryImg); // para comparación rápida de igual tamaño
+  if (!queryHist) {
+    showModalProgress('⚠️ No se pudo analizar la imagen', 0);
+    setTimeout(() => render(), 1500);
+    return;
+  }
+
+  // RANGO AMPLIADO (puedes cambiarlo hasta 500 si el rendimiento lo permite)
+  const MAX_COMPARE = allDesigns.length;   // Compara TODOS los diseños
+  const toCompare = allDesigns.slice(0, MAX_COMPARE);
+  const total = toCompare.length;
+  let done = 0;
+  let failed = 0;
+  let perfectMatchFound = false;
+
+  const BATCH = 5;
+
+  for (let i = 0; i < toCompare.length && !searchAbortFlag; i += BATCH) {
+    const batch = toCompare.slice(i, i + BATCH);
+    await Promise.all(batch.map(d => new Promise(resolve => {
+      if (searchAbortFlag) {
+        resolve();
+        return;
+      }
+
+      // 1. Revisar caché
+      if (histCache.has(d.url)) {
+        const hist = histCache.get(d.url);
+        const dist = hist ? histogramDistance(queryHist, hist) : 999;
+        vsScores.set(d.url, dist);
+        if (dist === 0) perfectMatchFound = true;
+        done++;
+        updateProgress(done, total);
+        resolve();
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+            img.onload = () => {
+        if (searchAbortFlag) { resolve(); return; }
+
+        // 2. Filtro rápido con histograma ultra (8x8, 4 bins)
+        const ultraHist = getUltraFastHistogram(img);
+        if (ultraHist) {
+        const ultraDist = histogramDistance(queryHistFast, ultraHist); // mismos bins = comparación correcta
+          if (ultraDist > 0.6) {
+            vsScores.set(d.url, 999);
+            done++;
+            updateProgress(done, total);
+            resolve();
+            return;
+          }
+        }
+
+        // 3. Cálculo detallado
+        const fullHist = getFastHistogram(img);
+        const finalDist = fullHist ? histogramDistance(queryHist, fullHist) : 999;
+        histCache.set(d.url, fullHist);
+        vsScores.set(d.url, finalDist);
+        
+        // Si es coincidencia exacta o casi exacta (distancia < 0.01)
+        if (finalDist < 0.01) {
+          vsScores.set(d.url, 0);        // forzar score 0
+          perfectMatchFound = true;
+          searchAbortFlag = true;
+          // Asignar score alto al resto de imágenes no comparadas
+          allDesigns.forEach(design => {
+            if (!vsScores.has(design.url)) vsScores.set(design.url, 999);
+          });
+          visualSearchMode = true;
+          currentPage = 1;
+          document.getElementById('vs-clear').style.display = 'inline-flex';
+          showModalProgress(`✨ ¡Coincidencia exacta! (100% similar)`, 100);
+          render();   // ordenar y mostrar inmediatamente
+          resolve();
+          return;
+        }
+        
+        done++;
+        updateProgress(done, total);
+        resolve();
+      };
+
+      img.onerror = () => {
+        vsScores.set(d.url, 999);
+        done++;
+        updateProgress(done, total);
+        resolve();
+      };
+      img.src = d.url;
+    })));
+
+    // Si ya encontramos coincidencia perfecta, detenemos la búsqueda
+    if (perfectMatchFound) {
+      searchAbortFlag = true;
+      showModalProgress(`✨ ¡Coincidencia exacta encontrada! (100% similar)`, 100);
+      setTimeout(() => {
+        // Asignar score alto al resto de imágenes no comparadas
+        allDesigns.forEach(d => {
+          if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
+        });
+        visualSearchMode = true;
+        currentPage = 1;
+        document.getElementById('vs-clear').style.display = 'inline-flex';
+        render();
+      }, 500);
+      return;
+    }
+  }
+
+  // Si terminó sin abortar
+  if (done === 0 || failed === done) {
+    showModalProgress('⚠️ No se pudo comparar ningún diseño (CORS)', 0);
+    setTimeout(() => render(), 2000);
+    return;
+  }
+
+  allDesigns.forEach(d => {
+    if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
+  });
+
+  visualSearchMode = true;
+  currentPage = 1;
+  document.getElementById('vs-clear').style.display = 'inline-flex';
+  showModalProgress(`✅ Mostrando ${Math.min(total, MAX_COMPARE)} resultados similares...`, 100);
+  setTimeout(() => render(), 500);
+}
+
+function updateProgress(done, total) {
+  const percent = 15 + Math.floor((done / total) * 70);
+  // Solo actualizar la barra de progreso si NO estamos ya mostrando resultados
+  if(!visualSearchMode) {
+    showModalProgress(`🖼️ Comparando ${done}/${total}...`, percent);
+  }
+}
+// ========== FIN BÚSQUEDA VISUAL ==========
 
 function buildMultiBar() {
   let bar = document.getElementById('gallery-multibar');
@@ -353,11 +401,18 @@ function getFilteredList() {
   });
 
   if(visualSearchMode && vsScores.size > 0) {
-    list = [...list].sort((a, b) => (vsScores.get(a.url) || 999) - (vsScores.get(b.url) || 999));
+    // Ordenar: menor distancia = más similar = primero
+    // Excluir items con score 998/999 (no comparados / no similares) del tope
+    list = [...list].sort((a, b) => {
+      const sa = vsScores.get(a.url) ?? 999;
+      const sb = vsScores.get(b.url) ?? 999;
+      return sa - sb;
+    });
   }
   return list;
 }
 
+// ========== RENDER CON MINIATURAS EFICIENTES ==========
 function render() {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -387,6 +442,7 @@ function render() {
       const img = entry.target.querySelector('img[data-src]');
       if(img && img.dataset.src) {
         const src = img.dataset.src;
+        // Decodificación asíncrona para no bloquear UI
         const tempImg = new Image();
         tempImg.onload = () => {
           img.src = src;
@@ -398,17 +454,23 @@ function render() {
     });
   }, { rootMargin: '100px' });
 
+  const maxDistance = 1.5;
+
   page.forEach(d => {
     const url   = d.url;
     const isSel = selectedItems.has(url);
     let score = vsScores.get(url);
     let similarityPercent = 0;
-    if (score !== undefined && score < 998) {
-      // score es distancia (0 = idéntico, 1 = muy diferente)
-      similarityPercent = Math.round((1 - Math.min(score, 1)) * 100);
-    }
-
-    const item = document.createElement('div');
+if (score !== undefined && score < 998) {
+  if (score < 0.05) {
+    score = 0;                    // forzar score mínimo
+    similarityPercent = 99;       // etiqueta 99%
+  } else {
+    let similarity = Math.max(0, 1 - (score / maxDistance));
+    similarityPercent = Math.round(similarity * 100);
+  }
+}
+     const item = document.createElement('div');
     item.className    = 'gal-item';
     item.dataset.url  = url;
     item.dataset.sel  = isSel ? '1' : '0';
@@ -424,6 +486,7 @@ function render() {
            ${similarityPercent}% similar
          </div>` : '';
 
+    // Placeholder más ligero (solo color, sin animación shimmer para ahorrar CPU)
     item.innerHTML = `
       ${scoreBadge}
       <div style="width:100%;aspect-ratio:1/1;border-radius:5px;overflow:hidden;background:#1e293b;
@@ -442,6 +505,7 @@ function render() {
         text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${d.nombre || '—'}</small>`;
 
+    const imgElem = item.querySelector('img');
     io.observe(item);
 
     item.addEventListener('mouseenter', () => {
