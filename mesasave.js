@@ -351,8 +351,8 @@ console.log("✅ mesasave.js (unificado) cargado - esperando login");
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '💾 Guardar Mesa';
-    saveBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
-    saveBtn.onclick = () => saveWorkbench(false);
+   saveBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
+// Elimina las líneas onmouseenter/onmouseleave
 
     const loadBtn = document.createElement('button');
     loadBtn.textContent = '📂 Cargar Mesa';
