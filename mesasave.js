@@ -1,14 +1,12 @@
-// mesasave.js - Guardado con IndexedDB (soporta imágenes grandes)
+// mesasave.js - Guardado con IndexedDB (soporta imágenes grandes) - VERSIÓN CORREGIDA
 console.log("✅ mesasave.js (IndexedDB) cargado");
 
 (function() {
   const DB_NAME = 'DTF_Workbench';
   const DB_VERSION = 1;
   const STORE_NAME = 'workbenches';
-
   let db = null;
 
-  // Abrir (o crear) la base de datos IndexedDB
   function openDB() {
     return new Promise((resolve, reject) => {
       if (db && db.name === DB_NAME) {
@@ -33,7 +31,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
     });
   }
 
-  // Guardar el estado actual en IndexedDB
   async function saveWorkbench(silent = false) {
     if (!designs || designs.length === 0) {
       if (!silent) showMessage('No hay diseños para guardar', 'warning', 2000);
@@ -41,7 +38,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
     }
     try {
       await openDB();
-
       const state = {
         id: 'current',
         timestamp: Date.now(),
@@ -51,8 +47,8 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
         designs: []
       };
 
-      // Convertir cada diseño a Blob (formato más eficiente que base64)
       const designPromises = designs.map(async (d) => {
+        // Convertir imagen a blob (PNG)
         const blob = await new Promise((resolve) => {
           const canvas = document.createElement('canvas');
           canvas.width = d.image.width;
@@ -78,17 +74,15 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
       });
 
       state.designs = await Promise.all(designPromises);
-
       const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const putRequest = store.put(state);
-
       putRequest.onsuccess = () => {
         if (!silent) showMessage('✅ Mesa guardada en IndexedDB', 'success', 2000);
       };
       putRequest.onerror = (err) => {
         console.error('Error al guardar en IndexedDB', err);
-        if (!silent) showMessage('❌ Error al guardar (quizá el espacio es insuficiente)', 'error', 3000);
+        if (!silent) showMessage('❌ Error al guardar', 'error', 3000);
       };
     } catch (err) {
       console.error('Error en saveWorkbench', err);
@@ -96,7 +90,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
     }
   }
 
-  // Cargar el estado desde IndexedDB
   async function loadWorkbench() {
     try {
       await openDB();
@@ -111,8 +104,9 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
           return;
         }
 
-        showMessage('Cargando mesa...', 'loading', 0);
-        const loadingMsg = document.querySelector('.message.loading:last-child');
+        // Mostrar mensaje de carga
+        const loadingMsg = showMessage('⏳ Cargando mesa...', 'loading', 0);
+        console.log('Cargando mesa con', state.designs.length, 'diseños');
 
         // Restaurar lienzo
         if (state.canvasWidthCm) CANVAS_WIDTH_CM = state.canvasWidthCm;
@@ -129,28 +123,48 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
           if (canvasColor) canvasColor.value = state.backgroundColor;
         }
 
-        // Restaurar diseños desde los Blobs
-        const loadPromises = state.designs.map(async (designState) => {
-          const url = URL.createObjectURL(designState.blob);
+        // Restaurar diseños con manejo de errores y timeout
+        const loadPromises = state.designs.map((designState, idx) => {
           return new Promise((resolve) => {
+            const url = URL.createObjectURL(designState.blob);
             const img = new Image();
+            let resolved = false;
+
+            const timeoutId = setTimeout(() => {
+              if (!resolved) {
+                console.warn(`Timeout cargando diseño ${idx}`);
+                URL.revokeObjectURL(url);
+                resolve(null);
+              }
+            }, 10000); // 10 segundos máximo por imagen
+
             img.onload = () => {
+              clearTimeout(timeoutId);
+              resolved = true;
               URL.revokeObjectURL(url);
-              const newDesign = new Design(designState.id, img);
-              newDesign.x = designState.x;
-              newDesign.y = designState.y;
-              newDesign.scale = designState.scale;
-              newDesign.rotation = designState.rotation;
-              newDesign.opacity = designState.opacity;
-              newDesign.width = designState.width;
-              newDesign.height = designState.height;
-              newDesign.originalWidth = designState.originalWidth;
-              newDesign.originalHeight = designState.originalHeight;
-              newDesign.aspectRatio = designState.aspectRatio;
-              resolve(newDesign);
+              try {
+                const newDesign = new Design(designState.id, img);
+                newDesign.x = designState.x;
+                newDesign.y = designState.y;
+                newDesign.scale = designState.scale;
+                newDesign.rotation = designState.rotation;
+                newDesign.opacity = designState.opacity;
+                newDesign.width = designState.width;
+                newDesign.height = designState.height;
+                newDesign.originalWidth = designState.originalWidth;
+                newDesign.originalHeight = designState.originalHeight;
+                newDesign.aspectRatio = designState.aspectRatio;
+                resolve(newDesign);
+              } catch (err) {
+                console.error(`Error creando diseño ${idx}:`, err);
+                resolve(null);
+              }
             };
-            img.onerror = () => {
+            img.onerror = (err) => {
+              clearTimeout(timeoutId);
+              resolved = true;
               URL.revokeObjectURL(url);
+              console.error(`Error cargando imagen ${idx}:`, err);
               resolve(null);
             };
             img.src = url;
@@ -158,17 +172,29 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
         });
 
         const loadedDesigns = await Promise.all(loadPromises);
-        designs.length = 0;
-        loadedDesigns.forEach(d => { if (d) designs.push(d); });
-        if (designs.length > 0) selectedDesignId = designs[0].id;
-        else selectedDesignId = null;
+        const validDesigns = loadedDesigns.filter(d => d !== null);
+        console.log(`Diseños cargados: ${validDesigns.length} de ${state.designs.length}`);
 
-        updateDesignsList();
-        updateControls();
-        drawCanvas();
+        if (validDesigns.length === 0) {
+          showMessage('❌ No se pudo cargar ningún diseño (posiblemente corruptos)', 'error', 3000);
+          if (loadingMsg) loadingMsg.remove();
+          return;
+        }
+
+        // Reemplazar array global de diseños
+        designs.length = 0;
+        validDesigns.forEach(d => designs.push(d));
+        selectedDesignId = designs[0] ? designs[0].id : null;
+
+        // Actualizar interfaz
+        if (typeof updateDesignsList === 'function') updateDesignsList();
+        if (typeof updateControls === 'function') updateControls();
+        if (typeof drawCanvas === 'function') drawCanvas();
+
         if (loadingMsg) loadingMsg.remove();
-        showMessage(`✅ Mesa cargada (${designs.length} diseños)`, 'success', 3000);
+        showMessage(`✅ Mesa cargada (${validDesigns.length} diseños)`, 'success', 3000);
       };
+
       getRequest.onerror = (err) => {
         console.error('Error al cargar de IndexedDB', err);
         showMessage('❌ Error al leer la mesa guardada', 'error', 3000);
@@ -179,7 +205,7 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
     }
   }
 
-  // Esperar a que el editor esté listo y crear los botones
+  // Esperar a que el editor esté listo
   function waitForEditor() {
     if (typeof designs !== 'undefined' && typeof drawCanvas === 'function') {
       initSaveButtons();
@@ -256,7 +282,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
       }
     }, 30000);
 
-    // Guardar antes de cerrar
     window.addEventListener('beforeunload', () => {
       if (designs && designs.length > 0) {
         saveWorkbench(true);
