@@ -534,12 +534,6 @@ footer {
 
 <body>
 
-  <div id="splash-screen" style="display: none;">
-  <div class="logo">🎨 EstampaHub</div>
-  <div class="progress-bar"><div class="progress-fill" id="splash-fill"></div></div>
-  <div class="message" id="splash-message">Iniciando editor...</div>
-</div>
-
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
@@ -1305,49 +1299,10 @@ function showLock(){
 
 
 function unlock(){
-  // Mostrar pantalla de carga
-  const splash = document.getElementById('splash-screen');
-  if (splash) splash.style.display = 'flex';
-  
-  // Pequeña pausa para que se vea el splash
-  setTimeout(() => {
-    // Forzar el dibujo inicial del canvas
-    drawCanvas();
-    
-    // Esperar un momento extra para asegurar que el canvas se dibujó
-    setTimeout(() => {
-    updateSplash(100, '¡Listo!');
-      // Ocultar el splash con animación
-      if (splash) {
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.style.display = 'none';
-          splash.style.opacity = '1';
-        }, 500);
-      }
-      // Mostrar el editor
-      overlay.style.display = 'none';
-      appRoot.style.visibility = 'visible';
-      showMessage('Editor listo', 'success', 2000);
-    }, 50);
-  }, 100);
+  overlay.style.display = 'none';
+  appRoot.style.visibility = 'visible';
+  showMessage('Editor listo', 'success', 2000);
 }
-
-// ========== PANTALLA DE CARGA ==========
-function updateSplash(percent, text) {
-  const fill = document.getElementById('splash-fill');
-  const msg = document.getElementById('splash-message');
-  if (fill) fill.style.width = percent + '%';
-  if (msg) msg.textContent = text;
-}
-function hideSplash() {
-  const splash = document.getElementById('splash-screen');
-  if (splash) {
-    splash.style.opacity = '0';
-    setTimeout(() => splash.remove(), 500);
-  }
-}
-
 
 if (lockBtn) {
   lockBtn.addEventListener('click', async () => {
