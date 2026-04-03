@@ -1309,24 +1309,29 @@ function unlock(){
   const splash = document.getElementById('splash-screen');
   if (splash) splash.style.display = 'flex';
   
-  // Pequeña pausa para que se vea el splash y luego mostrar el editor
+  // Pequeña pausa para que se vea el splash
   setTimeout(() => {
-    // Redibujar el canvas (aunque esté vacío, dibuja el fondo)
+    // Forzar el dibujo inicial del canvas
     drawCanvas();
-    // Ocultar el splash con animación
-    if (splash) {
-      splash.style.opacity = '0';
-      setTimeout(() => {
-        splash.style.display = 'none';
-        splash.style.opacity = '1';
-      }, 500);
-    }
-    // Mostrar el editor
-    overlay.style.display = 'none';
-    appRoot.style.visibility = 'visible';
-    showMessage('Editor listo', 'success', 2000);
+    
+    // Esperar un momento extra para asegurar que el canvas se dibujó
+    setTimeout(() => {
+    updateSplash(100, '¡Listo!');
+      // Ocultar el splash con animación
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+          splash.style.opacity = '1';
+        }, 500);
+      }
+      // Mostrar el editor
+      overlay.style.display = 'none';
+      appRoot.style.visibility = 'visible';
+      showMessage('Editor listo', 'success', 2000);
+    }, 50);
   }, 100);
-}
+}b
 
 // ========== PANTALLA DE CARGA ==========
 function updateSplash(percent, text) {
