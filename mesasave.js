@@ -353,23 +353,26 @@ console.log("✅ mesasave.js (unificado) cargado - esperando login");
     saveBtn.textContent = '💾 Guardar Mesa';
    saveBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
 // Elimina las líneas onmouseenter/onmouseleave
+saveBtn.onclick = () => saveWorkbench(false);
+
 
     const loadBtn = document.createElement('button');
     loadBtn.textContent = '📂 Cargar Mesa';
-    loadBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
+    loadBtn.style.cssText = `background: #0ea5e9; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
 // Elimina las líneas onmouseenter/onmouseleave
+loadBtn.onclick = () => loadWorkbench();
 
     const exportBtn = document.createElement('button');
     exportBtn.textContent = '📤 Exportar';
-    exportBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
+    exportBtn.style.cssText = `background: #8b5cf6; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
 // Elimina las líneas onmouseenter/onmouseleave
+exportBtn.onclick = () => exportToFile();
 
     const importBtn = document.createElement('button');
     importBtn.textContent = '📂 Importar';
-    importBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
+    importBtn.style.cssText = `background: #f59e0b; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
 // Elimina las líneas onmouseenter/onmouseleave
-
-    importBtn.onclick = () => {
+      importBtn.onclick = () => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.estampahub';
