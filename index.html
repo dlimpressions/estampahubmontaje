@@ -445,7 +445,37 @@
     0 16px 50px rgba(0,0,0,0.6) !important;
 }
 
+/* ── BARRA DE ESTADO ── */
+.status-bar-new {
+  height:30px; background:var(--surface-2);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center;
+  padding:0 14px; gap:0; flex-shrink:0;
+}
+.status-item-n {
+  display:flex; align-items:center; gap:4px;
+  padding:0 12px; border-right:1px solid var(--border);
+  font-family:var(--font-mono); font-size:0.62rem; color:#94a3b8;
+}
+.status-item-n .val { color:var(--accent); font-weight:500; }
+.status-dot-n {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--emerald); box-shadow:0 0 5px var(--emerald); flex-shrink:0;
+}
+.status-spacer-n { flex:1; }
+.status-keys-n {
+  font-family:var(--font-mono); font-size:0.58rem; color:#475569; white-space:nowrap;
+}
 
+<!-- BARRA DE ESTADO -->
+<div class="status-bar-new">
+  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
+  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
+  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
+  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
+  <div class="status-spacer-n"></div>
+  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
+</div>
 
 /* ── FOOTER ── */
 footer {
@@ -499,45 +529,9 @@ footer {
 }
 .designs-dropdown.open { display:block; }
   </style>
-
-/* ── BARRA DE ESTADO ── */
-.status-bar-new {
-  height:30px; background:var(--surface-2);
-  border-top:1px solid var(--border);
-  display:flex; align-items:center;
-  padding:0 14px; gap:0; flex-shrink:0;
-}
-.status-item-n {
-  display:flex; align-items:center; gap:4px;
-  padding:0 12px; border-right:1px solid var(--border);
-  font-family:var(--font-mono); font-size:0.62rem; color:#94a3b8;
-}
-.status-item-n .val { color:var(--accent); font-weight:500; }
-.status-dot-n {
-  width:6px; height:6px; border-radius:50%;
-  background:var(--emerald); box-shadow:0 0 5px var(--emerald); flex-shrink:0;
-}
-.status-spacer-n { flex:1; }
-.status-keys-n {
-  font-family:var(--font-mono); font-size:0.58rem; color:#475569; white-space:nowrap;
-}
-
-<!-- BARRA DE ESTADO -->
-<div class="status-bar-new">
-  <div class="status-item-n"><span class="status-dot-n"></span><span>Listo</span></div>
-  <div class="status-item-n"><span>Lienzo:</span><span class="val" id="status-canvas-size">58cm × 100cm</span></div>
-  <div class="status-item-n"><span>Diseño:</span><span class="val" id="status-design-size">—</span></div>
-  <div class="status-item-n"><span>Total:</span><span class="val" id="status-design-count">0</span></div>
-  <div class="status-spacer-n"></div>
-  <div class="status-keys-n">Ctrl+D duplicar · Supr eliminar · Flechas mover · Ctrl+Rueda zoom</div>
-</div>
-
 </head>
 
 <body>
-
-
-
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
@@ -937,7 +931,6 @@ footer {
       <span class="tb-label">Zoom</span>
       <input type="range" id="tb-zoom-slider" class="tb-input-t" min="20" max="200" value="100" style="width:95px">
       <span class="tb-val" id="tb-zoom-value">100%</span>
-      <input type="number" id="tb-zoom-number" class="tb-input-t" min="20" max="200" value="100" style="width:65px; margin-left:4px;" step="5">
       <div class="tb-sep"></div>
       <div class="precio-badge">
         <div>
@@ -1244,7 +1237,6 @@ footer {
 
   <script>
 
-
 // ====== Seguridad (Usuario + Contraseña con Google Sheets) ======
 const overlay = document.getElementById('lock-overlay');
 const appRoot = document.getElementById('app-root');
@@ -1377,8 +1369,6 @@ if (lockPass) {
     const opacitySlider = document.getElementById('opacity-slider');
     const opacityValue = document.getElementById('opacity-value');
     const zoomSlider = document.getElementById('zoom-slider');
-    const canvasAreaEl = document.querySelector('.canvas-area');
-    const zoomNumber = document.getElementById('tb-zoom-number');
     const zoomValue = document.getElementById('zoom-value');
     const zoomLevel = document.getElementById('zoom-level');
     const addTextBtn = document.getElementById('add-text-btn');
@@ -1449,9 +1439,6 @@ function calcularPrecioMontaje() {
     const INCHES_PER_CM = 0.3937007874;
 
     // ====== Estado
-    let backgroundCanvas = null;        // canvas para el fondo pre-renderizado
-    let lastBgColor = null;             // último color de fondo
-    let lastCanvasWidth = 0, lastCanvasHeight = 0;  // últimas dimensiones
     let designs = [];
     let selectedDesignId = null;
     let isDragging = false;
@@ -1459,9 +1446,6 @@ function calcularPrecioMontaje() {
     let isRotating = false;
     let dragOffsetX, dragOffsetY;
     let canvasZoom = 1.0;
-    let canvasZoomMin = 0.2;    // 20%
-    let canvasZoomMax = 2.0;    // 200%
-    let canvasZoomStep = 0.05;  // 5% por paso de rueda
     let lastMouseX, lastMouseY;
     let startScale = 1.0;
     let startResizeDist = 1.0;
@@ -1488,64 +1472,42 @@ function calcularPrecioMontaje() {
     }
 
     // ====== Fondo y guía
-   function initCanvas() {
-  // Si el fondo no ha cambiado, solo copiamos el caché
-  if (backgroundCanvas &&
-      canvas.width === lastCanvasWidth &&
-      canvas.height === lastCanvasHeight &&
-      canvasBackgroundColor === lastBgColor) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundCanvas, 0, 0);
-    return;
-  }
-  
-  // Renderizar fondo desde cero
-  ctx.save();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  const size = 20;
-  const patternCanvas = document.createElement('canvas');
-  patternCanvas.width = size * 2;
-  patternCanvas.height = size * 2;
-  const pctx = patternCanvas.getContext('2d');
-  pctx.fillStyle = '#f0f0f0';
-  pctx.fillRect(0, 0, size, size);
-  pctx.fillRect(size, size, size, size);
-  const pattern = ctx.createPattern(patternCanvas, 'repeat');
-  ctx.fillStyle = pattern;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.globalAlpha = 0.7;
-  ctx.fillStyle = canvasBackgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.globalAlpha = 1.0;
-  
-  ctx.strokeStyle = '#cbd5e0';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5,5]);
-  ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-  ctx.setLineDash([]);
-  
-  if (designs.length === 0) {
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('BY: Estampa Hub', canvas.width/2, canvas.height/2);
-  }
-  ctx.restore();
-  
-  // Guardar el fondo en el canvas caché
-  if (!backgroundCanvas) {
-    backgroundCanvas = document.createElement('canvas');
-  }
-  backgroundCanvas.width = canvas.width;
-  backgroundCanvas.height = canvas.height;
-  backgroundCanvas.getContext('2d').drawImage(canvas, 0, 0);
-  
-  lastBgColor = canvasBackgroundColor;
-  lastCanvasWidth = canvas.width;
-  lastCanvasHeight = canvas.height;
-}
+    function initCanvas() {
+      ctx.save();
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      const size = 20;
+      const patternCanvas = document.createElement('canvas');
+      patternCanvas.width = size * 2;
+      patternCanvas.height = size * 2;
+      const pctx = patternCanvas.getContext('2d');
+      pctx.fillStyle = '#f0f0f0';
+      pctx.fillRect(0, 0, size, size);
+      pctx.fillRect(size, size, size, size);
+      const pattern = ctx.createPattern(patternCanvas, 'repeat');
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = canvasBackgroundColor;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.globalAlpha = 1.0;
+
+      ctx.strokeStyle = '#cbd5e0';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5,5]);
+      ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
+      ctx.setLineDash([]);
+
+      if (designs.length===0){
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('BY: Estampa Hub', canvas.width/2, canvas.height/2);
+      }
+      ctx.restore();
+    }
+    initCanvas();
 
 // ====== Recorte automático de transparencia
 function trimTransparentPixels(img) {
@@ -1715,23 +1677,11 @@ class Design {
 }
 
     // ====== Dibujo general
-   let redrawScheduled = false;
-function drawCanvas() {
-  if (redrawScheduled) return;
-  redrawScheduled = true;
-  requestAnimationFrame(() => {
-    redrawScheduled = false;
-    // Llamamos a la función que realmente dibuja
-    performDraw();
-  });
-}
-
-// Cambia el nombre de tu función de dibujo actual a performDraw
-function performDraw() {
-  initCanvas();
-  designs.forEach(d => d.draw());
-  updateSizeInfo();
-}
+    function drawCanvas() {
+      initCanvas();
+      designs.forEach(d => d.draw());
+      updateSizeInfo();
+    }
 
     function updateSizeInfo() {
       const d = getSelectedDesign();
@@ -2035,92 +1985,34 @@ function performDraw() {
       });
     }
 
- // ========== ZOOM MEJORADO (estilo CorelDRAW) ==========
-let canvasZoom = 1.0;
-let canvasZoomMin = 0.2;
-let canvasZoomMax = 2.0;
-let canvasZoomStep = 0.05;
+    // Zoom con slider
+    if (zoomSlider){
+      zoomSlider.addEventListener('input', function(){
+        canvasZoom = this.value/100;
+        zoomValue.textContent = this.value + '%';
+        zoomLevel.textContent = 'Zoom: ' + this.value + '%';
 
-// Zoom con slider
-if (zoomSlider) {
-  zoomSlider.addEventListener('input', function() {
-    canvasZoom = this.value / 100;
-    zoomValue.textContent = this.value + '%';
-    if (zoomLevel) zoomLevel.textContent = 'Zoom: ' + this.value + '%';
-    if (zoomNumber) zoomNumber.value = this.value;
-    applyZoomTransform();
-  });
-}
+        const canvasContainer = document.querySelector('.canvas-area');
+        canvasWrapper.style.transform = `scale(${canvasZoom})`;
+        canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
+        canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
+      });
+    }
 
-// Zoom con input numérico
-if (zoomNumber) {
-  zoomNumber.addEventListener('input', function() {
-    let val = parseInt(this.value);
-    if (isNaN(val)) val = 100;
-    val = Math.min(canvasZoomMax * 100, Math.max(canvasZoomMin * 100, val));
-    canvasZoom = val / 100;
-    zoomSlider.value = val;
-    zoomValue.textContent = val + '%';
-    if (zoomLevel) zoomLevel.textContent = 'Zoom: ' + val + '%';
-    applyZoomTransform();
-  });
-}
-
-// Función que aplica la transformación de zoom
-function applyZoomTransform() {
-  if (!canvasWrapper || !canvasAreaEl) return;
-  canvasWrapper.style.transform = `scale(${canvasZoom})`;
-  
-  // Ajustar scroll para mantener el centro visible (opcional)
-  const wrapperRect = canvasWrapper.getBoundingClientRect();
-  const areaRect = canvasAreaEl.getBoundingClientRect();
-  if (wrapperRect.width > areaRect.width || wrapperRect.height > areaRect.height) {
-    canvasAreaEl.scrollLeft = (wrapperRect.width - areaRect.width) / 2;
-    canvasAreaEl.scrollTop = (wrapperRect.height - areaRect.height) / 2;
-  }
-}
-
-// Zoom con rueda (Ctrl/Cmd) - centrado en el cursor
-if (canvasAreaEl && zoomSlider) {
-  canvasAreaEl.addEventListener('wheel', (e) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    e.preventDefault();
-    
-    // Guardar posición del mouse relativa al área del canvas (antes del zoom)
-    const rect = canvasAreaEl.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    // Punto en el canvas sin zoom (coordenadas lógicas)
-    const oldZoom = canvasZoom;
-    const scrollLeft = canvasAreaEl.scrollLeft;
-    const scrollTop = canvasAreaEl.scrollTop;
-    const targetX = (scrollLeft + mouseX) / oldZoom;
-    const targetY = (scrollTop + mouseY) / oldZoom;
-    
-    // Calcular nuevo zoom (incremento/decremento del 5%)
-    let newZoom = oldZoom + (e.deltaY > 0 ? -canvasZoomStep : canvasZoomStep);
-    newZoom = Math.min(canvasZoomMax, Math.max(canvasZoomMin, newZoom));
-    if (newZoom === oldZoom) return;
-    
-    canvasZoom = newZoom;
-    const newZoomPercent = Math.round(canvasZoom * 100);
-    zoomSlider.value = newZoomPercent;
-    zoomValue.textContent = newZoomPercent + '%';
-    if (zoomLevel) zoomLevel.textContent = 'Zoom: ' + newZoomPercent + '%';
-    if (zoomNumber) zoomNumber.value = newZoomPercent;
-    
-    // Aplicar transformación
-    canvasWrapper.style.transform = `scale(${canvasZoom})`;
-    
-    // Ajustar scroll para que el punto bajo el cursor permanezca en la misma posición
-    const newScrollLeft = targetX * canvasZoom - mouseX;
-    const newScrollTop = targetY * canvasZoom - mouseY;
-    canvasAreaEl.scrollLeft = newScrollLeft;
-    canvasAreaEl.scrollTop = newScrollTop;
-  }, { passive: false });
-}
-
+    // Zoom con rueda (Ctrl o ⌘)
+    const canvasAreaEl = document.querySelector('.canvas-area');
+    if (canvasAreaEl && zoomSlider){
+      canvasAreaEl.addEventListener('wheel', (e)=>{
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        const cur = parseInt(zoomSlider.value,10);
+        const next = Math.max(20, Math.min(200, cur + (e.deltaY < 0 ? 10 : -10)));
+        if (next !== cur){
+          zoomSlider.value = String(next);
+          zoomSlider.dispatchEvent(new Event('input'));
+        }
+      }, {passive:false});
+    }
 
     // Agregar texto
     if (addTextBtn){
