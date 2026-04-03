@@ -529,56 +529,10 @@ footer {
 }
 .designs-dropdown.open { display:block; }
 
-/* Pantalla de carga inicial */
-#splash-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-family: 'DM Mono', monospace;
-  transition: opacity 0.5s ease;
-}
-#splash-screen .logo {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-#splash-screen .progress-bar {
-  width: 280px;
-  height: 6px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 20px 0;
-}
-#splash-screen .progress-fill {
-  width: 0%;
-  height: 100%;
-  background: #0ea5e9;
-  transition: width 0.3s ease;
-}
-#splash-screen .message {
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
   </style>
 </head>
 
 <body>
-
-<div id="splash-screen">
-  <div class="logo">🎨 EstampaHub</div>
-  <div class="progress-bar"><div class="progress-fill" id="splash-fill"></div></div>
-  <div class="message" id="splash-message">Iniciando editor...</div>
-</div>
 
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
@@ -1304,7 +1258,6 @@ function showLock(){
 }
 
 function unlock(){
-  hideSplash();
   overlay.style.display = 'none';
   appRoot.style.visibility = 'visible';
 }
@@ -1585,6 +1538,7 @@ if (autoCropBtn) {
 }
 
     // ====== Estado
+    showMessage('Cargando editor, por favor espera...', 'loading', 0);
     let designs = [];
     let selectedDesignId = null;
     let isDragging = false;
@@ -1827,6 +1781,13 @@ class Design {
       initCanvas();
       designs.forEach(d => d.draw());
       updateSizeInfo();
+// Ocultar mensaje de carga la primera vez que se dibuja el canvas
+if (window._initialDrawDone !== true) {
+  window._initialDrawDone = true;
+  const loadingMsg = document.querySelector('.message.loading');
+  if (loadingMsg) loadingMsg.remove();
+  showMessage('Editor listo', 'success', 2000);
+}
     }
 
     function updateSizeInfo() {
