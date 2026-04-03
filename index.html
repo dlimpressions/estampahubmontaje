@@ -1237,6 +1237,7 @@ footer {
 
   <script>
 
+
 // ====== Seguridad (Usuario + Contraseña con Google Sheets) ======
 const overlay = document.getElementById('lock-overlay');
 const appRoot = document.getElementById('app-root');
@@ -1439,6 +1440,9 @@ function calcularPrecioMontaje() {
     const INCHES_PER_CM = 0.3937007874;
 
     // ====== Estado
+    let backgroundCanvas = null;        // canvas para el fondo pre-renderizado
+    let lastBgColor = null;             // último color de fondo
+    let lastCanvasWidth = 0, lastCanvasHeight = 0;  // últimas dimensiones
     let designs = [];
     let selectedDesignId = null;
     let isDragging = false;
@@ -1472,42 +1476,64 @@ function calcularPrecioMontaje() {
     }
 
     // ====== Fondo y guía
-    function initCanvas() {
-      ctx.save();
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      const size = 20;
-      const patternCanvas = document.createElement('canvas');
-      patternCanvas.width = size * 2;
-      patternCanvas.height = size * 2;
-      const pctx = patternCanvas.getContext('2d');
-      pctx.fillStyle = '#f0f0f0';
-      pctx.fillRect(0, 0, size, size);
-      pctx.fillRect(size, size, size, size);
-      const pattern = ctx.createPattern(patternCanvas, 'repeat');
-      ctx.fillStyle = pattern;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = canvasBackgroundColor;
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.globalAlpha = 1.0;
-
-      ctx.strokeStyle = '#cbd5e0';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5,5]);
-      ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
-      ctx.setLineDash([]);
-
-      if (designs.length===0){
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = '20px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('BY: Estampa Hub', canvas.width/2, canvas.height/2);
-      }
-      ctx.restore();
-    }
-    initCanvas();
+   function initCanvas() {
+  // Si el fondo no ha cambiado, solo copiamos el caché
+  if (backgroundCanvas &&
+      canvas.width === lastCanvasWidth &&
+      canvas.height === lastCanvasHeight &&
+      canvasBackgroundColor === lastBgColor) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundCanvas, 0, 0);
+    return;
+  }
+  
+  // Renderizar fondo desde cero
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const size = 20;
+  const patternCanvas = document.createElement('canvas');
+  patternCanvas.width = size * 2;
+  patternCanvas.height = size * 2;
+  const pctx = patternCanvas.getContext('2d');
+  pctx.fillStyle = '#f0f0f0';
+  pctx.fillRect(0, 0, size, size);
+  pctx.fillRect(size, size, size, size);
+  const pattern = ctx.createPattern(patternCanvas, 'repeat');
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = canvasBackgroundColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.globalAlpha = 1.0;
+  
+  ctx.strokeStyle = '#cbd5e0';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,5]);
+  ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+  ctx.setLineDash([]);
+  
+  if (designs.length === 0) {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('BY: Estampa Hub', canvas.width/2, canvas.height/2);
+  }
+  ctx.restore();
+  
+  // Guardar el fondo en el canvas caché
+  if (!backgroundCanvas) {
+    backgroundCanvas = document.createElement('canvas');
+  }
+  backgroundCanvas.width = canvas.width;
+  backgroundCanvas.height = canvas.height;
+  backgroundCanvas.getContext('2d').drawImage(canvas, 0, 0);
+  
+  lastBgColor = canvasBackgroundColor;
+  lastCanvasWidth = canvas.width;
+  lastCanvasHeight = canvas.height;
+}
 
 // ====== Recorte automático de transparencia
 function trimTransparentPixels(img) {
@@ -1677,11 +1703,23 @@ class Design {
 }
 
     // ====== Dibujo general
-    function drawCanvas() {
-      initCanvas();
-      designs.forEach(d => d.draw());
-      updateSizeInfo();
-    }
+   let redrawScheduled = false;
+function drawCanvas() {
+  if (redrawScheduled) return;
+  redrawScheduled = true;
+  requestAnimationFrame(() => {
+    redrawScheduled = false;
+    // Llamamos a la función que realmente dibuja
+    performDraw();
+  });
+}
+
+// Cambia el nombre de tu función de dibujo actual a performDraw
+function performDraw() {
+  initCanvas();
+  designs.forEach(d => d.draw());
+  updateSizeInfo();
+}
 
     function updateSizeInfo() {
       const d = getSelectedDesign();
