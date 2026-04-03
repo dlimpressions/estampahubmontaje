@@ -534,6 +534,12 @@ footer {
 
 <body>
 
+  <div id="splash-screen" style="display: none;">
+  <div class="logo">🎨 EstampaHub</div>
+  <div class="progress-bar"><div class="progress-fill" id="splash-fill"></div></div>
+  <div class="message" id="splash-message">Iniciando editor...</div>
+</div>
+
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
@@ -1257,23 +1263,71 @@ function showLock(){
   setTimeout(() => lockPass && lockPass.focus(), 300);
 }
 
+  // ====== Referencias DOM
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const uploadBtn = document.getElementById('upload-btn');
+    const fileInput = document.getElementById('file-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const downloadPngBtn = document.getElementById('download-png');
+    const downloadPdfBtn = document.getElementById('download-pdf');
+    const rotationSlider = document.getElementById('rotation-slider');
+    const rotationValue = document.getElementById('rotation-value');
+    const rotationInput = document.getElementById('rotation-input');
+    const opacitySlider = document.getElementById('opacity-slider');
+    const opacityValue = document.getElementById('opacity-value');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomValue = document.getElementById('zoom-value');
+    const zoomLevel = document.getElementById('zoom-level');
+    const addTextBtn = document.getElementById('add-text-btn');
+    const designsList = document.getElementById('designs-list');
+    const removeBtn = document.getElementById('remove-btn');
+    const sizeInfo = document.getElementById('size-info');
+    const originalSizeInfo = document.getElementById('original-size');
+    const widthInput = document.getElementById('width-input');
+    const heightInput = document.getElementById('height-input');
+    const applySizeBtn = document.getElementById('apply-size');
+    const lockProportion = document.getElementById('lock-proportion');
+    const qualitySelect = document.getElementById('quality-select');
+    const canvasColor = document.getElementById('canvas-color');
+    const messageContainer = document.getElementById('message-container');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const specsLabel = document.getElementById('specs-label');
+    const canvasSizeLabel = document.getElementById('canvas-size-label');
+    const canvasHeightInput = document.getElementById('canvas-height-cm');
+    const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
+
+    const mirrorBtn = document.getElementById('mirror-btn');
+    const bringFrontBtn = document.getElementById('bring-front');
+    const sendBackBtn = document.getElementById('send-back');
+    const stepForwardBtn = document.getElementById('step-forward');
+    const stepBackBtn = document.getElementById('step-back');
+
+
 function unlock(){
-  overlay.style.display = 'none';
-  appRoot.style.visibility = 'visible';
+  // Mostrar pantalla de carga
+  const splash = document.getElementById('splash-screen');
+  if (splash) splash.style.display = 'flex';
+  
+  // Pequeña pausa para que se vea el splash y luego mostrar el editor
+  setTimeout(() => {
+    // Forzar un dibujo inicial del canvas (aunque esté vacío)
+    drawCanvas();
+    // Ocultar el splash con animación
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => {
+        splash.style.display = 'none';
+        splash.style.opacity = '1'; // reset para la próxima vez
+      }, 500);
+    }
+    // Mostrar el editor
+    overlay.style.display = 'none';
+    appRoot.style.visibility = 'visible';
+    showMessage('Editor listo', 'success', 2000);
+  }, 100);
 }
 
-if (sessionStorage.getItem('dtf_unlocked') === '1') {
-  unlock();
-} else {
-  showLock();
-}
-// Simular progreso de carga (mientras se ejecutan los scripts)
-let progress = 0;
-const progressInterval = setInterval(() => {
-  progress += 5;
-  if (progress >= 95) clearInterval(progressInterval);
-  updateSplash(progress, 'Cargando recursos...');
-}, 150);
 
 // ========== PANTALLA DE CARGA ==========
 function updateSplash(percent, text) {
@@ -1538,7 +1592,6 @@ if (autoCropBtn) {
 }
 
     // ====== Estado
-    showMessage('Cargando editor, por favor espera...', 'loading', 0);
     let designs = [];
     let selectedDesignId = null;
     let isDragging = false;
@@ -1781,13 +1834,6 @@ class Design {
       initCanvas();
       designs.forEach(d => d.draw());
       updateSizeInfo();
-// Ocultar mensaje de carga la primera vez que se dibuja el canvas
-if (window._initialDrawDone !== true) {
-  window._initialDrawDone = true;
-  const loadingMsg = document.querySelector('.message.loading');
-  if (loadingMsg) loadingMsg.remove();
-  showMessage('Editor listo', 'success', 2000);
-}
     }
 
     function updateSizeInfo() {
