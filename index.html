@@ -1505,6 +1505,8 @@ newHeightCm = Math.min(100, Math.max(10, newHeightCm));
 const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
 canvas.height = newPx;
 canvasWrapper.style.height = newPx + 'px';
+
+calcularPrecioMontaje();
   
   // Actualizar etiquetas visuales
   if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
