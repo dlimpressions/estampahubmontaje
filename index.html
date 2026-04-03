@@ -931,6 +931,7 @@ footer {
       <span class="tb-label">Zoom</span>
       <input type="range" id="tb-zoom-slider" class="tb-input-t" min="20" max="200" value="100" style="width:95px">
       <span class="tb-val" id="tb-zoom-value">100%</span>
+      <input type="number" id="tb-zoom-number" class="tb-input-t" min="20" max="200" value="100" style="width:65px; margin-left:4px;" step="5">
       <div class="tb-sep"></div>
       <div class="precio-badge">
         <div>
@@ -1450,6 +1451,9 @@ function calcularPrecioMontaje() {
     let isRotating = false;
     let dragOffsetX, dragOffsetY;
     let canvasZoom = 1.0;
+    let canvasZoomMin = 0.2;    // 20%
+    let canvasZoomMax = 2.0;    // 200%
+    let canvasZoomStep = 0.05;  // 5% por paso de rueda
     let lastMouseX, lastMouseY;
     let startScale = 1.0;
     let startResizeDist = 1.0;
@@ -2024,33 +2028,94 @@ function performDraw() {
     }
 
     // Zoom con slider
-    if (zoomSlider){
-      zoomSlider.addEventListener('input', function(){
-        canvasZoom = this.value/100;
-        zoomValue.textContent = this.value + '%';
-        zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+  // Zoom con slider
+if (zoomSlider) {
+  zoomSlider.addEventListener('input', function() {
+    canvasZoom = this.value / 100;
+    zoomValue.textContent = this.value + '%';
+    if (zoomLevel) zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+    // Sincronizar input numérico
+    if (zoomNumber) zoomNumber.value = this.value;
+    applyZoomTransform();
+  });
+}
 
-        const canvasContainer = document.querySelector('.canvas-area');
-        canvasWrapper.style.transform = `scale(${canvasZoom})`;
-        canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
-        canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
-      });
-    }
+// Zoom con input numérico (nuevo)
+const zoomNumber = document.getElementById('tb-zoom-number');
+if (zoomNumber) {
+  zoomNumber.addEventListener('input', function() {
+    let val = parseInt(this.value);
+    if (isNaN(val)) val = 100;
+    val = Math.min(canvasZoomMax * 100, Math.max(canvasZoomMin * 100, val));
+    canvasZoom = val / 100;
+    zoomSlider.value = val;
+    zoomValue.textContent = val + '%';
+    if (zoomLevel) zoomLevel.textContent = 'Zoom: ' + val + '%';
+    applyZoomTransform();
+  });
+}
 
-    // Zoom con rueda (Ctrl o ⌘)
-    const canvasAreaEl = document.querySelector('.canvas-area');
-    if (canvasAreaEl && zoomSlider){
-      canvasAreaEl.addEventListener('wheel', (e)=>{
-        if (!e.ctrlKey && !e.metaKey) return;
-        e.preventDefault();
-        const cur = parseInt(zoomSlider.value,10);
-        const next = Math.max(20, Math.min(200, cur + (e.deltaY < 0 ? 10 : -10)));
-        if (next !== cur){
-          zoomSlider.value = String(next);
-          zoomSlider.dispatchEvent(new Event('input'));
-        }
-      }, {passive:false});
-    }
+// Función que aplica la transformación de zoom y mantiene el punto central
+function applyZoomTransform() {
+  if (!canvasWrapper || !canvasAreaEl) return;
+  canvasWrapper.style.transform = `scale(${canvasZoom})`;
+  
+  // Opcional: ajustar el scroll para mantener el centro visible
+  const wrapperRect = canvasWrapper.getBoundingClientRect();
+  const areaRect = canvasAreaEl.getBoundingClientRect();
+  if (wrapperRect.width > areaRect.width || wrapperRect.height > areaRect.height) {
+    canvasAreaEl.scrollLeft = (wrapperRect.width - areaRect.width) / 2;
+    canvasAreaEl.scrollTop = (wrapperRect.height - areaRect.height) / 2;
+  }
+}
+
+
+// Zoom con rueda (Ctrl o ⌘) - estilo CorelDRAW: centrado en el cursor
+
+if (canvasAreaEl && zoomSlider) {
+  canvasAreaEl.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    
+    // Guardar la posición del mouse relativa al canvas (antes del zoom)
+    const rect = canvasAreaEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Calcular el punto en el canvas sin zoom (coordenadas lógicas)
+    const oldZoom = canvasZoom;
+    const scrollLeft = canvasAreaEl.scrollLeft;
+    const scrollTop = canvasAreaEl.scrollTop;
+    
+    // Coordenadas del punto bajo el mouse en el espacio del canvas (sin zoom)
+    const targetX = (scrollLeft + mouseX) / oldZoom;
+    const targetY = (scrollTop + mouseY) / oldZoom;
+    
+    // Calcular nuevo zoom (incremento/decremento del 5%)
+    let newZoom = oldZoom + (e.deltaY > 0 ? -canvasZoomStep : canvasZoomStep);
+    newZoom = Math.min(canvasZoomMax, Math.max(canvasZoomMin, newZoom));
+    if (newZoom === oldZoom) return;
+    
+    canvasZoom = newZoom;
+    const newZoomPercent = Math.round(canvasZoom * 100);
+    zoomSlider.value = newZoomPercent;
+    zoomValue.textContent = newZoomPercent + '%';
+    if (zoomLevel) zoomLevel.textContent = 'Zoom: ' + newZoomPercent + '%';
+    if (zoomNumber) zoomNumber.value = newZoomPercent;
+    
+    // Aplicar transformación
+    canvasWrapper.style.transform = `scale(${canvasZoom})`;
+    
+    // Calcular nuevo scroll para que el punto bajo el mouse permanezca en la misma posición
+    const newScrollLeft = targetX * canvasZoom - mouseX;
+    const newScrollTop = targetY * canvasZoom - mouseY;
+    canvasAreaEl.scrollLeft = newScrollLeft;
+    canvasAreaEl.scrollTop = newScrollTop;
+    
+    // También actualizar las variables de scroll (por si se usan después)
+    // No es necesario guardarlas porque ya están en el DOM
+  }, { passive: false });
+}
 
     // Agregar texto
     if (addTextBtn){
