@@ -1,11 +1,12 @@
-// mesasave.js - Guardado con IndexedDB y exportación/importación a archivo .estampahub (botones mejorados)
-console.log("✅ mesasave.js (unificado) cargado");
+// mesasave.js - Guardado con IndexedDB y exportación/importación (solo visible tras login)
+console.log("✅ mesasave.js (unificado) cargado - esperando login");
 
 (function() {
   const DB_NAME = 'DTF_Workbench';
   const DB_VERSION = 1;
   const STORE_NAME = 'workbenches';
   let db = null;
+  let buttonsInitialized = false;  // Evita crear botones múltiples veces
 
   function openDB() {
     return new Promise((resolve, reject) => {
@@ -105,7 +106,6 @@ console.log("✅ mesasave.js (unificado) cargado");
         const loadingMsg = showMessage('⏳ Cargando mesa...', 'loading', 0);
         console.log('Cargando mesa con', state.designs.length, 'diseños');
 
-        // Restaurar lienzo (solo alto, el ancho es fijo)
         if (state.canvasHeightCm) {
           let newHeightCm = Math.min(100, Math.max(10, state.canvasHeightCm));
           if (newHeightCm !== CANVAS_HEIGHT_CM) {
@@ -125,7 +125,6 @@ console.log("✅ mesasave.js (unificado) cargado");
           if (canvasColor) canvasColor.value = state.backgroundColor;
         }
 
-        // Restaurar diseños
         const loadPromises = state.designs.map((designState, idx) => {
           return new Promise((resolve) => {
             const url = URL.createObjectURL(designState.blob);
@@ -203,7 +202,6 @@ console.log("✅ mesasave.js (unificado) cargado");
     }
   }
 
-  // Exportar a archivo .estampahub
   async function exportToFile() {
     if (!designs || designs.length === 0) {
       showMessage('No hay diseños para exportar', 'warning', 2000);
@@ -254,7 +252,6 @@ console.log("✅ mesasave.js (unificado) cargado");
     }
   }
 
-  // Importar desde archivo .estampahub
   async function importFromFile(file) {
     if (!file) return;
     const loadingMsg = showMessage('⏳ Cargando archivo...', 'loading', 0);
@@ -263,7 +260,6 @@ console.log("✅ mesasave.js (unificado) cargado");
       const state = JSON.parse(text);
       if (state.version !== 2) throw new Error('Versión de archivo no soportada');
 
-      // Restaurar alto del lienzo (el ancho es fijo, no se modifica)
       let newHeightCm = Math.min(100, Math.max(10, state.canvasHeightCm));
       if (newHeightCm !== CANVAS_HEIGHT_CM) {
         CANVAS_HEIGHT_CM = newHeightCm;
@@ -323,7 +319,18 @@ console.log("✅ mesasave.js (unificado) cargado");
     }
   }
 
+  // Solo crear los botones si el usuario ya inició sesión
   function initSaveButtons() {
+    if (buttonsInitialized) return;
+    // Verificar si el editor es visible (login completado)
+    const appRoot = document.getElementById('app-root');
+    if (!appRoot || appRoot.style.visibility !== 'visible') {
+      // Aún no visible, reintentar en 500ms
+      setTimeout(initSaveButtons, 500);
+      return;
+    }
+
+    buttonsInitialized = true;
     const container = document.createElement('div');
     container.id = 'mesa-save-container';
     container.style.cssText = `
@@ -342,27 +349,23 @@ console.log("✅ mesasave.js (unificado) cargado");
       font-family: 'DM Mono', monospace;
     `;
 
-    // Botón Guardar (verde sólido)
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '💾 Guardar Mesa';
     saveBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     saveBtn.onclick = () => saveWorkbench(false);
 
-    // Botón Cargar (azul sólido)
     const loadBtn = document.createElement('button');
     loadBtn.textContent = '📂 Cargar Mesa';
     loadBtn.style.cssText = `background: #0ea5e9; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     loadBtn.onclick = () => loadWorkbench();
 
-    // Botón Exportar (morado sólido)
     const exportBtn = document.createElement('button');
-    exportBtn.textContent = '📤 Exportar';
+    exportBtn.textContent = '📤 Exportar (.estampahub)';
     exportBtn.style.cssText = `background: #8b5cf6; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     exportBtn.onclick = () => exportToFile();
 
-    // Botón Importar (naranja sólido)
     const importBtn = document.createElement('button');
-    importBtn.textContent = '📂 Importar';
+    importBtn.textContent = '📂 Importar (.estampahub)';
     importBtn.style.cssText = `background: #f59e0b; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     importBtn.onclick = () => {
       const input = document.createElement('input');
@@ -378,20 +381,22 @@ console.log("✅ mesasave.js (unificado) cargado");
     container.appendChild(importBtn);
     document.body.appendChild(container);
 
-    // Auto-guardado cada 30 segundos
+    // Auto-guardado cada 30 segundos (puedes cambiar el tiempo aquí)
     setInterval(() => {
       if (designs && designs.length > 0) saveWorkbench(true);
-    }, 300000);
+    }, 30000);
 
     window.addEventListener('beforeunload', () => {
       if (designs && designs.length > 0) saveWorkbench(true);
     });
 
-    console.log('✅ Botones de guardado/carga/exportación añadidos (estilo mejorado)');
+    console.log('✅ Botones de guardado/carga/exportación añadidos (solo editor)');
   }
 
   function waitForEditor() {
     if (typeof designs !== 'undefined' && typeof drawCanvas === 'function') {
+      // Una vez que el editor está listo, intentamos crear los botones
+      // La función initSaveButtons verificará si el login ya se hizo
       initSaveButtons();
     } else {
       setTimeout(waitForEditor, 200);
