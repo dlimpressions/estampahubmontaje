@@ -1506,16 +1506,21 @@ const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
 canvas.height = newPx;
 canvasWrapper.style.height = newPx + 'px';
 
+  // ✅ Primero actualizar el input del alto
+  if (canvasHeightInput) canvasHeightInput.value = CANVAS_HEIGHT_CM;
+
+// ✅ Luego recalcular el precio (ya usa el nuevo valor)
 calcularPrecioMontaje();
+
   
   // Actualizar etiquetas visuales
   if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
   if (specsLabel) specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
-  if (canvasHeightInput) canvasHeightInput.value = CANVAS_HEIGHT_CM;
+
   
   // Sincronizar toolbar si existe
-  const tbCanvasHeight = document.getElementById('tb-canvas-height-cm');
-  if (tbCanvasHeight) tbCanvasHeight.value = CANVAS_HEIGHT_CM;
+const tbCanvasHeight = document.getElementById('tb-canvas-height-cm');
+if (tbCanvasHeight) tbCanvasHeight.value = CANVAS_HEIGHT_CM;
   
   // Redibujar todo
   drawCanvas();
