@@ -1438,25 +1438,17 @@ function autoCropCanvasToContent(marginCm = 1) {
     return;
   }
 
-  // Margen adicional en píxeles (1 cm = 10 px por defecto)
   const marginPx = marginCm * PIXELS_PER_CM;
-
-  // Calcular el bounding box de todos los diseños (considerando rotación)
   let maxY = 0;
   
   designs.forEach(design => {
-    // Obtener dimensiones actuales del diseño (ancho y alto en píxeles)
     const w = design.width * design.scale;
     const h = design.height * design.scale;
-    
-    // Para manejar rotación, necesitamos los cuatro vértices del rectángulo
     const cx = design.x;
     const cy = design.y;
     const angleRad = design.rotation * Math.PI / 180;
     const cos = Math.cos(angleRad);
     const sin = Math.sin(angleRad);
-    
-    // Vértices relativos al centro
     const halfW = w / 2;
     const halfH = h / 2;
     const corners = [
@@ -1465,8 +1457,6 @@ function autoCropCanvasToContent(marginCm = 1) {
       { x:  halfW, y:  halfH },
       { x: -halfW, y:  halfH }
     ];
-    
-    // Transformar cada vértice y obtener la Y máxima
     corners.forEach(corner => {
       const rx = corner.x * cos - corner.y * sin;
       const ry = corner.x * sin + corner.y * cos;
@@ -1475,45 +1465,29 @@ function autoCropCanvasToContent(marginCm = 1) {
     });
   });
   
-  // Añadir margen y limitar al máximo permitido (100 cm)
-  let newHeightPx = Math.min(maxY + marginPx, CANVAS_HEIGHT_CM * PIXELS_PER_CM);
-  // No puede ser menor que 10 cm (100 px)
-  newHeightPx = Math.max(100, newHeightPx);
+  // ✅ Redondeo al entero más cercano
+  let newHeightCm = Math.round((maxY + marginPx) / PIXELS_PER_CM);
+  newHeightCm = Math.min(100, Math.max(10, newHeightCm));
   
-  const newHeightCm = newHeightPx / PIXELS_PER_CM;
-  
-  // Si el nuevo alto es igual al actual, no hacer nada
-  if (Math.abs(newHeightCm - CANVAS_HEIGHT_CM) < 0.1) {
+  if (Math.abs(newHeightCm - CANVAS_HEIGHT_CM) < 0.5) {
     showMessage('El lienzo ya está ajustado al contenido', 'info', 2000);
     return;
   }
   
-  // Actualizar el alto del lienzo
   CANVAS_HEIGHT_CM = newHeightCm;
   const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
   canvas.height = newPx;
   canvasWrapper.style.height = newPx + 'px';
   
-  // Actualizar etiquetas visuales
   if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
   if (specsLabel) specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
   if (canvasHeightInput) canvasHeightInput.value = CANVAS_HEIGHT_CM;
   
-  // Sincronizar toolbar si existe
   const tbCanvasHeight = document.getElementById('tb-canvas-height-cm');
   if (tbCanvasHeight) tbCanvasHeight.value = CANVAS_HEIGHT_CM;
   
-  // Redibujar todo
   drawCanvas();
-  showMessage(`Lienzo recortado a ${CANVAS_HEIGHT_CM.toFixed(1)} cm`, 'success', 2000);
-}
-
-// Botón recorte automático
-const autoCropBtn = document.getElementById('tb-auto-crop-canvas');
-if (autoCropBtn) {
-  autoCropBtn.addEventListener('click', () => {
-    autoCropCanvasToContent(1); // margen de 1 cm
-  });
+  showMessage(`Lienzo recortado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
 }
 
   // Precio inicial al cargar
