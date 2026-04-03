@@ -528,10 +528,58 @@ footer {
   scrollbar-width:thin; scrollbar-color:var(--border-md) transparent;
 }
 .designs-dropdown.open { display:block; }
+
+/* Pantalla de carga inicial */
+#splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'DM Mono', monospace;
+  transition: opacity 0.5s ease;
+}
+#splash-screen .logo {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+#splash-screen .progress-bar {
+  width: 280px;
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+#splash-screen .progress-fill {
+  width: 0%;
+  height: 100%;
+  background: #0ea5e9;
+  transition: width 0.3s ease;
+}
+#splash-screen .message {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
   </style>
 </head>
 
 <body>
+
+<div id="splash-screen">
+  <div class="logo">🎨 EstampaHub</div>
+  <div class="progress-bar"><div class="progress-fill" id="splash-fill"></div></div>
+  <div class="message" id="splash-message">Iniciando editor...</div>
+</div>
+
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
@@ -1256,6 +1304,7 @@ function showLock(){
 }
 
 function unlock(){
+  hideSplash();
   overlay.style.display = 'none';
   appRoot.style.visibility = 'visible';
 }
@@ -1264,6 +1313,28 @@ if (sessionStorage.getItem('dtf_unlocked') === '1') {
   unlock();
 } else {
   showLock();
+}
+// Simular progreso de carga (mientras se ejecutan los scripts)
+let progress = 0;
+const progressInterval = setInterval(() => {
+  progress += 5;
+  if (progress >= 95) clearInterval(progressInterval);
+  updateSplash(progress, 'Cargando recursos...');
+}, 150);
+
+// ========== PANTALLA DE CARGA ==========
+function updateSplash(percent, text) {
+  const fill = document.getElementById('splash-fill');
+  const msg = document.getElementById('splash-message');
+  if (fill) fill.style.width = percent + '%';
+  if (msg) msg.textContent = text;
+}
+function hideSplash() {
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(() => splash.remove(), 500);
+  }
 }
 
 if (lockBtn) {
@@ -1314,28 +1385,6 @@ if (lockBtn) {
 // AÑADE ESTAS LÍNEAS PARA DEPURAR:
   console.log("RESULTADO DEL SERVIDOR:", result);
   console.log("Datos que se guardan en localStorage:", userInfo);
-
-
-  // Mantén el fetch del facturador (si lo necesitas)
-  try {
-    const paramsFact = new URLSearchParams();
-    paramsFact.append('action', 'get_facturador_url');
-    paramsFact.append('usuario', usuario);
-    const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbwJOl_grF0Lp0Ff9aMc6v8qdc6olHirRsCw0UHnHbJDQX21qkOGksdn92lC_zgyW3o1/exec', {
-      method: 'POST',
-      body: paramsFact
-    });
-    const urlResult = await urlResponse.json();
-    if (urlResult.success) {
-      sessionStorage.setItem('facturador_url', urlResult.url);
-      showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
-    } else {
-      showMessage('No se encontró URL de facturador. Contacta al admin.', 'warning', 5000);
-    }
-  } catch (err) {
-    console.error('Error facturador:', err);
-    showMessage('Error al cargar facturador.', 'error');
-  }
 
   unlock();
 } else {
@@ -3463,7 +3512,7 @@ if(tbDtfBtn){
 
 <script src="termofijadoras_oc.js"></script>
 
-<script src="gallery.js"></script>
+<script src="gallery.js" defer></script>
 
 <script src="profile.js"></script>
 
