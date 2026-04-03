@@ -1,5 +1,5 @@
-// gallery.js - v15: detección temprana, cancelación al 100%, orden corregido
-console.log("✅ gallery.js v15 - búsqueda inteligente con abort temprano");
+// gallery.js - v17: caché de metadatos (sin imágenes), lazy loading, precarga asíncrona
+console.log("✅ gallery.js v17 - caché de metadatos + lazy loading");
 
 let allDesigns        = [];
 let currentPage       = 1;
@@ -7,17 +7,134 @@ const itemsPerPage    = 20;
 let selectedItems     = new Set();
 let currentSearch     = '';
 let visualSearchMode  = false;
-let vsScores          = new Map();    // distancia (menor = más similar)
-let searchAbortFlag   = false;        // para cancelar búsqueda si ya encontramos 100%
+let vsScores          = new Map();
+let searchAbortFlag   = false;
 
-// Cache de histogramas (por URL)
 const histCache = new Map();
 let searchDebounceTimer;
 
+// ========== CACHÉ DE METADATOS EN INDEXEDDB ==========
+const DB_NAME = 'DTF_GalleryCache';
+const DB_VERSION = 1;
+const STORE_NAME = 'designs_metadata';
+let db = null;
+let isLoadingFromNetwork = false;
+
+function openCacheDB() {
+  return new Promise((resolve, reject) => {
+    if (db && db.name === DB_NAME) {
+      resolve(db);
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (event) => {
+      const dbRef = event.target.result;
+      if (!dbRef.objectStoreNames.contains(STORE_NAME)) {
+        dbRef.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      resolve(db);
+    };
+    request.onerror = (event) => reject(event.target.error);
+  });
+}
+
+async function saveMetadataToCache(designs) {
+  try {
+    const database = await openCacheDB();
+    const tx = database.transaction([STORE_NAME], 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put({ id: 'cached', data: designs, timestamp: Date.now() });
+    await tx.done;
+    console.log('📦 Metadatos guardados en caché');
+  } catch (err) {
+    console.warn('Error guardando metadatos en caché:', err);
+  }
+}
+
+async function loadMetadataFromCache() {
+  try {
+    const database = await openCacheDB();
+    const tx = database.transaction([STORE_NAME], 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const result = await new Promise((resolve) => {
+      const req = store.get('cached');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+    if (result && result.data && Array.isArray(result.data)) {
+      console.log(`📦 Metadatos cargados desde caché: ${result.data.length} diseños (${new Date(result.timestamp).toLocaleTimeString()})`);
+      return result.data;
+    }
+  } catch (err) {
+    console.warn('Error leyendo metadatos de caché:', err);
+  }
+  return null;
+}
+
+async function fetchMetadataFromNetwork() {
+  if (isLoadingFromNetwork) return null;
+  isLoadingFromNetwork = true;
+  try {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
+    const designs = await res.json();
+    await saveMetadataToCache(designs);
+    console.log(`🌐 Metadatos descargados: ${designs.length} diseños`);
+    return designs;
+  } catch (e) {
+    console.error('Error de red:', e);
+    showMessage('Error al conectar con la galería. Usando datos locales.', 'warning', 3000);
+    return null;
+  } finally {
+    isLoadingFromNetwork = false;
+  }
+}
+
+// Inicialización: precarga asíncrona (caché primero, luego red en segundo plano)
+async function preloadGallery() {
+  const cached = await loadMetadataFromCache();
+  if (cached && cached.length > 0) {
+    allDesigns = cached;
+    currentPage = 1;
+    currentSearch = '';
+    buildSearchBar();
+    buildMultiBar();
+    render();
+    console.log(`🔄 Galería mostrada desde caché (${allDesigns.length} diseños)`);
+  } else {
+    // Sin caché, mostrar vacío y empezar descarga
+    allDesigns = [];
+    buildSearchBar();
+    buildMultiBar();
+    render();
+  }
+  // Actualizar en segundo plano
+  fetchMetadataFromNetwork().then(networkDesigns => {
+    if (networkDesigns && networkDesigns.length > 0) {
+      allDesigns = networkDesigns;
+      const overlay = document.getElementById('imgbb-gallery-overlay');
+      if (overlay && overlay.style.display === 'flex') {
+        currentPage = 1;
+        currentSearch = '';
+        visualSearchMode = false;
+        vsScores.clear();
+        document.getElementById('vs-clear').style.display = 'none';
+        render();
+        showMessage(`Galería actualizada (${allDesigns.length} diseños)`, 'success', 2000);
+      } else {
+        console.log('Diseños actualizados en segundo plano');
+      }
+    }
+  });
+}
+
+// ========== EVENTOS DE APERTURA/CIERRE ==========
 window.addEventListener('load', () => {
-  const overlay     = document.getElementById('imgbb-gallery-overlay');
-  const openBtn     = document.getElementById('open-imgbb-gallery');
-  const closeBtn    = document.getElementById('close-imgbb-gallery');
+  const overlay = document.getElementById('imgbb-gallery-overlay');
+  const openBtn = document.getElementById('open-imgbb-gallery');
+  const closeBtn = document.getElementById('close-imgbb-gallery');
 
   openBtn?.addEventListener('click', () => {
     overlay.style.display = 'flex';
@@ -25,39 +142,25 @@ window.addEventListener('load', () => {
     visualSearchMode = false;
     vsScores.clear();
     histCache.clear();
-    loadFromSheets();
+    if (allDesigns.length === 0) {
+      const grid = document.getElementById('imgbb-designs-grid');
+      if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px;">Cargando galería...</div>';
+    } else {
+      render();
+    }
   });
 
   closeBtn?.addEventListener('click', () => {
     overlay.style.display = 'none';
     selectedItems.clear();
   });
+
+  preloadGallery();
 });
 
-async function loadFromSheets() {
-  const grid = document.getElementById('imgbb-designs-grid');
-  if(!grid) return;
-
-  grid.innerHTML = `
-    <div style="grid-column:1/-1;text-align:center;padding:50px;color:#475569;font-family:monospace;">
-      <div style="display:inline-block;width:28px;height:28px;border:3px solid rgba(14,165,233,0.2);
-        border-top-color:#0ea5e9;border-radius:50%;animation:gspin 0.7s linear infinite;margin-bottom:10px;"></div><br>
-      Cargando diseños...
-    </div>
-    <style>@keyframes gspin{to{transform:rotate(360deg)}}</style>`;
-
-  try {
-    const res = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
-    allDesigns = await res.json();
-    currentPage = 1;
-    currentSearch = '';
-    buildSearchBar();
-    buildMultiBar();
-    render();
-  } catch(e) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f43f5e;padding:40px;">❌ Error al cargar: ${e.message}</div>`;
-  }
-}
+// ========== RESTO DE FUNCIONES (buildSearchBar, render, etc.) ==========
+// Aquí van todas las funciones que ya tenías exactamente igual (sin cambios).
+// Solo asegúrate de que no falte ninguna.
 
 function buildSearchBar() {
   let sc = document.getElementById('searchContainer');
@@ -120,7 +223,6 @@ function buildSearchBar() {
   });
 }
 
-// ========== PROGRESO EN MODAL ==========
 function showModalProgress(text, percent) {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
@@ -135,8 +237,6 @@ function showModalProgress(text, percent) {
   `;
 }
 
-// ========== HISTOGRAMAS RÁPIDOS ==========
-// Versión ultra rápida (8x8, 4 bins) para descartar
 function getUltraFastHistogram(img) {
   const size = 8;
   const bins = 4;
@@ -160,7 +260,6 @@ function getUltraFastHistogram(img) {
   } catch(e) { return null; }
 }
 
-// Versión estándar (16x16, 8 bins) para comparación final
 function getFastHistogram(img) {
   const size = 16;
   const bins = 8;
@@ -194,9 +293,7 @@ function histogramDistance(a, b) {
   return Math.sqrt(d);
 }
 
-// ========== BÚSQUEDA VISUAL INTELIGENTE ==========
 async function runVisualSearch(file) {
-  // Resetear estado
   vsScores.clear();
   searchAbortFlag = false;
   showModalProgress('📷 Cargando imagen de búsqueda...', 5);
@@ -217,22 +314,20 @@ async function runVisualSearch(file) {
   }
 
   showModalProgress('🎨 Analizando paleta de colores...', 15);
- const queryHist     = getFastHistogram(queryImg);
- const queryHistFast = getUltraFastHistogram(queryImg); // para comparación rápida de igual tamaño
+  const queryHist = getFastHistogram(queryImg);
+  const queryHistFast = getUltraFastHistogram(queryImg);
   if (!queryHist) {
     showModalProgress('⚠️ No se pudo analizar la imagen', 0);
     setTimeout(() => render(), 1500);
     return;
   }
 
-  // RANGO AMPLIADO (puedes cambiarlo hasta 500 si el rendimiento lo permite)
-  const MAX_COMPARE = allDesigns.length;   // Compara TODOS los diseños
+  const MAX_COMPARE = allDesigns.length;
   const toCompare = allDesigns.slice(0, MAX_COMPARE);
   const total = toCompare.length;
   let done = 0;
   let failed = 0;
   let perfectMatchFound = false;
-
   const BATCH = 5;
 
   for (let i = 0; i < toCompare.length && !searchAbortFlag; i += BATCH) {
@@ -242,8 +337,6 @@ async function runVisualSearch(file) {
         resolve();
         return;
       }
-
-      // 1. Revisar caché
       if (histCache.has(d.url)) {
         const hist = histCache.get(d.url);
         const dist = hist ? histogramDistance(queryHist, hist) : 999;
@@ -254,16 +347,13 @@ async function runVisualSearch(file) {
         resolve();
         return;
       }
-
       const img = new Image();
       img.crossOrigin = 'anonymous';
-            img.onload = () => {
+      img.onload = () => {
         if (searchAbortFlag) { resolve(); return; }
-
-        // 2. Filtro rápido con histograma ultra (8x8, 4 bins)
         const ultraHist = getUltraFastHistogram(img);
         if (ultraHist) {
-        const ultraDist = histogramDistance(queryHistFast, ultraHist); // mismos bins = comparación correcta
+          const ultraDist = histogramDistance(queryHistFast, ultraHist);
           if (ultraDist > 0.6) {
             vsScores.set(d.url, 999);
             done++;
@@ -272,19 +362,14 @@ async function runVisualSearch(file) {
             return;
           }
         }
-
-        // 3. Cálculo detallado
         const fullHist = getFastHistogram(img);
         const finalDist = fullHist ? histogramDistance(queryHist, fullHist) : 999;
         histCache.set(d.url, fullHist);
         vsScores.set(d.url, finalDist);
-        
-        // Si es coincidencia exacta o casi exacta (distancia < 0.01)
         if (finalDist < 0.01) {
-          vsScores.set(d.url, 0);        // forzar score 0
+          vsScores.set(d.url, 0);
           perfectMatchFound = true;
           searchAbortFlag = true;
-          // Asignar score alto al resto de imágenes no comparadas
           allDesigns.forEach(design => {
             if (!vsScores.has(design.url)) vsScores.set(design.url, 999);
           });
@@ -292,16 +377,14 @@ async function runVisualSearch(file) {
           currentPage = 1;
           document.getElementById('vs-clear').style.display = 'inline-flex';
           showModalProgress(`✨ ¡Coincidencia exacta! (100% similar)`, 100);
-          render();   // ordenar y mostrar inmediatamente
+          render();
           resolve();
           return;
         }
-        
         done++;
         updateProgress(done, total);
         resolve();
       };
-
       img.onerror = () => {
         vsScores.set(d.url, 999);
         done++;
@@ -310,13 +393,10 @@ async function runVisualSearch(file) {
       };
       img.src = d.url;
     })));
-
-    // Si ya encontramos coincidencia perfecta, detenemos la búsqueda
     if (perfectMatchFound) {
       searchAbortFlag = true;
       showModalProgress(`✨ ¡Coincidencia exacta encontrada! (100% similar)`, 100);
       setTimeout(() => {
-        // Asignar score alto al resto de imágenes no comparadas
         allDesigns.forEach(d => {
           if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
         });
@@ -328,18 +408,14 @@ async function runVisualSearch(file) {
       return;
     }
   }
-
-  // Si terminó sin abortar
   if (done === 0 || failed === done) {
     showModalProgress('⚠️ No se pudo comparar ningún diseño (CORS)', 0);
     setTimeout(() => render(), 2000);
     return;
   }
-
   allDesigns.forEach(d => {
     if (!vsScores.has(d.url)) vsScores.set(d.url, 999);
   });
-
   visualSearchMode = true;
   currentPage = 1;
   document.getElementById('vs-clear').style.display = 'inline-flex';
@@ -349,12 +425,10 @@ async function runVisualSearch(file) {
 
 function updateProgress(done, total) {
   const percent = 15 + Math.floor((done / total) * 70);
-  // Solo actualizar la barra de progreso si NO estamos ya mostrando resultados
   if(!visualSearchMode) {
     showModalProgress(`🖼️ Comparando ${done}/${total}...`, percent);
   }
 }
-// ========== FIN BÚSQUEDA VISUAL ==========
 
 function buildMultiBar() {
   let bar = document.getElementById('gallery-multibar');
@@ -399,10 +473,7 @@ function getFilteredList() {
     const c = (d.categoria || d.Categoria || '').toLowerCase();
     return n.includes(term) || c.includes(term);
   });
-
   if(visualSearchMode && vsScores.size > 0) {
-    // Ordenar: menor distancia = más similar = primero
-    // Excluir items con score 998/999 (no comparados / no similares) del tope
     list = [...list].sort((a, b) => {
       const sa = vsScores.get(a.url) ?? 999;
       const sb = vsScores.get(b.url) ?? 999;
@@ -412,23 +483,21 @@ function getFilteredList() {
   return list;
 }
 
-// ========== RENDER CON MINIATURAS EFICIENTES ==========
 function render() {
   const grid = document.getElementById('imgbb-designs-grid');
   if(!grid) return;
   grid.innerHTML = '';
 
-  const list       = getFilteredList();
+  const list = getFilteredList();
   const totalPages = Math.ceil(list.length / itemsPerPage);
-  const start      = (currentPage - 1) * itemsPerPage;
-  const page       = list.slice(start, start + itemsPerPage);
+  const start = (currentPage - 1) * itemsPerPage;
+  const page = list.slice(start, start + itemsPerPage);
 
   if (visualSearchMode && list.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#f59e0b;padding:50px;">🔍 No se encontraron diseños similares. Prueba con otra imagen.</div>`;
     renderPagination(totalPages);
     return;
   }
-
   if(page.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#475569;padding:50px;">Sin resultados</div>`;
     renderPagination(totalPages);
@@ -442,7 +511,6 @@ function render() {
       const img = entry.target.querySelector('img[data-src]');
       if(img && img.dataset.src) {
         const src = img.dataset.src;
-        // Decodificación asíncrona para no bloquear UI
         const tempImg = new Image();
         tempImg.onload = () => {
           img.src = src;
@@ -457,36 +525,33 @@ function render() {
   const maxDistance = 1.5;
 
   page.forEach(d => {
-    const url   = d.url;
+    const url = d.url;
     const isSel = selectedItems.has(url);
     let score = vsScores.get(url);
     let similarityPercent = 0;
-if (score !== undefined && score < 998) {
-  if (score < 0.05) {
-    score = 0;                    // forzar score mínimo
-    similarityPercent = 99;       // etiqueta 99%
-  } else {
-    let similarity = Math.max(0, 1 - (score / maxDistance));
-    similarityPercent = Math.round(similarity * 100);
-  }
-}
-     const item = document.createElement('div');
-    item.className    = 'gal-item';
-    item.dataset.url  = url;
-    item.dataset.sel  = isSel ? '1' : '0';
+    if (score !== undefined && score < 998) {
+      if (score < 0.05) {
+        score = 0;
+        similarityPercent = 99;
+      } else {
+        let similarity = Math.max(0, 1 - (score / maxDistance));
+        similarityPercent = Math.round(similarity * 100);
+      }
+    }
+    const item = document.createElement('div');
+    item.className = 'gal-item';
+    item.dataset.url = url;
+    item.dataset.sel = isSel ? '1' : '0';
     item.style.cssText = `
       cursor:pointer;padding:7px;border-radius:8px;position:relative;
       border:2px solid ${isSel ? '#0ea5e9' : 'rgba(14,165,233,0.14)'};
       background:${isSel ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.025)'};
       transition:border-color 0.15s,background 0.15s,transform 0.12s;`;
-
     const scoreBadge = (visualSearchMode && similarityPercent > 0)
       ? `<div style="position:absolute;top:4px;left:6px;font-size:0.55rem;font-family:monospace;
            background:rgba(168,85,247,0.8);color:#fff;padding:1px 5px;border-radius:4px;z-index:2;">
            ${similarityPercent}% similar
          </div>` : '';
-
-    // Placeholder más ligero (solo color, sin animación shimmer para ahorrar CPU)
     item.innerHTML = `
       ${scoreBadge}
       <div style="width:100%;aspect-ratio:1/1;border-radius:5px;overflow:hidden;background:#1e293b;
@@ -504,26 +569,20 @@ if (score !== undefined && score < 998) {
       <small style="display:block;margin-top:4px;color:#64748b;font-size:0.62rem;
         text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${d.nombre || '—'}</small>`;
-
-    const imgElem = item.querySelector('img');
     io.observe(item);
-
     item.addEventListener('mouseenter', () => {
       if(item.dataset.sel !== '1') item.style.transform = 'translateY(-2px)';
     });
     item.addEventListener('mouseleave', () => { item.style.transform = 'none'; });
-
     item.addEventListener('click', () => {
       const sel = item.dataset.sel === '1';
       if(sel) { selectedItems.delete(url); item.dataset.sel = '0'; applySelStyle(item, false); }
       else    { selectedItems.add(url);    item.dataset.sel = '1'; applySelStyle(item, true);  }
       updateMultiBar();
     });
-
     item.addEventListener('dblclick', e => { e.stopImmediatePropagation(); loadOne(url); });
     grid.appendChild(item);
   });
-
   renderPagination(totalPages);
 }
 
@@ -539,25 +598,20 @@ function renderPagination(totalPages) {
   if(!pag) return;
   pag.innerHTML = '';
   if(totalPages <= 1) return;
-
   const bs = `padding:5px 13px;border-radius:6px;margin:0 3px;cursor:pointer;
     font-size:0.76rem;border:1px solid rgba(14,165,233,0.35);
     background:rgba(14,165,233,0.07);color:#0ea5e9;font-family:monospace;`;
-
   const scrollUp = () => document.getElementById('imgbb-designs-grid')?.scrollIntoView({behavior:'smooth',block:'start'});
-
   if(currentPage > 1){
     const b = document.createElement('button');
     b.style.cssText = bs; b.textContent = '← Anterior';
     b.onclick = () => { currentPage--; render(); scrollUp(); };
     pag.appendChild(b);
   }
-
   const info = document.createElement('span');
   info.style.cssText = 'font-family:monospace;font-size:0.7rem;color:#334155;margin:0 8px;';
   info.textContent = `Pág. ${currentPage} / ${totalPages}  ·  ${getFilteredList().length} diseños`;
   pag.appendChild(info);
-
   if(currentPage < totalPages){
     const b = document.createElement('button');
     b.style.cssText = bs; b.textContent = 'Siguiente →';
@@ -572,10 +626,10 @@ function loadOne(url) {
   img.crossOrigin = 'anonymous';
   img.onload = () => {
     try {
-      const t  = trimTransparentPixels(img);
+      const t = trimTransparentPixels(img);
       const id = 'gal-' + Date.now();
-      const d  = new Design(id, t);
-      d.scale  = Math.min(1, Math.min((canvas.width-40)/d.width, (canvas.height-40)/d.height));
+      const d = new Design(id, t);
+      d.scale = Math.min(1, Math.min((canvas.width-40)/d.width, (canvas.height-40)/d.height));
       designs.push(d);
       window.designs = designs;
       selectedDesignId = id;
@@ -595,17 +649,16 @@ async function loadSelected() {
   if(!urls.length) return;
   const m = showMessage(`Cargando ${urls.length} diseño(s)...`, 'loading', 0);
   let ok = 0;
-
   for(const url of urls) {
     await new Promise(res => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
-          const t  = trimTransparentPixels(img);
+          const t = trimTransparentPixels(img);
           const id = 'gal-' + Date.now() + Math.random().toString(36).slice(2,5);
-          const d  = new Design(id, t);
-          d.scale  = Math.min(1, Math.min((canvas.width-40)/d.width, (canvas.height-40)/d.height));
+          const d = new Design(id, t);
+          d.scale = Math.min(1, Math.min((canvas.width-40)/d.width, (canvas.height-40)/d.height));
           designs.push(d);
           window.designs = designs;
           selectedDesignId = id;
@@ -617,7 +670,6 @@ async function loadSelected() {
       img.src = url;
     });
   }
-
   updateDesignsList(); updateControls(); drawCanvas();
   m.remove();
   showMessage(`✅ ${ok} diseño(s) cargados al canvas`, 'success', 2500);
