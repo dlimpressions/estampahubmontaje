@@ -1311,14 +1311,14 @@ function unlock(){
   
   // Pequeña pausa para que se vea el splash y luego mostrar el editor
   setTimeout(() => {
-    // Forzar un dibujo inicial del canvas (aunque esté vacío)
+    // Redibujar el canvas (aunque esté vacío, dibuja el fondo)
     drawCanvas();
     // Ocultar el splash con animación
     if (splash) {
       splash.style.opacity = '0';
       setTimeout(() => {
         splash.style.display = 'none';
-        splash.style.opacity = '1'; // reset para la próxima vez
+        splash.style.opacity = '1';
       }, 500);
     }
     // Mostrar el editor
@@ -1327,7 +1327,6 @@ function unlock(){
     showMessage('Editor listo', 'success', 2000);
   }, 100);
 }
-
 
 // ========== PANTALLA DE CARGA ==========
 function updateSplash(percent, text) {
@@ -1343,6 +1342,7 @@ function hideSplash() {
     setTimeout(() => splash.remove(), 500);
   }
 }
+
 
 if (lockBtn) {
   lockBtn.addEventListener('click', async () => {
@@ -1413,45 +1413,6 @@ if (lockPass) {
   });
 }
 
-    // ====== Referencias DOM
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const uploadBtn = document.getElementById('upload-btn');
-    const fileInput = document.getElementById('file-input');
-    const clearBtn = document.getElementById('clear-btn');
-    const downloadPngBtn = document.getElementById('download-png');
-    const downloadPdfBtn = document.getElementById('download-pdf');
-    const rotationSlider = document.getElementById('rotation-slider');
-    const rotationValue = document.getElementById('rotation-value');
-    const rotationInput = document.getElementById('rotation-input');
-    const opacitySlider = document.getElementById('opacity-slider');
-    const opacityValue = document.getElementById('opacity-value');
-    const zoomSlider = document.getElementById('zoom-slider');
-    const zoomValue = document.getElementById('zoom-value');
-    const zoomLevel = document.getElementById('zoom-level');
-    const addTextBtn = document.getElementById('add-text-btn');
-    const designsList = document.getElementById('designs-list');
-    const removeBtn = document.getElementById('remove-btn');
-    const sizeInfo = document.getElementById('size-info');
-    const originalSizeInfo = document.getElementById('original-size');
-    const widthInput = document.getElementById('width-input');
-    const heightInput = document.getElementById('height-input');
-    const applySizeBtn = document.getElementById('apply-size');
-    const lockProportion = document.getElementById('lock-proportion');
-    const qualitySelect = document.getElementById('quality-select');
-    const canvasColor = document.getElementById('canvas-color');
-    const messageContainer = document.getElementById('message-container');
-    const canvasWrapper = document.getElementById('canvas-wrapper');
-    const specsLabel = document.getElementById('specs-label');
-    const canvasSizeLabel = document.getElementById('canvas-size-label');
-    const canvasHeightInput = document.getElementById('canvas-height-cm');
-    const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
-
-    const mirrorBtn = document.getElementById('mirror-btn');
-    const bringFrontBtn = document.getElementById('bring-front');
-    const sendBackBtn = document.getElementById('send-back');
-    const stepForwardBtn = document.getElementById('step-forward');
-    const stepBackBtn = document.getElementById('step-back');
 
 // ====== Cálculo de precio aproximado de impresion ======
 function calcularPrecioMontaje() {
