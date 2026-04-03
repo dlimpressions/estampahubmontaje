@@ -1510,9 +1510,9 @@ newHeightCm = Math.min(100, Math.max(10, newHeightCm));
 // Botón recorte automático
 const autoCropBtn = document.getElementById('tb-auto-crop-canvas');
 if (autoCropBtn) {
-  autoCropBtn.addEventListener('click', () => {
-    autoCropCanvasToContent(1); // margen de 1 cm
-  });
+ autoCropBtn.addEventListener('click', () => {
+  autoCropCanvasToContent(0.3); // margen de 0.3 cm (3 píxeles)
+});
 }
 
   // Precio inicial al cargar
