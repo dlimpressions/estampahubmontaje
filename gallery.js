@@ -217,7 +217,8 @@ async function runVisualSearch(file) {
   }
 
   showModalProgress('🎨 Analizando paleta de colores...', 15);
-  const queryHist = getFastHistogram(queryImg);
+ const queryHist     = getFastHistogram(queryImg);
+ const queryHistFast = getUltraFastHistogram(queryImg); // para comparación rápida de igual tamaño
   if (!queryHist) {
     showModalProgress('⚠️ No se pudo analizar la imagen', 0);
     setTimeout(() => render(), 1500);
@@ -262,7 +263,7 @@ async function runVisualSearch(file) {
         // 2. Filtro rápido con histograma ultra (8x8, 4 bins)
         const ultraHist = getUltraFastHistogram(img);
         if (ultraHist) {
-          const ultraDist = histogramDistance(queryHist, ultraHist);
+        const ultraDist = histogramDistance(queryHistFast, ultraHist); // mismos bins = comparación correcta
           if (ultraDist > 0.6) {
             vsScores.set(d.url, 999);
             done++;
@@ -348,7 +349,10 @@ async function runVisualSearch(file) {
 
 function updateProgress(done, total) {
   const percent = 15 + Math.floor((done / total) * 70);
-  showModalProgress(`🖼️ Comparando ${done}/${total} imágenes...`, percent);
+  // Solo actualizar la barra de progreso si NO estamos ya mostrando resultados
+  if(!visualSearchMode) {
+    showModalProgress(`🖼️ Comparando ${done}/${total}...`, percent);
+  }
 }
 // ========== FIN BÚSQUEDA VISUAL ==========
 
@@ -397,7 +401,13 @@ function getFilteredList() {
   });
 
   if(visualSearchMode && vsScores.size > 0) {
-    list = [...list].sort((a, b) => (vsScores.get(a.url) || 999) - (vsScores.get(b.url) || 999));
+    // Ordenar: menor distancia = más similar = primero
+    // Excluir items con score 998/999 (no comparados / no similares) del tope
+    list = [...list].sort((a, b) => {
+      const sa = vsScores.get(a.url) ?? 999;
+      const sb = vsScores.get(b.url) ?? 999;
+      return sa - sb;
+    });
   }
   return list;
 }
