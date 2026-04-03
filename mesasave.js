@@ -1,4 +1,4 @@
-// mesasave.js - Guardado con IndexedDB y exportación/importación a archivo .estampahub
+// mesasave.js - Guardado con IndexedDB y exportación/importación a archivo .estampahub (botones mejorados)
 console.log("✅ mesasave.js (unificado) cargado");
 
 (function() {
@@ -342,32 +342,28 @@ console.log("✅ mesasave.js (unificado) cargado");
       font-family: 'DM Mono', monospace;
     `;
 
+    // Botón Guardar (verde sólido)
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '💾 Guardar Mesa';
-    saveBtn.style.cssText = `background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.75rem; font-weight: 600; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`;
-    saveBtn.onmouseenter = () => saveBtn.style.transform = 'scale(1.02)';
-    saveBtn.onmouseleave = () => saveBtn.style.transform = 'scale(1)';
+    saveBtn.style.cssText = `background: #10b981; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     saveBtn.onclick = () => saveWorkbench(false);
 
+    // Botón Cargar (azul sólido)
     const loadBtn = document.createElement('button');
     loadBtn.textContent = '📂 Cargar Mesa';
-    loadBtn.style.cssText = `background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.75rem; font-weight: 600; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`;
-    loadBtn.onmouseenter = () => loadBtn.style.transform = 'scale(1.02)';
-    loadBtn.onmouseleave = () => loadBtn.style.transform = 'scale(1)';
+    loadBtn.style.cssText = `background: #0ea5e9; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     loadBtn.onclick = () => loadWorkbench();
 
+    // Botón Exportar (morado sólido)
     const exportBtn = document.createElement('button');
     exportBtn.textContent = '📤 Exportar (.estampahub)';
-    exportBtn.style.cssText = `background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.75rem; font-weight: 600; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`;
-    exportBtn.onmouseenter = () => exportBtn.style.transform = 'scale(1.02)';
-    exportBtn.onmouseleave = () => exportBtn.style.transform = 'scale(1)';
+    exportBtn.style.cssText = `background: #8b5cf6; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     exportBtn.onclick = () => exportToFile();
 
+    // Botón Importar (naranja sólido)
     const importBtn = document.createElement('button');
     importBtn.textContent = '📂 Importar (.estampahub)';
-    importBtn.style.cssText = `background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.75rem; font-weight: 600; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`;
-    importBtn.onmouseenter = () => importBtn.style.transform = 'scale(1.02)';
-    importBtn.onmouseleave = () => importBtn.style.transform = 'scale(1)';
+    importBtn.style.cssText = `background: #f59e0b; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     importBtn.onclick = () => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -391,7 +387,7 @@ console.log("✅ mesasave.js (unificado) cargado");
       if (designs && designs.length > 0) saveWorkbench(true);
     });
 
-    console.log('✅ Botones de guardado/carga/exportación añadidos');
+    console.log('✅ Botones de guardado/carga/exportación añadidos (estilo mejorado)');
   }
 
   function waitForEditor() {
