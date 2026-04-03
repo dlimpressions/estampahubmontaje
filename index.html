@@ -528,12 +528,10 @@ footer {
   scrollbar-width:thin; scrollbar-color:var(--border-md) transparent;
 }
 .designs-dropdown.open { display:block; }
-
   </style>
 </head>
 
 <body>
-
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
@@ -892,7 +890,7 @@ footer {
 <div class="tb-sep"></div>
 <button class="tb-btn" id="tb-trim-btn" style="border-color:rgba(245,158,11,0.4);color:#f59e0b;">✂️ Recortar</button>
 </div>
-      
+
 
     <!-- Tamaño -->
     <div class="toolbar-panel" id="panel-size">
@@ -1221,9 +1219,9 @@ footer {
       <h3 style="margin:0; font-size:1.1rem;">✂️ Recorte Manual</h3>
       <span style="font-size:0.8rem; opacity:0.7;">Arrastra las esquinas o lados · Doble clic = auto-recortar</span>
     </div>
-    
+
     <canvas id="crop-canvas" style="border:2px solid #0ea5e9; border-radius:8px; cursor:crosshair; max-width:100%; background:#111827;"></canvas>
-    
+
     <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end;">
       <button id="crop-reset" style="padding:8px 16px; border-radius:6px; border:1px solid #f59e0b; background:rgba(245,158,11,0.1); color:#f59e0b; font-weight:500; cursor:pointer;">↺ Resetear</button>
       <button id="crop-auto" style="padding:8px 16px; border-radius:6px; border:1px solid #10b981; background:rgba(16,185,129,0.1); color:#10b981; font-weight:500; cursor:pointer;">✂️ Auto-recortar</button>
@@ -1257,51 +1255,15 @@ function showLock(){
   setTimeout(() => lockPass && lockPass.focus(), 300);
 }
 
-  // ====== Referencias DOM
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const uploadBtn = document.getElementById('upload-btn');
-    const fileInput = document.getElementById('file-input');
-    const clearBtn = document.getElementById('clear-btn');
-    const downloadPngBtn = document.getElementById('download-png');
-    const downloadPdfBtn = document.getElementById('download-pdf');
-    const rotationSlider = document.getElementById('rotation-slider');
-    const rotationValue = document.getElementById('rotation-value');
-    const rotationInput = document.getElementById('rotation-input');
-    const opacitySlider = document.getElementById('opacity-slider');
-    const opacityValue = document.getElementById('opacity-value');
-    const zoomSlider = document.getElementById('zoom-slider');
-    const zoomValue = document.getElementById('zoom-value');
-    const zoomLevel = document.getElementById('zoom-level');
-    const addTextBtn = document.getElementById('add-text-btn');
-    const designsList = document.getElementById('designs-list');
-    const removeBtn = document.getElementById('remove-btn');
-    const sizeInfo = document.getElementById('size-info');
-    const originalSizeInfo = document.getElementById('original-size');
-    const widthInput = document.getElementById('width-input');
-    const heightInput = document.getElementById('height-input');
-    const applySizeBtn = document.getElementById('apply-size');
-    const lockProportion = document.getElementById('lock-proportion');
-    const qualitySelect = document.getElementById('quality-select');
-    const canvasColor = document.getElementById('canvas-color');
-    const messageContainer = document.getElementById('message-container');
-    const canvasWrapper = document.getElementById('canvas-wrapper');
-    const specsLabel = document.getElementById('specs-label');
-    const canvasSizeLabel = document.getElementById('canvas-size-label');
-    const canvasHeightInput = document.getElementById('canvas-height-cm');
-    const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
-
-    const mirrorBtn = document.getElementById('mirror-btn');
-    const bringFrontBtn = document.getElementById('bring-front');
-    const sendBackBtn = document.getElementById('send-back');
-    const stepForwardBtn = document.getElementById('step-forward');
-    const stepBackBtn = document.getElementById('step-back');
-
-
 function unlock(){
   overlay.style.display = 'none';
   appRoot.style.visibility = 'visible';
-  showMessage('Editor listo', 'success', 2000);
+}
+
+if (sessionStorage.getItem('dtf_unlocked') === '1') {
+  unlock();
+} else {
+  showLock();
 }
 
 if (lockBtn) {
@@ -1353,6 +1315,28 @@ if (lockBtn) {
   console.log("RESULTADO DEL SERVIDOR:", result);
   console.log("Datos que se guardan en localStorage:", userInfo);
 
+
+  // Mantén el fetch del facturador (si lo necesitas)
+  try {
+    const paramsFact = new URLSearchParams();
+    paramsFact.append('action', 'get_facturador_url');
+    paramsFact.append('usuario', usuario);
+    const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbwJOl_grF0Lp0Ff9aMc6v8qdc6olHirRsCw0UHnHbJDQX21qkOGksdn92lC_zgyW3o1/exec', {
+      method: 'POST',
+      body: paramsFact
+    });
+    const urlResult = await urlResponse.json();
+    if (urlResult.success) {
+      sessionStorage.setItem('facturador_url', urlResult.url);
+      showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
+    } else {
+      showMessage('No se encontró URL de facturador. Contacta al admin.', 'warning', 5000);
+    }
+  } catch (err) {
+    console.error('Error facturador:', err);
+    showMessage('Error al cargar facturador.', 'error');
+  }
+
   unlock();
 } else {
   lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
@@ -1373,6 +1357,45 @@ if (lockPass) {
   });
 }
 
+    // ====== Referencias DOM
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const uploadBtn = document.getElementById('upload-btn');
+    const fileInput = document.getElementById('file-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const downloadPngBtn = document.getElementById('download-png');
+    const downloadPdfBtn = document.getElementById('download-pdf');
+    const rotationSlider = document.getElementById('rotation-slider');
+    const rotationValue = document.getElementById('rotation-value');
+    const rotationInput = document.getElementById('rotation-input');
+    const opacitySlider = document.getElementById('opacity-slider');
+    const opacityValue = document.getElementById('opacity-value');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomValue = document.getElementById('zoom-value');
+    const zoomLevel = document.getElementById('zoom-level');
+    const addTextBtn = document.getElementById('add-text-btn');
+    const designsList = document.getElementById('designs-list');
+    const removeBtn = document.getElementById('remove-btn');
+    const sizeInfo = document.getElementById('size-info');
+    const originalSizeInfo = document.getElementById('original-size');
+    const widthInput = document.getElementById('width-input');
+    const heightInput = document.getElementById('height-input');
+    const applySizeBtn = document.getElementById('apply-size');
+    const lockProportion = document.getElementById('lock-proportion');
+    const qualitySelect = document.getElementById('quality-select');
+    const canvasColor = document.getElementById('canvas-color');
+    const messageContainer = document.getElementById('message-container');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const specsLabel = document.getElementById('specs-label');
+    const canvasSizeLabel = document.getElementById('canvas-size-label');
+    const canvasHeightInput = document.getElementById('canvas-height-cm');
+    const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
+
+    const mirrorBtn = document.getElementById('mirror-btn');
+    const bringFrontBtn = document.getElementById('bring-front');
+    const sendBackBtn = document.getElementById('send-back');
+    const stepForwardBtn = document.getElementById('step-forward');
+    const stepBackBtn = document.getElementById('step-back');
 
 // ====== Cálculo de precio aproximado de impresion ======
 function calcularPrecioMontaje() {
@@ -1429,19 +1452,19 @@ function autoCropCanvasToContent(marginCm = 1) {
 
   // Calcular el bounding box de todos los diseños (considerando rotación)
   let maxY = 0;
-  
+
   designs.forEach(design => {
     // Obtener dimensiones actuales del diseño (ancho y alto en píxeles)
     const w = design.width * design.scale;
     const h = design.height * design.scale;
-    
+
     // Para manejar rotación, necesitamos los cuatro vértices del rectángulo
     const cx = design.x;
     const cy = design.y;
     const angleRad = design.rotation * Math.PI / 180;
     const cos = Math.cos(angleRad);
     const sin = Math.sin(angleRad);
-    
+
     // Vértices relativos al centro
     const halfW = w / 2;
     const halfH = h / 2;
@@ -1451,7 +1474,7 @@ function autoCropCanvasToContent(marginCm = 1) {
       { x:  halfW, y:  halfH },
       { x: -halfW, y:  halfH }
     ];
-    
+
     // Transformar cada vértice y obtener la Y máxima
     corners.forEach(corner => {
       const rx = corner.x * cos - corner.y * sin;
@@ -1460,7 +1483,7 @@ function autoCropCanvasToContent(marginCm = 1) {
       if (worldY > maxY) maxY = worldY;
     });
   });
-  
+
   // Añadir margen y limitar al máximo permitido (100 cm)
  let newHeightPx = Math.min(maxY + marginPx, CANVAS_HEIGHT_CM * PIXELS_PER_CM);
   // No puede ser menor que 10 cm (100 px)
@@ -1469,13 +1492,13 @@ function autoCropCanvasToContent(marginCm = 1) {
 // ✅ Redondear al entero más cercano
 let newHeightCm = Math.round(newHeightPx / PIXELS_PER_CM);
 newHeightCm = Math.min(100, Math.max(10, newHeightCm));
-    
+
   // Si el nuevo alto es igual al actual, no hacer nada
  if (newHeightCm === CANVAS_HEIGHT_CM) {
   showMessage('El lienzo ya está ajustado al contenido', 'info', 2000);
   return;
 }
-  
+
   // Actualizar el alto del lienzo
   CANVAS_HEIGHT_CM = newHeightCm;
 
@@ -1489,16 +1512,16 @@ canvasWrapper.style.height = newPx + 'px';
 // ✅ Luego recalcular el precio (ya usa el nuevo valor)
 calcularPrecioMontaje();
 
-  
+
   // Actualizar etiquetas visuales
   if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
   if (specsLabel) specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
 
-  
+
   // Sincronizar toolbar si existe
 const tbCanvasHeight = document.getElementById('tb-canvas-height-cm');
 if (tbCanvasHeight) tbCanvasHeight.value = CANVAS_HEIGHT_CM;
-  
+
   // Redibujar todo
   drawCanvas();
   showMessage(`Lienzo recortado a ${CANVAS_HEIGHT_CM.toFixed(1)} cm`, 'success', 2000);
@@ -3008,19 +3031,19 @@ if (logoutBtn) {
       // Borramos la sesión guardada
       sessionStorage.removeItem('dtf_unlocked');
       sessionStorage.removeItem('facturador_url');
-      
+
       // Mostramos de nuevo la pantalla de login
       const overlay = document.getElementById('lock-overlay');
       overlay.style.display = 'flex';
       setTimeout(() => overlay.classList.add('visible'), 100);
-      
+
       // Ocultamos el editor
       document.getElementById('app-root').style.visibility = 'hidden';
-      
+
       // Limpiamos los campos por seguridad
       document.getElementById('lock-user').value = '';
       document.getElementById('lock-pass').value = '';
-      
+
       showMessage('Sesión cerrada. Ingresa de nuevo para continuar.', 'info', 4000);
     }
   });
@@ -3440,14 +3463,14 @@ if(tbDtfBtn){
 
 <script src="termofijadoras_oc.js"></script>
 
-<script src="gallery.js" defer></script>
+<script src="gallery.js"></script>
 
 <script src="profile.js"></script>
 
 <!-- === CONTENEDOR DE DISEÑOS ImgBB (modal futurista) === -->
 <div class="oc-overlay" id="imgbb-gallery-overlay" style="display:none; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
   <div class="oc-card" style="background: rgba(30,30,60,0.7); border:1px solid rgba(66,153,225,0.3); backdrop-filter: blur(16px); padding:2.5rem 2rem; border-radius:20px; width:min(90vw, 900px); max-height:90vh; overflow-y:auto; box-shadow:0 0 60px rgba(66,153,225,0.25); text-align:center; animation:fadeInUp 0.8s ease-out; position:relative;">
-    
+
     <!-- Botón cerrar pequeño, neón rojo, arriba derecha -->
     <button id="close-imgbb-gallery" style="
       position: absolute;
@@ -3469,7 +3492,7 @@ if(tbDtfBtn){
 
     <h2 style="color:#a5b4fc; text-shadow:0 0 15px rgba(165,180,252,0.5); margin-bottom:1rem;">📁 Mis Diseños en ImgBB</h2>
     <p style="color:#cbd5e0; margin-bottom:1.5rem;">Selecciona un diseño para cargarlo en el lienzo</p>
-    
+
     <!-- Barra de búsqueda futurista (separada) -->
     <div id="searchContainer" style="margin-bottom:20px;"></div>
 
@@ -3487,7 +3510,7 @@ if(tbDtfBtn){
 <!-- === MODAL DE PERFIL - SOLO LECTURA (futurista) === -->
 <div class="oc-overlay" id="profile-overlay" style="display:none; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
   <div class="oc-card" style="background: rgba(30,30,60,0.7); border:1px solid rgba(66,153,225,0.3); backdrop-filter: blur(16px); padding:2.5rem; border-radius:20px; width:min(90vw, 600px); box-shadow:0 0 60px rgba(66,153,225,0.25); position:relative;">
-    
+
     <!-- Botón cerrar -->
     <button id="close-profile" style="position:absolute; top:15px; right:15px; padding:6px 12px; font-size:0.85rem; background:linear-gradient(135deg,#f56565,#e53e3e); color:white; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 15px rgba(245,101,101,0.4);">
       Cerrar
@@ -3720,8 +3743,6 @@ if(tbDtfBtn){
 
 <script src="mesasave.js"></script>
 
-
 </body>
 
 </html>
-
