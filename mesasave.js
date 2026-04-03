@@ -356,13 +356,13 @@ console.log("✅ mesasave.js (unificado) cargado");
 
     // Botón Exportar (morado sólido)
     const exportBtn = document.createElement('button');
-    exportBtn.textContent = '📤 Exportar (.estampahub)';
+    exportBtn.textContent = '📤 Exportar';
     exportBtn.style.cssText = `background: #8b5cf6; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     exportBtn.onclick = () => exportToFile();
 
     // Botón Importar (naranja sólido)
     const importBtn = document.createElement('button');
-    importBtn.textContent = '📂 Importar (.estampahub)';
+    importBtn.textContent = '📂 Importar';
     importBtn.style.cssText = `background: #f59e0b; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 700; font-family: inherit; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-shadow: 0 0 1px rgba(0,0,0,0.3);`;
     importBtn.onclick = () => {
       const input = document.createElement('input');
