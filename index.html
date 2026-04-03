@@ -927,6 +927,8 @@ footer {
       <span class="tb-label">Alto (cm)</span>
       <input type="number" id="tb-canvas-height-cm" class="tb-input-t" min="10" max="100" step="0.5" value="100" style="width:72px">
       <button class="tb-btn accent" id="tb-apply-canvas-height">Aplicar</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" id="tb-auto-crop-canvas" style="border-color:rgba(245,158,11,0.4); color:#f59e0b;">✂️ Recortar al contenido</button>
       <div class="tb-sep"></div>
       <span class="tb-label">Zoom</span>
       <input type="range" id="tb-zoom-slider" class="tb-input-t" min="20" max="200" value="100" style="width:95px">
@@ -1428,6 +1430,91 @@ function calcularPrecioMontaje() {
       calcularPrecioMontaje();
     });
   }
+
+// ====== RECORTE AUTOMÁTICO DEL LIENZO ======
+function autoCropCanvasToContent(marginCm = 1) {
+  if (!designs || designs.length === 0) {
+    showMessage('No hay diseños para recortar', 'warning', 2000);
+    return;
+  }
+
+  // Margen adicional en píxeles (1 cm = 10 px por defecto)
+  const marginPx = marginCm * PIXELS_PER_CM;
+
+  // Calcular el bounding box de todos los diseños (considerando rotación)
+  let maxY = 0;
+  
+  designs.forEach(design => {
+    // Obtener dimensiones actuales del diseño (ancho y alto en píxeles)
+    const w = design.width * design.scale;
+    const h = design.height * design.scale;
+    
+    // Para manejar rotación, necesitamos los cuatro vértices del rectángulo
+    const cx = design.x;
+    const cy = design.y;
+    const angleRad = design.rotation * Math.PI / 180;
+    const cos = Math.cos(angleRad);
+    const sin = Math.sin(angleRad);
+    
+    // Vértices relativos al centro
+    const halfW = w / 2;
+    const halfH = h / 2;
+    const corners = [
+      { x: -halfW, y: -halfH },
+      { x:  halfW, y: -halfH },
+      { x:  halfW, y:  halfH },
+      { x: -halfW, y:  halfH }
+    ];
+    
+    // Transformar cada vértice y obtener la Y máxima
+    corners.forEach(corner => {
+      const rx = corner.x * cos - corner.y * sin;
+      const ry = corner.x * sin + corner.y * cos;
+      const worldY = cy + ry;
+      if (worldY > maxY) maxY = worldY;
+    });
+  });
+  
+  // Añadir margen y limitar al máximo permitido (100 cm)
+  let newHeightPx = Math.min(maxY + marginPx, CANVAS_HEIGHT_CM * PIXELS_PER_CM);
+  // No puede ser menor que 10 cm (100 px)
+  newHeightPx = Math.max(100, newHeightPx);
+  
+  const newHeightCm = newHeightPx / PIXELS_PER_CM;
+  
+  // Si el nuevo alto es igual al actual, no hacer nada
+  if (Math.abs(newHeightCm - CANVAS_HEIGHT_CM) < 0.1) {
+    showMessage('El lienzo ya está ajustado al contenido', 'info', 2000);
+    return;
+  }
+  
+  // Actualizar el alto del lienzo
+  CANVAS_HEIGHT_CM = newHeightCm;
+  const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
+  canvas.height = newPx;
+  canvasWrapper.style.height = newPx + 'px';
+  
+  // Actualizar etiquetas visuales
+  if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
+  if (specsLabel) specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
+  if (canvasHeightInput) canvasHeightInput.value = CANVAS_HEIGHT_CM;
+  
+  // Sincronizar toolbar si existe
+  const tbCanvasHeight = document.getElementById('tb-canvas-height-cm');
+  if (tbCanvasHeight) tbCanvasHeight.value = CANVAS_HEIGHT_CM;
+  
+  // Redibujar todo
+  drawCanvas();
+  showMessage(`Lienzo recortado a ${CANVAS_HEIGHT_CM.toFixed(1)} cm`, 'success', 2000);
+}
+
+// Botón recorte automático
+const autoCropBtn = document.getElementById('tb-auto-crop-canvas');
+if (autoCropBtn) {
+  autoCropBtn.addEventListener('click', () => {
+    autoCropCanvasToContent(1); // margen de 1 cm
+  });
+}
 
   // Precio inicial al cargar
   calcularPrecioMontaje();
