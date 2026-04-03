@@ -381,7 +381,7 @@ console.log("✅ mesasave.js (unificado) cargado");
     // Auto-guardado cada 30 segundos
     setInterval(() => {
       if (designs && designs.length > 0) saveWorkbench(true);
-    }, 30000);
+    }, 300000);
 
     window.addEventListener('beforeunload', () => {
       if (designs && designs.length > 0) saveWorkbench(true);
