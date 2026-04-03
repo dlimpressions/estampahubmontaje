@@ -1,4 +1,4 @@
-// mesasave.js - Guardado con IndexedDB (soporta imágenes grandes) - VERSIÓN CORREGIDA
+// mesasave.js - Guardado con IndexedDB (soporta imágenes grandes) - VERSIÓN CORREGIDA (sin reasignar constantes)
 console.log("✅ mesasave.js (IndexedDB) cargado");
 
 (function() {
@@ -41,14 +41,13 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
       const state = {
         id: 'current',
         timestamp: Date.now(),
-        canvasWidthCm: CANVAS_WIDTH_CM,
-        canvasHeightCm: CANVAS_HEIGHT_CM,
+        canvasWidthCm: CANVAS_WIDTH_CM,   // constante, solo lectura
+        canvasHeightCm: CANVAS_HEIGHT_CM, // constante, solo lectura
         backgroundColor: canvasBackgroundColor,
         designs: []
       };
 
       const designPromises = designs.map(async (d) => {
-        // Convertir imagen a blob (PNG)
         const blob = await new Promise((resolve) => {
           const canvas = document.createElement('canvas');
           canvas.width = d.image.width;
@@ -104,40 +103,35 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
           return;
         }
 
-        // Mostrar mensaje de carga
         const loadingMsg = showMessage('⏳ Cargando mesa...', 'loading', 0);
         console.log('Cargando mesa con', state.designs.length, 'diseños');
 
-        // Restaurar lienzo
-        if (state.canvasWidthCm) CANVAS_WIDTH_CM = state.canvasWidthCm;
-        if (state.canvasHeightCm) {
-          CANVAS_HEIGHT_CM = state.canvasHeightCm;
-          const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
-          canvas.height = newPx;
-          canvasWrapper.style.height = newPx + 'px';
-          if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
-          if (specsLabel) specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
+        // Restaurar lienzo (alto) usando el método existente si es necesario
+        if (state.canvasHeightCm && state.canvasHeightCm !== CANVAS_HEIGHT_CM) {
+          // Simular el cambio de alto usando el input y botón existentes
+          if (canvasHeightInput) {
+            canvasHeightInput.value = state.canvasHeightCm;
+            if (applyCanvasHeightBtn) applyCanvasHeightBtn.click();
+          }
         }
         if (state.backgroundColor) {
           canvasBackgroundColor = state.backgroundColor;
           if (canvasColor) canvasColor.value = state.backgroundColor;
         }
 
-        // Restaurar diseños con manejo de errores y timeout
+        // Restaurar diseños
         const loadPromises = state.designs.map((designState, idx) => {
           return new Promise((resolve) => {
             const url = URL.createObjectURL(designState.blob);
             const img = new Image();
             let resolved = false;
-
             const timeoutId = setTimeout(() => {
               if (!resolved) {
                 console.warn(`Timeout cargando diseño ${idx}`);
                 URL.revokeObjectURL(url);
                 resolve(null);
               }
-            }, 10000); // 10 segundos máximo por imagen
-
+            }, 10000);
             img.onload = () => {
               clearTimeout(timeoutId);
               resolved = true;
@@ -176,17 +170,17 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
         console.log(`Diseños cargados: ${validDesigns.length} de ${state.designs.length}`);
 
         if (validDesigns.length === 0) {
-          showMessage('❌ No se pudo cargar ningún diseño (posiblemente corruptos)', 'error', 3000);
+          showMessage('❌ No se pudo cargar ningún diseño', 'error', 3000);
           if (loadingMsg) loadingMsg.remove();
           return;
         }
 
-        // Reemplazar array global de diseños
+        // Reemplazar array global
         designs.length = 0;
         validDesigns.forEach(d => designs.push(d));
         selectedDesignId = designs[0] ? designs[0].id : null;
 
-        // Actualizar interfaz
+        // Actualizar UI
         if (typeof updateDesignsList === 'function') updateDesignsList();
         if (typeof updateControls === 'function') updateControls();
         if (typeof drawCanvas === 'function') drawCanvas();
@@ -194,7 +188,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
         if (loadingMsg) loadingMsg.remove();
         showMessage(`✅ Mesa cargada (${validDesigns.length} diseños)`, 'success', 3000);
       };
-
       getRequest.onerror = (err) => {
         console.error('Error al cargar de IndexedDB', err);
         showMessage('❌ Error al leer la mesa guardada', 'error', 3000);
@@ -205,7 +198,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
     }
   }
 
-  // Esperar a que el editor esté listo
   function waitForEditor() {
     if (typeof designs !== 'undefined' && typeof drawCanvas === 'function') {
       initSaveButtons();
@@ -232,7 +224,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       font-family: 'DM Mono', monospace;
     `;
-
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '💾 Guardar Mesa';
     saveBtn.style.cssText = `
@@ -275,7 +266,6 @@ console.log("✅ mesasave.js (IndexedDB) cargado");
     container.appendChild(loadBtn);
     document.body.appendChild(container);
 
-    // Auto-guardado cada 30 segundos
     setInterval(() => {
       if (designs && designs.length > 0) {
         saveWorkbench(true);
