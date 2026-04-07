@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>EstampaHub DTF - Editor Móvil</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #06080f;
+      --surface: #0b0d17;
+      --surface-2: #0f1220;
+      --accent: #0ea5e9;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --font-ui: 'Exo 2', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: var(--text);
+      font-family: var(--font-ui);
+      overflow-x: hidden;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Contenedor principal */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    /* Cabecera compacta */
+    .mobile-header {
+      background: rgba(11,13,23,0.95);
+      backdrop-filter: blur(10px);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(14,165,233,0.3);
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: rgba(14,165,233,0.15);
+      border: 1px solid rgba(14,165,233,0.3);
+      border-radius: 30px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Barra de herramientas desplegable (menú hamburguesa) */
+    .toolbar-toggle {
+      background: var(--surface-2);
+      border: 1px solid rgba(14,165,233,0.3);
+      border-radius: 40px;
+      padding: 8px 16px;
+      margin: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .toolbar-toggle span {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .toolbar-panel {
+      background: rgba(11,13,23,0.95);
+      backdrop-filter: blur(12px);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .toolbar-panel.open {
+      max-height: 400px;
+      overflow-y: auto;
+      border-top: 1px solid rgba(14,165,233,0.2);
+      border-bottom: 1px solid rgba(14,165,233,0.2);
+    }
+
+    .toolbar-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .tool-btn {
+      background: rgba(14,165,233,0.1);
+      border: 1px solid rgba(14,165,233,0.3);
+      border-radius: 40px;
+      padding: 8px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tool-btn.accent {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Área del canvas */
+    .canvas-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #06080f;
+      padding: 10px;
+      position: relative;
+    }
+
+    .canvas-wrapper {
+      background: rgba(15,15,35,0.92);
+      border-radius: 16px;
+      overflow: auto;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 20px rgba(14,165,233,0.2);
+      display: inline-block;
+    }
+
+    canvas {
+      display: block;
+      background: white;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.3);
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* Controles flotantes (zoom, etc.) */
+    .floating-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 200;
+    }
+
+    .float-btn {
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    /* Barra de estado inferior */
+    .status-bar {
+      background: var(--surface-2);
+      padding: 6px 12px;
+      font-size: 0.6rem;
+      font-family: var(--font-mono);
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(14,165,233,0.2);
+      flex-shrink: 0;
+    }
+
+    /* Modales y overlays (se reutilizan estilos del index, pero ajustados) */
+    .oc-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .oc-card {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid rgba(14,165,233,0.3);
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 40px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: rgba(14,165,233,0.2); color: white; }
+
+    /* Ocultar elementos originales que no usamos en móvil */
+    .adobe-toolbar, .toolbar, .controls, .instructions, .help-section, .floating-tools {
+      display: none !important;
+    }
+
+    /* Ajustes para inputs */
+    input, select, textarea {
+      font-size: 16px !important; /* Evita zoom automático en iOS */
+    }
+  </style>
+</head>
+<body>
+<div class="app-container" id="mobile-app">
+  <div class="mobile-header">
+    <div class="logo">DTF <span>Móvil</span></div>
+    <div class="header-buttons">
+      <button class="icon-btn" id="mobile-menu-btn">📋 Menú</button>
+      <button class="icon-btn" id="mobile-profile-btn">👤</button>
+    </div>
+  </div>
+
+  <!-- Barra de herramientas colapsable -->
+  <div class="toolbar-toggle" id="toolbar-toggle">
+    <span>🛠️ Herramientas</span>
+    <span>▼</span>
+  </div>
+  <div class="toolbar-panel" id="toolbar-panel">
+    <div class="toolbar-grid">
+      <button class="tool-btn" id="mobile-upload">⬆️ Subir diseño</button>
+      <button class="tool-btn" id="mobile-text">✏️ Texto</button>
+      <button class="tool-btn" id="mobile-gallery">📁 Galería</button>
+      <button class="tool-btn" id="mobile-mockups">🧥 Mockups</button>
+      <button class="tool-btn" id="mobile-mirror">🪞 Espejo</button>
+      <button class="tool-btn" id="mobile-remove">🗑️ Eliminar</button>
+      <button class="tool-btn" id="mobile-clear">🧹 Limpiar</button>
+      <button class="tool-btn" id="mobile-save">💾 Guardar mesa</button>
+      <button class="tool-btn" id="mobile-load">📂 Cargar mesa</button>
+      <button class="tool-btn" id="mobile-export">📤 Exportar</button>
+      <button class="tool-btn" id="mobile-import">📂 Importar</button>
+      <button class="tool-btn" id="mobile-auto-crop">✂️ Recortar lienzo</button>
+    </div>
+  </div>
+
+  <!-- Área del canvas -->
+  <div class="canvas-area" id="canvas-area">
+    <div class="canvas-wrapper" id="canvas-wrapper-mobile">
+      <canvas id="canvas" width="580" height="1000"></canvas>
+    </div>
+  </div>
+
+  <!-- Botones flotantes de zoom -->
+  <div class="floating-controls">
+    <div class="float-btn" id="zoom-in">🔍+</div>
+    <div class="float-btn" id="zoom-out">🔍-</div>
+  </div>
+
+  <div class="status-bar">
+    <span>Diseños: <span id="mobile-design-count">0</span></span>
+    <span>Zoom: <span id="mobile-zoom">100</span>%</span>
+    <span>Alto: <span id="mobile-canvas-height">100</span> cm</span>
+  </div>
+</div>
+
+<!-- MODALES (reutilizamos los mismos del index, pero aseguramos IDs) -->
+<div class="oc-overlay" id="imgbb-gallery-overlay" style="display:none;">
+  <div class="oc-card">
+    <h2>📁 Mis Diseños</h2>
+    <div id="searchContainer"></div>
+    <div id="imgbb-designs-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:8px;"></div>
+    <div id="pagination"></div>
+    <button class="btn btn-secondary" id="close-imgbb-gallery">Cerrar</button>
+  </div>
+</div>
+
+<div class="oc-overlay" id="dtf-overlay" style="display:none;">
+  <div class="oc-card">
+    <h2>📤 Enviar archivo DTF</h2>
+    <form id="dtfForm">
+      <input type="text" id="dtf-name" placeholder="Nombre" required>
+      <input type="email" id="dtf-email" placeholder="Correo" required>
+      <input type="tel" id="dtf-phone" placeholder="Teléfono" required>
+      <input type="text" id="dtf-city" placeholder="Ciudad" required>
+      <textarea id="dtf-message" placeholder="Mensaje"></textarea>
+      <input type="file" id="dtf-file" accept=".png,.jpg,.jpeg,.pdf,.zip" required>
+      <button type="submit" class="btn btn-primary">Enviar Pedido</button>
+      <button type="button" class="btn btn-secondary" id="dtf-close">Cancelar</button>
+    </form>
+    <p id="dtf-status"></p>
+  </div>
+</div>
+
+<!-- Overlay de login (usamos el mismo del index pero simplificado) -->
+<div class="oc-overlay" id="lock-overlay" style="display:none;">
+  <div class="oc-card">
+    <h2>Acceso restringido</h2>
+    <input type="text" id="lock-user" placeholder="Usuario">
+    <input type="password" id="lock-pass" placeholder="Contraseña">
+    <div id="lock-error" style="color:red;"></div>
+    <button class="btn btn-primary" id="lock-btn">Acceder</button>
+    <button class="btn btn-secondary" id="open-dtf-btn">📤 Enviar DTF</button>
+    <button class="btn btn-secondary" id="open-oc-btn">🧾 OC Termofijadoras</button>
+  </div>
+</div>
+
+<!-- Cargar las mismas librerías y scripts que en el index -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+<!-- Los mismos archivos JS (se reutilizan) -->
+<script src="auto_pack_pro.js"></script>
+<script src="termofijadoras_oc.js"></script>
+<script src="gallery.js"></script>
+<script src="profile.js"></script>
+<script src="mesasave.js"></script>
+
+<!-- Script principal que adapta las funciones del editor al entorno móvil -->
+<script>
+  // Este script reutiliza todas las funciones globales del editor (designs, canvas, drawCanvas, etc.)
+  // pero engancha los botones móviles y ajusta el canvas al tamaño de la pantalla.
+
+  (function() {
+    // Esperar a que el editor principal esté listo
+    function waitForEditor() {
+      if (typeof designs !== 'undefined' && typeof canvas !== 'undefined') {
+        initMobile();
+      } else {
+        setTimeout(waitForEditor, 200);
+      }
+    }
+
+    function initMobile() {
+      console.log("Modo móvil activado - adaptando interfaz");
+
+      // Ajustar tamaño del canvas al ancho de la pantalla (manteniendo proporción)
+      function resizeCanvasToFit() {
+        const wrapper = document.getElementById('canvas-wrapper-mobile');
+        const canvasEl = canvas;
+        const container = document.querySelector('.canvas-area');
+        if (!wrapper || !canvasEl) return;
+        const maxWidth = container.clientWidth - 20;
+        const maxHeight = container.clientHeight - 20;
+        const scale = Math.min(maxWidth / canvasEl.width, maxHeight / canvasEl.height);
+        wrapper.style.transform = `scale(${scale})`;
+        wrapper.style.transformOrigin = 'top left';
+        // Ajustar scroll para centrar
+        container.scrollLeft = (canvasEl.width * scale - container.clientWidth) / 2;
+        container.scrollTop = (canvasEl.height * scale - container.clientHeight) / 2;
+      }
+
+      window.addEventListener('resize', resizeCanvasToFit);
+      setTimeout(resizeCanvasToFit, 100);
+
+      // Conectar botones móviles con funciones existentes
+      document.getElementById('mobile-upload')?.addEventListener('click', () => {
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) fileInput.click();
+        else {
+          // Crear input temporal si no existe
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.multiple = true;
+          input.onchange = (e) => {
+            if (typeof window.uploadFiles === 'function') window.uploadFiles(e.target.files);
+            else if (fileInput && fileInput.onchange) fileInput.onchange(e);
+          };
+          input.click();
+        }
+      });
+
+      document.getElementById('mobile-text')?.addEventListener('click', () => {
+        const btn = document.getElementById('add-text-btn');
+        if (btn) btn.click();
+      });
+
+      document.getElementById('mobile-gallery')?.addEventListener('click', () => {
+        const btn = document.getElementById('open-imgbb-gallery');
+        if (btn) btn.click();
+      });
+
+      document.getElementById('mobile-mockups')?.addEventListener('click', () => {
+        const btn = document.getElementById('open-mockups');
+        if (btn) btn.click();
+      });
+
+      document.getElementById('mobile-mirror')?.addEventListener('click', () => {
+        const btn = document.getElementById('mirror-btn');
+        if (btn) btn.click();
+      });
+
+      document.getElementById('mobile-remove')?.addEventListener('click', () => {
+        const btn = document.getElementById('remove-btn');
+        if (btn) btn.click();
+      });
+
+      document.getElementById('mobile-clear')?.addEventListener('click', () => {
+        const btn = document.getElementById('clear-btn');
+        if (btn) btn.click();
+      });
+
+      document.getElementById('mobile-save')?.addEventListener('click', () => {
+        if (typeof saveWorkbench === 'function') saveWorkbench(false);
+        else showMessage('Guardado no disponible', 'error');
+      });
+
+      document.getElementById('mobile-load')?.addEventListener('click', () => {
+        if (typeof loadWorkbench === 'function') loadWorkbench();
+        else showMessage('Carga no disponible', 'error');
+      });
+
+      document.getElementById('mobile-export')?.addEventListener('click', () => {
+        if (typeof exportToFile === 'function') exportToFile();
+        else if (typeof window.exportToFile === 'function') window.exportToFile();
+        else showMessage('Exportación no disponible', 'error');
+      });
+
+      document.getElementById('mobile-import')?.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.estampahub';
+        input.onchange = (e) => {
+          if (typeof importFromFile === 'function') importFromFile(e.target.files[0]);
+          else if (typeof window.importFromFile === 'function') window.importFromFile(e.target.files[0]);
+          else showMessage('Importación no disponible', 'error');
+        };
+        input.click();
+      });
+
+      document.getElementById('mobile-auto-crop')?.addEventListener('click', () => {
+        if (typeof autoCropCanvasToContent === 'function') autoCropCanvasToContent(0.5);
+        else showMessage('Auto recorte no disponible', 'error');
+      });
+
+      // Zoom flotante
+      document.getElementById('zoom-in')?.addEventListener('click', () => {
+        const slider = document.getElementById('zoom-slider');
+        if (slider) {
+          let val = parseInt(slider.value) + 10;
+          if (val > 200) val = 200;
+          slider.value = val;
+          slider.dispatchEvent(new Event('input'));
+        }
+      });
+
+      document.getElementById('zoom-out')?.addEventListener('click', () => {
+        const slider = document.getElementById('zoom-slider');
+        if (slider) {
+          let val = parseInt(slider.value) - 10;
+          if (val < 20) val = 20;
+          slider.value = val;
+          slider.dispatchEvent(new Event('input'));
+        }
+      });
+
+      // Menú desplegable
+      const toggleBtn = document.getElementById('toolbar-toggle');
+      const panel = document.getElementById('toolbar-panel');
+      if (toggleBtn && panel) {
+        toggleBtn.addEventListener('click', () => {
+          panel.classList.toggle('open');
+          toggleBtn.querySelector('span:last-child').textContent = panel.classList.contains('open') ? '▲' : '▼';
+        });
+      }
+
+      // Sincronizar contador de diseños
+      function updateMobileStatus() {
+        const countSpan = document.getElementById('mobile-design-count');
+        if (countSpan && typeof designs !== 'undefined') countSpan.textContent = designs.length;
+        const zoomSpan = document.getElementById('mobile-zoom');
+        if (zoomSpan && typeof canvasZoom !== 'undefined') zoomSpan.textContent = Math.round(canvasZoom * 100);
+        const heightSpan = document.getElementById('mobile-canvas-height');
+        if (heightSpan && typeof CANVAS_HEIGHT_CM !== 'undefined') heightSpan.textContent = CANVAS_HEIGHT_CM;
+      }
+      setInterval(updateMobileStatus, 500);
+
+      // Botón perfil
+      document.getElementById('mobile-profile-btn')?.addEventListener('click', () => {
+        const profileBtn = document.getElementById('open-profile-btn');
+        if (profileBtn) profileBtn.click();
+      });
+    }
+
+    waitForEditor();
+  })();
+</script>
+
+<!-- Asegurar que el file-input existe globalmente -->
+<input type="file" id="file-input" accept="image/*" style="display:none" multiple>
+
+</body>
+</html>
