@@ -994,6 +994,1821 @@
 <!-- ══════════════════════════════════
      SCRIPTS
 ══════════════════════════════════ -->
+<script>
+
+// ====== Seguridad (Usuario + Contraseña con Google Sheets) ======
+const overlay = document.getElementById('lock-overlay');
+const appRoot = document.getElementById('app-root');
+const lockUser = document.getElementById('lock-user');
+const lockPass = document.getElementById('lock-pass');
+const lockBtn = document.getElementById('lock-btn');
+const lockError = document.getElementById('lock-error');
+
+function showLock(){
+  const overlay = document.getElementById('lock-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('visible'), 100); // Para que aparezca con animación
+  appRoot.style.visibility = 'hidden';
+  setTimeout(() => lockPass && lockPass.focus(), 300);
+}
+
+function unlock(){
+  overlay.style.display = 'none';
+  appRoot.style.visibility = 'visible';
+}
+
+if (sessionStorage.getItem('dtf_unlocked') === '1') {
+  unlock();
+} else {
+  showLock();
+}
+
+if (lockBtn) {
+  lockBtn.addEventListener('click', async () => {
+    const usuario = lockUser?.value?.trim() || '';
+    const password = lockPass?.value?.trim() || '';
+
+    if (!usuario || !password) {
+      lockError.textContent = 'Completa usuario y contraseña';
+      return;
+    }
+
+    lockError.textContent = 'Verificando...';
+
+    try {
+      const params = new URLSearchParams();
+      params.append('action', 'validar_login');
+      params.append('usuario', usuario);
+      params.append('contrasena', password);
+
+      const response = await fetch('https://script.google.com/macros/s/AKfycbyXg2frQnrPl0bSRNretUUBPrr2j4_-NZE9C4AsjMogOKlhA0Ck14IVM7RLq5hsMESsNQ/exec', {
+        method: 'POST',
+        body: params  // ← Esto es lo que hace que funcione sin CORS
+      });
+
+      const result = await response.json();
+
+    if (result.success === true) {
+  sessionStorage.setItem('dtf_unlocked', '1');
+
+// Agrega esto para guardar los datos del perfil
+ // Normalizar campos del servidor (el sheet puede tener nombres distintos)
+  const r = result;
+  const userInfo = {
+    usuario:     usuario,
+    nombre:      r.nombre      || r.Nombre      || 'No disponible',
+    correo:      r.correo      || r.Correo      || 'No disponible',
+    edad:        r.edad        || r.Edad        || 'No disponible',
+    genero:      r.genero      || r.Genero      || r.género || 'No disponible',
+    membresia:   r.membresia   || r.Membresia   || r.membresía || 'Básica',
+    fotoPerfil:  r.fotoPerfil  || r.fotoperfil  || r.FotoPerfil || 'https://via.placeholder.com/120',
+    fechaInicio: r.fechaInicio || r['fecha de inicio del plan'] || r.fechaInicioPlan || 'N/A',
+    fechaFin:    r.fechaFin    || r['fecha final del plan']     || r.fechaFinPlan    || 'N/A'
+  };
+  console.log("Respuesta completa del servidor:", JSON.stringify(r));
+  console.log("userData guardado:", userInfo);
+
+// AÑADE ESTAS LÍNEAS PARA DEPURAR:
+  console.log("RESULTADO DEL SERVIDOR:", result);
+  console.log("Datos que se guardan en localStorage:", userInfo);
+
+
+  // Mantén el fetch del facturador (si lo necesitas)
+  try {
+    const paramsFact = new URLSearchParams();
+    paramsFact.append('action', 'get_facturador_url');
+    paramsFact.append('usuario', usuario);
+    const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbwJOl_grF0Lp0Ff9aMc6v8qdc6olHirRsCw0UHnHbJDQX21qkOGksdn92lC_zgyW3o1/exec', {
+      method: 'POST',
+      body: paramsFact
+    });
+    const urlResult = await urlResponse.json();
+    if (urlResult.success) {
+      sessionStorage.setItem('facturador_url', urlResult.url);
+      showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
+    } else {
+      showMessage('No se encontró URL de facturador. Contacta al admin.', 'warning', 5000);
+    }
+  } catch (err) {
+    console.error('Error facturador:', err);
+    showMessage('Error al cargar facturador.', 'error');
+  }
+
+  unlock();
+} else {
+  lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
+}
+     } catch (err) {
+      lockError.textContent = 'Error al conectar. Intenta más tarde.';
+      console.error('Error de conexión/login:', err);
+    }
+  });
+}
+
+// Permitir Enter para enviar
+if (lockPass) {
+  lockPass.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      lockBtn?.click();
+    }
+  });
+}
+
+    // ====== Referencias DOM
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const uploadBtn = document.getElementById('upload-btn');
+    const fileInput = document.getElementById('file-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const downloadPngBtn = document.getElementById('download-png');
+    const downloadPdfBtn = document.getElementById('download-pdf');
+    const rotationSlider = document.getElementById('rotation-slider');
+    const rotationValue = document.getElementById('rotation-value');
+    const rotationInput = document.getElementById('rotation-input');
+    const opacitySlider = document.getElementById('opacity-slider');
+    const opacityValue = document.getElementById('opacity-value');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomValue = document.getElementById('zoom-value');
+    const zoomLevel = document.getElementById('zoom-level');
+    const addTextBtn = document.getElementById('add-text-btn');
+    const designsList = document.getElementById('designs-list');
+    const removeBtn = document.getElementById('remove-btn');
+    const sizeInfo = document.getElementById('size-info');
+    const originalSizeInfo = document.getElementById('original-size');
+    const widthInput = document.getElementById('width-input');
+    const heightInput = document.getElementById('height-input');
+    const applySizeBtn = document.getElementById('apply-size');
+    const lockProportion = document.getElementById('lock-proportion');
+    const qualitySelect = document.getElementById('quality-select');
+    const canvasColor = document.getElementById('canvas-color');
+    const messageContainer = document.getElementById('message-container');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const specsLabel = document.getElementById('specs-label');
+    const canvasSizeLabel = document.getElementById('canvas-size-label');
+    const canvasHeightInput = document.getElementById('canvas-height-cm');
+    const applyCanvasHeightBtn = document.getElementById('apply-canvas-height');
+
+    const mirrorBtn = document.getElementById('mirror-btn');
+    const bringFrontBtn = document.getElementById('bring-front');
+    const sendBackBtn = document.getElementById('send-back');
+    const stepForwardBtn = document.getElementById('step-forward');
+    const stepBackBtn = document.getElementById('step-back');
+
+// ====== Cálculo de precio aproximado de impresion ======
+function calcularPrecioMontaje() {
+  const altoCm = parseFloat(canvasHeightInput?.value) || 100;
+  let precio = 10000; // mínimo hasta 60 cm
+
+  if (altoCm >= 61 && altoCm <= 99) {
+    precio = 15000; // fijo entre 61 y 99 cm
+  } else if (altoCm >= 100) {
+    const altoMetros = altoCm / 100;
+    precio = altoMetros * 15000;
+  }
+
+  const precioElement = document.getElementById('precio-montaje');
+  if (precioElement) {
+    let texto = '$' + precio.toLocaleString('es-CO');
+    if (altoCm <= 60) texto += ' (mínimo)';
+    precioElement.textContent = texto;
+  }
+}
+
+  // Actualizar en tiempo real cuando cambie el input
+  if (canvasHeightInput) {
+    canvasHeightInput.addEventListener('input', calcularPrecioMontaje);
+  }
+
+  // Actualizar también al presionar "Aplicar alto"
+  if (applyCanvasHeightBtn) {
+    const originalClick = applyCanvasHeightBtn.onclick || function() {};
+    applyCanvasHeightBtn.addEventListener('click', function(e) {
+      originalClick.call(this, e); // mantiene el comportamiento original
+      calcularPrecioMontaje();
+    });
+  }
+
+  // Precio inicial al cargar
+  calcularPrecioMontaje();
+
+    // ====== Constantes físicas
+    const PIXELS_PER_CM = 10;
+    const CANVAS_WIDTH_CM = 58;
+    let CANVAS_HEIGHT_CM = 100;
+    const INCHES_PER_CM = 0.3937007874;
+
+// ====== RECORTE AUTOMÁTICO DEL LIENZO ======
+function autoCropCanvasToContent(marginCm = 1) {
+  if (!designs || designs.length === 0) {
+    showMessage('No hay diseños para recortar', 'warning', 2000);
+    return;
+  }
+
+  // Margen adicional en píxeles (1 cm = 10 px por defecto)
+  const marginPx = marginCm * PIXELS_PER_CM;
+
+  // Calcular el bounding box de todos los diseños (considerando rotación)
+  let maxY = 0;
+
+  designs.forEach(design => {
+    // Obtener dimensiones actuales del diseño (ancho y alto en píxeles)
+    const w = design.width * design.scale;
+    const h = design.height * design.scale;
+
+    // Para manejar rotación, necesitamos los cuatro vértices del rectángulo
+    const cx = design.x;
+    const cy = design.y;
+    const angleRad = design.rotation * Math.PI / 180;
+    const cos = Math.cos(angleRad);
+    const sin = Math.sin(angleRad);
+
+    // Vértices relativos al centro
+    const halfW = w / 2;
+    const halfH = h / 2;
+    const corners = [
+      { x: -halfW, y: -halfH },
+      { x:  halfW, y: -halfH },
+      { x:  halfW, y:  halfH },
+      { x: -halfW, y:  halfH }
+    ];
+
+    // Transformar cada vértice y obtener la Y máxima
+    corners.forEach(corner => {
+      const rx = corner.x * cos - corner.y * sin;
+      const ry = corner.x * sin + corner.y * cos;
+      const worldY = cy + ry;
+      if (worldY > maxY) maxY = worldY;
+    });
+  });
+
+  // Añadir margen y limitar al máximo permitido (100 cm)
+ let newHeightPx = Math.min(maxY + marginPx, CANVAS_HEIGHT_CM * PIXELS_PER_CM);
+  // No puede ser menor que 10 cm (100 px)
+  newHeightPx = Math.max(100, newHeightPx);
+
+// ✅ Redondear al entero más cercano
+let newHeightCm = Math.round(newHeightPx / PIXELS_PER_CM);
+newHeightCm = Math.min(100, Math.max(10, newHeightCm));
+
+  // Si el nuevo alto es igual al actual, no hacer nada
+ if (newHeightCm === CANVAS_HEIGHT_CM) {
+  showMessage('El lienzo ya está ajustado al contenido', 'info', 2000);
+  return;
+}
+
+  // Actualizar el alto del lienzo
+  CANVAS_HEIGHT_CM = newHeightCm;
+
+const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
+canvas.height = newPx;
+canvasWrapper.style.height = newPx + 'px';
+
+  // ✅ Primero actualizar el input del alto
+  if (canvasHeightInput) canvasHeightInput.value = CANVAS_HEIGHT_CM;
+
+// ✅ Luego recalcular el precio (ya usa el nuevo valor)
+calcularPrecioMontaje();
+
+
+  // Actualizar etiquetas visuales
+  if (canvasSizeLabel) canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
+  if (specsLabel) specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
+
+
+  // Sincronizar toolbar si existe
+const tbCanvasHeight = document.getElementById('tb-canvas-height-cm');
+if (tbCanvasHeight) tbCanvasHeight.value = CANVAS_HEIGHT_CM;
+
+  // Redibujar todo
+  drawCanvas();
+  showMessage(`Lienzo recortado a ${CANVAS_HEIGHT_CM.toFixed(1)} cm`, 'success', 2000);
+}
+
+// Botón recorte automático
+const autoCropBtn = document.getElementById('tb-auto-crop-canvas');
+if (autoCropBtn) {
+ autoCropBtn.addEventListener('click', () => {
+  autoCropCanvasToContent(0.8); // margen de 0.8 cm (8 píxeles)
+});
+}
+
+    // ====== Estado
+    let designs = [];
+    let selectedDesignId = null;
+    let isDragging = false;
+    let isResizing = false;
+    let isRotating = false;
+    let dragOffsetX, dragOffsetY;
+    let canvasZoom = 1.0;
+    let lastMouseX, lastMouseY;
+    let startScale = 1.0;
+    let startResizeDist = 1.0;
+    let canvasBackgroundColor = '#ffffff';
+
+    // ====== Mensajes flotantes
+    function showMessage(message, type = 'info', duration = 5000) {
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${type}`;
+      const icons = { info:'ℹ️', success:'✅', error:'❌', warning:'⚠️', loading:'⏳' };
+      messageEl.innerHTML = `
+        <span class="message-icon">${icons[type] || icons.info}</span>
+        <span>${message}</span>
+        <button class="close-message">&times;</button>`;
+      messageContainer.appendChild(messageEl);
+      const closeBtn = messageEl.querySelector('.close-message');
+      function close(){
+        messageEl.style.animation='slideOut .3s ease-out';
+        setTimeout(()=> messageEl.remove(), 300);
+      }
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      if (duration>0) setTimeout(()=> messageEl && close(), duration);
+      return messageEl;
+    }
+
+    // ====== Fondo y guía
+    function initCanvas() {
+      ctx.save();
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      const size = 20;
+      const patternCanvas = document.createElement('canvas');
+      patternCanvas.width = size * 2;
+      patternCanvas.height = size * 2;
+      const pctx = patternCanvas.getContext('2d');
+      pctx.fillStyle = '#f0f0f0';
+      pctx.fillRect(0, 0, size, size);
+      pctx.fillRect(size, size, size, size);
+      const pattern = ctx.createPattern(patternCanvas, 'repeat');
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = canvasBackgroundColor;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.globalAlpha = 1.0;
+
+      ctx.strokeStyle = '#cbd5e0';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5,5]);
+      ctx.strokeRect(5,5, canvas.width-10, canvas.height-10);
+      ctx.setLineDash([]);
+
+      if (designs.length===0){
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('BY: Estampa Hub', canvas.width/2, canvas.height/2);
+      }
+      ctx.restore();
+    }
+    initCanvas();
+
+// ====== Recorte automático de transparencia
+function trimTransparentPixels(img) {
+  const tc = document.createElement('canvas');
+  tc.width = img.width;
+  tc.height = img.height;
+  const tctx = tc.getContext('2d');
+  tctx.drawImage(img, 0, 0);
+
+  const { data } = tctx.getImageData(0, 0, tc.width, tc.height);
+  let top = tc.height, left = tc.width, right = 0, bottom = 0;
+  let found = false;
+
+  for (let y = 0; y < tc.height; y++) {
+    for (let x = 0; x < tc.width; x++) {
+      if (data[(y * tc.width + x) * 4 + 3] > 10) {
+        if (y < top)    top    = y;
+        if (y > bottom) bottom = y;
+        if (x < left)   left   = x;
+        if (x > right)  right  = x;
+        found = true;
+      }
+    }
+  }
+
+  if (!found) return tc;
+
+  const w = right - left + 1;
+  const h = bottom - top + 1;
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  out.getContext('2d').drawImage(tc, left, top, w, h, 0, 0, w, h);
+  return out;
+}
+
+   // ====== Clase Design
+class Design {
+  constructor(id, image, x, y) {
+    this.id = id;
+    this.image = image;
+    this.x = x || canvas.width/2;
+    this.y = y || canvas.height/2;
+    this.scale = 1.0;
+    this.rotation = 0;
+    this.opacity = 1.0;
+    this.width = image.width;
+    this.height = image.height;
+    this.aspectRatio = image.width / image.height;
+    this.originalWidth = image.width;
+    this.originalHeight = image.height;
+  }
+
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation * Math.PI / 180);
+    ctx.scale(this.scale, this.scale);
+
+    const width = this.width;
+    const height = this.height;
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(this.image, -width/2, -height/2, width, height);
+
+    if (this.id === selectedDesignId) {
+      ctx.strokeStyle = '#4299e1';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-width/2, -height/2, width, height);
+
+      ctx.fillStyle = '#4299e1';
+      ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = '#48bb78';
+      ctx.beginPath(); ctx.arc(0, -height/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = '#f56565';
+      ctx.beginPath(); ctx.arc(width/2 + 5, height/2 + 5, 6, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  getDimensionsInCm() {
+    return {
+      width:  (this.width  * this.scale) / PIXELS_PER_CM,
+      height: (this.height * this.scale) / PIXELS_PER_CM
+    };
+  }
+
+  getOriginalDimensionsInCm() {
+    return {
+      width:  (this.originalWidth)  / PIXELS_PER_CM,
+      height: (this.originalHeight) / PIXELS_PER_CM
+    };
+  }
+
+  setDimensions(widthCm, heightCm, maintainProportion = true) {
+    const targetWidthPx  = widthCm  * PIXELS_PER_CM;
+    const targetHeightPx = heightCm * PIXELS_PER_CM;
+
+    if (maintainProportion) {
+      this.scale = targetWidthPx / this.originalWidth;
+    } else {
+      const scaleX = targetWidthPx  / this.originalWidth;
+      const scaleY = targetHeightPx / this.originalHeight;
+      this.scale = (scaleX + scaleY) / 2;
+    }
+    this.updateInputs();
+    drawCanvas();
+  }
+
+  updateInputs() {
+    const d = this.getDimensionsInCm();
+    widthInput.value = d.width.toFixed(1);
+    heightInput.value = d.height.toFixed(1);
+  }
+
+  isPointInside(x, y) {
+    const width = this.width * this.scale;
+    const height = this.height * this.scale;
+
+    const relX = x - this.x;
+    const relY = y - this.y;
+
+    const angle = -this.rotation * Math.PI/180;
+    const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+    const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+    return Math.abs(rx) <= width/2 && Math.abs(ry) <= height/2;
+  }
+
+  isRotationHandle(x, y) {
+    const width  = this.width * this.scale;
+    const height = this.height * this.scale;
+
+    const relX = x - this.x;
+    const relY = y - this.y;
+
+    const angle = -this.rotation * Math.PI / 180;
+    const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+    const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+    const hx = 0;
+    const hy = -height / 2 - 15;
+
+    return Math.hypot(rx - hx, ry - hy) <= 10;
+  }
+
+  isScaleHandle(x, y) {
+    const width  = this.width * this.scale;
+    const height = this.height * this.scale;
+
+    const relX = x - this.x;
+    const relY = y - this.y;
+
+    const angle = -this.rotation * Math.PI / 180;
+    const rx = relX * Math.cos(angle) - relY * Math.sin(angle);
+    const ry = relX * Math.sin(angle) + relY * Math.cos(angle);
+
+    const hx = width / 2 + 5;
+    const hy = height / 2 + 5;
+
+    return Math.hypot(rx - hx, ry - hy) <= 10;
+  }
+}
+
+    // ====== Dibujo general
+    function drawCanvas() {
+      initCanvas();
+      designs.forEach(d => d.draw());
+      updateSizeInfo();
+    }
+
+    function updateSizeInfo() {
+      const d = getSelectedDesign();
+      if (d) {
+        const c = d.getDimensionsInCm();
+        const o = d.getOriginalDimensionsInCm();
+        sizeInfo.textContent = `${c.width.toFixed(1)}cm × ${c.height.toFixed(1)}cm`;
+        originalSizeInfo.textContent = `Tamaño original: ${o.width.toFixed(1)}cm × ${o.height.toFixed(1)}cm`;
+      } else {
+        sizeInfo.textContent = '0cm × 0cm';
+        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+      }
+    }
+
+    // ====== Exportación
+    function getPixelDimensions(dpi) {
+      const widthPx  = Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * dpi);
+      const heightPx = Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * dpi);
+      return { width: widthPx, height: heightPx };
+    }
+
+    function createHighQualityCanvas() {
+  const dpi = parseInt(qualitySelect.value);
+  const dim = getPixelDimensions(dpi);
+
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width  = dim.width;
+  exportCanvas.height = dim.height;
+  const ectx = exportCanvas.getContext('2d');
+
+  ectx.imageSmoothingEnabled = true;
+  ectx.imageSmoothingQuality = 'high';
+  ectx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  // Escalas INDEPENDIENTES para X e Y
+  const scaleX = exportCanvas.width  / canvas.width;
+  const scaleY = exportCanvas.height / canvas.height;
+
+  designs.forEach(design => {
+    ectx.save();
+    ectx.globalAlpha = design.opacity;
+
+    const ex = design.x * scaleX;
+    const ey = design.y * scaleY;
+
+    ectx.translate(ex, ey);
+    ectx.rotate(design.rotation * Math.PI / 180);
+    // Escalar usando scaleX e scaleY independientes
+    ectx.scale(design.scale * scaleX, design.scale * scaleY);
+
+    ectx.drawImage(design.image, -design.width / 2, -design.height / 2, design.width, design.height);
+    ectx.restore();
+  });
+
+  return exportCanvas;
+}
+
+
+    // ====== UI: color de fondo
+    if (canvasColor){
+      canvasColor.addEventListener('input', function(){
+        canvasBackgroundColor = this.value;
+        drawCanvas();
+        showMessage(`Color de fondo cambiado a ${this.value}`, 'info', 2000);
+      });
+    }
+
+    // ====== Upload
+    if (uploadBtn){
+      uploadBtn.addEventListener('click', ()=>{
+        if (fileInput) fileInput.value = '';
+        if (fileInput) fileInput.click();
+      });
+    }
+
+    if (fileInput){
+      fileInput.addEventListener('change', function(e){
+        if (e.target.files && e.target.files.length>0){
+          const files = Array.from(e.target.files);
+          let loaded = 0;
+          const total = files.length;
+          const loadingMsg = showMessage(`Cargando ${total} diseño(s)...`,'loading',0);
+
+          files.forEach(file=>{
+            if (!file.type.match('image.*')){
+              showMessage(`Error: ${file.name} no es una imagen válida`,'error');
+              if (++loaded===total) loadingMsg.remove();
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(ev){
+              const img = new Image();
+              img.onload = function(){
+                const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
+                const trimmed = trimTransparentPixels(img);
+                const d = new Design(id, trimmed);
+
+                const maxW = canvas.width - 20;
+                const maxH = canvas.height - 20;
+                const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
+                d.scale = Math.min(1, scaleToFit);
+
+                designs.push(d);
+                selectedDesignId = id;
+
+                if (++loaded===total) { loadingMsg.remove(); showMessage(`${total} diseño(s) cargado(s)`,'success'); }
+                updateDesignsList();
+                updateControls();
+                drawCanvas();
+              };
+              img.onerror = function(){
+                if (++loaded===total) loadingMsg.remove();
+                showMessage(`Error al cargar la imagen: ${file.name}`,'error');
+              }
+              img.src = ev.target.result;
+            };
+            reader.onerror = function(){
+              if (++loaded===total) loadingMsg.remove();
+              showMessage(`Error al leer: ${file.name}`,'error');
+            }
+            reader.readAsDataURL(file);
+          });
+
+          fileInput.value = '';
+        }
+      });
+    }
+
+    // ====== Lista de diseños
+    function updateDesignsList(){
+      designsList.innerHTML = '';
+      if (designs.length===0){
+        designsList.innerHTML = '<div class="no-designs">No hay diseños cargados</div>';
+        return;
+      }
+      designs.forEach(design=>{
+        const item = document.createElement('div');
+        item.className = 'design-item' + (design.id===selectedDesignId ? ' active' : '');
+        item.dataset.id = design.id;
+
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width = 40; thumbCanvas.height = 40;
+        const tctx = thumbCanvas.getContext('2d');
+        const scale = Math.min(40/design.width, 40/design.height) * 0.8;
+        tctx.fillStyle = '#fff'; tctx.fillRect(0,0,40,40);
+        tctx.save();
+        tctx.translate(20,20);
+        tctx.scale(scale, scale);
+        tctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+        tctx.restore();
+        tctx.strokeStyle = '#cbd5e0'; tctx.strokeRect(0,0,40,40);
+
+        item.innerHTML = `
+          <img class="design-thumb" src="${thumbCanvas.toDataURL('image/png')}" alt="Miniatura">
+          <div>Diseño ${designs.indexOf(design)+1}</div>`;
+        item.addEventListener('click', ()=>{
+          selectedDesignId = design.id;
+          updateDesignsList(); updateControls(); drawCanvas();
+          showMessage(`Diseño ${designs.indexOf(design)+1} seleccionado`,'info',2000);
+        });
+        designsList.appendChild(item);
+      });
+    }
+
+    // ====== Controles
+    function updateControls(){
+      const d = getSelectedDesign();
+      if (d){
+        rotationSlider.value = Math.round(d.rotation);
+        rotationInput.value = Math.round(d.rotation);
+        rotationValue.textContent = Math.round(d.rotation) + '°';
+        opacitySlider.value = Math.round(d.opacity*100);
+        opacityValue.textContent = Math.round(d.opacity*100) + '%';
+        d.updateInputs();
+
+        [rotationSlider, rotationInput, opacitySlider, removeBtn,
+         widthInput, heightInput, applySizeBtn, lockProportion,
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
+        ].forEach(el=> el && (el.disabled=false));
+
+        updateSizeInfo();
+      } else {
+        [rotationSlider, rotationInput, opacitySlider, removeBtn,
+         widthInput, heightInput, applySizeBtn, lockProportion,
+         mirrorBtn, bringFrontBtn, sendBackBtn, stepForwardBtn, stepBackBtn
+        ].forEach(el=> el && (el.disabled=true));
+        sizeInfo.textContent = '0cm × 0cm';
+        originalSizeInfo.textContent = 'Tamaño original: 0cm × 0cm';
+      }
+    }
+
+    function getSelectedDesign(){
+      return designs.find(d=> d.id===selectedDesignId);
+    }
+
+    // tamaño manual
+    if (applySizeBtn){
+      applySizeBtn.addEventListener('click', function(){
+        const d = getSelectedDesign();
+        if (d){
+          const w = parseFloat(widthInput.value);
+          const h = parseFloat(heightInput.value);
+          if (!isNaN(w) && !isNaN(h) && w>0 && h>0){
+            d.setDimensions(w,h, lockProportion.checked);
+            showMessage(`Tamaño ajustado a ${w}cm × ${h}cm`, 'success', 2000);
+          }
+        }
+      });
+    }
+
+    if (lockProportion){
+      lockProportion.addEventListener('change', function(){
+        const d = getSelectedDesign();
+        if (d && this.checked){
+          const w = parseFloat(widthInput.value);
+          if (!isNaN(w) && w>0){
+            heightInput.value = (w / d.aspectRatio).toFixed(1);
+          }
+        }
+        showMessage(this.checked ? 'Proporción bloqueada' : 'Proporción desbloqueada','info',2000);
+      });
+    }
+
+    if (widthInput){
+      widthInput.addEventListener('input', function(){
+        if (lockProportion.checked){
+          const d = getSelectedDesign();
+          if (d){
+            const w = parseFloat(this.value);
+            if (!isNaN(w) && w>0){
+              heightInput.value = (w / d.aspectRatio).toFixed(1);
+            }
+          }
+        }
+      });
+    }
+
+    if (heightInput){
+      heightInput.addEventListener('input', function(){
+        if (lockProportion.checked){
+          const d = getSelectedDesign();
+          if (d){
+            const h = parseFloat(this.value);
+            if (!isNaN(h) && h>0){
+              widthInput.value = (h * d.aspectRatio).toFixed(1);
+            }
+          }
+        }
+      });
+    }
+
+    // rotación
+    if (rotationSlider){
+      rotationSlider.addEventListener('input', function(){
+        const d = getSelectedDesign();
+        if (d){
+          d.rotation = parseInt(this.value);
+          rotationInput.value = this.value;
+          rotationValue.textContent = this.value + '°';
+          drawCanvas();
+        }
+      });
+    }
+    if (rotationInput){
+      rotationInput.addEventListener('input', function(){
+        const d = getSelectedDesign();
+        if (d){
+          let val = parseInt(this.value);
+          if (isNaN(val)) val = 0;
+          val = ((val % 360) + 360) % 360;
+          d.rotation = val;
+          rotationSlider.value = val;
+          rotationValue.textContent = val + '°';
+          drawCanvas();
+        }
+      });
+    }
+
+    // opacidad
+    if (opacitySlider){
+      opacitySlider.addEventListener('input', function(){
+        const d = getSelectedDesign();
+        if (d){
+          d.opacity = this.value / 100;
+          opacityValue.textContent = this.value + '%';
+          drawCanvas();
+        }
+      });
+    }
+
+    // eliminar
+    if (removeBtn){
+      removeBtn.addEventListener('click', function(){
+        const d = getSelectedDesign();
+        if (d && confirm('¿Eliminar este diseño?')){
+          designs = designs.filter(x=> x.id!==d.id);
+          selectedDesignId = designs.length ? designs[designs.length-1].id : null;
+          showMessage('Diseño eliminado','info',2000);
+          updateDesignsList(); updateControls(); drawCanvas();
+        }
+      });
+    }
+
+    // Zoom con slider
+    if (zoomSlider){
+      zoomSlider.addEventListener('input', function(){
+        canvasZoom = this.value/100;
+        zoomValue.textContent = this.value + '%';
+        zoomLevel.textContent = 'Zoom: ' + this.value + '%';
+
+        const canvasContainer = document.querySelector('.canvas-area');
+        canvasWrapper.style.transform = `scale(${canvasZoom})`;
+        canvasContainer.scrollLeft = (canvas.width * canvasZoom - canvasContainer.clientWidth)/2;
+        canvasContainer.scrollTop  = (canvas.height* canvasZoom - canvasContainer.clientHeight)/2;
+      });
+    }
+
+    // Zoom con rueda (Ctrl o ⌘)
+    const canvasAreaEl = document.querySelector('.canvas-area');
+    if (canvasAreaEl && zoomSlider){
+      canvasAreaEl.addEventListener('wheel', (e)=>{
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        const cur = parseInt(zoomSlider.value,10);
+        const next = Math.max(20, Math.min(200, cur + (e.deltaY < 0 ? 10 : -10)));
+        if (next !== cur){
+          zoomSlider.value = String(next);
+          zoomSlider.dispatchEvent(new Event('input'));
+        }
+      }, {passive:false});
+    }
+
+    // Agregar texto
+    if (addTextBtn){
+      addTextBtn.addEventListener('click', function(){
+        const text = prompt('Ingresa el texto que deseas agregar:', 'Texto de ejemplo');
+        if (text){
+          const tCanvas = document.createElement('canvas');
+          tCanvas.width = 600; tCanvas.height = 200;
+          const tctx = tCanvas.getContext('2d');
+          tctx.clearRect(0,0,tCanvas.width,tCanvas.height);
+          tctx.fillStyle = '#000000';
+          tctx.font = '80px Arial';
+          tctx.textAlign = 'center';
+          tctx.textBaseline = 'middle';
+          tctx.fillText(text, tCanvas.width/2, tCanvas.height/2);
+
+          const img = new Image();
+          img.onload = function(){
+            const id = 'text-' + Date.now();
+            const d = new Design(id, img, canvas.width/2, canvas.height/2);
+
+            const maxW = canvas.width - 20;
+            const maxH = canvas.height - 20;
+            const scaleToFit = Math.min(maxW / d.width, maxH / d.height);
+            d.scale = Math.min(1, scaleToFit);
+
+            designs.push(d); selectedDesignId = id;
+            showMessage('Texto agregado correctamente','success',2000);
+            updateDesignsList(); updateControls(); drawCanvas();
+          };
+          img.src = tCanvas.toDataURL('image/png');
+        }
+      });
+    }
+
+    // Exportar PNG
+    if (downloadPngBtn){
+      downloadPngBtn.addEventListener('click', function(){
+        if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+        const loading = showMessage('Preparando descarga PNG...','loading',0);
+        setTimeout(()=>{
+          try{
+            const exportCanvas = createHighQualityCanvas();
+            const link = document.createElement('a');
+            link.download = 'montaje-dtf.png';
+            exportCanvas.toBlob(function(blob){
+              link.href = URL.createObjectURL(blob);
+              link.click();
+              setTimeout(()=>{
+                URL.revokeObjectURL(link.href);
+                loading.remove();
+                showMessage('Descarga PNG completada','success');
+              },100);
+            }, 'image/png', 1.0);
+          } catch(err){
+            loading.remove();
+            showMessage('Error al generar PNG: ' + err.message, 'error');
+          }
+        }, 200);
+      });
+    }
+
+    // Exportar PDF
+   if (downloadPdfBtn){
+  downloadPdfBtn.addEventListener('click', function(){
+    if (designs.length===0){ showMessage('No hay diseños para exportar','error'); return; }
+    const loading = showMessage('Preparando PDF...','loading',0);
+    setTimeout(()=>{
+      try{
+        // Para PDF usamos 96 DPI para evitar imágenes demasiado grandes
+        const pdfDpi = Math.min(parseInt(qualitySelect.value), 150);
+        const pdfW = Math.round(CANVAS_WIDTH_CM  * INCHES_PER_CM * pdfDpi);
+        const pdfH = Math.round(CANVAS_HEIGHT_CM * INCHES_PER_CM * pdfDpi);
+
+        const pdfCanvas = document.createElement('canvas');
+        pdfCanvas.width  = pdfW;
+        pdfCanvas.height = pdfH;
+        const pctx = pdfCanvas.getContext('2d');
+        pctx.imageSmoothingEnabled = true;
+        pctx.imageSmoothingQuality = 'high';
+        pctx.clearRect(0, 0, pdfW, pdfH);
+
+        const sX = pdfW / canvas.width;
+        const sY = pdfH / canvas.height;
+
+        designs.forEach(design => {
+          pctx.save();
+          pctx.globalAlpha = design.opacity;
+          pctx.translate(design.x * sX, design.y * sY);
+          pctx.rotate(design.rotation * Math.PI / 180);
+          pctx.scale(design.scale * sX, design.scale * sY);
+          pctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+          pctx.restore();
+        });
+
+        pdfCanvas.toBlob(function(blob){
+          const reader = new FileReader();
+          reader.onload = function(){
+            try{
+              const { jsPDF } = window.jspdf;
+              // Dimensiones en mm (1cm = 10mm)
+              const pageW = CANVAS_WIDTH_CM  * 10;
+              const pageH = CANVAS_HEIGHT_CM * 10;
+              const doc = new jsPDF({
+                orientation: pageW < pageH ? 'portrait' : 'landscape',
+                unit: 'mm',
+                format: [pageW, pageH]
+              });
+              doc.addImage(reader.result, 'PNG', 0, 0, pageW, pageH, undefined, 'SLOW');
+              doc.save('montaje-dtf.pdf');
+              loading.remove();
+              showMessage('✅ PDF descargado completo','success',3000);
+            } catch(e){
+              loading.remove();
+              showMessage('Error al generar PDF: ' + e.message,'error');
+            }
+          };
+          reader.readAsDataURL(blob);
+        }, 'image/png', 0.92);
+
+      } catch(err){
+        loading.remove();
+        showMessage('Error: ' + err.message,'error');
+      }
+    }, 200);
+  });
+}
+
+    // Limpiar lienzo
+    if (clearBtn){
+      clearBtn.addEventListener('click', function(){
+        if (designs.length>0 && confirm('¿Limpiar el lienzo? Se perderán todos los diseños.')){
+          designs = [];
+          syncDesignsRef();  // <-- NUEVO
+          selectedDesignId = null;
+          showMessage('Lienzo limpiado','info',2000);
+          updateDesignsList(); updateControls(); initCanvas();
+        }
+      });
+    }
+
+    // Interacción mouse/touch
+    function toCanvasCoords(e){
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top)  * scaleY
+      };
+    }
+
+    canvas.addEventListener('mousedown', function(e){
+      const {x, y} = toCanvasCoords(e);
+      lastMouseX = x; lastMouseY = y;
+
+      for (let i=designs.length-1; i>=0; i--){
+        const d = designs[i];
+
+        if (d.isRotationHandle(x,y)){
+          selectedDesignId = d.id; isRotating = true;
+          updateDesignsList(); updateControls(); drawCanvas(); return;
+        }
+        if (d.isScaleHandle(x,y)){
+          selectedDesignId = d.id; isResizing = true;
+          startScale = d.scale;
+          startResizeDist = Math.hypot(x - d.x, y - d.y);
+          updateDesignsList(); updateControls(); drawCanvas(); return;
+        }
+        if (d.isPointInside(x,y)){
+          selectedDesignId = d.id; isDragging = true;
+          dragOffsetX = x - d.x; dragOffsetY = y - d.y;
+          updateDesignsList(); updateControls(); drawCanvas(); return;
+        }
+      }
+      selectedDesignId = null;
+      updateDesignsList(); updateControls(); drawCanvas();
+    });
+
+    canvas.addEventListener('mousemove', function(e){
+      const {x, y} = toCanvasCoords(e);
+      const d = getSelectedDesign();
+      lastMouseX = x; lastMouseY = y;
+
+      if (isDragging && d){
+        d.x = x - dragOffsetX; d.y = y - dragOffsetY;
+        drawCanvas();
+      } else if (isRotating && d){
+        let angle = Math.atan2(y - d.y, x - d.x) * 180 / Math.PI + 90;
+        angle = (angle % 360 + 360) % 360;
+        d.rotation = angle;
+        rotationSlider.value = Math.round(angle);
+        rotationInput.value = Math.round(angle);
+        rotationValue.textContent = Math.round(angle) + '°';
+        drawCanvas();
+      } else if (isResizing && d){
+        const dist = Math.hypot(x - d.x, y - d.y);
+        const factor = dist / Math.max(1, startResizeDist);
+        d.scale = startScale * factor;
+        d.updateInputs();
+        updateSizeInfo();
+        drawCanvas();
+      }
+    });
+
+    ['mouseup','mouseleave'].forEach(ev=>{
+      canvas.addEventListener(ev, function(){
+        isDragging = false; isResizing = false; isRotating = false;
+      });
+    });
+
+    // touch
+    canvas.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      const t = e.touches[0];
+      canvas.dispatchEvent(new MouseEvent('mousedown', { clientX:t.clientX, clientY:t.clientY }));
+    }, {passive:false});
+    canvas.addEventListener('touchmove', function(e){
+      e.preventDefault();
+      const t = e.touches[0];
+      canvas.dispatchEvent(new MouseEvent('mousemove', { clientX:t.clientX, clientY:t.clientY }));
+    }, {passive:false});
+    canvas.addEventListener('touchend', function(e){
+      e.preventDefault();
+      canvas.dispatchEvent(new MouseEvent('mouseup', {}));
+    }, {passive:false});
+
+    // Alto del lienzo (máx 100 cm)
+    if (applyCanvasHeightBtn){
+      applyCanvasHeightBtn.addEventListener('click', function(){
+        let newHcm = parseFloat(canvasHeightInput.value);
+        if (isNaN(newHcm)) return;
+        newHcm = Math.max(10, Math.min(100, newHcm));
+        CANVAS_HEIGHT_CM = newHcm;
+
+        const newPx = Math.round(CANVAS_HEIGHT_CM * PIXELS_PER_CM);
+        canvas.height = newPx;
+        canvasWrapper.style.height = newPx + 'px';
+
+        canvasSizeLabel.textContent = `${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm`;
+        specsLabel.textContent = `Lienzo: ${CANVAS_WIDTH_CM}cm × ${CANVAS_HEIGHT_CM}cm | Formato: PNG/PDF`;
+
+        drawCanvas();
+        showMessage(`Alto del lienzo ajustado a ${CANVAS_HEIGHT_CM} cm`, 'success', 2000);
+      });
+    }
+
+    // Atajos de teclado
+    document.addEventListener('keydown', function(e){
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      const d = getSelectedDesign();
+      const step = e.shiftKey ? 10 : 1;
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && d){
+        e.preventDefault();
+       designs = designs.filter(x=> x.id!==d.id);
+        syncDesignsRef();  // <-- NUEVO
+        selectedDesignId = designs.length ? designs[designs.length-1].id : null;
+        updateDesignsList(); updateControls(); drawCanvas();
+        showMessage('Diseño eliminado','info',1500);
+        return;
+      }
+
+      if (!d) return;
+
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'd')){
+        e.preventDefault();
+        const id = 'design-' + Date.now() + Math.random().toString(36).slice(2,7);
+        const dup = new Design(id, d.image, d.x + 10, d.y + 10);
+        dup.scale = d.scale; dup.rotation = d.rotation; dup.opacity = d.opacity;
+        designs.push(dup);
+        selectedDesignId = id;
+        updateDesignsList(); updateControls(); drawCanvas();
+        showMessage('Diseño duplicado','success',1200);
+        return;
+      }
+
+      const arrows = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+      if (arrows.includes(e.key)){
+        e.preventDefault();
+        if (e.key === 'ArrowLeft')  d.x -= step;
+        if (e.key === 'ArrowRight') d.x += step;
+        if (e.key === 'ArrowUp')    d.y -= step;
+        if (e.key === 'ArrowDown')  d.y += step;
+        drawCanvas();
+      }
+    });
+
+    // ESPEJO (Horizontal)
+    if (mirrorBtn){
+      mirrorBtn.addEventListener('click', ()=>{
+        const d = getSelectedDesign();
+        if (!d){ showMessage('Selecciona un diseño para aplicar espejo','warning',1800); return; }
+
+        const tCanvas = document.createElement('canvas');
+        tCanvas.width = d.image.width;
+        tCanvas.height = d.image.height;
+        const tctx = tCanvas.getContext('2d');
+
+        tctx.save();
+        tctx.translate(tCanvas.width, 0);
+        tctx.scale(-1, 1);
+        tctx.imageSmoothingEnabled = true;
+        tctx.imageSmoothingQuality = 'high';
+        tctx.drawImage(d.image, 0, 0, tCanvas.width, tCanvas.height);
+        tctx.restore();
+
+        const img = new Image();
+        img.onload = ()=>{ d.image = img; drawCanvas(); showMessage('Espejo aplicado','success',1200); };
+        img.src = tCanvas.toDataURL('image/png');
+      });
+    }
+
+    // Z-ORDER
+    function idxSel(){ return designs.findIndex(x=> x.id===selectedDesignId); }
+    function refreshAfterZ(){ updateDesignsList(); drawCanvas(); }
+
+    if (bringFrontBtn){
+      bringFrontBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<0) return;
+        const it = designs.splice(i,1)[0];
+        designs.push(it);
+        refreshAfterZ();
+      });
+    }
+    if (sendBackBtn){
+      sendBackBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<0) return;
+        const it = designs.splice(i,1)[0];
+        designs.unshift(it);
+        refreshAfterZ();
+      });
+    }
+    if (stepForwardBtn){
+      stepForwardBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<0 || i===designs.length-1) return;
+        [designs[i], designs[i+1]] = [designs[i+1], designs[i]];
+        refreshAfterZ();
+      });
+    }
+    if (stepBackBtn){
+      stepBackBtn.addEventListener('click', ()=>{
+        const i = idxSel(); if (i<=0) return;
+        [designs[i-1], designs[i]] = [designs[i], designs[i-1]];
+        refreshAfterZ();
+      });
+    }
+
+    // Barra flotante: reenviar clicks
+    (function(){
+      const floatBar = document.getElementById('floating-tools');
+      if (!floatBar) return;
+      floatBar.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-target]');
+        if (!btn) return;
+        const targetId = btn.getAttribute('data-target');
+        const realBtn = document.getElementById(targetId);
+        if (realBtn && !realBtn.disabled){
+          realBtn.click();
+        } else if (realBtn && realBtn.disabled){
+          const d = getSelectedDesign();
+          if (!d) showMessage('Selecciona un diseño primero', 'warning', 1600);
+        }
+      });
+    })();
+
+    // Colocar barra debajo del título automáticamente mientras esté "anclada"
+    (function placeFloatBelowTitle(){
+      const titleEl = document.querySelector('.canvas-title');
+      function update(){
+        if (!titleEl) return;
+        const h = titleEl.offsetHeight || 0;
+        document.documentElement.style.setProperty('--title-h', h + 'px');
+      }
+      window.addEventListener('load', update);
+      window.addEventListener('resize', update);
+      if ('ResizeObserver' in window && titleEl){
+        const ro = new ResizeObserver(update);
+        ro.observe(titleEl);
+      } else {
+        setInterval(update, 500);
+      }
+      update();
+    })();
+
+    // Hacer la barra arrastrable + recordar posición + doble click para reset
+    (function makeFloatingToolsDraggable(){
+      const bar = document.getElementById('floating-tools');
+      const container = document.querySelector('.canvas-container');
+      if (!bar || !container) return;
+
+      function loadPos(){
+        try { return JSON.parse(localStorage.getItem('dtf_float_pos') || '{}'); }
+        catch { return {}; }
+      }
+      function savePos(obj){
+        localStorage.setItem('dtf_float_pos', JSON.stringify(obj || {}));
+      }
+
+      const saved = loadPos();
+      if (typeof saved.top === 'number' && typeof saved.left === 'number'){
+        bar.style.top = saved.top + 'px';
+        bar.style.left = saved.left + 'px';
+        bar.style.right = 'auto';
+        savePos({ mode:'free', top:saved.top, left:saved.left });
+      } else if (saved.mode === 'free'){
+        if (typeof saved.top === 'number')  bar.style.top  = saved.top + 'px';
+        if (typeof saved.left === 'number') bar.style.left = saved.left + 'px';
+        bar.style.right = 'auto';
+      }
+
+      let startX=0, startY=0, startLeft=0, startTop=0, dragging=false;
+
+      function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
+
+      function getBarRectRel(){
+        const cont = container.getBoundingClientRect();
+        const rect = bar.getBoundingClientRect();
+        return {
+          left: rect.left - cont.left + container.scrollLeft,
+          top : rect.top  - cont.top  + container.scrollTop,
+          width: rect.width,
+          height: rect.height,
+          contW: cont.width,
+          contH: cont.height
+        };
+      }
+
+      function onPointerDown(e){
+        if (e.target.closest('button[data-target]')) return;
+        dragging = true;
+        const r = getBarRectRel();
+        startX = e.clientX; startY = e.clientY;
+        startLeft = r.left; startTop = r.top;
+        bar.setPointerCapture?.(e.pointerId);
+        e.preventDefault();
+      }
+
+      function onPointerMove(e){
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        const r = getBarRectRel();
+        const maxLeft = r.contW - r.width - 6;
+        const maxTop  = r.contH - r.height - 6;
+
+        const nextLeft = clamp(startLeft + dx, 6, Math.max(6, maxLeft));
+        const nextTop  = clamp(startTop  + dy, 6, Math.max(6, maxTop));
+
+        bar.style.left = nextLeft + 'px';
+        bar.style.top  = nextTop  + 'px';
+        bar.style.right = 'auto';
+
+        savePos({ mode:'free', top: nextTop, left: nextLeft });
+      }
+
+      function onPointerUp(){ dragging = false; }
+
+      bar.addEventListener('dblclick', ()=>{
+        bar.style.left = '';
+        bar.style.top  = '';
+        bar.style.right = '';
+        savePos({ mode:'docked' });
+        showMessage('Barra reposicionada debajo del título','info',1500);
+      });
+
+      bar.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+
+      window.addEventListener('resize', ()=>{
+        const s = loadPos();
+        if (s.mode !== 'free') return;
+        const r = getBarRectRel();
+        const maxLeft = r.contW - r.width - 6;
+        const maxTop  = r.contH - r.height - 6;
+        const newLeft = clamp(parseInt(bar.style.left||'0',10), 6, Math.max(6, maxLeft));
+        const newTop  = clamp(parseInt(bar.style.top ||'0',10),  6, Math.max(6, maxTop));
+        bar.style.left = newLeft + 'px';
+        bar.style.top  = newTop + 'px';
+        savePos({ mode:'free', top:newTop, left:newLeft });
+      });
+    })();
+
+// ===== MOCKUPS (multi-capa): refs y estado =====
+const openMockupsBtn = document.getElementById('open-mockups');
+const mockPane     = document.getElementById('mockup-pane');
+const mockStage    = document.getElementById('mock-stage');
+const mockTemplate = document.getElementById('mock-template');
+const mockHost     = document.getElementById('mock-layer-host');
+
+const mockTemplateSelect = document.getElementById('mock-template-select');
+const mockBlend    = document.getElementById('mock-blend');
+const mockOpacity  = document.getElementById('mock-opacity');
+const mockScale    = document.getElementById('mock-scale');
+const mockRot      = document.getElementById('mock-rot');
+
+const mockUploadBtn= document.getElementById('mock-upload');
+const mockFile     = document.getElementById('mock-file');
+const mockUseSelectedBtn = document.getElementById('mock-use-selected');
+const mockDeleteBtn  = document.getElementById('mock-delete');
+const mockFrontBtn   = document.getElementById('mock-front');
+const mockBackBtn    = document.getElementById('mock-back');
+const mockDownloadBtn= document.getElementById('mock-download');
+const mockCloseBtn   = document.getElementById('mock-close');
+
+const mockLayersList = document.getElementById('mock-layers-list');
+
+let mockState = {
+  templateLoaded: false,
+  layers: [],
+  active: -1
+};
+
+const MOCK_TEMPLATES = [
+  { name: 'Camiseta Blanca', url: 'https://i.ibb.co/9kDxHZyY/camiseta-blanca.png' },
+  { name: 'Camiseta Negra',  url: 'https://i.ibb.co/8DwDJ6xZ/camiseta-negra.png' },
+  { name: 'Camiseta Gris',   url: 'https://i.ibb.co/9V0b9mB/tee-gray.png' }
+];
+function fillMockTemplateSelect(){
+  mockTemplateSelect.innerHTML = '';
+  MOCK_TEMPLATES.forEach((t, i)=>{
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = t.name;
+    mockTemplateSelect.appendChild(opt);
+  });
+}
+fillMockTemplateSelect();
+
+function loadImageCORS(src){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=> resolve(img);
+    img.onerror = ()=> reject(new Error('No se pudo cargar: ' + src));
+    img.src = src;
+  });
+}
+
+if (openMockupsBtn){
+  openMockupsBtn.addEventListener('click', async ()=>{
+    mockPane.style.display = 'block';
+    showMessage('Panel de Mockups abierto','info',1500);
+    try{
+      const idx = parseInt(mockTemplateSelect.value || '0', 10) || 0;
+      await setMockTemplate(MOCK_TEMPLATES[idx].url);
+    }catch(err){ showMessage(err.message, 'error'); }
+  });
+}
+mockCloseBtn?.addEventListener('click', ()=> mockPane.style.display='none');
+
+mockTemplateSelect.addEventListener('change', async ()=>{
+  const idx = parseInt(mockTemplateSelect.value, 10);
+  if (isNaN(idx)) return;
+  const url = MOCK_TEMPLATES[idx]?.url;
+  if (!url) return;
+  try{ await setMockTemplate(url); }catch(err){ showMessage(err.message,'error'); }
+});
+
+async function setMockTemplate(url){
+  const img = await loadImageCORS(url);
+  return new Promise((resolve)=>{
+    mockTemplate.onload = ()=>{
+      mockTemplate.style.width = '100%';
+      mockTemplate.style.height = 'auto';
+      mockState.templateLoaded = true;
+      resolve();
+    };
+    mockTemplate.src = img.src;
+  });
+}
+
+function addLayerFromSrc(src, opts={}){
+  const el = document.createElement('img');
+  el.className = 'mock-design';
+  el.draggable = false;
+  el.alt = 'Capa';
+  el.src = src;
+
+  const layer = {
+    el,
+    src,
+    x: opts.x ?? 0.5,
+    y: opts.y ?? 0.5,
+    scale: opts.scale ?? 1.0,
+    rot: opts.rot ?? 0,
+    blend: opts.blend ?? (mockBlend.value || 'multiply'),
+    opacity: opts.opacity ?? (parseInt(mockOpacity.value,10)/100 || 0.95)
+  };
+
+  el.style.width = '50%';
+
+  mockHost.appendChild(el);
+  mockState.layers.push(layer);
+  selectLayer(mockState.layers.length - 1);
+  applyLayerStyle(layer);
+  rebuildLayersList();
+  enableDragFor(el);
+  showMessage('Capa añadida','success',1200);
+}
+
+function selectLayer(index){
+  mockState.layers.forEach(l=> l.el.classList.remove('selected'));
+  mockState.active = index;
+  const L = mockState.layers[index];
+  if (L){
+    L.el.classList.add('selected');
+    mockBlend.value = L.blend === 'source-over' ? 'normal' : L.blend;
+    mockOpacity.value = Math.round((L.opacity ?? 1)*100);
+    mockScale.value = Math.round(L.scale * 100);
+    mockRot.value = Math.round(L.rot || 0);
+  }
+  rebuildLayersList();
+}
+
+function removeActiveLayer(){
+  const i = mockState.active;
+  if (i<0) return;
+  const [L] = mockState.layers.splice(i,1);
+  L?.el?.remove();
+  const next = Math.min(i, mockState.layers.length-1);
+  selectLayer(next);
+  rebuildLayersList();
+  showMessage('Capa eliminada','info',1200);
+}
+
+function moveActiveToFront(){
+  const i = mockState.active;
+  if (i<0 || i===mockState.layers.length-1) return;
+  const [L] = mockState.layers.splice(i,1);
+  mockState.layers.push(L);
+  mockHost.appendChild(L.el);
+  selectLayer(mockState.layers.length-1);
+  rebuildLayersList();
+}
+
+function moveActiveToBack(){
+  const i = mockState.active;
+  if (i<=0) return;
+  const [L] = mockState.layers.splice(i,1);
+  mockState.layers.unshift(L);
+  mockHost.insertBefore(L.el, mockHost.firstChild);
+  selectLayer(0);
+  rebuildLayersList();
+}
+
+function rebuildLayersList(){
+  mockLayersList.innerHTML = '';
+  if (mockState.layers.length===0){
+    mockLayersList.innerHTML = '<div class="no-designs">No hay capas aún</div>';
+    return;
+  }
+  mockState.layers.forEach((L, idx)=>{
+    const item = document.createElement('div');
+    item.className = 'design-item' + (idx===mockState.active ? ' active' : '');
+    item.innerHTML = `
+      <img class="design-thumb" src="${L.src}">
+      <div>Capa ${idx+1}</div>
+    `;
+    item.addEventListener('click', ()=> selectLayer(idx));
+    mockLayersList.appendChild(item);
+  });
+}
+
+function applyLayerStyle(L){
+  const rect = mockStage.getBoundingClientRect();
+  const dx = L.x * rect.width;
+  const dy = L.y * rect.height;
+
+  L.el.style.left = dx + 'px';
+  L.el.style.top  = dy + 'px';
+  L.el.style.transform = `translate(-50%,-50%) rotate(${L.rot||0}deg) scale(${L.scale||1})`;
+  L.el.style.mixBlendMode = (L.blend === 'source-over' ? 'normal' : L.blend) || 'multiply';
+  L.el.style.opacity = String(L.opacity ?? 0.95);
+}
+
+function enableDragFor(el){
+  let dragging=false, startX=0, startY=0, startLeft=0, startTop=0;
+  function getPoint(e){
+    if (e.touches && e.touches[0]) return { x:e.touches[0].clientX, y:e.touches[0].clientY };
+    return { x:e.clientX, y:e.clientY };
+  }
+  function rectHalf(el){
+    const r = el.getBoundingClientRect();
+    return { w:r.width/2, h:r.height/2 };
+  }
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+  el.addEventListener('mousedown', (e)=>{
+    const idx = mockState.layers.findIndex(L=> L.el === el);
+    if (idx>=0) selectLayer(idx);
+    dragging = true;
+    const pt = getPoint(e);
+    startX = pt.x; startY = pt.y;
+    const r = el.getBoundingClientRect();
+    startLeft = r.left; startTop = r.top;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if (!dragging) return;
+    const L = mockState.layers[mockState.active]; if (!L) return;
+    const pt = getPoint(e);
+    const dx = pt.x - startX;
+    const dy = pt.y - startY;
+
+    const stageRect = mockStage.getBoundingClientRect();
+    const half = rectHalf(el);
+    const newCX = (startLeft + dx) + half.w;
+    const newCY = (startTop  + dy) + half.h;
+
+    L.x = clamp((newCX - stageRect.left) / stageRect.width , 0, 1);
+    L.y = clamp((newCY - stageRect.top ) / stageRect.height, 0, 1);
+    applyLayerStyle(L);
+  });
+  window.addEventListener('mouseup', ()=> dragging=false);
+
+  el.addEventListener('touchstart', (e)=>{
+    const idx = mockState.layers.findIndex(L=> L.el === el);
+    if (idx>=0) selectLayer(idx);
+    dragging = true;
+    const pt = getPoint(e);
+    startX = pt.x; startY = pt.y;
+    const r = el.getBoundingClientRect();
+    startLeft = r.left; startTop = r.top;
+    e.preventDefault();
+  }, {passive:false});
+  window.addEventListener('touchmove', (e)=>{
+    if (!dragging) return;
+    const L = mockState.layers[mockState.active]; if (!L) return;
+    const pt = getPoint(e);
+    const dx = pt.x - startX;
+    const dy = pt.y - startY;
+
+    const stageRect = mockStage.getBoundingClientRect();
+    const half = rectHalf(el);
+    const newCX = (startLeft + dx) + half.w;
+    const newCY = (startTop  + dy) + half.h;
+
+    L.x = Math.max(0, Math.min(1, (newCX - stageRect.left) / stageRect.width ));
+    L.y = Math.max(0, Math.min(1, (newCY - stageRect.top ) / stageRect.height));
+    applyLayerStyle(L);
+  }, {passive:false});
+  window.addEventListener('touchend', ()=> dragging=false);
+}
+
+// Añadir capas
+mockFile.addEventListener('change', (e)=>{
+  if (!mockState.templateLoaded){
+    showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
+    mockFile.value = '';
+    return;
+  }
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+
+  let ok = 0, fail = 0;
+  files.forEach(file=>{
+    if (!file.type.match(/^image\//)){
+      fail++;
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      try {
+        addLayerFromSrc(ev.target.result, { scale: 1.0, rot: 0 });
+        ok++;
+        rebuildLayersList();
+      } catch(err){
+        fail++;
+      }
+    };
+    reader.onerror = ()=> fail++;
+    reader.readAsDataURL(file);
+  });
+
+  setTimeout(()=>{
+    if (ok>0)  showMessage(`Capa(s) añadida(s): ${ok}`, 'success', 1800);
+    if (fail>0) showMessage(`No se pudieron cargar ${fail} archivo(s)`, 'warning', 2500);
+  }, 50);
+
+  mockFile.value = '';
+});
+
+mockUploadBtn.addEventListener('click', ()=>{
+  if (!mockState.templateLoaded){
+    showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
+    return;
+  }
+  mockFile.click();
+});
+
+mockUseSelectedBtn.addEventListener('click', ()=>{
+  if (!mockState.templateLoaded){
+    showMessage('Espera: primero carga la plantilla de camiseta', 'warning');
+    return;
+  }
+  const d = getSelectedDesign();
+  if (!d){
+    showMessage('Selecciona un diseño en el editor', 'warning', 1800);
+    return;
+  }
+  const temp = document.createElement('canvas');
+  temp.width = d.image.width; temp.height = d.image.height;
+  const tctx = temp.getContext('2d');
+  tctx.imageSmoothingEnabled = true; tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(d.image, 0, 0, temp.width, temp.height);
+  addLayerFromSrc(temp.toDataURL('image/png'), { scale: 1.0, rot: d.rotation||0 });
+});
+
+// Controles aplican a la capa activa
+mockBlend.addEventListener('change', ()=>{
+  const L = mockState.layers[mockState.active]; if (!L) return;
+  L.blend = (mockBlend.value === 'normal') ? 'source-over' : mockBlend.value;
+  applyLayerStyle(L);
+});
+mockOpacity.addEventListener('input', ()=>{
+  const L = mockState.layers[mockState.active]; if (!L) return;
+  L.opacity = parseInt(mockOpacity.value, 10)/100;
+  applyLayerStyle(L);
+});
+mockScale.addEventListener('input', ()=>{
+  const L = mockState.layers[mockState.active]; if (!L) return;
+  L.scale = parseInt(mockScale.value, 10)/100;
+  applyLayerStyle(L);
+});
+mockRot.addEventListener('input', ()=>{
+  const L = mockState.layers[mockState.active]; if (!L) return;
+  L.rot = parseInt(mockRot.value, 10) || 0;
+  applyLayerStyle(L);
+});
+
+// Eliminar / Z-order
+mockDeleteBtn.addEventListener('click', removeActiveLayer);
+mockFrontBtn.addEventListener('click', moveActiveToFront);
+mockBackBtn.addEventListener('click', moveActiveToBack);
+
+// Tecla Supr en el panel
+document.addEventListener('keydown', (e)=>{
+  if (mockPane.style.display !== 'block') return;
+  if (['INPUT','SELECT','TEXTAREA'].includes((e.target.tagName||'').toUpperCase())) return;
+  if ((e.key === 'Delete' || e.key === 'Backspace') && mockState.active>=0){
+    e.preventDefault();
+    removeActiveLayer();
+  }
+});
+
+// Descargar PNG del mockup
+mockDownloadBtn.addEventListener('click', async ()=>{
+  if (!mockState.templateLoaded){
+    showMessage('Carga una plantilla primero','warning',2000); return;
+  }
+  if (mockState.layers.length===0){
+    showMessage('Agrega al menos una capa','warning',2000); return;
+  }
+
+  const stageRect = mockStage.getBoundingClientRect();
+  const W = Math.max(2, Math.round(stageRect.width * 2));
+  const H = Math.max(2, Math.round(stageRect.height * 2));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+
+  const tplImg = await loadImageCORS(mockTemplate.src);
+  x.drawImage(tplImg, 0, 0, W, H);
+
+  for (const L of mockState.layers){
+    const img = await loadImageCORS(L.src);
+    const elRect = L.el.getBoundingClientRect();
+    const sx = W / stageRect.width;
+    const dw = Math.max(1, Math.round(elRect.width  * sx));
+    const dh = Math.max(1, Math.round(elRect.height * sx));
+    const cx = L.x * W;
+    const cy = L.y * H;
+
+    x.save();
+    x.globalAlpha = L.opacity ?? 1;
+    x.globalCompositeOperation = L.blend || 'source-over';
+    x.translate(cx, cy);
+    x.rotate((L.rot||0) * Math.PI/180);
+    x.scale(L.scale || 1, L.scale || 1);
+    x.drawImage(img, -dw/2, -dh/2, dw, dh);
+    x.restore();
+  }
+
+  c.toBlob(blob=>{
+    const a = document.createElement('a');
+    a.download = 'mockup-camiseta.png';
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png', 1.0);
+});
+
+// --- Exponer referencias globales para el motor PRO ---
+// (Esto permite que auto_pack_pro.js encuentre las cosas)
+window.canvas = canvas;
+window.drawCanvas = drawCanvas;
+window.PIXELS_PER_CM = PIXELS_PER_CM;
+
+// MUY IMPORTANTE: mantener window.designs apuntando al array actual
+function syncDesignsRef(){ window.designs = designs; }
+syncDesignsRef();
+
+    // Iniciar controles
+    updateControls();
+    setTimeout(()=> showMessage('¡Bienvenido al Editor DTF! Sube tus diseños para comenzar.','info'), 800);
+
+// Botón Cerrar Sesión
+const logoutBtn = document.getElementById('logout-btn');
+
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    if (confirm('¿Seguro que quieres cerrar sesión?')) {
+      // Borramos la sesión guardada
+      sessionStorage.removeItem('dtf_unlocked');
+      sessionStorage.removeItem('facturador_url');
+
+      // Mostramos de nuevo la pantalla de login
+      const overlay = document.getElementById('lock-overlay');
+      overlay.style.display = 'flex';
+      setTimeout(() => overlay.classList.add('visible'), 100);
+
+      // Ocultamos el editor
+      document.getElementById('app-root').style.visibility = 'hidden';
+
+      // Limpiamos los campos por seguridad
+      document.getElementById('lock-user').value = '';
+      document.getElementById('lock-pass').value = '';
+
+      showMessage('Sesión cerrada. Ingresa de nuevo para continuar.', 'info', 4000);
+    }
+  });
+}
+  </script>
+
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="auto_pack_pro.js"></script>
@@ -1003,6 +2818,10 @@
 <script src="mesasave.js"></script>
 
 <script>
+window.showMessage = function(msg, type, duration) {
+  console.log(`[${type}] ${msg}`);
+  // Opcional: mostrar un toast nativo
+};
 /* ════════════════════════════════════════
    MOBILE UI CONTROLLER
 ════════════════════════════════════════ */
@@ -1010,12 +2829,14 @@
 
   /* ── Esperar a que el editor base esté listo ── */
   function waitForEditor(cb) {
-    if (typeof designs !== 'undefined' && typeof canvas !== 'undefined' && typeof drawCanvas !== 'undefined') {
-      cb();
-    } else {
-      setTimeout(() => waitForEditor(cb), 150);
-    }
+  if (typeof designs !== 'undefined' && typeof canvas !== 'undefined' && 
+      typeof drawCanvas !== 'undefined' && typeof updateDesignsList !== 'undefined' &&
+      typeof updateControls !== 'undefined' && typeof getSelectedDesign !== 'undefined') {
+    cb();
+  } else {
+    setTimeout(() => waitForEditor(cb), 150);
   }
+}
 
   waitForEditor(initMobile);
 
