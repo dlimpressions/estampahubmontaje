@@ -42,10 +42,9 @@
       background: var(--bg);
       color: var(--text);
       font-family: var(--ui);
-      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── iframe oculto del editor base ── */
+    /* Ocultar elementos del editor original en el iframe */
     #editor-iframe {
       position: fixed;
       top: -9999px; left: -9999px;
@@ -54,13 +53,13 @@
       pointer-events: none;
     }
 
-    /* ── SHELL ── */
+    /* Shell principal */
     #shell {
       display: flex; flex-direction: column;
       height: 100dvh; position: relative;
     }
 
-    /* ── HEADER ── */
+    /* Header */
     #hdr {
       height: var(--hdr-h);
       padding: 0 14px;
@@ -80,13 +79,8 @@
       font-weight: 900; font-size: 0.7rem; color: #fff;
       box-shadow: 0 0 10px rgba(14,165,233,0.35); flex-shrink: 0;
     }
-    .hdr-name {
-      font-weight: 800; font-size: 0.88rem;
-      letter-spacing: 1.2px; text-transform: uppercase; color: var(--text);
-    }
-    .hdr-sub {
-      font-family: var(--mono); font-size: 0.55rem; color: var(--muted);
-    }
+    .hdr-name { font-weight: 800; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text); }
+    .hdr-sub { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); }
     .hdr-actions { display: flex; gap: 6px; }
     .hdr-btn {
       width: 34px; height: 34px;
@@ -98,13 +92,12 @@
     .hdr-btn:active { background: var(--s3); transform: scale(0.92); }
     .hdr-btn.accent { background: var(--adim); border-color: var(--bmd); }
 
-    /* ── CANVAS AREA ── */
+    /* Canvas espejo */
     #canvas-area {
       flex: 1; position: relative; overflow: hidden;
-      background:
-        radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
-        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
-        var(--bg);
+      background: radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
+                  radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
+                  var(--bg);
       display: flex; align-items: center; justify-content: center;
       touch-action: none;
     }
@@ -122,7 +115,7 @@
       max-height: 96%;
     }
 
-    /* Info flotante */
+    /* Información flotante */
     #zoom-badge {
       position: absolute; top: 10px; right: 10px;
       background: rgba(11,13,23,0.88); border: 1px solid var(--border);
@@ -147,7 +140,7 @@
     }
     .sel-btn.red { color: var(--rose); }
 
-    /* ── BOTTOM NAV ── */
+    /* Bottom Navigation */
     #nav {
       height: calc(var(--nav-h) + var(--safe-b));
       padding-bottom: var(--safe-b);
@@ -174,7 +167,7 @@
       box-shadow: 0 4px 14px rgba(14,165,233,0.4);
     }
 
-    /* ── SHEETS ── */
+    /* Sheets deslizantes */
     .sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: var(--s2);
@@ -208,7 +201,6 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    /* ── Backdrop ── */
     #backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,0.65);
       backdrop-filter: blur(3px); z-index: 400;
@@ -216,7 +208,7 @@
     }
     #backdrop.show { display: block; opacity: 1; }
 
-    /* ── Components inside sheets ── */
+    /* Componentes internos */
     .sec-label {
       font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
       letter-spacing: 0.8px; text-transform: uppercase;
@@ -318,7 +310,7 @@
       padding: 1px 4px; font-family: var(--mono); font-size: 0.52rem; color: #fff;
     }
 
-    /* ── Mensajes ── */
+    /* Mensajes */
     #msgs {
       position: fixed; top: 58px; left: 10px; right: 10px;
       z-index: 9999; display: flex; flex-direction: column; gap: 5px;
@@ -338,7 +330,7 @@
     .mmsg.warning { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
     @keyframes msgin { from { transform: translateY(-8px); opacity:0; } to { transform: none; opacity:1; } }
 
-    /* ── Overlay genérico para modales del editor ── */
+    /* Modal genérico */
     #mod-wrap {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
@@ -352,7 +344,6 @@
       border-radius: 22px 22px 0 0;
       padding: 20px 17px calc(20px + var(--safe-b));
       width: 100%; max-height: 88dvh; overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
     .mod-card.centered {
       border-radius: 22px; max-width: 500px; width: 96vw;
@@ -366,35 +357,6 @@
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
     .mod-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-
-    .mbtn-primary {
-      width: 100%; padding: 13px;
-      background: linear-gradient(135deg, var(--accent), #0284c7);
-      border: none; border-radius: 13px;
-      color: #fff; font-family: var(--ui); font-weight: 700;
-      font-size: 0.88rem; letter-spacing: 0.8px; text-transform: uppercase;
-      cursor: pointer; box-shadow: 0 3px 14px rgba(14,165,233,0.3);
-      margin-top: 6px;
-    }
-    .mbtn-sec {
-      width: 100%; padding: 11px;
-      background: transparent; border: 1px solid var(--bmd);
-      border-radius: 13px; color: var(--text); font-family: var(--ui);
-      font-weight: 600; font-size: 0.84rem; cursor: pointer; margin-top: 8px;
-    }
-    .finput {
-      width: 100%; padding: 12px 14px;
-      background: var(--s3); border: 1px solid var(--bmd);
-      border-radius: 12px; color: var(--text);
-      font-family: var(--mono); font-size: 0.86rem; outline: none;
-      margin-bottom: 0; transition: border-color 0.18s;
-    }
-    .finput:focus { border-color: var(--accent); }
-    .flbl {
-      display: block; font-family: var(--mono); font-size: 0.62rem;
-      color: var(--muted); letter-spacing: 0.5px;
-      margin-bottom: 4px; margin-top: 10px;
-    }
 
     /* Gallery grid */
     #imgbb-designs-grid {
@@ -418,27 +380,14 @@
 </head>
 <body>
 
-<!-- ════════════════════════════
-     IFRAME DEL EDITOR BASE
-════════════════════════════ -->
+<!-- IFRAME DEL EDITOR BASE -->
 <iframe id="editor-iframe" src="index.html"></iframe>
 
-<!-- ════════════════════════════
-     MENSAJES
-════════════════════════════ -->
+<!-- Elementos de UI -->
 <div id="msgs"></div>
-
-<!-- ════════════════════════════
-     BACKDROP
-════════════════════════════ -->
 <div id="backdrop"></div>
 
-<!-- ════════════════════════════
-     SHELL PRINCIPAL
-════════════════════════════ -->
 <div id="shell">
-
-  <!-- HEADER -->
   <div id="hdr">
     <div class="hdr-logo">
       <div class="hdr-badge">DTF</div>
@@ -453,7 +402,6 @@
     </div>
   </div>
 
-  <!-- CANVAS (espejo del editor) -->
   <div id="canvas-area">
     <canvas id="mirror-canvas"></canvas>
     <div id="zoom-badge">100%</div>
@@ -464,7 +412,6 @@
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
   <nav id="nav">
     <button class="ntab" data-sheet="sh-designs" id="nt-designs">
       <span class="nicon">🖼️</span><span class="nlabel">Diseños</span>
@@ -485,11 +432,7 @@
   </nav>
 </div>
 
-<!-- ════════════════════════════
-     SHEETS
-════════════════════════════ -->
-
-<!-- Sheet: Añadir -->
+<!-- Sheets -->
 <div class="sheet" id="sh-add">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -505,7 +448,6 @@
   </div>
 </div>
 
-<!-- Sheet: Diseños -->
 <div class="sheet" id="sh-designs">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -514,13 +456,10 @@
   </div>
   <div class="sh-body">
     <div class="dsgrid" id="mob-ds-grid"><div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div></div>
-    <div style="margin-top:10px;">
-      <button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button>
-    </div>
+    <div style="margin-top:10px;"><button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button></div>
   </div>
 </div>
 
-<!-- Sheet: Ajustar -->
 <div class="sheet" id="sh-tools">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -565,9 +504,7 @@
       <button class="pill" id="p-fwd">⬆️ Adelante</button>
       <button class="pill" id="p-front">⤴️ Frente</button>
     </div>
-    <div class="pill-row" style="margin-top:4px;">
-      <button class="pill red" id="p-remove" style="flex:1;">🗑️ Eliminar diseño seleccionado</button>
-    </div>
+    <div class="pill-row" style="margin-top:4px;"><button class="pill red" id="p-remove" style="flex:1;">🗑️ Eliminar diseño seleccionado</button></div>
 
     <div class="info-box" style="margin-top:12px;">
       <div class="ib-lbl">DIMENSIONES DEL DISEÑO</div>
@@ -576,7 +513,6 @@
   </div>
 </div>
 
-<!-- Sheet: Lienzo -->
 <div class="sheet" id="sh-canvas">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -618,7 +554,6 @@
   </div>
 </div>
 
-<!-- Sheet: Exportar -->
 <div class="sheet" id="sh-export">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -626,66 +561,39 @@
     <button class="sh-x" data-close="sh-export">✕</button>
   </div>
   <div class="sh-body">
-    <p class="sec-label">Resolución de exportación</p>
+    <p class="sec-label">Resolución</p>
     <div class="pill-row" style="margin-bottom:14px;">
       <button class="pill res-pill" data-dpi="300">300 DPI</button>
       <button class="pill res-pill acc" data-dpi="150">150 DPI ★</button>
       <button class="pill res-pill" data-dpi="72">72 DPI</button>
     </div>
-    <div class="exp-opt" id="ex-png">
-      <div class="exp-ico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div>
-      <div><div class="exp-ttl">Descargar PNG</div><div class="exp-dsc">Con transparencia · Máxima calidad</div></div>
-    </div>
-    <div class="exp-opt" id="ex-pdf">
-      <div class="exp-ico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div>
-      <div><div class="exp-ttl">Descargar PDF</div><div class="exp-dsc">Para imprenta · Dimensiones exactas</div></div>
-    </div>
-    <div class="exp-opt" id="ex-dtf">
-      <div class="exp-ico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div>
-      <div><div class="exp-ttl">Enviar pedido DTF</div><div class="exp-dsc">Enviar directamente a impresión</div></div>
-    </div>
-    <div class="exp-opt" id="ex-save">
-      <div class="exp-ico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div>
-      <div><div class="exp-ttl">Guardar sesión</div><div class="exp-dsc">Continuar el montaje después</div></div>
-    </div>
-    <div class="exp-opt" id="ex-load">
-      <div class="exp-ico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div>
-      <div><div class="exp-ttl">Cargar sesión guardada</div><div class="exp-dsc">Restaurar último montaje</div></div>
-    </div>
+    <div class="exp-opt" id="ex-png"><div class="exp-ico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div><div><div class="exp-ttl">Descargar PNG</div><div class="exp-dsc">Con transparencia · Máxima calidad</div></div></div>
+    <div class="exp-opt" id="ex-pdf"><div class="exp-ico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div><div><div class="exp-ttl">Descargar PDF</div><div class="exp-dsc">Para imprenta · Dimensiones exactas</div></div></div>
+    <div class="exp-opt" id="ex-dtf"><div class="exp-ico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div><div><div class="exp-ttl">Enviar pedido DTF</div><div class="exp-dsc">Enviar directamente a impresión</div></div></div>
+    <div class="exp-opt" id="ex-save"><div class="exp-ico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div><div><div class="exp-ttl">Guardar sesión</div><div class="exp-dsc">Continuar el montaje después</div></div></div>
+    <div class="exp-opt" id="ex-load"><div class="exp-ico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div><div><div class="exp-ttl">Cargar sesión guardada</div><div class="exp-dsc">Restaurar último montaje</div></div></div>
   </div>
 </div>
 
-<!-- ════════════════════════════
-     MODAL GALERÍA
-════════════════════════════ -->
-<div id="mod-wrap" id="gal-modal">
+<!-- Modal para galería ImgBB -->
+<div id="mod-wrap" class="center" style="display: none;">
   <div class="mod-card centered">
-    <div class="mod-hdr">
-      <span class="mod-ttl">📁 Mis diseños ImgBB</span>
-      <button class="mod-close" id="close-gal">✕</button>
-    </div>
+    <div class="mod-hdr"><span class="mod-ttl">📁 Mis diseños ImgBB</span><button class="mod-close" id="close-gal">✕</button></div>
     <div id="searchContainer"></div>
     <div id="imgbb-designs-grid"></div>
     <div id="pagination"></div>
   </div>
 </div>
 
-<!-- ════════════════════════════
-     CONTROLLER JS
-════════════════════════════ -->
 <script>
 (function(){
-  /* ── Variables del editor (se llenan al cargar el iframe) ── */
-  let EW = null;   // editor iframe contentWindow
+  let EW = null;           // editor iframe window
   let ready = false;
   let mirrorRAF = null;
-
   const mirrorCanvas = document.getElementById('mirror-canvas');
-  const mirrorCtx    = mirrorCanvas.getContext('2d');
+  const mirrorCtx = mirrorCanvas.getContext('2d');
 
-  /* ════════════════════════════
-     MENSAJES
-  ════════════════════════════ */
+  // Mensajes
   function msg(text, type, ms) {
     const c = document.getElementById('msgs');
     const el = document.createElement('div');
@@ -698,156 +606,110 @@
     return { remove: rm };
   }
 
-  /* ════════════════════════════
-     IFRAME LOAD
-  ════════════════════════════ */
+  // Esperar iframe y editor
   const iframe = document.getElementById('editor-iframe');
-
   iframe.addEventListener('load', () => {
     try {
       EW = iframe.contentWindow;
-      // Esperar a que el editor base termine de inicializar
       waitForEditor();
-    } catch(e) {
-      msg('Error al cargar el editor base', 'error');
-      console.error(e);
-    }
+    } catch(e) { console.error(e); msg('Error cargando editor', 'error'); }
   });
 
   function waitForEditor() {
     if(!EW) return;
-    // Verificar que las funciones core estén disponibles
-    if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') {
-      onEditorReady();
-    } else {
-      setTimeout(waitForEditor, 200);
-    }
+    if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') onEditorReady();
+    else setTimeout(waitForEditor, 200);
   }
 
   function onEditorReady() {
     ready = true;
-    console.log('✅ Editor base listo, conectando UI móvil');
-
-    // Parchar showMessage del editor para que use nuestros mensajes
+    console.log('Editor base listo');
     EW.showMessage = (text, type, ms) => msg(text, type, ms);
-
-    // Configurar canvas espejo
     setupMirrorCanvas();
-
-    // Conectar todos los botones
     initButtons();
-
-    // Iniciar sincronización
     syncLoop();
-
-    // Ocultar el login si el editor ya está desbloqueado
-    const lockOverlay = EW.document.getElementById('lock-overlay');
-    if(lockOverlay && lockOverlay.style.display !== 'none') {
-      showLoginMobile();
-    }
-
-    // Observar cuando el editor abre la galería
     patchGalleryOverlay();
 
+    // Forzar que el editor muestre el login si es necesario
+    const lockOverlay = EW.document.getElementById('lock-overlay');
+    if(lockOverlay && lockOverlay.style.display !== 'none') showLoginObserver();
     msg('✅ Editor listo', 'success', 2000);
   }
 
-  /* ════════════════════════════
-     CANVAS ESPEJO
-  ════════════════════════════ */
+  // Canvas espejo
   function setupMirrorCanvas() {
     const editorCanvas = EW.document.getElementById('canvas');
     if(!editorCanvas) return;
-
-    // Sincronizar dimensiones
-    mirrorCanvas.width  = editorCanvas.width;
+    mirrorCanvas.width = editorCanvas.width;
     mirrorCanvas.height = editorCanvas.height;
-
-    // Ajustar tamaño visual al viewport
     fitMirror();
     window.addEventListener('resize', fitMirror);
-
-    // Iniciar loop de espejado
     function loop() {
       if(!ready) { mirrorRAF = requestAnimationFrame(loop); return; }
       try {
         const ec = EW.document.getElementById('canvas');
         if(ec) {
           if(mirrorCanvas.width !== ec.width || mirrorCanvas.height !== ec.height) {
-            mirrorCanvas.width  = ec.width;
+            mirrorCanvas.width = ec.width;
             mirrorCanvas.height = ec.height;
             fitMirror();
           }
           mirrorCtx.clearRect(0,0,mirrorCanvas.width,mirrorCanvas.height);
-          mirrorCtx.drawImage(ec, 0, 0);
+          mirrorCtx.drawImage(ec,0,0);
         }
       } catch(e) {}
       mirrorRAF = requestAnimationFrame(loop);
     }
     loop();
-
-    // Redirigir eventos táctiles al canvas original
     setupTouchForwarding(editorCanvas);
   }
 
   function fitMirror() {
     const area = document.getElementById('canvas-area');
     if(!area || !mirrorCanvas.width) return;
-    const aw = area.clientWidth  - 20;
+    const aw = area.clientWidth - 20;
     const ah = area.clientHeight - 20;
     const sc = Math.min(aw / mirrorCanvas.width, ah / mirrorCanvas.height, 1);
-    mirrorCanvas.style.width  = Math.round(mirrorCanvas.width  * sc) + 'px';
+    mirrorCanvas.style.width = Math.round(mirrorCanvas.width * sc) + 'px';
     mirrorCanvas.style.height = Math.round(mirrorCanvas.height * sc) + 'px';
   }
 
-  /* ════════════════════════════
-     REENVIAR TOUCH → CANVAS EDITOR
-  ════════════════════════════ */
   function setupTouchForwarding(editorCanvas) {
     function getEditorPoint(touch) {
       const mr = mirrorCanvas.getBoundingClientRect();
-      const scaleX = mirrorCanvas.width  / mr.width;
+      const scaleX = mirrorCanvas.width / mr.width;
       const scaleY = mirrorCanvas.height / mr.height;
       return {
         clientX: editorCanvas.getBoundingClientRect().left + (touch.clientX - mr.left) * scaleX / (mirrorCanvas.width / editorCanvas.width),
         clientY: editorCanvas.getBoundingClientRect().top  + (touch.clientY - mr.top)  * scaleY / (mirrorCanvas.height / editorCanvas.height),
       };
     }
-
     function forward(e, type) {
       e.preventDefault();
       const t = e.touches[0] || e.changedTouches[0];
       if(!t) return;
       const pt = getEditorPoint(t);
-      try {
-        const me = new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true });
-        editorCanvas.dispatchEvent(me);
-      } catch(err) {}
+      const me = new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true });
+      editorCanvas.dispatchEvent(me);
     }
+    mirrorCanvas.addEventListener('touchstart', e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
+    mirrorCanvas.addEventListener('touchmove',  e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
+    mirrorCanvas.addEventListener('touchend',   e => forward(e,'mouseup'),   { passive: false });
+    mirrorCanvas.addEventListener('touchcancel',e => forward(e,'mouseleave'), { passive: false });
 
-    mirrorCanvas.addEventListener('touchstart',  e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
-    mirrorCanvas.addEventListener('touchmove',   e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
-    mirrorCanvas.addEventListener('touchend',    e => forward(e,'mouseup'),   { passive: false });
-    mirrorCanvas.addEventListener('touchcancel', e => forward(e,'mouseleave'), { passive: false });
-
-    // Pinch zoom (2 dedos)
     let lastPinchDist = 0;
     mirrorCanvas.addEventListener('touchmove', e => {
       if(e.touches.length === 2) {
         e.preventDefault();
-        const d = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         if(lastPinchDist) {
           const delta = d - lastPinchDist;
           const sl = EW.document.getElementById('zoom-slider');
           if(sl) {
-            const nv = Math.max(20, Math.min(200, parseInt(sl.value)+( delta>0?5:-5)));
-            sl.value = nv;
-            sl.dispatchEvent(new Event('input'));
+            let nv = Math.max(20, Math.min(200, parseInt(sl.value) + (delta>0?5:-5)));
+            sl.value = nv; sl.dispatchEvent(new Event('input'));
             document.getElementById('sl-zoom').value = nv;
-            document.getElementById('sl-zoom-v').textContent = nv + '%';
+            document.getElementById('sl-zoom-v').textContent = nv+'%';
           }
         }
         lastPinchDist = d;
@@ -856,11 +718,8 @@
     mirrorCanvas.addEventListener('touchend', () => { lastPinchDist = 0; });
   }
 
-  /* ════════════════════════════
-     SHEETS
-  ════════════════════════════ */
+  // Sheets
   let activeSheet = null;
-
   function openSheet(id) {
     if(activeSheet) closeSheet(activeSheet);
     const sh = document.getElementById(id);
@@ -869,9 +728,8 @@
     document.getElementById('backdrop').classList.add('show');
     activeSheet = id;
     if(id === 'sh-designs') refreshDesignsGrid();
-    if(id === 'sh-tools')   syncToolsSliders();
+    if(id === 'sh-tools') syncToolsSliders();
   }
-
   function closeSheet(id) {
     const sh = document.getElementById(id);
     if(sh) sh.classList.remove('open');
@@ -879,15 +737,8 @@
     document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
     activeSheet = null;
   }
-
-  document.getElementById('backdrop').addEventListener('click', ()=>{
-    if(activeSheet) closeSheet(activeSheet);
-  });
-
-  document.querySelectorAll('[data-close]').forEach(btn=>{
-    btn.addEventListener('click',()=>{ closeSheet(btn.dataset.close); });
-  });
-
+  document.getElementById('backdrop').addEventListener('click', ()=>{ if(activeSheet) closeSheet(activeSheet); });
+  document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click',()=>{ closeSheet(btn.dataset.close); }); });
   document.querySelectorAll('.ntab').forEach(tab=>{
     tab.addEventListener('click',()=>{
       const id = tab.dataset.sheet;
@@ -898,91 +749,46 @@
     });
   });
 
-  /* ════════════════════════════
-     PARCHEAR GALERÍA DEL EDITOR
-  ════════════════════════════ */
+  // Galería ImgBB: optimizada, carga rápida y previsualización en el modal
   function patchGalleryOverlay() {
-    // Cuando gallery.js abre el overlay del editor, lo redirigimos a nuestro modal
     const editorOverlay = EW.document.getElementById('imgbb-gallery-overlay');
     if(!editorOverlay) return;
-
-    // Observar cambios de display
     const obs = new MutationObserver(muts => {
       muts.forEach(m => {
         if(m.attributeName === 'style') {
-          const display = editorOverlay.style.display;
-          const mod = document.getElementById('mod-wrap');
-          if(display !== 'none' && display !== '') {
-            // El editor abrió la galería - mostramos el nuestro y movemos el contenido
-            moveGalleryContent();
-            mod.classList.add('open');
-            mod.classList.add('center');
-            // Ocultar el del editor
+          if(editorOverlay.style.display !== 'none' && editorOverlay.style.display !== '') {
+            // transferir contenido dinámicamente
+            const myGrid = document.getElementById('imgbb-designs-grid');
+            const mySearch = document.getElementById('searchContainer');
+            const myPag = document.getElementById('pagination');
+            const origGrid = EW.document.getElementById('imgbb-designs-grid');
+            const origSearch = EW.document.getElementById('searchContainer');
+            const origPag = EW.document.getElementById('pagination');
+            if(origGrid && myGrid) myGrid.innerHTML = origGrid.innerHTML;
+            if(origSearch && mySearch) mySearch.innerHTML = origSearch.innerHTML;
+            if(origPag && myPag) myPag.innerHTML = origPag.innerHTML;
+            // Reenlazar eventos de carga de imágenes en miniaturas
+            myGrid.querySelectorAll('.gal-item').forEach(item => {
+              item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const url = item.dataset.url;
+                if(url && EW && typeof EW.loadOne === 'function') EW.loadOne(url);
+                document.getElementById('mod-wrap').classList.remove('open','center');
+              });
+            });
+            const mod = document.getElementById('mod-wrap');
+            mod.classList.add('open','center');
             editorOverlay.style.display = 'none';
           }
         }
       });
     });
     obs.observe(editorOverlay, { attributes: true });
-
-    // Botón cerrar del modal móvil
     document.getElementById('close-gal').addEventListener('click', ()=>{
       document.getElementById('mod-wrap').classList.remove('open','center');
     });
   }
 
-  function moveGalleryContent() {
-    // Mover los elementos de búsqueda y grid del editor a nuestro modal
-    const editorGrid   = EW.document.getElementById('imgbb-designs-grid');
-    const editorSearch = EW.document.getElementById('searchContainer');
-    const editorPag    = EW.document.getElementById('pagination');
-    const myGrid       = document.getElementById('imgbb-designs-grid');
-    const mySearch     = document.getElementById('searchContainer');
-    const myPag        = document.getElementById('pagination');
-
-    if(editorGrid   && myGrid)   { myGrid.innerHTML   = editorGrid.innerHTML; }
-    if(editorSearch && mySearch) { mySearch.innerHTML  = editorSearch.innerHTML; }
-    if(editorPag    && myPag)    { myPag.innerHTML     = editorPag.innerHTML; }
-
-    // Reenviar clicks de items al editor
-    myGrid.querySelectorAll('[data-url],.gal-item').forEach(item=>{
-      item.addEventListener('click', ()=>{
-        const url = item.dataset.url;
-        if(!url) return;
-        // Llamar loadOne del gallery del editor
-        if(typeof EW.loadOne === 'function') EW.loadOne(url);
-        else if(typeof EW.loadSingleDesign === 'function') EW.loadSingleDesign(url);
-        document.getElementById('mod-wrap').classList.remove('open','center');
-      });
-    });
-
-    // Sincronizar búsqueda
-    const inp = mySearch.querySelector('input');
-    const origInp = EW.document.getElementById('searchInput');
-    if(inp && origInp) {
-      inp.addEventListener('input', e => {
-        origInp.value = e.target.value;
-        origInp.dispatchEvent(new Event('input'));
-        // Resincronizar grid
-        setTimeout(moveGalleryContent, 300);
-      });
-    }
-
-    // Paginación
-    myPag.querySelectorAll('button').forEach((btn,i)=>{
-      const origBtns = editorPag ? editorPag.querySelectorAll('button') : [];
-      if(origBtns[i]) {
-        btn.addEventListener('click', ()=>{
-          origBtns[i].click();
-          setTimeout(moveGalleryContent, 300);
-        });
-      }
-    });
-  }
-
-  /* ════════════════════════════
-     GRID DE DISEÑOS
-  ════════════════════════════ */
   function refreshDesignsGrid() {
     const grid = document.getElementById('mob-ds-grid');
     if(!grid || !EW) return;
@@ -1006,9 +812,9 @@
       el.innerHTML=`<img src="${tc.toDataURL()}"><span class="ds-num">${i+1}</span>`;
       el.addEventListener('click',()=>{
         EW.selectedDesignId=d.id;
-        if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
-        if(typeof EW.updateControls==='function') EW.updateControls();
-        if(typeof EW.drawCanvas==='function') EW.drawCanvas();
+        if(EW.updateDesignsList) EW.updateDesignsList();
+        if(EW.updateControls) EW.updateControls();
+        if(EW.drawCanvas) EW.drawCanvas();
         refreshDesignsGrid();
         syncToolsSliders();
         msg(`Diseño ${i+1} seleccionado`,'info',1200);
@@ -1017,9 +823,6 @@
     });
   }
 
-  /* ════════════════════════════
-     SINCRONIZAR SLIDERS
-  ════════════════════════════ */
   function syncToolsSliders() {
     if(!EW || !EW.getSelectedDesign) return;
     const d = EW.getSelectedDesign();
@@ -1028,38 +831,28 @@
     const rv=document.getElementById('sl-rot-v');
     const o=document.getElementById('sl-op');
     const ov=document.getElementById('sl-op-v');
-    if(r){r.value=Math.round(d.rotation);rv.textContent=Math.round(d.rotation)+'°';}
-    if(o){o.value=Math.round(d.opacity*100);ov.textContent=Math.round(d.opacity*100)+'%';}
+    if(r){ r.value=Math.round(d.rotation); rv.textContent=Math.round(d.rotation)+'°'; }
+    if(o){ o.value=Math.round(d.opacity*100); ov.textContent=Math.round(d.opacity*100)+'%'; }
     const w=document.getElementById('sz-w');
     const h=document.getElementById('sz-h');
     const c=d.getDimensionsInCm();
-    if(w)w.value=c.width.toFixed(1);
-    if(h)h.value=c.height.toFixed(1);
+    if(w) w.value=c.width.toFixed(1);
+    if(h) h.value=c.height.toFixed(1);
   }
 
-  /* ════════════════════════════
-     BOTONES
-  ════════════════════════════ */
   function ew(id){ return EW ? EW.document.getElementById(id) : null; }
   function click(id){ const el=ew(id); if(el) el.click(); }
 
   function initButtons() {
-
     // Header
-    document.getElementById('btn-save').addEventListener('click',()=>{
-      if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
-      else msg('Guardado no disponible','error');
-    });
+    document.getElementById('btn-save').addEventListener('click',()=>{ if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false); else msg('Guardado no disponible','error'); });
     document.getElementById('btn-profile').addEventListener('click',()=>click('open-profile-btn'));
-
     // Añadir
     document.getElementById('ac-upload').addEventListener('click',()=>{ ew('file-input')?.click(); closeSheet('sh-add'); });
     document.getElementById('ac-gallery').addEventListener('click',()=>{ click('open-imgbb-gallery'); closeSheet('sh-add'); });
     document.getElementById('ac-text').addEventListener('click',()=>{ click('add-text-btn'); closeSheet('sh-add'); });
-
-    // Diseños
+    // Limpiar
     document.getElementById('p-clear').addEventListener('click',()=>click('clear-btn'));
-
     // Herramientas
     document.getElementById('p-mirror').addEventListener('click',()=>click('mirror-btn'));
     document.getElementById('p-trim').addEventListener('click',()=>click('tb-trim-btn'));
@@ -1068,151 +861,79 @@
     document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
     document.getElementById('p-fwd').addEventListener('click',()=>click('step-forward'));
     document.getElementById('p-front').addEventListener('click',()=>click('bring-front'));
-
-    // Barra selección
     document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
-    document.getElementById('sel-desel').addEventListener('click',()=>{
-      if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); }
-    });
-
-    // Sliders rotación / opacidad
-    document.getElementById('sl-rot').addEventListener('input',e=>{
-      document.getElementById('sl-rot-v').textContent=e.target.value+'°';
-      const s=ew('rotation-slider');
-      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
-    });
-    document.getElementById('sl-op').addEventListener('input',e=>{
-      document.getElementById('sl-op-v').textContent=e.target.value+'%';
-      const s=ew('opacity-slider');
-      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
-    });
-
-    // Tamaño
-    const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h');
-    const szlk=document.getElementById('sz-lock');
-    szw.addEventListener('input',()=>{
-      if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d)szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1);}
-    });
-    document.getElementById('p-szapply').addEventListener('click',()=>{
-      const wi=ew('width-input'), hi=ew('height-input');
-      if(wi)wi.value=szw.value; if(hi)hi.value=szh.value;
-      click('apply-size');
-    });
-
+    document.getElementById('sel-desel').addEventListener('click',()=>{ if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); } });
+    // Sliders rot/op
+    document.getElementById('sl-rot').addEventListener('input',e=>{ document.getElementById('sl-rot-v').textContent=e.target.value+'°'; const s=ew('rotation-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
+    document.getElementById('sl-op').addEventListener('input',e=>{ document.getElementById('sl-op-v').textContent=e.target.value+'%'; const s=ew('opacity-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
+    // Tamaño y proporción (corregido: ambos sentidos)
+    const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h'), szlk=document.getElementById('sz-lock');
+    szw.addEventListener('input',()=>{ if(szlk.checked && EW){ const d=EW.getSelectedDesign?.(); if(d && d.aspectRatio) szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1); } });
+    szh.addEventListener('input',()=>{ if(szlk.checked && EW){ const d=EW.getSelectedDesign?.(); if(d && d.aspectRatio) szw.value=(parseFloat(szh.value)*d.aspectRatio).toFixed(1); } });
+    document.getElementById('p-szapply').addEventListener('click',()=>{ const wi=ew('width-input'), hi=ew('height-input'); if(wi) wi.value=szw.value; if(hi) hi.value=szh.value; click('apply-size'); });
     // Zoom
-    document.getElementById('sl-zoom').addEventListener('input',e=>{
-      document.getElementById('sl-zoom-v').textContent=e.target.value+'%';
-      const s=ew('zoom-slider');
-      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
-    });
-
+    document.getElementById('sl-zoom').addEventListener('input',e=>{ document.getElementById('sl-zoom-v').textContent=e.target.value+'%'; const s=ew('zoom-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
     // Alto lienzo
-    document.getElementById('p-cvh').addEventListener('click',()=>{
-      const hi=ew('canvas-height-cm');
-      if(hi)hi.value=document.getElementById('cv-h').value;
-      click('apply-canvas-height');
-      setTimeout(fitMirror,300);
-    });
-
+    document.getElementById('p-cvh').addEventListener('click',()=>{ const hi=ew('canvas-height-cm'); if(hi) hi.value=document.getElementById('cv-h').value; click('apply-canvas-height'); setTimeout(fitMirror,300); });
     // Color fondo
-    document.getElementById('cv-color').addEventListener('input',e=>{
-      const cc=ew('canvas-color');
-      if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));}
-    });
-
+    document.getElementById('cv-color').addEventListener('input',e=>{ const cc=ew('canvas-color'); if(cc){ cc.value=e.target.value; cc.dispatchEvent(new Event('input')); } });
     // Auto-pack
-    document.getElementById('p-pack').addEventListener('click',()=>{
-      if(EW&&typeof EW.__autoPackDesignsPRO__==='function'){
-        EW.__autoPackDesignsPRO__(8,false);
-        msg('🧠 Diseños ordenados','success',2000);
-      } else msg('Motor PRO no disponible','error');
-    });
-
+    document.getElementById('p-pack').addEventListener('click',()=>{ if(EW && typeof EW.__autoPackDesignsPRO__==='function'){ EW.__autoPackDesignsPRO__(8,false); msg('🧠 Diseños ordenados','success',2000); } else msg('Motor PRO no disponible','error'); });
     // Exportar
     document.getElementById('ex-png').addEventListener('click',()=>{ click('download-png'); closeSheet('sh-export'); });
     document.getElementById('ex-pdf').addEventListener('click',()=>{ click('download-pdf'); closeSheet('sh-export'); });
-    document.getElementById('ex-dtf').addEventListener('click',()=>{
-      const ov=EW.document.getElementById('dtf-overlay');
-      if(ov){ov.style.display='flex';} closeSheet('sh-export');
-    });
-    document.getElementById('ex-save').addEventListener('click',()=>{
-      if(EW&&typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
-      else msg('Guardado no disponible','error');
-    });
-    document.getElementById('ex-load').addEventListener('click',()=>{
-      if(EW&&typeof EW.loadWorkbench==='function') EW.loadWorkbench();
-      else msg('Carga no disponible','error');
-    });
-
+    document.getElementById('ex-dtf').addEventListener('click',()=>{ const ov=EW.document.getElementById('dtf-overlay'); if(ov) ov.style.display='flex'; closeSheet('sh-export'); });
+    document.getElementById('ex-save').addEventListener('click',()=>{ if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false); else msg('Guardado no disponible','error'); });
+    document.getElementById('ex-load').addEventListener('click',()=>{ if(EW && typeof EW.loadWorkbench==='function') EW.loadWorkbench(); else msg('Carga no disponible','error'); });
     // Resolución
     document.querySelectorAll('.res-pill').forEach(btn=>{
       btn.addEventListener('click',()=>{
-        document.querySelectorAll('.res-pill').forEach(b=>{
-          b.classList.remove('acc');
-          b.style.borderColor=''; b.style.color='';
-        });
+        document.querySelectorAll('.res-pill').forEach(b=>{ b.classList.remove('acc'); b.style.borderColor=''; b.style.color=''; });
         btn.classList.add('acc');
-        const s=ew('quality-select');
-        if(s)s.value=btn.dataset.dpi;
+        const sel=ew('quality-select');
+        if(sel) sel.value=btn.dataset.dpi;
       });
     });
   }
 
-  /* ════════════════════════════
-     LOGIN MÓVIL
-  ════════════════════════════ */
-  function showLoginMobile() {
-    // El login del editor (en el iframe) ya se encarga,
-    // solo necesitamos escuchar cuando se desbloquea
+  function showLoginObserver() {
     const lo = EW.document.getElementById('lock-overlay');
     if(!lo) return;
-
     const obs = new MutationObserver(()=>{
       if(lo.style.display==='none' || !lo.style.display){
         obs.disconnect();
-        msg('🔓 Sesión iniciada','success',2500);
+        msg('🔓 Sesión iniciada', 'success', 2500);
       }
     });
-    obs.observe(lo,{attributes:true,attributeFilter:['style']});
-
-    // Hacer visible el login del editor dentro del iframe
-    // (ya se muestra automáticamente)
+    obs.observe(lo, { attributes: true, attributeFilter: ['style'] });
   }
 
-  /* ════════════════════════════
-     SYNC LOOP
-  ════════════════════════════ */
   function syncLoop() {
     setInterval(()=>{
-      if(!ready||!EW) return;
-
-      // Zoom badge
+      if(!ready || !EW) return;
       const zb=document.getElementById('zoom-badge');
-      if(zb&&EW.canvasZoom!=null) zb.textContent=`${Math.round(EW.canvasZoom*100)}%`;
-
-      // Barra selección
+      if(zb && EW.canvasZoom!=null) zb.textContent=`${Math.round(EW.canvasZoom*100)}%`;
       const bar=document.getElementById('sel-bar');
       const si=document.getElementById('sel-info');
       let sel=null;
-      try{ sel=typeof EW.getSelectedDesign==='function'?EW.getSelectedDesign():null; }catch(e){}
-      if(sel&&bar){
+      try{ sel=typeof EW.getSelectedDesign==='function' ? EW.getSelectedDesign() : null; }catch(e){}
+      if(sel && bar){
         bar.classList.add('show');
-        if(si){const c=sel.getDimensionsInCm();si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`;}
+        if(si){ const c=sel.getDimensionsInCm(); si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`; }
       } else if(bar) bar.classList.remove('show');
-
-      // Precio
-      const ib=document.getElementById('ib-precio');
+      const ibp=document.getElementById('ib-precio');
       const op=EW.document.getElementById('precio-montaje');
-      if(ib&&op) ib.textContent=op.textContent;
-
-      // Tamaño info
+      if(ibp && op) ibp.textContent=op.textContent;
       const ibs=document.getElementById('ib-size');
       const ops=EW.document.getElementById('size-info');
-      if(ibs&&ops) ibs.textContent=ops.textContent;
-
+      if(ibs && ops) ibs.textContent=ops.textContent;
     }, 400);
   }
 
+  // Detección automática de móvil y redirección (solo si no estamos ya en mobile.html)
+  if(window.location.pathname !== '/mobile.html' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = 'mobile.html';
+  }
 })();
 </script>
 </body>
