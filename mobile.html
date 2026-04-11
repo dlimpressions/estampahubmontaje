@@ -44,7 +44,7 @@
       font-family: var(--ui);
     }
 
-    /* Ocultar elementos del editor original en el iframe */
+    /* iframe oculto del editor base */
     #editor-iframe {
       position: fixed;
       top: -9999px; left: -9999px;
@@ -68,7 +68,6 @@
       border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
-      box-shadow: 0 2px 14px rgba(0,0,0,0.45);
       z-index: 100;
     }
     .hdr-logo { display: flex; align-items: center; gap: 8px; }
@@ -77,45 +76,35 @@
       background: linear-gradient(135deg, var(--accent), var(--indigo));
       display: flex; align-items: center; justify-content: center;
       font-weight: 900; font-size: 0.7rem; color: #fff;
-      box-shadow: 0 0 10px rgba(14,165,233,0.35); flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(14,165,233,0.35);
     }
-    .hdr-name { font-weight: 800; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text); }
+    .hdr-name { font-weight: 800; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; }
     .hdr-sub { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); }
     .hdr-actions { display: flex; gap: 6px; }
     .hdr-btn {
       width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
       background: var(--s2); border: 1px solid var(--border);
       border-radius: 9px; font-size: 0.9rem; cursor: pointer;
-      transition: all 0.13s;
+      display: flex; align-items: center; justify-content: center;
     }
     .hdr-btn:active { background: var(--s3); transform: scale(0.92); }
     .hdr-btn.accent { background: var(--adim); border-color: var(--bmd); }
 
-    /* Canvas espejo */
+    /* Canvas area */
     #canvas-area {
-      flex: 1; position: relative; overflow: hidden;
+      flex: 1; position: relative; overflow: auto;
       background: radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
                   radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
                   var(--bg);
       display: flex; align-items: center; justify-content: center;
       touch-action: none;
     }
-    #canvas-area::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background-image: radial-gradient(circle, rgba(14,165,233,0.06) 1px, transparent 1px);
-      background-size: 22px 22px;
-    }
     #mirror-canvas {
-      position: relative; z-index: 1;
+      max-width: 96%; max-height: 96%;
       box-shadow: 0 0 0 1px rgba(14,165,233,0.22), 0 0 28px rgba(14,165,233,0.1), 0 12px 36px rgba(0,0,0,0.55);
-      touch-action: none;
       cursor: crosshair;
-      max-width: 96%;
-      max-height: 96%;
+      touch-action: none;
     }
-
-    /* Información flotante */
     #zoom-badge {
       position: absolute; top: 10px; right: 10px;
       background: rgba(11,13,23,0.88); border: 1px solid var(--border);
@@ -140,14 +129,14 @@
     }
     .sel-btn.red { color: var(--rose); }
 
-    /* Bottom Navigation */
+    /* Bottom nav */
     #nav {
       height: calc(var(--nav-h) + var(--safe-b));
       padding-bottom: var(--safe-b);
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex; align-items: flex-start; justify-content: space-around;
-      padding-top: 8px; flex-shrink: 0; z-index: 200;
+      padding-top: 8px; flex-shrink: 0;
     }
     .ntab {
       flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -156,7 +145,7 @@
       transition: color 0.14s;
     }
     .ntab.active { color: var(--accent); }
-    .ntab .nicon { font-size: 1.22rem; line-height: 1; }
+    .ntab .nicon { font-size: 1.22rem; }
     .ntab .nlabel { font-size: 0.56rem; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
     .ntab.ncenter .nbadge {
       width: 44px; height: 44px;
@@ -167,7 +156,7 @@
       box-shadow: 0 4px 14px rgba(14,165,233,0.4);
     }
 
-    /* Sheets deslizantes */
+    /* Sheets */
     .sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: var(--s2);
@@ -183,13 +172,13 @@
     .sheet.open { transform: translateY(0); }
     .sh-handle {
       width: 36px; height: 4px; background: rgba(255,255,255,0.14);
-      border-radius: 2px; margin: 10px auto 0; flex-shrink: 0;
+      border-radius: 2px; margin: 10px auto 0;
     }
     .sh-hdr {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 18px 8px; flex-shrink: 0;
+      padding: 12px 18px 8px;
     }
-    .sh-title { font-weight: 700; font-size: 0.96rem; color: var(--text); }
+    .sh-title { font-weight: 700; font-size: 0.96rem; }
     .sh-x {
       width: 26px; height: 26px; border-radius: 50%;
       background: rgba(255,255,255,0.08); border: none;
@@ -208,7 +197,7 @@
     }
     #backdrop.show { display: block; opacity: 1; }
 
-    /* Componentes internos */
+    /* Componentes */
     .sec-label {
       font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
       letter-spacing: 0.8px; text-transform: uppercase;
@@ -273,7 +262,6 @@
       background: var(--s3); border: 1px solid var(--bmd);
       border-radius: 12px; color: var(--text);
       font-family: var(--mono); font-size: 0.85rem; outline: none;
-      transition: border-color 0.18s; margin-bottom: 0;
     }
     .ninput:focus { border-color: var(--accent); }
 
@@ -281,7 +269,7 @@
       display: flex; align-items: center; gap: 12px;
       padding: 13px 14px; background: var(--s3);
       border: 1px solid var(--border); border-radius: 14px;
-      margin-bottom: 9px; cursor: pointer; transition: all 0.13s;
+      margin-bottom: 9px; cursor: pointer;
     }
     .exp-opt:active { background: var(--s2); }
     .exp-ico {
@@ -289,7 +277,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.2rem; flex-shrink: 0;
     }
-    .exp-ttl { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .exp-ttl { font-weight: 700; font-size: 0.85rem; }
     .exp-dsc { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
 
     .dsgrid {
@@ -299,7 +287,7 @@
     .ds-thumb {
       background: var(--s3); border: 2px solid var(--border);
       border-radius: 12px; aspect-ratio: 1/1; overflow: hidden;
-      cursor: pointer; position: relative; transition: all 0.13s;
+      cursor: pointer; position: relative;
     }
     .ds-thumb.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(14,165,233,0.3); }
     .ds-thumb:active { transform: scale(0.93); }
@@ -330,26 +318,20 @@
     .mmsg.warning { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
     @keyframes msgin { from { transform: translateY(-8px); opacity:0; } to { transform: none; opacity:1; } }
 
-    /* Modal genérico */
+    /* Modal galería */
     #mod-wrap {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
       z-index: 3000; display: none;
-      align-items: flex-end; justify-content: center;
+      align-items: center; justify-content: center;
     }
     #mod-wrap.open { display: flex; }
-    #mod-wrap.center { align-items: center; }
     .mod-card {
       background: var(--s2); border: 1px solid var(--bmd);
-      border-radius: 22px 22px 0 0;
-      padding: 20px 17px calc(20px + var(--safe-b));
-      width: 100%; max-height: 88dvh; overflow-y: auto;
-    }
-    .mod-card.centered {
       border-radius: 22px; max-width: 500px; width: 96vw;
-      padding: 20px 17px 20px;
+      padding: 20px 17px; max-height: 88dvh; overflow-y: auto;
     }
-    .mod-ttl { font-weight: 800; font-size: 1rem; color: var(--text); margin-bottom: 12px; }
+    .mod-ttl { font-weight: 800; font-size: 1rem; margin-bottom: 12px; }
     .mod-close {
       width: 28px; height: 28px; border-radius: 50%;
       background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);
@@ -369,7 +351,6 @@
       background: var(--s3); border: 1px solid var(--bmd);
       border-radius: 11px; color: var(--text); font-size: 0.86rem; outline: none;
     }
-    #searchContainer input:focus { border-color: var(--accent); }
     #pagination { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     #pagination button {
       padding: 6px 14px; border-radius: 8px;
@@ -380,10 +361,9 @@
 </head>
 <body>
 
-<!-- IFRAME DEL EDITOR BASE -->
+<!-- IFRAME EDITOR BASE -->
 <iframe id="editor-iframe" src="index.html"></iframe>
 
-<!-- Elementos de UI -->
 <div id="msgs"></div>
 <div id="backdrop"></div>
 
@@ -413,26 +393,15 @@
   </div>
 
   <nav id="nav">
-    <button class="ntab" data-sheet="sh-designs" id="nt-designs">
-      <span class="nicon">🖼️</span><span class="nlabel">Diseños</span>
-    </button>
-    <button class="ntab" data-sheet="sh-tools" id="nt-tools">
-      <span class="nicon">⚙️</span><span class="nlabel">Ajustar</span>
-    </button>
-    <button class="ntab ncenter" data-sheet="sh-add" id="nt-add">
-      <div class="nbadge">➕</div>
-      <span class="nlabel" style="margin-top:2px;">Añadir</span>
-    </button>
-    <button class="ntab" data-sheet="sh-canvas" id="nt-canvas">
-      <span class="nicon">🖼</span><span class="nlabel">Lienzo</span>
-    </button>
-    <button class="ntab" data-sheet="sh-export" id="nt-export">
-      <span class="nicon">💾</span><span class="nlabel">Exportar</span>
-    </button>
+    <button class="ntab" data-sheet="sh-designs"><span class="nicon">🖼️</span><span class="nlabel">Diseños</span></button>
+    <button class="ntab" data-sheet="sh-tools"><span class="nicon">⚙️</span><span class="nlabel">Ajustar</span></button>
+    <button class="ntab ncenter" data-sheet="sh-add"><div class="nbadge">➕</div><span class="nlabel" style="margin-top:2px;">Añadir</span></button>
+    <button class="ntab" data-sheet="sh-canvas"><span class="nicon">🖼</span><span class="nlabel">Lienzo</span></button>
+    <button class="ntab" data-sheet="sh-export"><span class="nicon">💾</span><span class="nlabel">Exportar</span></button>
   </nav>
 </div>
 
-<!-- Sheets -->
+<!-- ==================== SHEET: AÑADIR ==================== -->
 <div class="sheet" id="sh-add">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -448,6 +417,7 @@
   </div>
 </div>
 
+<!-- ==================== SHEET: DISEÑOS ==================== -->
 <div class="sheet" id="sh-designs">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -456,10 +426,13 @@
   </div>
   <div class="sh-body">
     <div class="dsgrid" id="mob-ds-grid"><div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div></div>
-    <div style="margin-top:10px;"><button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button></div>
+    <div style="margin-top:10px;">
+      <button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button>
+    </div>
   </div>
 </div>
 
+<!-- ==================== SHEET: AJUSTAR ==================== -->
 <div class="sheet" id="sh-tools">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -504,7 +477,9 @@
       <button class="pill" id="p-fwd">⬆️ Adelante</button>
       <button class="pill" id="p-front">⤴️ Frente</button>
     </div>
-    <div class="pill-row" style="margin-top:4px;"><button class="pill red" id="p-remove" style="flex:1;">🗑️ Eliminar diseño seleccionado</button></div>
+    <div class="pill-row" style="margin-top:4px;">
+      <button class="pill red" id="p-remove" style="flex:1;">🗑️ Eliminar diseño seleccionado</button>
+    </div>
 
     <div class="info-box" style="margin-top:12px;">
       <div class="ib-lbl">DIMENSIONES DEL DISEÑO</div>
@@ -513,6 +488,7 @@
   </div>
 </div>
 
+<!-- ==================== SHEET: LIENZO ==================== -->
 <div class="sheet" id="sh-canvas">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -554,6 +530,7 @@
   </div>
 </div>
 
+<!-- ==================== SHEET: EXPORTAR ==================== -->
 <div class="sheet" id="sh-export">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -561,39 +538,56 @@
     <button class="sh-x" data-close="sh-export">✕</button>
   </div>
   <div class="sh-body">
-    <p class="sec-label">Resolución</p>
+    <p class="sec-label">Resolución de exportación</p>
     <div class="pill-row" style="margin-bottom:14px;">
       <button class="pill res-pill" data-dpi="300">300 DPI</button>
       <button class="pill res-pill acc" data-dpi="150">150 DPI ★</button>
       <button class="pill res-pill" data-dpi="72">72 DPI</button>
     </div>
-    <div class="exp-opt" id="ex-png"><div class="exp-ico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div><div><div class="exp-ttl">Descargar PNG</div><div class="exp-dsc">Con transparencia · Máxima calidad</div></div></div>
-    <div class="exp-opt" id="ex-pdf"><div class="exp-ico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div><div><div class="exp-ttl">Descargar PDF</div><div class="exp-dsc">Para imprenta · Dimensiones exactas</div></div></div>
-    <div class="exp-opt" id="ex-dtf"><div class="exp-ico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div><div><div class="exp-ttl">Enviar pedido DTF</div><div class="exp-dsc">Enviar directamente a impresión</div></div></div>
-    <div class="exp-opt" id="ex-save"><div class="exp-ico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div><div><div class="exp-ttl">Guardar sesión</div><div class="exp-dsc">Continuar el montaje después</div></div></div>
-    <div class="exp-opt" id="ex-load"><div class="exp-ico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div><div><div class="exp-ttl">Cargar sesión guardada</div><div class="exp-dsc">Restaurar último montaje</div></div></div>
+    <div class="exp-opt" id="ex-png">
+      <div class="exp-ico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div>
+      <div><div class="exp-ttl">Descargar PNG</div><div class="exp-dsc">Con transparencia · Máxima calidad</div></div>
+    </div>
+    <div class="exp-opt" id="ex-pdf">
+      <div class="exp-ico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div>
+      <div><div class="exp-ttl">Descargar PDF</div><div class="exp-dsc">Para imprenta · Dimensiones exactas</div></div>
+    </div>
+    <div class="exp-opt" id="ex-dtf">
+      <div class="exp-ico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div>
+      <div><div class="exp-ttl">Enviar pedido DTF</div><div class="exp-dsc">Enviar directamente a impresión</div></div>
+    </div>
+    <div class="exp-opt" id="ex-save">
+      <div class="exp-ico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div>
+      <div><div class="exp-ttl">Guardar sesión</div><div class="exp-dsc">Continuar el montaje después</div></div>
+    </div>
+    <div class="exp-opt" id="ex-load">
+      <div class="exp-ico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div>
+      <div><div class="exp-ttl">Cargar sesión guardada</div><div class="exp-dsc">Restaurar último montaje</div></div>
+    </div>
   </div>
 </div>
 
-<!-- Modal para galería ImgBB -->
-<div id="mod-wrap" class="center" style="display: none;">
-  <div class="mod-card centered">
-    <div class="mod-hdr"><span class="mod-ttl">📁 Mis diseños ImgBB</span><button class="mod-close" id="close-gal">✕</button></div>
+<!-- ==================== MODAL GALERÍA ==================== -->
+<div id="mod-wrap">
+  <div class="mod-card">
+    <div class="mod-hdr">
+      <span class="mod-ttl">📁 Mis diseños ImgBB</span>
+      <button class="mod-close" id="close-gal">✕</button>
+    </div>
     <div id="searchContainer"></div>
     <div id="imgbb-designs-grid"></div>
     <div id="pagination"></div>
   </div>
 </div>
 
+<!-- ==================== CONTROLLER JS ==================== -->
 <script>
 (function(){
-  let EW = null;           // editor iframe window
+  let EW = null;
   let ready = false;
-  let mirrorRAF = null;
   const mirrorCanvas = document.getElementById('mirror-canvas');
   const mirrorCtx = mirrorCanvas.getContext('2d');
 
-  // Mensajes
   function msg(text, type, ms) {
     const c = document.getElementById('msgs');
     const el = document.createElement('div');
@@ -606,13 +600,12 @@
     return { remove: rm };
   }
 
-  // Esperar iframe y editor
   const iframe = document.getElementById('editor-iframe');
   iframe.addEventListener('load', () => {
     try {
       EW = iframe.contentWindow;
       waitForEditor();
-    } catch(e) { console.error(e); msg('Error cargando editor', 'error'); }
+    } catch(e) { msg('Error al cargar editor', 'error'); }
   });
 
   function waitForEditor() {
@@ -623,45 +616,39 @@
 
   function onEditorReady() {
     ready = true;
-    console.log('Editor base listo');
+    console.log('✅ Editor base listo');
     EW.showMessage = (text, type, ms) => msg(text, type, ms);
     setupMirrorCanvas();
     initButtons();
     syncLoop();
+    handleLogin();
     patchGalleryOverlay();
-
-    // Forzar que el editor muestre el login si es necesario
-    const lockOverlay = EW.document.getElementById('lock-overlay');
-    if(lockOverlay && lockOverlay.style.display !== 'none') showLoginObserver();
-    msg('✅ Editor listo', 'success', 2000);
+    msg('Editor listo', 'success', 2000);
   }
 
-  // Canvas espejo
+  // ----- Canvas espejo y eventos táctiles -----
   function setupMirrorCanvas() {
-    const editorCanvas = EW.document.getElementById('canvas');
-    if(!editorCanvas) return;
-    mirrorCanvas.width = editorCanvas.width;
-    mirrorCanvas.height = editorCanvas.height;
+    const ec = EW.document.getElementById('canvas');
+    if(!ec) return;
+    mirrorCanvas.width = ec.width;
+    mirrorCanvas.height = ec.height;
     fitMirror();
     window.addEventListener('resize', fitMirror);
     function loop() {
-      if(!ready) { mirrorRAF = requestAnimationFrame(loop); return; }
+      if(!ready) { requestAnimationFrame(loop); return; }
       try {
-        const ec = EW.document.getElementById('canvas');
-        if(ec) {
-          if(mirrorCanvas.width !== ec.width || mirrorCanvas.height !== ec.height) {
-            mirrorCanvas.width = ec.width;
-            mirrorCanvas.height = ec.height;
-            fitMirror();
-          }
-          mirrorCtx.clearRect(0,0,mirrorCanvas.width,mirrorCanvas.height);
-          mirrorCtx.drawImage(ec,0,0);
+        const ec2 = EW.document.getElementById('canvas');
+        if(ec2 && (mirrorCanvas.width !== ec2.width || mirrorCanvas.height !== ec2.height)) {
+          mirrorCanvas.width = ec2.width;
+          mirrorCanvas.height = ec2.height;
+          fitMirror();
         }
+        mirrorCtx.drawImage(ec2, 0, 0);
       } catch(e) {}
-      mirrorRAF = requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
     }
     loop();
-    setupTouchForwarding(editorCanvas);
+    setupTouchForwarding(ec);
   }
 
   function fitMirror() {
@@ -677,11 +664,13 @@
   function setupTouchForwarding(editorCanvas) {
     function getEditorPoint(touch) {
       const mr = mirrorCanvas.getBoundingClientRect();
-      const scaleX = mirrorCanvas.width / mr.width;
-      const scaleY = mirrorCanvas.height / mr.height;
+      const sx = mirrorCanvas.width / mr.width;
+      const sy = mirrorCanvas.height / mr.height;
+      const ex = editorCanvas.getBoundingClientRect().left;
+      const ey = editorCanvas.getBoundingClientRect().top;
       return {
-        clientX: editorCanvas.getBoundingClientRect().left + (touch.clientX - mr.left) * scaleX / (mirrorCanvas.width / editorCanvas.width),
-        clientY: editorCanvas.getBoundingClientRect().top  + (touch.clientY - mr.top)  * scaleY / (mirrorCanvas.height / editorCanvas.height),
+        clientX: ex + (touch.clientX - mr.left) * sx * (editorCanvas.width / mirrorCanvas.width),
+        clientY: ey + (touch.clientY - mr.top)  * sy * (editorCanvas.height / mirrorCanvas.height)
       };
     }
     function forward(e, type) {
@@ -689,36 +678,285 @@
       const t = e.touches[0] || e.changedTouches[0];
       if(!t) return;
       const pt = getEditorPoint(t);
-      const me = new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true });
-      editorCanvas.dispatchEvent(me);
+      editorCanvas.dispatchEvent(new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true }));
     }
     mirrorCanvas.addEventListener('touchstart', e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
-    mirrorCanvas.addEventListener('touchmove',  e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
-    mirrorCanvas.addEventListener('touchend',   e => forward(e,'mouseup'),   { passive: false });
-    mirrorCanvas.addEventListener('touchcancel',e => forward(e,'mouseleave'), { passive: false });
+    mirrorCanvas.addEventListener('touchmove', e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
+    mirrorCanvas.addEventListener('touchend', e => forward(e,'mouseup'), { passive: false });
+    mirrorCanvas.addEventListener('touchcancel', e => forward(e,'mouseleave'), { passive: false });
 
-    let lastPinchDist = 0;
+    let lastPinch = 0;
     mirrorCanvas.addEventListener('touchmove', e => {
       if(e.touches.length === 2) {
         e.preventDefault();
         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        if(lastPinchDist) {
-          const delta = d - lastPinchDist;
+        if(lastPinch) {
+          const delta = d - lastPinch;
           const sl = EW.document.getElementById('zoom-slider');
           if(sl) {
-            let nv = Math.max(20, Math.min(200, parseInt(sl.value) + (delta>0?5:-5)));
-            sl.value = nv; sl.dispatchEvent(new Event('input'));
-            document.getElementById('sl-zoom').value = nv;
-            document.getElementById('sl-zoom-v').textContent = nv+'%';
+            let val = Math.max(20, Math.min(200, parseInt(sl.value) + (delta>0?5:-5)));
+            sl.value = val;
+            sl.dispatchEvent(new Event('input'));
+            document.getElementById('sl-zoom').value = val;
+            document.getElementById('sl-zoom-v').textContent = val + '%';
           }
         }
-        lastPinchDist = d;
+        lastPinch = d;
       }
     }, { passive: false });
-    mirrorCanvas.addEventListener('touchend', () => { lastPinchDist = 0; });
+    mirrorCanvas.addEventListener('touchend', () => { lastPinch = 0; });
   }
 
-  // Sheets
+  // ----- Galería mejorada -----
+  function patchGalleryOverlay() {
+    const editorOverlay = EW.document.getElementById('imgbb-gallery-overlay');
+    if(!editorOverlay) return;
+    const obs = new MutationObserver(() => {
+      if(editorOverlay.style.display !== 'none' && editorOverlay.style.display !== '') {
+        moveGalleryContent();
+        document.getElementById('mod-wrap').classList.add('open');
+        editorOverlay.style.display = 'none';
+      }
+    });
+    obs.observe(editorOverlay, { attributes: true, attributeFilter: ['style'] });
+    document.getElementById('close-gal').addEventListener('click', () => {
+      document.getElementById('mod-wrap').classList.remove('open');
+      editorOverlay.style.display = 'none';
+    });
+  }
+
+  function moveGalleryContent() {
+    const editorGrid = EW.document.getElementById('imgbb-designs-grid');
+    const editorSearch = EW.document.getElementById('searchContainer');
+    const editorPag = EW.document.getElementById('pagination');
+    const myGrid = document.getElementById('imgbb-designs-grid');
+    const mySearch = document.getElementById('searchContainer');
+    const myPag = document.getElementById('pagination');
+
+    if(editorGrid && myGrid) myGrid.innerHTML = editorGrid.innerHTML;
+    if(editorSearch && mySearch) mySearch.innerHTML = editorSearch.innerHTML;
+    if(editorPag && myPag) myPag.innerHTML = editorPag.innerHTML;
+
+    myGrid.querySelectorAll('[data-url], .gal-item').forEach(item => {
+      const url = item.dataset.url;
+      if(url) {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if(typeof EW.loadOne === 'function') EW.loadOne(url);
+          document.getElementById('mod-wrap').classList.remove('open');
+        });
+      }
+    });
+    const inp = mySearch.querySelector('input');
+    const origInp = EW.document.getElementById('searchInput');
+    if(inp && origInp) {
+      inp.addEventListener('input', e => {
+        origInp.value = e.target.value;
+        origInp.dispatchEvent(new Event('input'));
+        setTimeout(moveGalleryContent, 300);
+      });
+    }
+    myPag.querySelectorAll('button').forEach((btn,i) => {
+      const origBtns = editorPag ? editorPag.querySelectorAll('button') : [];
+      if(origBtns[i]) {
+        btn.addEventListener('click', () => {
+          origBtns[i].click();
+          setTimeout(moveGalleryContent, 300);
+        });
+      }
+    });
+  }
+
+  // ----- Login móvil -----
+  function handleLogin() {
+    const lock = EW.document.getElementById('lock-overlay');
+    if(!lock) return;
+    if(lock.style.display !== 'none') {
+      const loginModal = document.createElement('div');
+      loginModal.className = 'mod-card';
+      loginModal.style.position = 'fixed'; loginModal.style.top = '50%'; loginModal.style.left = '50%';
+      loginModal.style.transform = 'translate(-50%, -50%)'; loginModal.style.zIndex = '4000';
+      loginModal.style.maxWidth = '90vw'; loginModal.style.padding = '20px';
+      loginModal.innerHTML = `
+        <div class="mod-ttl">🔐 Acceso requerido</div>
+        <input type="text" id="mob-user" placeholder="Usuario" class="ninput" style="margin-bottom:8px;">
+        <input type="password" id="mob-pass" placeholder="Contraseña" class="ninput" style="margin-bottom:12px;">
+        <button id="mob-login-btn" class="pill grn" style="width:100%;">Ingresar</button>
+        <button id="mob-login-cancel" class="pill" style="width:100%; margin-top:6px;">Cancelar</button>
+      `;
+      document.body.appendChild(loginModal);
+      document.getElementById('mob-login-btn').onclick = () => {
+        const u = document.getElementById('mob-user').value;
+        const p = document.getElementById('mob-pass').value;
+        const lockUser = EW.document.getElementById('lock-user');
+        const lockPass = EW.document.getElementById('lock-pass');
+        const lockBtn = EW.document.getElementById('lock-btn');
+        if(lockUser && lockPass && lockBtn) {
+          lockUser.value = u;
+          lockPass.value = p;
+          lockBtn.click();
+          const check = setInterval(() => {
+            if(lock.style.display === 'none') {
+              clearInterval(check);
+              loginModal.remove();
+              msg('✅ Sesión iniciada', 'success');
+            }
+          }, 500);
+        }
+      };
+      document.getElementById('mob-login-cancel').onclick = () => loginModal.remove();
+    }
+  }
+
+  // ----- Botones y sincronización -----
+  function ew(id){ return EW ? EW.document.getElementById(id) : null; }
+  function click(id){ const el=ew(id); if(el) el.click(); }
+
+  function refreshDesignsGrid() {
+    const grid = document.getElementById('mob-ds-grid');
+    if(!grid || !EW) return;
+    const ds = EW.designs;
+    if(!ds || !ds.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    ds.forEach((d,i)=>{
+      const tc = document.createElement('canvas');
+      tc.width=80; tc.height=80;
+      const tctx=tc.getContext('2d');
+      const sc=Math.min(80/d.width,80/d.height)*0.88;
+      tctx.fillStyle='#fff'; tctx.fillRect(0,0,80,80);
+      tctx.save(); tctx.translate(40,40); tctx.scale(sc,sc);
+      tctx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height);
+      tctx.restore();
+      const el=document.createElement('div');
+      el.className='ds-thumb'+(d.id===EW.selectedDesignId?' active':'');
+      el.innerHTML=`<img src="${tc.toDataURL()}"><span class="ds-num">${i+1}</span>`;
+      el.onclick=()=>{
+        EW.selectedDesignId=d.id;
+        if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
+        if(typeof EW.updateControls==='function') EW.updateControls();
+        if(typeof EW.drawCanvas==='function') EW.drawCanvas();
+        refreshDesignsGrid();
+        syncToolsSliders();
+        msg(`Diseño ${i+1} seleccionado`,'info',1200);
+      };
+      grid.appendChild(el);
+    });
+  }
+
+  function syncToolsSliders() {
+    if(!EW || !EW.getSelectedDesign) return;
+    const d = EW.getSelectedDesign();
+    if(!d) return;
+    document.getElementById('sl-rot').value = Math.round(d.rotation);
+    document.getElementById('sl-rot-v').textContent = Math.round(d.rotation)+'°';
+    document.getElementById('sl-op').value = Math.round(d.opacity*100);
+    document.getElementById('sl-op-v').textContent = Math.round(d.opacity*100)+'%';
+    const c = d.getDimensionsInCm();
+    document.getElementById('sz-w').value = c.width.toFixed(1);
+    document.getElementById('sz-h').value = c.height.toFixed(1);
+  }
+
+  function initButtons() {
+    document.getElementById('btn-save').onclick = () => { if(EW && EW.saveWorkbench) EW.saveWorkbench(false); else msg('Guardado no disponible','error'); };
+    document.getElementById('btn-profile').onclick = () => click('open-profile-btn');
+
+    document.getElementById('ac-upload').onclick = () => { ew('file-input')?.click(); closeSheet('sh-add'); };
+    document.getElementById('ac-gallery').onclick = () => { click('open-imgbb-gallery'); closeSheet('sh-add'); };
+    document.getElementById('ac-text').onclick = () => { click('add-text-btn'); closeSheet('sh-add'); };
+
+    document.getElementById('p-clear').onclick = () => click('clear-btn');
+
+    document.getElementById('p-mirror').onclick = () => click('mirror-btn');
+    document.getElementById('p-trim').onclick = () => click('tb-trim-btn');
+    document.getElementById('p-remove').onclick = () => click('remove-btn');
+    document.getElementById('p-sback').onclick = () => click('send-back');
+    document.getElementById('p-back').onclick = () => click('step-back');
+    document.getElementById('p-fwd').onclick = () => click('step-forward');
+    document.getElementById('p-front').onclick = () => click('bring-front');
+
+    document.getElementById('sel-del').onclick = () => click('remove-btn');
+    document.getElementById('sel-desel').onclick = () => { if(EW) { EW.selectedDesignId=null; EW.drawCanvas?.(); } };
+
+    document.getElementById('sl-rot').oninput = e => {
+      document.getElementById('sl-rot-v').textContent=e.target.value+'°';
+      const s=ew('rotation-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); }
+    };
+    document.getElementById('sl-op').oninput = e => {
+      document.getElementById('sl-op-v').textContent=e.target.value+'%';
+      const s=ew('opacity-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); }
+    };
+
+    const szw = document.getElementById('sz-w');
+    const szh = document.getElementById('sz-h');
+    const szlk = document.getElementById('sz-lock');
+    szw.oninput = () => {
+      if(szlk.checked && EW){
+        const d = EW.getSelectedDesign();
+        if(d) szh.value = (parseFloat(szw.value) / d.aspectRatio).toFixed(1);
+      }
+    };
+    szh.oninput = () => {
+      if(szlk.checked && EW){
+        const d = EW.getSelectedDesign();
+        if(d) szw.value = (parseFloat(szh.value) * d.aspectRatio).toFixed(1);
+      }
+    };
+    document.getElementById('p-szapply').onclick = () => {
+      const wi=ew('width-input'), hi=ew('height-input');
+      if(wi) wi.value = szw.value;
+      if(hi) hi.value = szh.value;
+      click('apply-size');
+    };
+
+    document.getElementById('sl-zoom').oninput = e => {
+      const val = e.target.value;
+      document.getElementById('sl-zoom-v').textContent = val+'%';
+      const s=ew('zoom-slider'); if(s){ s.value=val; s.dispatchEvent(new Event('input')); }
+    };
+
+    document.getElementById('p-cvh').onclick = () => {
+      const hi=ew('canvas-height-cm');
+      if(hi) hi.value = document.getElementById('cv-h').value;
+      click('apply-canvas-height');
+      setTimeout(fitMirror, 300);
+    };
+
+    document.getElementById('cv-color').oninput = e => {
+      const cc=ew('canvas-color');
+      if(cc){ cc.value=e.target.value; cc.dispatchEvent(new Event('input')); }
+    };
+
+    document.getElementById('p-pack').onclick = () => {
+      if(EW && typeof EW.__autoPackDesignsPRO__ === 'function'){
+        EW.__autoPackDesignsPRO__(8, false);
+        msg('🧠 Diseños ordenados', 'success');
+      } else msg('Motor PRO no disponible', 'error');
+    };
+
+    document.getElementById('ex-png').onclick = () => { click('download-png'); closeSheet('sh-export'); };
+    document.getElementById('ex-pdf').onclick = () => { click('download-pdf'); closeSheet('sh-export'); };
+    document.getElementById('ex-dtf').onclick = () => {
+      const ov=EW.document.getElementById('dtf-overlay');
+      if(ov) ov.style.display='flex';
+      closeSheet('sh-export');
+    };
+    document.getElementById('ex-save').onclick = () => { if(EW && EW.saveWorkbench) EW.saveWorkbench(false); else msg('Guardado no disponible','error'); };
+    document.getElementById('ex-load').onclick = () => { if(EW && EW.loadWorkbench) EW.loadWorkbench(); else msg('Carga no disponible','error'); };
+
+    document.querySelectorAll('.res-pill').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.res-pill').forEach(b => b.classList.remove('acc'));
+        btn.classList.add('acc');
+        const s=ew('quality-select');
+        if(s) s.value = btn.dataset.dpi;
+      };
+    });
+  }
+
+  // ----- Sheets management -----
   let activeSheet = null;
   function openSheet(id) {
     if(activeSheet) closeSheet(activeSheet);
@@ -737,202 +975,41 @@
     document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
     activeSheet = null;
   }
-  document.getElementById('backdrop').addEventListener('click', ()=>{ if(activeSheet) closeSheet(activeSheet); });
-  document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click',()=>{ closeSheet(btn.dataset.close); }); });
-  document.querySelectorAll('.ntab').forEach(tab=>{
-    tab.addEventListener('click',()=>{
+  document.getElementById('backdrop').onclick = () => { if(activeSheet) closeSheet(activeSheet); };
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.onclick = () => closeSheet(btn.dataset.close);
+  });
+  document.querySelectorAll('.ntab').forEach(tab => {
+    tab.onclick = () => {
       const id = tab.dataset.sheet;
       document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');
-      if(activeSheet===id){ closeSheet(id); return; }
+      if(activeSheet === id) { closeSheet(id); return; }
       openSheet(id);
-    });
+    };
   });
 
-  // Galería ImgBB: optimizada, carga rápida y previsualización en el modal
-  function patchGalleryOverlay() {
-    const editorOverlay = EW.document.getElementById('imgbb-gallery-overlay');
-    if(!editorOverlay) return;
-    const obs = new MutationObserver(muts => {
-      muts.forEach(m => {
-        if(m.attributeName === 'style') {
-          if(editorOverlay.style.display !== 'none' && editorOverlay.style.display !== '') {
-            // transferir contenido dinámicamente
-            const myGrid = document.getElementById('imgbb-designs-grid');
-            const mySearch = document.getElementById('searchContainer');
-            const myPag = document.getElementById('pagination');
-            const origGrid = EW.document.getElementById('imgbb-designs-grid');
-            const origSearch = EW.document.getElementById('searchContainer');
-            const origPag = EW.document.getElementById('pagination');
-            if(origGrid && myGrid) myGrid.innerHTML = origGrid.innerHTML;
-            if(origSearch && mySearch) mySearch.innerHTML = origSearch.innerHTML;
-            if(origPag && myPag) myPag.innerHTML = origPag.innerHTML;
-            // Reenlazar eventos de carga de imágenes en miniaturas
-            myGrid.querySelectorAll('.gal-item').forEach(item => {
-              item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const url = item.dataset.url;
-                if(url && EW && typeof EW.loadOne === 'function') EW.loadOne(url);
-                document.getElementById('mod-wrap').classList.remove('open','center');
-              });
-            });
-            const mod = document.getElementById('mod-wrap');
-            mod.classList.add('open','center');
-            editorOverlay.style.display = 'none';
-          }
-        }
-      });
-    });
-    obs.observe(editorOverlay, { attributes: true });
-    document.getElementById('close-gal').addEventListener('click', ()=>{
-      document.getElementById('mod-wrap').classList.remove('open','center');
-    });
-  }
-
-  function refreshDesignsGrid() {
-    const grid = document.getElementById('mob-ds-grid');
-    if(!grid || !EW) return;
-    const ds = EW.designs;
-    if(!ds || !ds.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.74rem;color:var(--muted);">Sin diseños. Usa "Añadir" para cargar.</div>';
-      return;
-    }
-    grid.innerHTML = '';
-    ds.forEach((d,i)=>{
-      const tc = document.createElement('canvas');
-      tc.width=80; tc.height=80;
-      const tctx=tc.getContext('2d');
-      const sc=Math.min(80/d.width,80/d.height)*0.88;
-      tctx.fillStyle='#fff'; tctx.fillRect(0,0,80,80);
-      tctx.save(); tctx.translate(40,40); tctx.scale(sc,sc);
-      tctx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height);
-      tctx.restore();
-      const el=document.createElement('div');
-      el.className='ds-thumb'+(d.id===EW.selectedDesignId?' active':'');
-      el.innerHTML=`<img src="${tc.toDataURL()}"><span class="ds-num">${i+1}</span>`;
-      el.addEventListener('click',()=>{
-        EW.selectedDesignId=d.id;
-        if(EW.updateDesignsList) EW.updateDesignsList();
-        if(EW.updateControls) EW.updateControls();
-        if(EW.drawCanvas) EW.drawCanvas();
-        refreshDesignsGrid();
-        syncToolsSliders();
-        msg(`Diseño ${i+1} seleccionado`,'info',1200);
-      });
-      grid.appendChild(el);
-    });
-  }
-
-  function syncToolsSliders() {
-    if(!EW || !EW.getSelectedDesign) return;
-    const d = EW.getSelectedDesign();
-    if(!d) return;
-    const r=document.getElementById('sl-rot');
-    const rv=document.getElementById('sl-rot-v');
-    const o=document.getElementById('sl-op');
-    const ov=document.getElementById('sl-op-v');
-    if(r){ r.value=Math.round(d.rotation); rv.textContent=Math.round(d.rotation)+'°'; }
-    if(o){ o.value=Math.round(d.opacity*100); ov.textContent=Math.round(d.opacity*100)+'%'; }
-    const w=document.getElementById('sz-w');
-    const h=document.getElementById('sz-h');
-    const c=d.getDimensionsInCm();
-    if(w) w.value=c.width.toFixed(1);
-    if(h) h.value=c.height.toFixed(1);
-  }
-
-  function ew(id){ return EW ? EW.document.getElementById(id) : null; }
-  function click(id){ const el=ew(id); if(el) el.click(); }
-
-  function initButtons() {
-    // Header
-    document.getElementById('btn-save').addEventListener('click',()=>{ if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false); else msg('Guardado no disponible','error'); });
-    document.getElementById('btn-profile').addEventListener('click',()=>click('open-profile-btn'));
-    // Añadir
-    document.getElementById('ac-upload').addEventListener('click',()=>{ ew('file-input')?.click(); closeSheet('sh-add'); });
-    document.getElementById('ac-gallery').addEventListener('click',()=>{ click('open-imgbb-gallery'); closeSheet('sh-add'); });
-    document.getElementById('ac-text').addEventListener('click',()=>{ click('add-text-btn'); closeSheet('sh-add'); });
-    // Limpiar
-    document.getElementById('p-clear').addEventListener('click',()=>click('clear-btn'));
-    // Herramientas
-    document.getElementById('p-mirror').addEventListener('click',()=>click('mirror-btn'));
-    document.getElementById('p-trim').addEventListener('click',()=>click('tb-trim-btn'));
-    document.getElementById('p-remove').addEventListener('click',()=>click('remove-btn'));
-    document.getElementById('p-sback').addEventListener('click',()=>click('send-back'));
-    document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
-    document.getElementById('p-fwd').addEventListener('click',()=>click('step-forward'));
-    document.getElementById('p-front').addEventListener('click',()=>click('bring-front'));
-    document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
-    document.getElementById('sel-desel').addEventListener('click',()=>{ if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); } });
-    // Sliders rot/op
-    document.getElementById('sl-rot').addEventListener('input',e=>{ document.getElementById('sl-rot-v').textContent=e.target.value+'°'; const s=ew('rotation-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
-    document.getElementById('sl-op').addEventListener('input',e=>{ document.getElementById('sl-op-v').textContent=e.target.value+'%'; const s=ew('opacity-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
-    // Tamaño y proporción (corregido: ambos sentidos)
-    const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h'), szlk=document.getElementById('sz-lock');
-    szw.addEventListener('input',()=>{ if(szlk.checked && EW){ const d=EW.getSelectedDesign?.(); if(d && d.aspectRatio) szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1); } });
-    szh.addEventListener('input',()=>{ if(szlk.checked && EW){ const d=EW.getSelectedDesign?.(); if(d && d.aspectRatio) szw.value=(parseFloat(szh.value)*d.aspectRatio).toFixed(1); } });
-    document.getElementById('p-szapply').addEventListener('click',()=>{ const wi=ew('width-input'), hi=ew('height-input'); if(wi) wi.value=szw.value; if(hi) hi.value=szh.value; click('apply-size'); });
-    // Zoom
-    document.getElementById('sl-zoom').addEventListener('input',e=>{ document.getElementById('sl-zoom-v').textContent=e.target.value+'%'; const s=ew('zoom-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
-    // Alto lienzo
-    document.getElementById('p-cvh').addEventListener('click',()=>{ const hi=ew('canvas-height-cm'); if(hi) hi.value=document.getElementById('cv-h').value; click('apply-canvas-height'); setTimeout(fitMirror,300); });
-    // Color fondo
-    document.getElementById('cv-color').addEventListener('input',e=>{ const cc=ew('canvas-color'); if(cc){ cc.value=e.target.value; cc.dispatchEvent(new Event('input')); } });
-    // Auto-pack
-    document.getElementById('p-pack').addEventListener('click',()=>{ if(EW && typeof EW.__autoPackDesignsPRO__==='function'){ EW.__autoPackDesignsPRO__(8,false); msg('🧠 Diseños ordenados','success',2000); } else msg('Motor PRO no disponible','error'); });
-    // Exportar
-    document.getElementById('ex-png').addEventListener('click',()=>{ click('download-png'); closeSheet('sh-export'); });
-    document.getElementById('ex-pdf').addEventListener('click',()=>{ click('download-pdf'); closeSheet('sh-export'); });
-    document.getElementById('ex-dtf').addEventListener('click',()=>{ const ov=EW.document.getElementById('dtf-overlay'); if(ov) ov.style.display='flex'; closeSheet('sh-export'); });
-    document.getElementById('ex-save').addEventListener('click',()=>{ if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false); else msg('Guardado no disponible','error'); });
-    document.getElementById('ex-load').addEventListener('click',()=>{ if(EW && typeof EW.loadWorkbench==='function') EW.loadWorkbench(); else msg('Carga no disponible','error'); });
-    // Resolución
-    document.querySelectorAll('.res-pill').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        document.querySelectorAll('.res-pill').forEach(b=>{ b.classList.remove('acc'); b.style.borderColor=''; b.style.color=''; });
-        btn.classList.add('acc');
-        const sel=ew('quality-select');
-        if(sel) sel.value=btn.dataset.dpi;
-      });
-    });
-  }
-
-  function showLoginObserver() {
-    const lo = EW.document.getElementById('lock-overlay');
-    if(!lo) return;
-    const obs = new MutationObserver(()=>{
-      if(lo.style.display==='none' || !lo.style.display){
-        obs.disconnect();
-        msg('🔓 Sesión iniciada', 'success', 2500);
-      }
-    });
-    obs.observe(lo, { attributes: true, attributeFilter: ['style'] });
-  }
-
+  // ----- Sync loop (actualizaciones periódicas) -----
   function syncLoop() {
-    setInterval(()=>{
+    setInterval(() => {
       if(!ready || !EW) return;
-      const zb=document.getElementById('zoom-badge');
-      if(zb && EW.canvasZoom!=null) zb.textContent=`${Math.round(EW.canvasZoom*100)}%`;
-      const bar=document.getElementById('sel-bar');
-      const si=document.getElementById('sel-info');
-      let sel=null;
-      try{ sel=typeof EW.getSelectedDesign==='function' ? EW.getSelectedDesign() : null; }catch(e){}
-      if(sel && bar){
+      const zb = document.getElementById('zoom-badge');
+      if(zb && EW.canvasZoom != null) zb.textContent = `${Math.round(EW.canvasZoom*100)}%`;
+      const bar = document.getElementById('sel-bar');
+      const si = document.getElementById('sel-info');
+      let sel = null;
+      try{ sel = EW.getSelectedDesign?.(); } catch(e){}
+      if(sel && bar) {
         bar.classList.add('show');
-        if(si){ const c=sel.getDimensionsInCm(); si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`; }
+        if(si) { const c = sel.getDimensionsInCm(); si.textContent = `${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`; }
       } else if(bar) bar.classList.remove('show');
-      const ibp=document.getElementById('ib-precio');
-      const op=EW.document.getElementById('precio-montaje');
-      if(ibp && op) ibp.textContent=op.textContent;
-      const ibs=document.getElementById('ib-size');
-      const ops=EW.document.getElementById('size-info');
-      if(ibs && ops) ibs.textContent=ops.textContent;
+      const ib = document.getElementById('ib-precio');
+      const op = EW.document.getElementById('precio-montaje');
+      if(ib && op) ib.textContent = op.textContent;
+      const ibs = document.getElementById('ib-size');
+      const ops = EW.document.getElementById('size-info');
+      if(ibs && ops) ibs.textContent = ops.textContent;
     }, 400);
-  }
-
-  // Detección automática de móvil y redirección (solo si no estamos ya en mobile.html)
-  if(window.location.pathname !== '/mobile.html' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    window.location.href = 'mobile.html';
   }
 })();
 </script>
