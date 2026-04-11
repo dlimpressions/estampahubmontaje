@@ -532,6 +532,15 @@ footer {
 </head>
 
 <body>
+
+<script>
+  (function(){
+    if(/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768) {
+      window.location.href = 'mobile.html';
+    }
+  })();
+</script>
+
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
