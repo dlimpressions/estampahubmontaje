@@ -42,9 +42,10 @@
       background: var(--bg);
       color: var(--text);
       font-family: var(--ui);
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* iframe oculto del editor base */
+    /* ── iframe oculto del editor base ── */
     #editor-iframe {
       position: fixed;
       top: -9999px; left: -9999px;
@@ -53,13 +54,13 @@
       pointer-events: none;
     }
 
-    /* Shell principal */
+    /* ── SHELL ── */
     #shell {
       display: flex; flex-direction: column;
       height: 100dvh; position: relative;
     }
 
-    /* Header */
+    /* ── HEADER ── */
     #hdr {
       height: var(--hdr-h);
       padding: 0 14px;
@@ -68,6 +69,7 @@
       border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.45);
       z-index: 100;
     }
     .hdr-logo { display: flex; align-items: center; gap: 8px; }
@@ -76,35 +78,51 @@
       background: linear-gradient(135deg, var(--accent), var(--indigo));
       display: flex; align-items: center; justify-content: center;
       font-weight: 900; font-size: 0.7rem; color: #fff;
-      box-shadow: 0 0 10px rgba(14,165,233,0.35);
+      box-shadow: 0 0 10px rgba(14,165,233,0.35); flex-shrink: 0;
     }
-    .hdr-name { font-weight: 800; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; }
-    .hdr-sub { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); }
+    .hdr-name {
+      font-weight: 800; font-size: 0.88rem;
+      letter-spacing: 1.2px; text-transform: uppercase; color: var(--text);
+    }
+    .hdr-sub {
+      font-family: var(--mono); font-size: 0.55rem; color: var(--muted);
+    }
     .hdr-actions { display: flex; gap: 6px; }
     .hdr-btn {
       width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
       background: var(--s2); border: 1px solid var(--border);
       border-radius: 9px; font-size: 0.9rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      transition: all 0.13s;
     }
     .hdr-btn:active { background: var(--s3); transform: scale(0.92); }
     .hdr-btn.accent { background: var(--adim); border-color: var(--bmd); }
 
-    /* Canvas area */
+    /* ── CANVAS AREA ── */
     #canvas-area {
-      flex: 1; position: relative; overflow: auto;
-      background: radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
-                  radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
-                  var(--bg);
+      flex: 1; position: relative; overflow: hidden;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
+        var(--bg);
       display: flex; align-items: center; justify-content: center;
       touch-action: none;
     }
-    #mirror-canvas {
-      max-width: 96%; max-height: 96%;
-      box-shadow: 0 0 0 1px rgba(14,165,233,0.22), 0 0 28px rgba(14,165,233,0.1), 0 12px 36px rgba(0,0,0,0.55);
-      cursor: crosshair;
-      touch-action: none;
+    #canvas-area::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image: radial-gradient(circle, rgba(14,165,233,0.06) 1px, transparent 1px);
+      background-size: 22px 22px;
     }
+    #mirror-canvas {
+      position: relative; z-index: 1;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.22), 0 0 28px rgba(14,165,233,0.1), 0 12px 36px rgba(0,0,0,0.55);
+      touch-action: none;
+      cursor: crosshair;
+      max-width: 96%;
+      max-height: 96%;
+    }
+
+    /* Info flotante */
     #zoom-badge {
       position: absolute; top: 10px; right: 10px;
       background: rgba(11,13,23,0.88); border: 1px solid var(--border);
@@ -129,14 +147,14 @@
     }
     .sel-btn.red { color: var(--rose); }
 
-    /* Bottom nav */
+    /* ── BOTTOM NAV ── */
     #nav {
       height: calc(var(--nav-h) + var(--safe-b));
       padding-bottom: var(--safe-b);
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex; align-items: flex-start; justify-content: space-around;
-      padding-top: 8px; flex-shrink: 0;
+      padding-top: 8px; flex-shrink: 0; z-index: 200;
     }
     .ntab {
       flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -145,7 +163,7 @@
       transition: color 0.14s;
     }
     .ntab.active { color: var(--accent); }
-    .ntab .nicon { font-size: 1.22rem; }
+    .ntab .nicon { font-size: 1.22rem; line-height: 1; }
     .ntab .nlabel { font-size: 0.56rem; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
     .ntab.ncenter .nbadge {
       width: 44px; height: 44px;
@@ -156,7 +174,7 @@
       box-shadow: 0 4px 14px rgba(14,165,233,0.4);
     }
 
-    /* Sheets */
+    /* ── SHEETS ── */
     .sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: var(--s2);
@@ -172,13 +190,13 @@
     .sheet.open { transform: translateY(0); }
     .sh-handle {
       width: 36px; height: 4px; background: rgba(255,255,255,0.14);
-      border-radius: 2px; margin: 10px auto 0;
+      border-radius: 2px; margin: 10px auto 0; flex-shrink: 0;
     }
     .sh-hdr {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 18px 8px;
+      padding: 12px 18px 8px; flex-shrink: 0;
     }
-    .sh-title { font-weight: 700; font-size: 0.96rem; }
+    .sh-title { font-weight: 700; font-size: 0.96rem; color: var(--text); }
     .sh-x {
       width: 26px; height: 26px; border-radius: 50%;
       background: rgba(255,255,255,0.08); border: none;
@@ -190,6 +208,7 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    /* ── Backdrop ── */
     #backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,0.65);
       backdrop-filter: blur(3px); z-index: 400;
@@ -197,7 +216,7 @@
     }
     #backdrop.show { display: block; opacity: 1; }
 
-    /* Componentes */
+    /* ── Components inside sheets ── */
     .sec-label {
       font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
       letter-spacing: 0.8px; text-transform: uppercase;
@@ -262,6 +281,7 @@
       background: var(--s3); border: 1px solid var(--bmd);
       border-radius: 12px; color: var(--text);
       font-family: var(--mono); font-size: 0.85rem; outline: none;
+      transition: border-color 0.18s; margin-bottom: 0;
     }
     .ninput:focus { border-color: var(--accent); }
 
@@ -269,7 +289,7 @@
       display: flex; align-items: center; gap: 12px;
       padding: 13px 14px; background: var(--s3);
       border: 1px solid var(--border); border-radius: 14px;
-      margin-bottom: 9px; cursor: pointer;
+      margin-bottom: 9px; cursor: pointer; transition: all 0.13s;
     }
     .exp-opt:active { background: var(--s2); }
     .exp-ico {
@@ -277,7 +297,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.2rem; flex-shrink: 0;
     }
-    .exp-ttl { font-weight: 700; font-size: 0.85rem; }
+    .exp-ttl { font-weight: 700; font-size: 0.85rem; color: var(--text); }
     .exp-dsc { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
 
     .dsgrid {
@@ -287,7 +307,7 @@
     .ds-thumb {
       background: var(--s3); border: 2px solid var(--border);
       border-radius: 12px; aspect-ratio: 1/1; overflow: hidden;
-      cursor: pointer; position: relative;
+      cursor: pointer; position: relative; transition: all 0.13s;
     }
     .ds-thumb.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(14,165,233,0.3); }
     .ds-thumb:active { transform: scale(0.93); }
@@ -298,7 +318,7 @@
       padding: 1px 4px; font-family: var(--mono); font-size: 0.52rem; color: #fff;
     }
 
-    /* Mensajes */
+    /* ── Mensajes ── */
     #msgs {
       position: fixed; top: 58px; left: 10px; right: 10px;
       z-index: 9999; display: flex; flex-direction: column; gap: 5px;
@@ -318,20 +338,27 @@
     .mmsg.warning { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
     @keyframes msgin { from { transform: translateY(-8px); opacity:0; } to { transform: none; opacity:1; } }
 
-    /* Modal galería */
+    /* ── Overlay genérico para modales del editor ── */
     #mod-wrap {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
       z-index: 3000; display: none;
-      align-items: center; justify-content: center;
+      align-items: flex-end; justify-content: center;
     }
     #mod-wrap.open { display: flex; }
+    #mod-wrap.center { align-items: center; }
     .mod-card {
       background: var(--s2); border: 1px solid var(--bmd);
-      border-radius: 22px; max-width: 500px; width: 96vw;
-      padding: 20px 17px; max-height: 88dvh; overflow-y: auto;
+      border-radius: 22px 22px 0 0;
+      padding: 20px 17px calc(20px + var(--safe-b));
+      width: 100%; max-height: 88dvh; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .mod-ttl { font-weight: 800; font-size: 1rem; margin-bottom: 12px; }
+    .mod-card.centered {
+      border-radius: 22px; max-width: 500px; width: 96vw;
+      padding: 20px 17px 20px;
+    }
+    .mod-ttl { font-weight: 800; font-size: 1rem; color: var(--text); margin-bottom: 12px; }
     .mod-close {
       width: 28px; height: 28px; border-radius: 50%;
       background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);
@@ -339,6 +366,35 @@
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
     .mod-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+    .mbtn-primary {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, var(--accent), #0284c7);
+      border: none; border-radius: 13px;
+      color: #fff; font-family: var(--ui); font-weight: 700;
+      font-size: 0.88rem; letter-spacing: 0.8px; text-transform: uppercase;
+      cursor: pointer; box-shadow: 0 3px 14px rgba(14,165,233,0.3);
+      margin-top: 6px;
+    }
+    .mbtn-sec {
+      width: 100%; padding: 11px;
+      background: transparent; border: 1px solid var(--bmd);
+      border-radius: 13px; color: var(--text); font-family: var(--ui);
+      font-weight: 600; font-size: 0.84rem; cursor: pointer; margin-top: 8px;
+    }
+    .finput {
+      width: 100%; padding: 12px 14px;
+      background: var(--s3); border: 1px solid var(--bmd);
+      border-radius: 12px; color: var(--text);
+      font-family: var(--mono); font-size: 0.86rem; outline: none;
+      margin-bottom: 0; transition: border-color 0.18s;
+    }
+    .finput:focus { border-color: var(--accent); }
+    .flbl {
+      display: block; font-family: var(--mono); font-size: 0.62rem;
+      color: var(--muted); letter-spacing: 0.5px;
+      margin-bottom: 4px; margin-top: 10px;
+    }
 
     /* Gallery grid */
     #imgbb-designs-grid {
@@ -351,6 +407,7 @@
       background: var(--s3); border: 1px solid var(--bmd);
       border-radius: 11px; color: var(--text); font-size: 0.86rem; outline: none;
     }
+    #searchContainer input:focus { border-color: var(--accent); }
     #pagination { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     #pagination button {
       padding: 6px 14px; border-radius: 8px;
@@ -361,13 +418,27 @@
 </head>
 <body>
 
-<!-- IFRAME EDITOR BASE -->
+<!-- ════════════════════════════
+     IFRAME DEL EDITOR BASE
+════════════════════════════ -->
 <iframe id="editor-iframe" src="index.html"></iframe>
 
+<!-- ════════════════════════════
+     MENSAJES
+════════════════════════════ -->
 <div id="msgs"></div>
+
+<!-- ════════════════════════════
+     BACKDROP
+════════════════════════════ -->
 <div id="backdrop"></div>
 
+<!-- ════════════════════════════
+     SHELL PRINCIPAL
+════════════════════════════ -->
 <div id="shell">
+
+  <!-- HEADER -->
   <div id="hdr">
     <div class="hdr-logo">
       <div class="hdr-badge">DTF</div>
@@ -382,6 +453,7 @@
     </div>
   </div>
 
+  <!-- CANVAS (espejo del editor) -->
   <div id="canvas-area">
     <canvas id="mirror-canvas"></canvas>
     <div id="zoom-badge">100%</div>
@@ -392,16 +464,32 @@
     </div>
   </div>
 
+  <!-- BOTTOM NAV -->
   <nav id="nav">
-    <button class="ntab" data-sheet="sh-designs"><span class="nicon">🖼️</span><span class="nlabel">Diseños</span></button>
-    <button class="ntab" data-sheet="sh-tools"><span class="nicon">⚙️</span><span class="nlabel">Ajustar</span></button>
-    <button class="ntab ncenter" data-sheet="sh-add"><div class="nbadge">➕</div><span class="nlabel" style="margin-top:2px;">Añadir</span></button>
-    <button class="ntab" data-sheet="sh-canvas"><span class="nicon">🖼</span><span class="nlabel">Lienzo</span></button>
-    <button class="ntab" data-sheet="sh-export"><span class="nicon">💾</span><span class="nlabel">Exportar</span></button>
+    <button class="ntab" data-sheet="sh-designs" id="nt-designs">
+      <span class="nicon">🖼️</span><span class="nlabel">Diseños</span>
+    </button>
+    <button class="ntab" data-sheet="sh-tools" id="nt-tools">
+      <span class="nicon">⚙️</span><span class="nlabel">Ajustar</span>
+    </button>
+    <button class="ntab ncenter" data-sheet="sh-add" id="nt-add">
+      <div class="nbadge">➕</div>
+      <span class="nlabel" style="margin-top:2px;">Añadir</span>
+    </button>
+    <button class="ntab" data-sheet="sh-canvas" id="nt-canvas">
+      <span class="nicon">🖼</span><span class="nlabel">Lienzo</span>
+    </button>
+    <button class="ntab" data-sheet="sh-export" id="nt-export">
+      <span class="nicon">💾</span><span class="nlabel">Exportar</span>
+    </button>
   </nav>
 </div>
 
-<!-- ==================== SHEET: AÑADIR ==================== -->
+<!-- ════════════════════════════
+     SHEETS
+════════════════════════════ -->
+
+<!-- Sheet: Añadir -->
 <div class="sheet" id="sh-add">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -417,7 +505,7 @@
   </div>
 </div>
 
-<!-- ==================== SHEET: DISEÑOS ==================== -->
+<!-- Sheet: Diseños -->
 <div class="sheet" id="sh-designs">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -432,7 +520,7 @@
   </div>
 </div>
 
-<!-- ==================== SHEET: AJUSTAR ==================== -->
+<!-- Sheet: Ajustar -->
 <div class="sheet" id="sh-tools">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -488,7 +576,7 @@
   </div>
 </div>
 
-<!-- ==================== SHEET: LIENZO ==================== -->
+<!-- Sheet: Lienzo -->
 <div class="sheet" id="sh-canvas">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -530,7 +618,7 @@
   </div>
 </div>
 
-<!-- ==================== SHEET: EXPORTAR ==================== -->
+<!-- Sheet: Exportar -->
 <div class="sheet" id="sh-export">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
@@ -567,9 +655,11 @@
   </div>
 </div>
 
-<!-- ==================== MODAL GALERÍA ==================== -->
-<div id="mod-wrap">
-  <div class="mod-card">
+<!-- ════════════════════════════
+     MODAL GALERÍA
+════════════════════════════ -->
+<div id="mod-wrap" id="gal-modal">
+  <div class="mod-card centered">
     <div class="mod-hdr">
       <span class="mod-ttl">📁 Mis diseños ImgBB</span>
       <button class="mod-close" id="close-gal">✕</button>
@@ -580,14 +670,22 @@
   </div>
 </div>
 
-<!-- ==================== CONTROLLER JS ==================== -->
+<!-- ════════════════════════════
+     CONTROLLER JS
+════════════════════════════ -->
 <script>
 (function(){
-  let EW = null;
+  /* ── Variables del editor (se llenan al cargar el iframe) ── */
+  let EW = null;   // editor iframe contentWindow
   let ready = false;
-  const mirrorCanvas = document.getElementById('mirror-canvas');
-  const mirrorCtx = mirrorCanvas.getContext('2d');
+  let mirrorRAF = null;
 
+  const mirrorCanvas = document.getElementById('mirror-canvas');
+  const mirrorCtx    = mirrorCanvas.getContext('2d');
+
+  /* ════════════════════════════
+     MENSAJES
+  ════════════════════════════ */
   function msg(text, type, ms) {
     const c = document.getElementById('msgs');
     const el = document.createElement('div');
@@ -600,166 +698,281 @@
     return { remove: rm };
   }
 
+  /* ════════════════════════════
+     IFRAME LOAD
+  ════════════════════════════ */
   const iframe = document.getElementById('editor-iframe');
+
   iframe.addEventListener('load', () => {
     try {
       EW = iframe.contentWindow;
+      // Esperar a que el editor base termine de inicializar
       waitForEditor();
-    } catch(e) { msg('Error al cargar editor', 'error'); }
+    } catch(e) {
+      msg('Error al cargar el editor base', 'error');
+      console.error(e);
+    }
   });
 
   function waitForEditor() {
     if(!EW) return;
-    if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') onEditorReady();
-    else setTimeout(waitForEditor, 200);
+    // Verificar que las funciones core estén disponibles
+    if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') {
+      onEditorReady();
+    } else {
+      setTimeout(waitForEditor, 200);
+    }
   }
 
   function onEditorReady() {
     ready = true;
-    console.log('✅ Editor base listo');
+    console.log('✅ Editor base listo, conectando UI móvil');
+
+    // Parchar showMessage del editor para que use nuestros mensajes
     EW.showMessage = (text, type, ms) => msg(text, type, ms);
+
+    // Configurar canvas espejo
     setupMirrorCanvas();
+
+    // Conectar todos los botones
     initButtons();
+
+    // Iniciar sincronización
     syncLoop();
-    handleLogin();
+
+    // Ocultar el login si el editor ya está desbloqueado
+    const lockOverlay = EW.document.getElementById('lock-overlay');
+    if(lockOverlay && lockOverlay.style.display !== 'none') {
+      showLoginMobile();
+    }
+
+    // Observar cuando el editor abre la galería
     patchGalleryOverlay();
-    msg('Editor listo', 'success', 2000);
+
+    msg('✅ Editor listo', 'success', 2000);
   }
 
-  // ----- Canvas espejo y eventos táctiles -----
+  /* ════════════════════════════
+     CANVAS ESPEJO
+  ════════════════════════════ */
   function setupMirrorCanvas() {
-    const ec = EW.document.getElementById('canvas');
-    if(!ec) return;
-    mirrorCanvas.width = ec.width;
-    mirrorCanvas.height = ec.height;
+    const editorCanvas = EW.document.getElementById('canvas');
+    if(!editorCanvas) return;
+
+    // Sincronizar dimensiones
+    mirrorCanvas.width  = editorCanvas.width;
+    mirrorCanvas.height = editorCanvas.height;
+
+    // Ajustar tamaño visual al viewport
     fitMirror();
     window.addEventListener('resize', fitMirror);
+
+    // Iniciar loop de espejado
     function loop() {
-      if(!ready) { requestAnimationFrame(loop); return; }
+      if(!ready) { mirrorRAF = requestAnimationFrame(loop); return; }
       try {
-        const ec2 = EW.document.getElementById('canvas');
-        if(ec2 && (mirrorCanvas.width !== ec2.width || mirrorCanvas.height !== ec2.height)) {
-          mirrorCanvas.width = ec2.width;
-          mirrorCanvas.height = ec2.height;
-          fitMirror();
+        const ec = EW.document.getElementById('canvas');
+        if(ec) {
+          if(mirrorCanvas.width !== ec.width || mirrorCanvas.height !== ec.height) {
+            mirrorCanvas.width  = ec.width;
+            mirrorCanvas.height = ec.height;
+            fitMirror();
+          }
+          mirrorCtx.clearRect(0,0,mirrorCanvas.width,mirrorCanvas.height);
+          mirrorCtx.drawImage(ec, 0, 0);
         }
-        mirrorCtx.drawImage(ec2, 0, 0);
       } catch(e) {}
-      requestAnimationFrame(loop);
+      mirrorRAF = requestAnimationFrame(loop);
     }
     loop();
-    setupTouchForwarding(ec);
+
+    // Redirigir eventos táctiles al canvas original
+    setupTouchForwarding(editorCanvas);
   }
 
   function fitMirror() {
     const area = document.getElementById('canvas-area');
     if(!area || !mirrorCanvas.width) return;
-    const aw = area.clientWidth - 20;
+    const aw = area.clientWidth  - 20;
     const ah = area.clientHeight - 20;
     const sc = Math.min(aw / mirrorCanvas.width, ah / mirrorCanvas.height, 1);
-    mirrorCanvas.style.width = Math.round(mirrorCanvas.width * sc) + 'px';
+    mirrorCanvas.style.width  = Math.round(mirrorCanvas.width  * sc) + 'px';
     mirrorCanvas.style.height = Math.round(mirrorCanvas.height * sc) + 'px';
   }
 
+  /* ════════════════════════════
+     REENVIAR TOUCH → CANVAS EDITOR
+  ════════════════════════════ */
   function setupTouchForwarding(editorCanvas) {
     function getEditorPoint(touch) {
       const mr = mirrorCanvas.getBoundingClientRect();
-      const sx = mirrorCanvas.width / mr.width;
-      const sy = mirrorCanvas.height / mr.height;
-      const ex = editorCanvas.getBoundingClientRect().left;
-      const ey = editorCanvas.getBoundingClientRect().top;
+      const scaleX = mirrorCanvas.width  / mr.width;
+      const scaleY = mirrorCanvas.height / mr.height;
       return {
-        clientX: ex + (touch.clientX - mr.left) * sx * (editorCanvas.width / mirrorCanvas.width),
-        clientY: ey + (touch.clientY - mr.top)  * sy * (editorCanvas.height / mirrorCanvas.height)
+        clientX: editorCanvas.getBoundingClientRect().left + (touch.clientX - mr.left) * scaleX / (mirrorCanvas.width / editorCanvas.width),
+        clientY: editorCanvas.getBoundingClientRect().top  + (touch.clientY - mr.top)  * scaleY / (mirrorCanvas.height / editorCanvas.height),
       };
     }
+
     function forward(e, type) {
       e.preventDefault();
       const t = e.touches[0] || e.changedTouches[0];
       if(!t) return;
       const pt = getEditorPoint(t);
-      editorCanvas.dispatchEvent(new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true }));
+      try {
+        const me = new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true });
+        editorCanvas.dispatchEvent(me);
+      } catch(err) {}
     }
-    mirrorCanvas.addEventListener('touchstart', e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
-    mirrorCanvas.addEventListener('touchmove', e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
-    mirrorCanvas.addEventListener('touchend', e => forward(e,'mouseup'), { passive: false });
+
+    mirrorCanvas.addEventListener('touchstart',  e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
+    mirrorCanvas.addEventListener('touchmove',   e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
+    mirrorCanvas.addEventListener('touchend',    e => forward(e,'mouseup'),   { passive: false });
     mirrorCanvas.addEventListener('touchcancel', e => forward(e,'mouseleave'), { passive: false });
 
-    let lastPinch = 0;
+    // Pinch zoom (2 dedos)
+    let lastPinchDist = 0;
     mirrorCanvas.addEventListener('touchmove', e => {
       if(e.touches.length === 2) {
         e.preventDefault();
-        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        if(lastPinch) {
-          const delta = d - lastPinch;
+        const d = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if(lastPinchDist) {
+          const delta = d - lastPinchDist;
           const sl = EW.document.getElementById('zoom-slider');
           if(sl) {
-            let val = Math.max(20, Math.min(200, parseInt(sl.value) + (delta>0?5:-5)));
-            sl.value = val;
+            const nv = Math.max(20, Math.min(200, parseInt(sl.value)+( delta>0?5:-5)));
+            sl.value = nv;
             sl.dispatchEvent(new Event('input'));
-            document.getElementById('sl-zoom').value = val;
-            document.getElementById('sl-zoom-v').textContent = val + '%';
+            document.getElementById('sl-zoom').value = nv;
+            document.getElementById('sl-zoom-v').textContent = nv + '%';
           }
         }
-        lastPinch = d;
+        lastPinchDist = d;
       }
     }, { passive: false });
-    mirrorCanvas.addEventListener('touchend', () => { lastPinch = 0; });
+    mirrorCanvas.addEventListener('touchend', () => { lastPinchDist = 0; });
   }
 
-  // ----- Galería mejorada -----
+  /* ════════════════════════════
+     SHEETS
+  ════════════════════════════ */
+  let activeSheet = null;
+
+  function openSheet(id) {
+    if(activeSheet) closeSheet(activeSheet);
+    const sh = document.getElementById(id);
+    if(!sh) return;
+    sh.classList.add('open');
+    document.getElementById('backdrop').classList.add('show');
+    activeSheet = id;
+    if(id === 'sh-designs') refreshDesignsGrid();
+    if(id === 'sh-tools')   syncToolsSliders();
+  }
+
+  function closeSheet(id) {
+    const sh = document.getElementById(id);
+    if(sh) sh.classList.remove('open');
+    document.getElementById('backdrop').classList.remove('show');
+    document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+    activeSheet = null;
+  }
+
+  document.getElementById('backdrop').addEventListener('click', ()=>{
+    if(activeSheet) closeSheet(activeSheet);
+  });
+
+  document.querySelectorAll('[data-close]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ closeSheet(btn.dataset.close); });
+  });
+
+  document.querySelectorAll('.ntab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      const id = tab.dataset.sheet;
+      document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      if(activeSheet===id){ closeSheet(id); return; }
+      openSheet(id);
+    });
+  });
+
+  /* ════════════════════════════
+     PARCHEAR GALERÍA DEL EDITOR
+  ════════════════════════════ */
   function patchGalleryOverlay() {
+    // Cuando gallery.js abre el overlay del editor, lo redirigimos a nuestro modal
     const editorOverlay = EW.document.getElementById('imgbb-gallery-overlay');
     if(!editorOverlay) return;
-    const obs = new MutationObserver(() => {
-      if(editorOverlay.style.display !== 'none' && editorOverlay.style.display !== '') {
-        moveGalleryContent();
-        document.getElementById('mod-wrap').classList.add('open');
-        editorOverlay.style.display = 'none';
-      }
+
+    // Observar cambios de display
+    const obs = new MutationObserver(muts => {
+      muts.forEach(m => {
+        if(m.attributeName === 'style') {
+          const display = editorOverlay.style.display;
+          const mod = document.getElementById('mod-wrap');
+          if(display !== 'none' && display !== '') {
+            // El editor abrió la galería - mostramos el nuestro y movemos el contenido
+            moveGalleryContent();
+            mod.classList.add('open');
+            mod.classList.add('center');
+            // Ocultar el del editor
+            editorOverlay.style.display = 'none';
+          }
+        }
+      });
     });
-    obs.observe(editorOverlay, { attributes: true, attributeFilter: ['style'] });
-    document.getElementById('close-gal').addEventListener('click', () => {
-      document.getElementById('mod-wrap').classList.remove('open');
-      editorOverlay.style.display = 'none';
+    obs.observe(editorOverlay, { attributes: true });
+
+    // Botón cerrar del modal móvil
+    document.getElementById('close-gal').addEventListener('click', ()=>{
+      document.getElementById('mod-wrap').classList.remove('open','center');
     });
   }
 
   function moveGalleryContent() {
-    const editorGrid = EW.document.getElementById('imgbb-designs-grid');
+    // Mover los elementos de búsqueda y grid del editor a nuestro modal
+    const editorGrid   = EW.document.getElementById('imgbb-designs-grid');
     const editorSearch = EW.document.getElementById('searchContainer');
-    const editorPag = EW.document.getElementById('pagination');
-    const myGrid = document.getElementById('imgbb-designs-grid');
-    const mySearch = document.getElementById('searchContainer');
-    const myPag = document.getElementById('pagination');
+    const editorPag    = EW.document.getElementById('pagination');
+    const myGrid       = document.getElementById('imgbb-designs-grid');
+    const mySearch     = document.getElementById('searchContainer');
+    const myPag        = document.getElementById('pagination');
 
-    if(editorGrid && myGrid) myGrid.innerHTML = editorGrid.innerHTML;
-    if(editorSearch && mySearch) mySearch.innerHTML = editorSearch.innerHTML;
-    if(editorPag && myPag) myPag.innerHTML = editorPag.innerHTML;
+    if(editorGrid   && myGrid)   { myGrid.innerHTML   = editorGrid.innerHTML; }
+    if(editorSearch && mySearch) { mySearch.innerHTML  = editorSearch.innerHTML; }
+    if(editorPag    && myPag)    { myPag.innerHTML     = editorPag.innerHTML; }
 
-    myGrid.querySelectorAll('[data-url], .gal-item').forEach(item => {
-      const url = item.dataset.url;
-      if(url) {
-        item.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if(typeof EW.loadOne === 'function') EW.loadOne(url);
-          document.getElementById('mod-wrap').classList.remove('open');
-        });
-      }
+    // Reenviar clicks de items al editor
+    myGrid.querySelectorAll('[data-url],.gal-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        const url = item.dataset.url;
+        if(!url) return;
+        // Llamar loadOne del gallery del editor
+        if(typeof EW.loadOne === 'function') EW.loadOne(url);
+        else if(typeof EW.loadSingleDesign === 'function') EW.loadSingleDesign(url);
+        document.getElementById('mod-wrap').classList.remove('open','center');
+      });
     });
+
+    // Sincronizar búsqueda
     const inp = mySearch.querySelector('input');
     const origInp = EW.document.getElementById('searchInput');
     if(inp && origInp) {
       inp.addEventListener('input', e => {
         origInp.value = e.target.value;
         origInp.dispatchEvent(new Event('input'));
+        // Resincronizar grid
         setTimeout(moveGalleryContent, 300);
       });
     }
-    myPag.querySelectorAll('button').forEach((btn,i) => {
+
+    // Paginación
+    myPag.querySelectorAll('button').forEach((btn,i)=>{
       const origBtns = editorPag ? editorPag.querySelectorAll('button') : [];
       if(origBtns[i]) {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', ()=>{
           origBtns[i].click();
           setTimeout(moveGalleryContent, 300);
         });
@@ -767,57 +980,15 @@
     });
   }
 
-  // ----- Login móvil -----
-  function handleLogin() {
-    const lock = EW.document.getElementById('lock-overlay');
-    if(!lock) return;
-    if(lock.style.display !== 'none') {
-      const loginModal = document.createElement('div');
-      loginModal.className = 'mod-card';
-      loginModal.style.position = 'fixed'; loginModal.style.top = '50%'; loginModal.style.left = '50%';
-      loginModal.style.transform = 'translate(-50%, -50%)'; loginModal.style.zIndex = '4000';
-      loginModal.style.maxWidth = '90vw'; loginModal.style.padding = '20px';
-      loginModal.innerHTML = `
-        <div class="mod-ttl">🔐 Acceso requerido</div>
-        <input type="text" id="mob-user" placeholder="Usuario" class="ninput" style="margin-bottom:8px;">
-        <input type="password" id="mob-pass" placeholder="Contraseña" class="ninput" style="margin-bottom:12px;">
-        <button id="mob-login-btn" class="pill grn" style="width:100%;">Ingresar</button>
-        <button id="mob-login-cancel" class="pill" style="width:100%; margin-top:6px;">Cancelar</button>
-      `;
-      document.body.appendChild(loginModal);
-      document.getElementById('mob-login-btn').onclick = () => {
-        const u = document.getElementById('mob-user').value;
-        const p = document.getElementById('mob-pass').value;
-        const lockUser = EW.document.getElementById('lock-user');
-        const lockPass = EW.document.getElementById('lock-pass');
-        const lockBtn = EW.document.getElementById('lock-btn');
-        if(lockUser && lockPass && lockBtn) {
-          lockUser.value = u;
-          lockPass.value = p;
-          lockBtn.click();
-          const check = setInterval(() => {
-            if(lock.style.display === 'none') {
-              clearInterval(check);
-              loginModal.remove();
-              msg('✅ Sesión iniciada', 'success');
-            }
-          }, 500);
-        }
-      };
-      document.getElementById('mob-login-cancel').onclick = () => loginModal.remove();
-    }
-  }
-
-  // ----- Botones y sincronización -----
-  function ew(id){ return EW ? EW.document.getElementById(id) : null; }
-  function click(id){ const el=ew(id); if(el) el.click(); }
-
+  /* ════════════════════════════
+     GRID DE DISEÑOS
+  ════════════════════════════ */
   function refreshDesignsGrid() {
     const grid = document.getElementById('mob-ds-grid');
     if(!grid || !EW) return;
     const ds = EW.designs;
     if(!ds || !ds.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div>';
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.74rem;color:var(--muted);">Sin diseños. Usa "Añadir" para cargar.</div>';
       return;
     }
     grid.innerHTML = '';
@@ -833,7 +1004,7 @@
       const el=document.createElement('div');
       el.className='ds-thumb'+(d.id===EW.selectedDesignId?' active':'');
       el.innerHTML=`<img src="${tc.toDataURL()}"><span class="ds-num">${i+1}</span>`;
-      el.onclick=()=>{
+      el.addEventListener('click',()=>{
         EW.selectedDesignId=d.id;
         if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
         if(typeof EW.updateControls==='function') EW.updateControls();
@@ -841,176 +1012,207 @@
         refreshDesignsGrid();
         syncToolsSliders();
         msg(`Diseño ${i+1} seleccionado`,'info',1200);
-      };
+      });
       grid.appendChild(el);
     });
   }
 
+  /* ════════════════════════════
+     SINCRONIZAR SLIDERS
+  ════════════════════════════ */
   function syncToolsSliders() {
     if(!EW || !EW.getSelectedDesign) return;
     const d = EW.getSelectedDesign();
     if(!d) return;
-    document.getElementById('sl-rot').value = Math.round(d.rotation);
-    document.getElementById('sl-rot-v').textContent = Math.round(d.rotation)+'°';
-    document.getElementById('sl-op').value = Math.round(d.opacity*100);
-    document.getElementById('sl-op-v').textContent = Math.round(d.opacity*100)+'%';
-    const c = d.getDimensionsInCm();
-    document.getElementById('sz-w').value = c.width.toFixed(1);
-    document.getElementById('sz-h').value = c.height.toFixed(1);
+    const r=document.getElementById('sl-rot');
+    const rv=document.getElementById('sl-rot-v');
+    const o=document.getElementById('sl-op');
+    const ov=document.getElementById('sl-op-v');
+    if(r){r.value=Math.round(d.rotation);rv.textContent=Math.round(d.rotation)+'°';}
+    if(o){o.value=Math.round(d.opacity*100);ov.textContent=Math.round(d.opacity*100)+'%';}
+    const w=document.getElementById('sz-w');
+    const h=document.getElementById('sz-h');
+    const c=d.getDimensionsInCm();
+    if(w)w.value=c.width.toFixed(1);
+    if(h)h.value=c.height.toFixed(1);
   }
 
+  /* ════════════════════════════
+     BOTONES
+  ════════════════════════════ */
+  function ew(id){ return EW ? EW.document.getElementById(id) : null; }
+  function click(id){ const el=ew(id); if(el) el.click(); }
+
   function initButtons() {
-    document.getElementById('btn-save').onclick = () => { if(EW && EW.saveWorkbench) EW.saveWorkbench(false); else msg('Guardado no disponible','error'); };
-    document.getElementById('btn-profile').onclick = () => click('open-profile-btn');
 
-    document.getElementById('ac-upload').onclick = () => { ew('file-input')?.click(); closeSheet('sh-add'); };
-    document.getElementById('ac-gallery').onclick = () => { click('open-imgbb-gallery'); closeSheet('sh-add'); };
-    document.getElementById('ac-text').onclick = () => { click('add-text-btn'); closeSheet('sh-add'); };
+    // Header
+    document.getElementById('btn-save').addEventListener('click',()=>{
+      if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
+      else msg('Guardado no disponible','error');
+    });
+    document.getElementById('btn-profile').addEventListener('click',()=>click('open-profile-btn'));
 
-    document.getElementById('p-clear').onclick = () => click('clear-btn');
+    // Añadir
+    document.getElementById('ac-upload').addEventListener('click',()=>{ ew('file-input')?.click(); closeSheet('sh-add'); });
+    document.getElementById('ac-gallery').addEventListener('click',()=>{ click('open-imgbb-gallery'); closeSheet('sh-add'); });
+    document.getElementById('ac-text').addEventListener('click',()=>{ click('add-text-btn'); closeSheet('sh-add'); });
 
-    document.getElementById('p-mirror').onclick = () => click('mirror-btn');
-    document.getElementById('p-trim').onclick = () => click('tb-trim-btn');
-    document.getElementById('p-remove').onclick = () => click('remove-btn');
-    document.getElementById('p-sback').onclick = () => click('send-back');
-    document.getElementById('p-back').onclick = () => click('step-back');
-    document.getElementById('p-fwd').onclick = () => click('step-forward');
-    document.getElementById('p-front').onclick = () => click('bring-front');
+    // Diseños
+    document.getElementById('p-clear').addEventListener('click',()=>click('clear-btn'));
 
-    document.getElementById('sel-del').onclick = () => click('remove-btn');
-    document.getElementById('sel-desel').onclick = () => { if(EW) { EW.selectedDesignId=null; EW.drawCanvas?.(); } };
+    // Herramientas
+    document.getElementById('p-mirror').addEventListener('click',()=>click('mirror-btn'));
+    document.getElementById('p-trim').addEventListener('click',()=>click('tb-trim-btn'));
+    document.getElementById('p-remove').addEventListener('click',()=>click('remove-btn'));
+    document.getElementById('p-sback').addEventListener('click',()=>click('send-back'));
+    document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
+    document.getElementById('p-fwd').addEventListener('click',()=>click('step-forward'));
+    document.getElementById('p-front').addEventListener('click',()=>click('bring-front'));
 
-    document.getElementById('sl-rot').oninput = e => {
+    // Barra selección
+    document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
+    document.getElementById('sel-desel').addEventListener('click',()=>{
+      if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); }
+    });
+
+    // Sliders rotación / opacidad
+    document.getElementById('sl-rot').addEventListener('input',e=>{
       document.getElementById('sl-rot-v').textContent=e.target.value+'°';
-      const s=ew('rotation-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); }
-    };
-    document.getElementById('sl-op').oninput = e => {
+      const s=ew('rotation-slider');
+      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+    });
+    document.getElementById('sl-op').addEventListener('input',e=>{
       document.getElementById('sl-op-v').textContent=e.target.value+'%';
-      const s=ew('opacity-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); }
-    };
+      const s=ew('opacity-slider');
+      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+    });
 
-    const szw = document.getElementById('sz-w');
-    const szh = document.getElementById('sz-h');
-    const szlk = document.getElementById('sz-lock');
-    szw.oninput = () => {
-      if(szlk.checked && EW){
-        const d = EW.getSelectedDesign();
-        if(d) szh.value = (parseFloat(szw.value) / d.aspectRatio).toFixed(1);
-      }
-    };
-    szh.oninput = () => {
-      if(szlk.checked && EW){
-        const d = EW.getSelectedDesign();
-        if(d) szw.value = (parseFloat(szh.value) * d.aspectRatio).toFixed(1);
-      }
-    };
-    document.getElementById('p-szapply').onclick = () => {
+    // Tamaño
+    const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h');
+    const szlk=document.getElementById('sz-lock');
+    szw.addEventListener('input',()=>{
+      if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d)szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1);}
+    });
+    document.getElementById('p-szapply').addEventListener('click',()=>{
       const wi=ew('width-input'), hi=ew('height-input');
-      if(wi) wi.value = szw.value;
-      if(hi) hi.value = szh.value;
+      if(wi)wi.value=szw.value; if(hi)hi.value=szh.value;
       click('apply-size');
-    };
+    });
 
-    document.getElementById('sl-zoom').oninput = e => {
-      const val = e.target.value;
-      document.getElementById('sl-zoom-v').textContent = val+'%';
-      const s=ew('zoom-slider'); if(s){ s.value=val; s.dispatchEvent(new Event('input')); }
-    };
+    // Zoom
+    document.getElementById('sl-zoom').addEventListener('input',e=>{
+      document.getElementById('sl-zoom-v').textContent=e.target.value+'%';
+      const s=ew('zoom-slider');
+      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+    });
 
-    document.getElementById('p-cvh').onclick = () => {
+    // Alto lienzo
+    document.getElementById('p-cvh').addEventListener('click',()=>{
       const hi=ew('canvas-height-cm');
-      if(hi) hi.value = document.getElementById('cv-h').value;
+      if(hi)hi.value=document.getElementById('cv-h').value;
       click('apply-canvas-height');
-      setTimeout(fitMirror, 300);
-    };
+      setTimeout(fitMirror,300);
+    });
 
-    document.getElementById('cv-color').oninput = e => {
+    // Color fondo
+    document.getElementById('cv-color').addEventListener('input',e=>{
       const cc=ew('canvas-color');
-      if(cc){ cc.value=e.target.value; cc.dispatchEvent(new Event('input')); }
-    };
+      if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));}
+    });
 
-    document.getElementById('p-pack').onclick = () => {
-      if(EW && typeof EW.__autoPackDesignsPRO__ === 'function'){
-        EW.__autoPackDesignsPRO__(8, false);
-        msg('🧠 Diseños ordenados', 'success');
-      } else msg('Motor PRO no disponible', 'error');
-    };
+    // Auto-pack
+    document.getElementById('p-pack').addEventListener('click',()=>{
+      if(EW&&typeof EW.__autoPackDesignsPRO__==='function'){
+        EW.__autoPackDesignsPRO__(8,false);
+        msg('🧠 Diseños ordenados','success',2000);
+      } else msg('Motor PRO no disponible','error');
+    });
 
-    document.getElementById('ex-png').onclick = () => { click('download-png'); closeSheet('sh-export'); };
-    document.getElementById('ex-pdf').onclick = () => { click('download-pdf'); closeSheet('sh-export'); };
-    document.getElementById('ex-dtf').onclick = () => {
+    // Exportar
+    document.getElementById('ex-png').addEventListener('click',()=>{ click('download-png'); closeSheet('sh-export'); });
+    document.getElementById('ex-pdf').addEventListener('click',()=>{ click('download-pdf'); closeSheet('sh-export'); });
+    document.getElementById('ex-dtf').addEventListener('click',()=>{
       const ov=EW.document.getElementById('dtf-overlay');
-      if(ov) ov.style.display='flex';
-      closeSheet('sh-export');
-    };
-    document.getElementById('ex-save').onclick = () => { if(EW && EW.saveWorkbench) EW.saveWorkbench(false); else msg('Guardado no disponible','error'); };
-    document.getElementById('ex-load').onclick = () => { if(EW && EW.loadWorkbench) EW.loadWorkbench(); else msg('Carga no disponible','error'); };
+      if(ov){ov.style.display='flex';} closeSheet('sh-export');
+    });
+    document.getElementById('ex-save').addEventListener('click',()=>{
+      if(EW&&typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
+      else msg('Guardado no disponible','error');
+    });
+    document.getElementById('ex-load').addEventListener('click',()=>{
+      if(EW&&typeof EW.loadWorkbench==='function') EW.loadWorkbench();
+      else msg('Carga no disponible','error');
+    });
 
-    document.querySelectorAll('.res-pill').forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll('.res-pill').forEach(b => b.classList.remove('acc'));
+    // Resolución
+    document.querySelectorAll('.res-pill').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.res-pill').forEach(b=>{
+          b.classList.remove('acc');
+          b.style.borderColor=''; b.style.color='';
+        });
         btn.classList.add('acc');
         const s=ew('quality-select');
-        if(s) s.value = btn.dataset.dpi;
-      };
+        if(s)s.value=btn.dataset.dpi;
+      });
     });
   }
 
-  // ----- Sheets management -----
-  let activeSheet = null;
-  function openSheet(id) {
-    if(activeSheet) closeSheet(activeSheet);
-    const sh = document.getElementById(id);
-    if(!sh) return;
-    sh.classList.add('open');
-    document.getElementById('backdrop').classList.add('show');
-    activeSheet = id;
-    if(id === 'sh-designs') refreshDesignsGrid();
-    if(id === 'sh-tools') syncToolsSliders();
-  }
-  function closeSheet(id) {
-    const sh = document.getElementById(id);
-    if(sh) sh.classList.remove('open');
-    document.getElementById('backdrop').classList.remove('show');
-    document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
-    activeSheet = null;
-  }
-  document.getElementById('backdrop').onclick = () => { if(activeSheet) closeSheet(activeSheet); };
-  document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.onclick = () => closeSheet(btn.dataset.close);
-  });
-  document.querySelectorAll('.ntab').forEach(tab => {
-    tab.onclick = () => {
-      const id = tab.dataset.sheet;
-      document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      if(activeSheet === id) { closeSheet(id); return; }
-      openSheet(id);
-    };
-  });
+  /* ════════════════════════════
+     LOGIN MÓVIL
+  ════════════════════════════ */
+  function showLoginMobile() {
+    // El login del editor (en el iframe) ya se encarga,
+    // solo necesitamos escuchar cuando se desbloquea
+    const lo = EW.document.getElementById('lock-overlay');
+    if(!lo) return;
 
-  // ----- Sync loop (actualizaciones periódicas) -----
+    const obs = new MutationObserver(()=>{
+      if(lo.style.display==='none' || !lo.style.display){
+        obs.disconnect();
+        msg('🔓 Sesión iniciada','success',2500);
+      }
+    });
+    obs.observe(lo,{attributes:true,attributeFilter:['style']});
+
+    // Hacer visible el login del editor dentro del iframe
+    // (ya se muestra automáticamente)
+  }
+
+  /* ════════════════════════════
+     SYNC LOOP
+  ════════════════════════════ */
   function syncLoop() {
-    setInterval(() => {
-      if(!ready || !EW) return;
-      const zb = document.getElementById('zoom-badge');
-      if(zb && EW.canvasZoom != null) zb.textContent = `${Math.round(EW.canvasZoom*100)}%`;
-      const bar = document.getElementById('sel-bar');
-      const si = document.getElementById('sel-info');
-      let sel = null;
-      try{ sel = EW.getSelectedDesign?.(); } catch(e){}
-      if(sel && bar) {
+    setInterval(()=>{
+      if(!ready||!EW) return;
+
+      // Zoom badge
+      const zb=document.getElementById('zoom-badge');
+      if(zb&&EW.canvasZoom!=null) zb.textContent=`${Math.round(EW.canvasZoom*100)}%`;
+
+      // Barra selección
+      const bar=document.getElementById('sel-bar');
+      const si=document.getElementById('sel-info');
+      let sel=null;
+      try{ sel=typeof EW.getSelectedDesign==='function'?EW.getSelectedDesign():null; }catch(e){}
+      if(sel&&bar){
         bar.classList.add('show');
-        if(si) { const c = sel.getDimensionsInCm(); si.textContent = `${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`; }
+        if(si){const c=sel.getDimensionsInCm();si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`;}
       } else if(bar) bar.classList.remove('show');
-      const ib = document.getElementById('ib-precio');
-      const op = EW.document.getElementById('precio-montaje');
-      if(ib && op) ib.textContent = op.textContent;
-      const ibs = document.getElementById('ib-size');
-      const ops = EW.document.getElementById('size-info');
-      if(ibs && ops) ibs.textContent = ops.textContent;
+
+      // Precio
+      const ib=document.getElementById('ib-precio');
+      const op=EW.document.getElementById('precio-montaje');
+      if(ib&&op) ib.textContent=op.textContent;
+
+      // Tamaño info
+      const ibs=document.getElementById('ib-size');
+      const ops=EW.document.getElementById('size-info');
+      if(ibs&&ops) ibs.textContent=ops.textContent;
+
     }, 400);
   }
+
 })();
 </script>
 </body>
