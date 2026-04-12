@@ -1044,6 +1044,11 @@
   closeGallery();
 }
 
+  function closeGallery() {
+    document.getElementById('gal-modal').classList.remove('open');
+    selItems.clear(); updateGalMultibar();
+  }
+
   // Búsqueda por texto
   document.getElementById('gal-search').addEventListener('input', e=>{
     galSearch = e.target.value; galPage=1; renderGal();
