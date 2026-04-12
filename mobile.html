@@ -1606,7 +1606,12 @@ document.getElementById('crop-mobile-apply').addEventListener('click', applyMobi
 
     // Herramientas
     document.getElementById('p-mirror').addEventListener('click',()=>click('mirror-btn'));
-    document.getElementById('p-trim').addEventListener('click',()=>click('tb-trim-btn'));
+    document.getElementById('p-trim').addEventListener('click', () => {
+  if (!EW) return;
+  const d = EW.getSelectedDesign?.();
+  if (!d) { msg('Selecciona un diseño primero', 'warning'); return; }
+  openMobileCrop(d);
+});
     document.getElementById('p-remove').addEventListener('click',()=>click('remove-btn'));
     document.getElementById('p-sback').addEventListener('click',()=>click('send-back'));
     document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
