@@ -533,6 +533,23 @@ footer {
 
 <body>
 
+<!-- ════════════════════════════════════════════════════
+  SNIPPET A PEGAR EN index.html (justo antes del </body>)
+  Detecta móvil y redirige automáticamente:
+
+  <script>
+  (function(){
+    const isMob = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const alreadyMob = window.location.pathname.includes('mobile');
+    const stayDesk   = sessionStorage.getItem('stay_desktop');
+    if(isMob && !alreadyMob && !stayDesk){
+      window.location.replace('mobile.html');
+    }
+  })();
+  </script>
+════════════════════════════════════════════════════ -->
+
+
  <!-- Overlay de contraseña (MODIFICADO: ahora pide usuario + contraseña) -->
 <div class="lock-overlay" id="lock-overlay" style="display:none;">
 
@@ -3744,21 +3761,7 @@ if(tbDtfBtn){
 
 <script src="mesasave.js"></script>
 
-<!-- ════════════════════════════════════════════════════
-  SNIPPET A PEGAR EN index.html (justo antes del </body>)
-  Detecta móvil y redirige automáticamente:
 
-  <script>
-  (function(){
-    const isMob = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const alreadyMob = window.location.pathname.includes('mobile');
-    const stayDesk   = sessionStorage.getItem('stay_desktop');
-    if(isMob && !alreadyMob && !stayDesk){
-      window.location.replace('mobile.html');
-    }
-  })();
-  </script>
-════════════════════════════════════════════════════ -->
 
 </body>
 
