@@ -7,435 +7,329 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
   <style>
-    *, *::before, *::after {
-      margin: 0; padding: 0; box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-    :root {
-      --bg:       #06080f;
-      --surface:  #0b0d17;
-      --s2:       #0f1220;
-      --s3:       #151826;
-      --border:   rgba(14,165,233,0.14);
-      --bmd:      rgba(14,165,233,0.28);
-      --accent:   #0ea5e9;
-      --adim:     rgba(14,165,233,0.12);
-      --emerald:  #10b981;
-      --rose:     #f43f5e;
-      --amber:    #f59e0b;
-      --purple:   #a855f7;
-      --indigo:   #6366f1;
-      --text:     #e2e8f0;
-      --muted:    #64748b;
-      --ui:       'Exo 2', sans-serif;
-      --mono:     'DM Mono', monospace;
-      --safe-b:   env(safe-area-inset-bottom, 0px);
-      --safe-t:   env(safe-area-inset-top, 0px);
-      --nav-h:    68px;
-      --hdr-h:    54px;
-    }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --bg:#06080f; --surface:#0b0d17; --s2:#0f1220; --s3:#151826;
+    --border:rgba(14,165,233,0.14); --bmd:rgba(14,165,233,0.28);
+    --accent:#0ea5e9; --adim:rgba(14,165,233,0.12);
+    --emerald:#10b981; --rose:#f43f5e; --amber:#f59e0b;
+    --purple:#a855f7; --indigo:#6366f1;
+    --text:#e2e8f0; --muted:#64748b;
+    --ui:'Exo 2',sans-serif; --mono:'DM Mono',monospace;
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --safe-t:env(safe-area-inset-top,0px);
+    --nav-h:66px; --hdr-h:52px;
+  }
+  html,body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--ui); -webkit-font-smoothing:antialiased; }
 
-    html, body {
-      height: 100%; height: 100dvh;
-      overflow: hidden;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--ui);
-      -webkit-font-smoothing: antialiased;
-    }
+  /* iframe oculto - pero con dimensiones reales para que el canvas funcione */
+  #editor-iframe {
+    position:fixed; top:-9999px; left:-9999px;
+    width:800px; height:1200px;
+    border:none; pointer-events:none; visibility:hidden;
+  }
 
-    /* ── iframe oculto del editor base ── */
-    #editor-iframe {
-      position: fixed;
-      top: -9999px; left: -9999px;
-      width: 1px; height: 1px;
-      border: none; opacity: 0;
-      pointer-events: none;
-    }
+  /* ── SHELL ── */
+  #shell { display:flex; flex-direction:column; height:100dvh; }
 
-    /* ── SHELL ── */
-    #shell {
-      display: flex; flex-direction: column;
-      height: 100dvh; position: relative;
-    }
+  /* ── HEADER ── */
+  #hdr {
+    height:calc(var(--hdr-h) + var(--safe-t));
+    padding:var(--safe-t) 14px 0;
+    background:var(--surface); border-bottom:1px solid var(--border);
+    display:flex; align-items:flex-end; justify-content:space-between;
+    padding-bottom:10px; flex-shrink:0;
+    box-shadow:0 2px 14px rgba(0,0,0,0.45); z-index:100;
+  }
+  .hdr-logo { display:flex; align-items:center; gap:8px; }
+  .hdr-badge {
+    width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(135deg,var(--accent),var(--indigo));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:0.7rem; color:#fff;
+    box-shadow:0 0 10px rgba(14,165,233,0.35);
+  }
+  .hdr-title { font-weight:800; font-size:0.86rem; letter-spacing:1.2px; text-transform:uppercase; color:var(--text); }
+  .hdr-sub   { font-family:var(--mono); font-size:0.54rem; color:var(--muted); }
+  .hdr-btns  { display:flex; gap:6px; }
+  .hbtn {
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    background:var(--s2); border:1px solid var(--border); border-radius:9px;
+    font-size:0.9rem; cursor:pointer; transition:all 0.13s;
+  }
+  .hbtn:active { transform:scale(0.92); background:var(--s3); }
+  .hbtn.accent { background:var(--adim); border-color:var(--bmd); }
 
-    /* ── HEADER ── */
-    #hdr {
-      height: var(--hdr-h);
-      padding: 0 14px;
-      padding-top: var(--safe-t);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
-      box-shadow: 0 2px 14px rgba(0,0,0,0.45);
-      z-index: 100;
-    }
-    .hdr-logo { display: flex; align-items: center; gap: 8px; }
-    .hdr-badge {
-      width: 30px; height: 30px; border-radius: 8px;
-      background: linear-gradient(135deg, var(--accent), var(--indigo));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 0.7rem; color: #fff;
-      box-shadow: 0 0 10px rgba(14,165,233,0.35); flex-shrink: 0;
-    }
-    .hdr-name {
-      font-weight: 800; font-size: 0.88rem;
-      letter-spacing: 1.2px; text-transform: uppercase; color: var(--text);
-    }
-    .hdr-sub {
-      font-family: var(--mono); font-size: 0.55rem; color: var(--muted);
-    }
-    .hdr-actions { display: flex; gap: 6px; }
-    .hdr-btn {
-      width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--s2); border: 1px solid var(--border);
-      border-radius: 9px; font-size: 0.9rem; cursor: pointer;
-      transition: all 0.13s;
-    }
-    .hdr-btn:active { background: var(--s3); transform: scale(0.92); }
-    .hdr-btn.accent { background: var(--adim); border-color: var(--bmd); }
+  /* ── CANVAS AREA ── */
+  #carea {
+    flex:1; position:relative; overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 15%,rgba(14,165,233,0.04) 0%,transparent 65%),
+      radial-gradient(ellipse 50% 60% at 80% 80%,rgba(99,102,241,0.04) 0%,transparent 65%),
+      var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none;
+  }
+  #carea::before {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background-image:radial-gradient(circle,rgba(14,165,233,0.06) 1px,transparent 1px);
+    background-size:22px 22px;
+  }
+  #mc {
+    position:relative; z-index:1; touch-action:none; cursor:crosshair;
+    box-shadow:0 0 0 1px rgba(14,165,233,0.22),0 0 26px rgba(14,165,233,0.1),0 10px 32px rgba(0,0,0,0.55);
+    display:block;
+  }
 
-    /* ── CANVAS AREA ── */
-    #canvas-area {
-      flex: 1; position: relative; overflow: hidden;
-      background:
-        radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
-        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
-        var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      touch-action: none;
-    }
-    #canvas-area::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background-image: radial-gradient(circle, rgba(14,165,233,0.06) 1px, transparent 1px);
-      background-size: 22px 22px;
-    }
-    #mirror-canvas {
-      position: relative; z-index: 1;
-      box-shadow: 0 0 0 1px rgba(14,165,233,0.22), 0 0 28px rgba(14,165,233,0.1), 0 12px 36px rgba(0,0,0,0.55);
-      touch-action: none;
-      cursor: crosshair;
-      max-width: 96%;
-      max-height: 96%;
-    }
+  /* indicadores flotantes */
+  #zbadge {
+    position:absolute; top:10px; right:10px;
+    background:rgba(11,13,23,0.88); border:1px solid var(--border);
+    border-radius:7px; padding:3px 8px;
+    font-family:var(--mono); font-size:0.6rem; color:var(--muted);
+    pointer-events:none; z-index:10;
+  }
+  #selbar {
+    position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+    background:rgba(11,13,23,0.9); border:1px solid var(--bmd);
+    border-radius:18px; padding:5px 12px;
+    display:none; align-items:center; gap:8px;
+    backdrop-filter:blur(10px); white-space:nowrap; z-index:20;
+  }
+  #selbar.show { display:flex; }
+  #sel-info { font-family:var(--mono); font-size:0.65rem; color:var(--accent); }
+  .sbtn { background:rgba(255,255,255,0.08); border:none; border-radius:10px; padding:3px 9px; color:var(--text); font-size:0.65rem; cursor:pointer; }
+  .sbtn.red { color:var(--rose); }
 
-    /* Info flotante */
-    #zoom-badge {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(11,13,23,0.88); border: 1px solid var(--border);
-      border-radius: 7px; padding: 3px 8px;
-      font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
-      pointer-events: none; z-index: 10;
-    }
-    #sel-bar {
-      position: absolute; bottom: 10px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(11,13,23,0.9); border: 1px solid var(--bmd);
-      border-radius: 18px; padding: 5px 12px;
-      display: none; align-items: center; gap: 8px;
-      backdrop-filter: blur(10px); white-space: nowrap; z-index: 20;
-    }
-    #sel-bar.show { display: flex; }
-    #sel-info { font-family: var(--mono); font-size: 0.65rem; color: var(--accent); }
-    .sel-btn {
-      background: rgba(255,255,255,0.08); border: none;
-      border-radius: 10px; padding: 3px 9px;
-      color: var(--text); font-size: 0.65rem; cursor: pointer;
-    }
-    .sel-btn.red { color: var(--rose); }
+  /* ── BOTTOM NAV ── */
+  #nav {
+    height:calc(var(--nav-h) + var(--safe-b)); padding-bottom:var(--safe-b);
+    background:var(--surface); border-top:1px solid var(--border);
+    display:flex; align-items:flex-start; justify-content:space-around;
+    padding-top:8px; flex-shrink:0; z-index:200;
+  }
+  .ntab {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    cursor:pointer; padding:2px 0; border:none; background:transparent;
+    color:var(--muted); transition:color 0.14s;
+  }
+  .ntab.active { color:var(--accent); }
+  .ntab .ni { font-size:1.2rem; line-height:1; }
+  .ntab .nl { font-size:0.55rem; font-weight:600; letter-spacing:0.3px; text-transform:uppercase; }
+  .ntab.nc .nbadge {
+    width:44px; height:44px; background:linear-gradient(135deg,var(--accent),var(--indigo));
+    border-radius:14px; display:flex; align-items:center; justify-content:center;
+    font-size:1.3rem; margin-top:-10px; box-shadow:0 4px 14px rgba(14,165,233,0.4);
+  }
 
-    /* ── BOTTOM NAV ── */
-    #nav {
-      height: calc(var(--nav-h) + var(--safe-b));
-      padding-bottom: var(--safe-b);
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex; align-items: flex-start; justify-content: space-around;
-      padding-top: 8px; flex-shrink: 0; z-index: 200;
-    }
-    .ntab {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-      gap: 3px; cursor: pointer; padding: 2px 0;
-      border: none; background: transparent; color: var(--muted);
-      transition: color 0.14s;
-    }
-    .ntab.active { color: var(--accent); }
-    .ntab .nicon { font-size: 1.22rem; line-height: 1; }
-    .ntab .nlabel { font-size: 0.56rem; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
-    .ntab.ncenter .nbadge {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, var(--accent), var(--indigo));
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; margin-top: -10px;
-      box-shadow: 0 4px 14px rgba(14,165,233,0.4);
-    }
+  /* ── SHEETS ── */
+  .sheet {
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--s2); border-radius:22px 22px 0 0;
+    border:1px solid var(--bmd); border-bottom:none;
+    z-index:500; transform:translateY(100%);
+    transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    max-height:82dvh; display:flex; flex-direction:column;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.5);
+  }
+  .sheet.open { transform:translateY(0); }
+  .sh-handle { width:36px; height:4px; background:rgba(255,255,255,0.14); border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+  .sh-hdr { display:flex; align-items:center; justify-content:space-between; padding:12px 18px 8px; flex-shrink:0; }
+  .sh-title { font-weight:700; font-size:0.96rem; color:var(--text); }
+  .sh-x { width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.08); border:none; color:var(--muted); font-size:0.78rem; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .sh-body { overflow-y:auto; padding:0 15px calc(16px + var(--safe-b)); flex:1; -webkit-overflow-scrolling:touch; }
 
-    /* ── SHEETS ── */
-    .sheet {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--s2);
-      border-radius: 22px 22px 0 0;
-      border: 1px solid var(--bmd); border-bottom: none;
-      z-index: 500;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-      max-height: 82dvh;
-      display: flex; flex-direction: column;
-      box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
-    }
-    .sheet.open { transform: translateY(0); }
-    .sh-handle {
-      width: 36px; height: 4px; background: rgba(255,255,255,0.14);
-      border-radius: 2px; margin: 10px auto 0; flex-shrink: 0;
-    }
-    .sh-hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 18px 8px; flex-shrink: 0;
-    }
-    .sh-title { font-weight: 700; font-size: 0.96rem; color: var(--text); }
-    .sh-x {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: rgba(255,255,255,0.08); border: none;
-      color: var(--muted); font-size: 0.78rem;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-    }
-    .sh-body {
-      overflow-y: auto; padding: 0 15px calc(16px + var(--safe-b)); flex: 1;
-      -webkit-overflow-scrolling: touch;
-    }
+  /* ── BACKDROP ── */
+  #backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(3px); z-index:400; display:none; opacity:0; transition:opacity 0.22s; }
+  #backdrop.show { display:block; opacity:1; }
 
-    /* ── Backdrop ── */
-    #backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(3px); z-index: 400;
-      display: none; opacity: 0; transition: opacity 0.22s;
-    }
-    #backdrop.show { display: block; opacity: 1; }
+  /* ── COMPONENTES ── */
+  .slbl { font-family:var(--mono); font-size:0.62rem; color:var(--muted); letter-spacing:0.8px; text-transform:uppercase; margin:14px 0 7px; }
+  .add-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:4px 0 10px; }
+  .add-card { background:var(--s3); border:1px solid var(--border); border-radius:16px; padding:16px 10px 12px; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; transition:all 0.13s; }
+  .add-card:active { transform:scale(0.94); }
+  .add-card .ac-i { font-size:1.7rem; }
+  .add-card .ac-l { font-size:0.68rem; font-weight:600; color:var(--muted); text-align:center; }
+  .add-card.hi { border-color:var(--bmd); background:var(--adim); }
+  .add-card.hi .ac-l { color:var(--accent); }
 
-    /* ── Components inside sheets ── */
-    .sec-label {
-      font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
-      letter-spacing: 0.8px; text-transform: uppercase;
-      margin: 14px 0 7px;
-    }
-    .add-grid {
-      display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
-      padding: 4px 0 10px;
-    }
-    .add-card {
-      background: var(--s3); border: 1px solid var(--border);
-      border-radius: 16px; padding: 16px 10px 12px;
-      display: flex; flex-direction: column; align-items: center; gap: 7px;
-      cursor: pointer; transition: all 0.13s;
-    }
-    .add-card:active { transform: scale(0.94); background: var(--s2); }
-    .add-card .ac-icon { font-size: 1.7rem; }
-    .add-card .ac-lbl { font-size: 0.68rem; font-weight: 600; color: var(--muted); text-align: center; }
-    .add-card.hi { border-color: var(--bmd); background: var(--adim); }
-    .add-card.hi .ac-lbl { color: var(--accent); }
+  .pr { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .pill {
+    flex:1; min-width:90px; display:flex; align-items:center; justify-content:center; gap:5px;
+    padding:10px 12px; background:var(--s3); border:1px solid var(--border);
+    border-radius:12px; font-size:0.76rem; font-weight:600; color:var(--text);
+    cursor:pointer; transition:all 0.13s;
+  }
+  .pill:active { background:var(--s2); transform:scale(0.96); }
+  .pill.red  { border-color:rgba(244,63,94,0.35); color:var(--rose); }
+  .pill.grn  { border-color:rgba(16,185,129,0.35); color:var(--emerald); }
+  .pill.prp  { border-color:rgba(168,85,247,0.35); color:var(--purple); }
+  .pill.amb  { border-color:rgba(245,158,11,0.35); color:var(--amber); }
+  .pill.acc  { border-color:var(--bmd); color:var(--accent); background:var(--adim); }
 
-    .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-    .pill {
-      flex: 1; min-width: 90px;
-      display: flex; align-items: center; justify-content: center; gap: 5px;
-      padding: 10px 12px;
-      background: var(--s3); border: 1px solid var(--border);
-      border-radius: 12px; font-size: 0.76rem; font-weight: 600; color: var(--text);
-      cursor: pointer; transition: all 0.13s;
-    }
-    .pill:active { background: var(--s2); transform: scale(0.96); }
-    .pill.red  { border-color: rgba(244,63,94,0.35); color: var(--rose); }
-    .pill.grn  { border-color: rgba(16,185,129,0.35); color: var(--emerald); }
-    .pill.prp  { border-color: rgba(168,85,247,0.35); color: var(--purple); }
-    .pill.amb  { border-color: rgba(245,158,11,0.35); color: var(--amber); }
-    .pill.acc  { border-color: var(--bmd); color: var(--accent); background: var(--adim); }
+  .sr { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .srl { font-family:var(--mono); font-size:0.65rem; color:var(--muted); width:58px; flex-shrink:0; }
+  .srv { font-family:var(--mono); font-size:0.7rem; color:var(--accent); width:38px; text-align:right; flex-shrink:0; }
+  input[type=range].ms {
+    flex:1; -webkit-appearance:none; appearance:none; height:4px;
+    border-radius:2px; background:var(--s3); outline:none; cursor:pointer;
+  }
+  input[type=range].ms::-webkit-slider-thumb {
+    -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+    background:var(--accent); box-shadow:0 0 8px rgba(14,165,233,0.5); cursor:pointer;
+  }
 
-    .slider-row {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-    }
-    .sl-lbl { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); width: 58px; flex-shrink: 0; }
-    .sl-val { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); width: 38px; text-align: right; flex-shrink: 0; }
-    input[type=range].mslider {
-      flex: 1; -webkit-appearance: none; appearance: none;
-      height: 4px; border-radius: 2px; background: var(--s3); outline: none; cursor: pointer;
-    }
-    input[type=range].mslider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 22px; height: 22px;
-      border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 8px rgba(14,165,233,0.5); cursor: pointer;
-    }
+  .ibox { padding:12px 14px; background:var(--adim); border:1px solid var(--bmd); border-radius:12px; margin-bottom:10px; }
+  .ibox .il { font-family:var(--mono); font-size:0.6rem; color:var(--muted); margin-bottom:3px; }
+  .ibox .iv { font-family:var(--mono); font-size:0.9rem; color:var(--accent); font-weight:700; }
 
-    .info-box {
-      padding: 12px 14px; background: var(--adim);
-      border: 1px solid var(--bmd); border-radius: 12px; margin-bottom: 10px;
-    }
-    .info-box .ib-lbl { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-bottom: 3px; }
-    .info-box .ib-val { font-family: var(--mono); font-size: 0.9rem; color: var(--accent); font-weight: 700; }
+  .ni {
+    width:100%; padding:11px 13px; background:var(--s3); border:1px solid var(--bmd);
+    border-radius:12px; color:var(--text); font-family:var(--mono);
+    font-size:0.85rem; outline:none; transition:border-color 0.18s;
+  }
+  .ni:focus { border-color:var(--accent); }
 
-    .ninput {
-      width: 100%; padding: 11px 13px;
-      background: var(--s3); border: 1px solid var(--bmd);
-      border-radius: 12px; color: var(--text);
-      font-family: var(--mono); font-size: 0.85rem; outline: none;
-      transition: border-color 0.18s; margin-bottom: 0;
-    }
-    .ninput:focus { border-color: var(--accent); }
+  .exopt { display:flex; align-items:center; gap:12px; padding:13px 14px; background:var(--s3); border:1px solid var(--border); border-radius:14px; margin-bottom:9px; cursor:pointer; transition:all 0.13s; }
+  .exopt:active { background:var(--s2); }
+  .exico { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .extl { font-weight:700; font-size:0.85rem; color:var(--text); }
+  .exds { font-family:var(--mono); font-size:0.6rem; color:var(--muted); margin-top:2px; }
 
-    .exp-opt {
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 14px; background: var(--s3);
-      border: 1px solid var(--border); border-radius: 14px;
-      margin-bottom: 9px; cursor: pointer; transition: all 0.13s;
-    }
-    .exp-opt:active { background: var(--s2); }
-    .exp-ico {
-      width: 40px; height: 40px; border-radius: 11px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; flex-shrink: 0;
-    }
-    .exp-ttl { font-weight: 700; font-size: 0.85rem; color: var(--text); }
-    .exp-dsc { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+  .dsgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(70px,1fr)); gap:8px; padding:4px 0; }
+  .dst { background:var(--s3); border:2px solid var(--border); border-radius:12px; aspect-ratio:1/1; overflow:hidden; cursor:pointer; position:relative; transition:all 0.13s; }
+  .dst.active { border-color:var(--accent); box-shadow:0 0 8px rgba(14,165,233,0.3); }
+  .dst:active { transform:scale(0.93); }
+  .dst img { width:100%; height:100%; object-fit:cover; }
+  .dsn { position:absolute; bottom:2px; right:3px; background:rgba(0,0,0,0.72); border-radius:4px; padding:1px 4px; font-family:var(--mono); font-size:0.52rem; color:#fff; }
 
-    .dsgrid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(70px,1fr)); gap: 8px;
-      padding: 4px 0;
-    }
-    .ds-thumb {
-      background: var(--s3); border: 2px solid var(--border);
-      border-radius: 12px; aspect-ratio: 1/1; overflow: hidden;
-      cursor: pointer; position: relative; transition: all 0.13s;
-    }
-    .ds-thumb.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(14,165,233,0.3); }
-    .ds-thumb:active { transform: scale(0.93); }
-    .ds-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .ds-num {
-      position: absolute; bottom: 2px; right: 3px;
-      background: rgba(0,0,0,0.72); border-radius: 4px;
-      padding: 1px 4px; font-family: var(--mono); font-size: 0.52rem; color: #fff;
-    }
+  /* ── MENSAJES ── */
+  #msgs { position:fixed; top:58px; left:10px; right:10px; z-index:9999; display:flex; flex-direction:column; gap:5px; pointer-events:none; }
+  .mm { padding:9px 13px; border-radius:11px; display:flex; align-items:center; gap:7px; font-size:0.78rem; font-weight:500; backdrop-filter:blur(12px); border:1px solid; animation:msgin 0.22s ease-out; pointer-events:auto; }
+  .mm.success { background:rgba(16,185,129,0.12); color:#6ee7b7; border-color:rgba(16,185,129,0.3); }
+  .mm.error   { background:rgba(244,63,94,0.12);  color:#fda4af; border-color:rgba(244,63,94,0.3); }
+  .mm.info    { background:rgba(14,165,233,0.12); color:#7dd3fc; border-color:rgba(14,165,233,0.3); }
+  .mm.loading { background:rgba(168,85,247,0.12); color:#d8b4fe; border-color:rgba(168,85,247,0.3); }
+  .mm.warning { background:rgba(245,158,11,0.12); color:#fcd34d; border-color:rgba(245,158,11,0.3); }
+  @keyframes msgin { from{transform:translateY(-8px);opacity:0} to{transform:none;opacity:1} }
 
-    /* ── Mensajes ── */
-    #msgs {
-      position: fixed; top: 58px; left: 10px; right: 10px;
-      z-index: 9999; display: flex; flex-direction: column; gap: 5px;
-      pointer-events: none;
-    }
-    .mmsg {
-      padding: 9px 13px; border-radius: 11px;
-      display: flex; align-items: center; gap: 7px;
-      font-size: 0.78rem; font-weight: 500;
-      backdrop-filter: blur(12px); border: 1px solid;
-      animation: msgin 0.22s ease-out; pointer-events: auto;
-    }
-    .mmsg.success { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
-    .mmsg.error   { background: rgba(244,63,94,0.12);  color: #fda4af; border-color: rgba(244,63,94,0.3); }
-    .mmsg.info    { background: rgba(14,165,233,0.12); color: #7dd3fc; border-color: rgba(14,165,233,0.3); }
-    .mmsg.loading { background: rgba(168,85,247,0.12); color: #d8b4fe; border-color: rgba(168,85,247,0.3); }
-    .mmsg.warning { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
-    @keyframes msgin { from { transform: translateY(-8px); opacity:0; } to { transform: none; opacity:1; } }
+  /* ── GALERÍA MODAL ── */
+  #gal-modal {
+    position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    backdrop-filter:blur(6px); z-index:3000;
+    display:none; align-items:center; justify-content:center;
+  }
+  #gal-modal.open { display:flex; }
+  .galcard {
+    background:var(--s2); border:1px solid var(--bmd); border-radius:22px;
+    padding:18px 15px 20px; width:96vw; max-width:560px;
+    max-height:88dvh; display:flex; flex-direction:column;
+    box-shadow:0 0 50px rgba(14,165,233,0.15);
+    overflow:hidden;
+  }
+  .galhdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-shrink:0; }
+  .galttl { font-weight:800; font-size:1rem; color:var(--text); }
+  .galx { background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:var(--rose); border-radius:8px; padding:5px 12px; font-size:0.78rem; cursor:pointer; }
 
-    /* ── Overlay genérico para modales del editor ── */
-    #mod-wrap {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
-      z-index: 3000; display: none;
-      align-items: flex-end; justify-content: center;
-    }
-    #mod-wrap.open { display: flex; }
-    #mod-wrap.center { align-items: center; }
-    .mod-card {
-      background: var(--s2); border: 1px solid var(--bmd);
-      border-radius: 22px 22px 0 0;
-      padding: 20px 17px calc(20px + var(--safe-b));
-      width: 100%; max-height: 88dvh; overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .mod-card.centered {
-      border-radius: 22px; max-width: 500px; width: 96vw;
-      padding: 20px 17px 20px;
-    }
-    .mod-ttl { font-weight: 800; font-size: 1rem; color: var(--text); margin-bottom: 12px; }
-    .mod-close {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);
-      color: var(--rose); font-size: 0.75rem;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-    }
-    .mod-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  #gal-search-wrap { flex-shrink:0; margin-bottom:8px; }
+  #gal-search {
+    width:100%; padding:10px 13px;
+    background:var(--s3); border:1px solid var(--bmd); border-radius:11px;
+    color:var(--text); font-size:0.86rem; outline:none;
+  }
+  #gal-search:focus { border-color:var(--accent); }
 
-    .mbtn-primary {
-      width: 100%; padding: 13px;
-      background: linear-gradient(135deg, var(--accent), #0284c7);
-      border: none; border-radius: 13px;
-      color: #fff; font-family: var(--ui); font-weight: 700;
-      font-size: 0.88rem; letter-spacing: 0.8px; text-transform: uppercase;
-      cursor: pointer; box-shadow: 0 3px 14px rgba(14,165,233,0.3);
-      margin-top: 6px;
-    }
-    .mbtn-sec {
-      width: 100%; padding: 11px;
-      background: transparent; border: 1px solid var(--bmd);
-      border-radius: 13px; color: var(--text); font-family: var(--ui);
-      font-weight: 600; font-size: 0.84rem; cursor: pointer; margin-top: 8px;
-    }
-    .finput {
-      width: 100%; padding: 12px 14px;
-      background: var(--s3); border: 1px solid var(--bmd);
-      border-radius: 12px; color: var(--text);
-      font-family: var(--mono); font-size: 0.86rem; outline: none;
-      margin-bottom: 0; transition: border-color 0.18s;
-    }
-    .finput:focus { border-color: var(--accent); }
-    .flbl {
-      display: block; font-family: var(--mono); font-size: 0.62rem;
-      color: var(--muted); letter-spacing: 0.5px;
-      margin-bottom: 4px; margin-top: 10px;
-    }
+  /* Botón buscar por imagen */
+  .galtools { display:flex; gap:8px; margin-bottom:8px; flex-shrink:0; }
+  #gal-imgbtn {
+    padding:8px 12px; border-radius:9px;
+    border:1px solid rgba(168,85,247,0.4); background:rgba(168,85,247,0.08);
+    color:var(--purple); font-size:0.75rem; font-weight:600; cursor:pointer;
+    white-space:nowrap; transition:all 0.14s; flex-shrink:0;
+  }
+  #gal-imgbtn:active { background:rgba(168,85,247,0.18); }
+  #gal-clearvs {
+    padding:8px 12px; border-radius:9px; display:none;
+    border:1px solid rgba(244,63,94,0.4); background:rgba(244,63,94,0.08);
+    color:var(--rose); font-size:0.75rem; font-weight:600; cursor:pointer;
+  }
 
-    /* Gallery grid */
-    #imgbb-designs-grid {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fill, minmax(85px,1fr)) !important;
-      gap: 8px !important;
-    }
-    #searchContainer input {
-      width: 100%; padding: 10px 13px; margin-bottom: 10px;
-      background: var(--s3); border: 1px solid var(--bmd);
-      border-radius: 11px; color: var(--text); font-size: 0.86rem; outline: none;
-    }
-    #searchContainer input:focus { border-color: var(--accent); }
-    #pagination { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    #pagination button {
-      padding: 6px 14px; border-radius: 8px;
-      background: var(--adim); border: 1px solid var(--bmd);
-      color: var(--accent); font-size: 0.75rem; cursor: pointer;
-    }
+  #gal-status { font-family:var(--mono); font-size:0.65rem; color:var(--muted); margin-bottom:6px; flex-shrink:0; min-height:1.2em; }
+  #gal-progress-wrap { height:3px; background:var(--s3); border-radius:2px; margin-bottom:8px; flex-shrink:0; display:none; overflow:hidden; }
+  #gal-progress-bar  { height:100%; background:var(--accent); border-radius:2px; width:0%; transition:width 0.2s; }
+
+  /* multiselect bar */
+  #gal-multibar { display:flex; align-items:center; gap:8px; min-height:30px; margin-bottom:6px; flex-shrink:0; flex-wrap:wrap; }
+  #gal-sel-count { font-family:var(--mono); font-size:0.7rem; color:var(--accent); font-weight:700; }
+  #gal-load-sel { padding:5px 14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.75rem; cursor:pointer; display:none; }
+  #gal-clear-sel { padding:5px 10px; background:transparent; border:1px solid rgba(244,63,94,0.35); color:var(--rose); border-radius:8px; font-size:0.75rem; cursor:pointer; display:none; }
+
+  #gal-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
+    gap:8px; overflow-y:auto; flex:1;
+    -webkit-overflow-scrolling:touch; padding-right:2px;
+  }
+  .gi {
+    background:var(--s3); border:2px solid var(--border);
+    border-radius:10px; aspect-ratio:1/1; overflow:hidden;
+    cursor:pointer; position:relative; transition:border-color 0.14s;
+    flex-shrink:0;
+  }
+  .gi.sel { border-color:var(--accent); }
+  .gi img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.3s; }
+  .gi img.loaded { opacity:1; }
+  .gi-name { position:absolute; bottom:0; left:0; right:0; padding:3px 5px; background:rgba(0,0,0,0.65); font-family:var(--mono); font-size:0.52rem; color:#e2e8f0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+  .gi-score { position:absolute; top:4px; left:4px; background:rgba(168,85,247,0.85); color:#fff; border-radius:5px; padding:1px 5px; font-size:0.52rem; font-family:var(--mono); }
+  .gi-chk { position:absolute; top:5px; right:5px; width:18px; height:18px; border-radius:50%; border:2px solid var(--accent); background:transparent; display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:#fff; transition:background 0.13s; }
+  .gi.sel .gi-chk { background:var(--accent); }
+
+  #gal-pag { display:flex; justify-content:center; gap:8px; margin-top:10px; flex-shrink:0; }
+  #gal-pag button { padding:6px 14px; border-radius:8px; background:var(--adim); border:1px solid var(--bmd); color:var(--accent); font-size:0.75rem; cursor:pointer; }
+  #gal-pag span { font-family:var(--mono); font-size:0.68rem; color:var(--muted); align-self:center; }
+
+  /* ── LOGIN ── */
+  #login-modal {
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse at 40% 30%,#0b1833 0%,#06080f 65%);
+    z-index:5000; display:none; align-items:center; justify-content:center;
+  }
+  #login-modal.open { display:flex; }
+  .login-card {
+    background:rgba(11,13,23,0.94); border:1px solid var(--bmd); border-radius:24px;
+    padding:28px 22px; width:min(92vw,360px);
+    box-shadow:0 0 50px rgba(14,165,233,0.18); animation:fiu 0.45s ease-out;
+  }
+  @keyframes fiu { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+  .login-logo { display:flex; align-items:center; gap:10px; margin-bottom:20px; justify-content:center; }
+  .login-badge { width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--indigo)); display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:1rem; box-shadow:0 0 16px rgba(14,165,233,0.4); }
+  .login-name  { font-weight:800; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase; color:var(--text); }
+  .login-sub   { font-family:var(--mono); font-size:0.6rem; color:var(--muted); }
+  .flbl { display:block; font-family:var(--mono); font-size:0.62rem; color:var(--muted); letter-spacing:0.5px; margin-bottom:4px; margin-top:10px; }
+  .fi { width:100%; padding:12px 14px; background:var(--s3); border:1px solid var(--bmd); border-radius:12px; color:var(--text); font-family:var(--mono); font-size:0.86rem; outline:none; transition:border-color 0.18s; }
+  .fi:focus { border-color:var(--accent); }
+  #l-error { min-height:1.2em; font-family:var(--mono); font-size:0.75rem; color:var(--rose); margin:6px 0; }
+  .mbpri { width:100%; padding:13px; background:linear-gradient(135deg,var(--accent),#0284c7); border:none; border-radius:13px; color:#fff; font-family:var(--ui); font-weight:700; font-size:0.88rem; letter-spacing:0.8px; text-transform:uppercase; cursor:pointer; box-shadow:0 3px 14px rgba(14,165,233,0.3); margin-top:6px; }
+  .mbsec { width:100%; padding:11px; background:transparent; border:1px solid var(--bmd); border-radius:13px; color:var(--text); font-family:var(--ui); font-weight:600; font-size:0.84rem; cursor:pointer; margin-top:8px; }
+  .lbtns { display:flex; gap:8px; margin-top:10px; }
+  .lbtn { flex:1; padding:10px; border-radius:12px; font-size:0.74rem; font-weight:600; cursor:pointer; text-align:center; }
+  .lbtn.g { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); color:var(--emerald); }
+  .lbtn.p { background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.3); color:var(--purple); }
   </style>
 </head>
 <body>
 
-<!-- ════════════════════════════
-     IFRAME DEL EDITOR BASE
-════════════════════════════ -->
+<!-- iframe editor base - dimensiones reales para evitar canvas taint -->
 <iframe id="editor-iframe" src="index.html"></iframe>
 
-<!-- ════════════════════════════
-     MENSAJES
-════════════════════════════ -->
+<!-- Mensajes -->
 <div id="msgs"></div>
 
-<!-- ════════════════════════════
-     BACKDROP
-════════════════════════════ -->
+<!-- Backdrop sheets -->
 <div id="backdrop"></div>
 
-<!-- ════════════════════════════
-     SHELL PRINCIPAL
-════════════════════════════ -->
+<!-- ════ SHELL ════ -->
 <div id="shell">
 
   <!-- HEADER -->
@@ -443,280 +337,269 @@
     <div class="hdr-logo">
       <div class="hdr-badge">DTF</div>
       <div>
-        <div class="hdr-name">EstampaHub</div>
+        <div class="hdr-title">EstampaHub</div>
         <div class="hdr-sub">Editor Pro · Móvil</div>
       </div>
     </div>
-    <div class="hdr-actions">
-      <button class="hdr-btn" id="btn-save" title="Guardar">💾</button>
-      <button class="hdr-btn accent" id="btn-profile" title="Perfil">👤</button>
+    <div class="hdr-btns">
+      <button class="hbtn" id="btn-save" title="Guardar sesión">💾</button>
+      <button class="hbtn accent" id="btn-profile" title="Mi perfil">👤</button>
     </div>
   </div>
 
-  <!-- CANVAS (espejo del editor) -->
-  <div id="canvas-area">
-    <canvas id="mirror-canvas"></canvas>
-    <div id="zoom-badge">100%</div>
-    <div id="sel-bar">
-      <span id="sel-info">Seleccionado</span>
-      <button class="sel-btn" id="sel-del">🗑️</button>
-      <button class="sel-btn" id="sel-desel">✕</button>
+  <!-- CANVAS -->
+  <div id="carea">
+    <canvas id="mc"></canvas>
+    <div id="zbadge">100%</div>
+    <div id="selbar">
+      <span id="sel-info">0×0 cm</span>
+      <button class="sbtn" id="sel-dup">⊕</button>
+      <button class="sbtn red" id="sel-del">🗑️</button>
+      <button class="sbtn" id="sel-x">✕</button>
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
+  <!-- NAV -->
   <nav id="nav">
-    <button class="ntab" data-sheet="sh-designs" id="nt-designs">
-      <span class="nicon">🖼️</span><span class="nlabel">Diseños</span>
-    </button>
-    <button class="ntab" data-sheet="sh-tools" id="nt-tools">
-      <span class="nicon">⚙️</span><span class="nlabel">Ajustar</span>
-    </button>
-    <button class="ntab ncenter" data-sheet="sh-add" id="nt-add">
-      <div class="nbadge">➕</div>
-      <span class="nlabel" style="margin-top:2px;">Añadir</span>
-    </button>
-    <button class="ntab" data-sheet="sh-canvas" id="nt-canvas">
-      <span class="nicon">🖼</span><span class="nlabel">Lienzo</span>
-    </button>
-    <button class="ntab" data-sheet="sh-export" id="nt-export">
-      <span class="nicon">💾</span><span class="nlabel">Exportar</span>
-    </button>
+    <button class="ntab" data-sh="sh-designs" id="nt-ds"><span class="ni">🖼️</span><span class="nl">Diseños</span></button>
+    <button class="ntab" data-sh="sh-tools" id="nt-tl"><span class="ni">⚙️</span><span class="nl">Ajustar</span></button>
+    <button class="ntab nc" data-sh="sh-add" id="nt-ad"><div class="nbadge">➕</div><span class="nl" style="margin-top:2px;">Añadir</span></button>
+    <button class="ntab" data-sh="sh-canvas" id="nt-cv"><span class="ni">🖼</span><span class="nl">Lienzo</span></button>
+    <button class="ntab" data-sh="sh-export" id="nt-ex"><span class="ni">💾</span><span class="nl">Exportar</span></button>
   </nav>
 </div>
 
-<!-- ════════════════════════════
-     SHEETS
-════════════════════════════ -->
+<!-- ════ SHEETS ════ -->
 
-<!-- Sheet: Añadir -->
+<!-- Añadir -->
 <div class="sheet" id="sh-add">
   <div class="sh-handle"></div>
-  <div class="sh-hdr">
-    <div class="sh-title">Añadir al lienzo</div>
-    <button class="sh-x" data-close="sh-add">✕</button>
-  </div>
+  <div class="sh-hdr"><div class="sh-title">Añadir al lienzo</div><button class="sh-x" data-close="sh-add">✕</button></div>
   <div class="sh-body">
     <div class="add-grid">
-      <div class="add-card hi" id="ac-upload"><span class="ac-icon">📷</span><span class="ac-lbl">Subir imagen</span></div>
-      <div class="add-card" id="ac-gallery"><span class="ac-icon">🖼️</span><span class="ac-lbl">Galería ImgBB</span></div>
-      <div class="add-card" id="ac-text"><span class="ac-icon">✏️</span><span class="ac-lbl">Texto</span></div>
+      <div class="add-card hi" id="ac-upload"><span class="ac-i">📷</span><span class="ac-l">Subir imagen</span></div>
+      <div class="add-card" id="ac-gallery"><span class="ac-i">🖼️</span><span class="ac-l">Galería ImgBB</span></div>
+      <div class="add-card" id="ac-text"><span class="ac-i">✏️</span><span class="ac-l">Texto</span></div>
     </div>
   </div>
 </div>
 
-<!-- Sheet: Diseños -->
+<!-- Diseños -->
 <div class="sheet" id="sh-designs">
   <div class="sh-handle"></div>
-  <div class="sh-hdr">
-    <div class="sh-title">Mis diseños</div>
-    <button class="sh-x" data-close="sh-designs">✕</button>
-  </div>
+  <div class="sh-hdr"><div class="sh-title">Mis diseños en el lienzo</div><button class="sh-x" data-close="sh-designs">✕</button></div>
   <div class="sh-body">
-    <div class="dsgrid" id="mob-ds-grid"><div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div></div>
-    <div style="margin-top:10px;">
-      <button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button>
-    </div>
+    <div class="dsgrid" id="ds-grid"><div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños. Usa "Añadir" para cargar.</div></div>
+    <div style="margin-top:10px;"><button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button></div>
   </div>
 </div>
 
-<!-- Sheet: Ajustar -->
+<!-- Herramientas -->
 <div class="sheet" id="sh-tools">
   <div class="sh-handle"></div>
-  <div class="sh-hdr">
-    <div class="sh-title">Ajustar diseño</div>
-    <button class="sh-x" data-close="sh-tools">✕</button>
-  </div>
+  <div class="sh-hdr"><div class="sh-title">Ajustar diseño</div><button class="sh-x" data-close="sh-tools">✕</button></div>
   <div class="sh-body">
-    <p class="sec-label">Transformar</p>
-    <div class="slider-row">
-      <span class="sl-lbl">Rotación</span>
-      <input type="range" class="mslider" id="sl-rot" min="0" max="360" value="0">
-      <span class="sl-val" id="sl-rot-v">0°</span>
-    </div>
-    <div class="slider-row">
-      <span class="sl-lbl">Opacidad</span>
-      <input type="range" class="mslider" id="sl-op" min="10" max="100" value="100">
-      <span class="sl-val" id="sl-op-v">100%</span>
-    </div>
+    <p class="slbl">Transformar</p>
+    <div class="sr"><span class="srl">Rotación</span><input type="range" class="ms" id="sl-rot" min="0" max="360" value="0"><span class="srv" id="sl-rot-v">0°</span></div>
+    <div class="sr"><span class="srl">Opacidad</span><input type="range" class="ms" id="sl-op" min="10" max="100" value="100"><span class="srv" id="sl-op-v">100%</span></div>
 
-    <p class="sec-label">Tamaño (cm)</p>
+    <p class="slbl">Tamaño (cm)</p>
     <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ANCHO</div>
-        <input type="number" class="ninput" id="sz-w" min="1" step="0.5" placeholder="0"></div>
-      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ALTO</div>
-        <input type="number" class="ninput" id="sz-h" min="1" step="0.5" placeholder="0"></div>
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ANCHO</div>
+        <input type="number" class="ni" id="sz-w" min="0.5" step="0.5" placeholder="0">
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ALTO</div>
+        <input type="number" class="ni" id="sz-h" min="0.5" step="0.5" placeholder="0">
+      </div>
     </div>
     <label style="display:flex;align-items:center;gap:6px;font-size:0.76rem;color:var(--muted);margin-bottom:9px;">
       <input type="checkbox" id="sz-lock" checked style="accent-color:var(--accent);"> Mantener proporción
     </label>
     <button class="pill grn" style="width:100%;" id="p-szapply">Aplicar tamaño</button>
 
-    <p class="sec-label">Herramientas</p>
-    <div class="pill-row">
+    <p class="slbl">Herramientas</p>
+    <div class="pr">
       <button class="pill" id="p-mirror">🪞 Espejo</button>
       <button class="pill amb" id="p-trim">✂️ Recortar</button>
     </div>
 
-    <p class="sec-label">Orden de capas</p>
-    <div class="pill-row">
+    <p class="slbl">Orden de capas</p>
+    <div class="pr">
       <button class="pill" id="p-sback">⤵️ Fondo</button>
       <button class="pill" id="p-back">⬇️ Atrás</button>
       <button class="pill" id="p-fwd">⬆️ Adelante</button>
       <button class="pill" id="p-front">⤴️ Frente</button>
     </div>
-    <div class="pill-row" style="margin-top:4px;">
+    <div class="pr" style="margin-top:4px;">
       <button class="pill red" id="p-remove" style="flex:1;">🗑️ Eliminar diseño seleccionado</button>
     </div>
 
-    <div class="info-box" style="margin-top:12px;">
-      <div class="ib-lbl">DIMENSIONES DEL DISEÑO</div>
-      <div class="ib-val" id="ib-size">0cm × 0cm</div>
+    <div class="ibox" style="margin-top:12px;">
+      <div class="il">DIMENSIONES DEL DISEÑO</div>
+      <div class="iv" id="ib-size">0cm × 0cm</div>
     </div>
   </div>
 </div>
 
-<!-- Sheet: Lienzo -->
+<!-- Lienzo -->
 <div class="sheet" id="sh-canvas">
   <div class="sh-handle"></div>
-  <div class="sh-hdr">
-    <div class="sh-title">Ajustar lienzo</div>
-    <button class="sh-x" data-close="sh-canvas">✕</button>
-  </div>
+  <div class="sh-hdr"><div class="sh-title">Ajustar lienzo</div><button class="sh-x" data-close="sh-canvas">✕</button></div>
   <div class="sh-body">
-    <p class="sec-label">Zoom</p>
-    <div class="slider-row">
-      <span class="sl-lbl">Zoom</span>
-      <input type="range" class="mslider" id="sl-zoom" min="20" max="200" value="100">
-      <span class="sl-val" id="sl-zoom-v">100%</span>
-    </div>
+    <p class="slbl">Zoom</p>
+    <div class="sr"><span class="srl">Zoom</span><input type="range" class="ms" id="sl-zoom" min="20" max="200" value="100"><span class="srv" id="sl-zoom-v">100%</span></div>
 
-    <p class="sec-label">Dimensiones</p>
+    <p class="slbl">Dimensiones</p>
     <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;">
-      <div style="flex:1;">
-        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ALTO (cm, máx 100)</div>
-        <input type="number" class="ninput" id="cv-h" min="10" max="100" step="0.5" value="100">
-      </div>
-      <button class="pill grn" style="margin-bottom:0;white-space:nowrap;" id="p-cvh">Aplicar</button>
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ALTO (cm, máx 100)</div><input type="number" class="ni" id="cv-h" min="10" max="100" step="0.5" value="100"></div>
+      <button class="pill grn" style="white-space:nowrap;" id="p-cvh">Aplicar</button>
     </div>
     <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);">Ancho fijo: 58 cm</div>
 
-    <p class="sec-label">Color de fondo</p>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <input type="color" id="cv-color" value="#ffffff" style="width:42px;height:42px;border-radius:10px;border:2px solid var(--bmd);cursor:pointer;padding:2px;">
-      <span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);">Solo visual (no afecta PNG)</span>
+    <p class="slbl">Color de fondo</p>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="color" id="cv-color" value="#ffffff" style="width:42px;height:42px;border-radius:10px;border:2px solid var(--bmd);cursor:pointer;padding:2px;flex-shrink:0;">
+      <span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);">Solo visual · PNG siempre transparente</span>
     </div>
 
-    <p class="sec-label">Precio estimado</p>
-    <div class="info-box">
-      <div class="ib-lbl">PRECIO APROX. IMPRESIÓN</div>
-      <div class="ib-val" id="ib-precio">$10.000 (mín.)</div>
-    </div>
+    <p class="slbl">Precio estimado</p>
+    <div class="ibox"><div class="il">PRECIO APROX. IMPRESIÓN</div><div class="iv" id="ib-precio">$10.000 (mín.)</div></div>
 
-    <p class="sec-label">Auto-ordenar</p>
+    <p class="slbl">Auto-ordenar</p>
     <button class="pill prp" style="width:100%;" id="p-pack">🧠 Ordenar diseños automáticamente</button>
   </div>
 </div>
 
-<!-- Sheet: Exportar -->
+<!-- Exportar -->
 <div class="sheet" id="sh-export">
   <div class="sh-handle"></div>
-  <div class="sh-hdr">
-    <div class="sh-title">Exportar montaje</div>
-    <button class="sh-x" data-close="sh-export">✕</button>
-  </div>
+  <div class="sh-hdr"><div class="sh-title">Exportar montaje</div><button class="sh-x" data-close="sh-export">✕</button></div>
   <div class="sh-body">
-    <p class="sec-label">Resolución de exportación</p>
-    <div class="pill-row" style="margin-bottom:14px;">
-      <button class="pill res-pill" data-dpi="300">300 DPI</button>
-      <button class="pill res-pill acc" data-dpi="150">150 DPI ★</button>
-      <button class="pill res-pill" data-dpi="72">72 DPI</button>
+    <p class="slbl">Resolución</p>
+    <div class="pr" style="margin-bottom:14px;">
+      <button class="pill rp" data-dpi="300">300 DPI</button>
+      <button class="pill rp acc" data-dpi="150">150 DPI ★</button>
+      <button class="pill rp" data-dpi="72">72 DPI</button>
     </div>
-    <div class="exp-opt" id="ex-png">
-      <div class="exp-ico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div>
-      <div><div class="exp-ttl">Descargar PNG</div><div class="exp-dsc">Con transparencia · Máxima calidad</div></div>
+    <div class="exopt" id="ex-png"><div class="exico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div><div><div class="extl">Descargar PNG</div><div class="exds">Con transparencia · Sin fondo</div></div></div>
+    <div class="exopt" id="ex-pdf"><div class="exico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div><div><div class="extl">Descargar PDF</div><div class="exds">Para imprenta · Dimensiones exactas</div></div></div>
+    <div class="exopt" id="ex-dtf"><div class="exico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div><div><div class="extl">Enviar pedido DTF</div><div class="exds">Enviar directamente a impresión</div></div></div>
+    <div class="exopt" id="ex-save"><div class="exico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div><div><div class="extl">Guardar sesión</div><div class="exds">Continuar el montaje después</div></div></div>
+    <div class="exopt" id="ex-load"><div class="exico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div><div><div class="extl">Cargar sesión guardada</div><div class="exds">Restaurar último montaje</div></div></div>
+  </div>
+</div>
+
+<!-- ════ GALERÍA MODAL ════ -->
+<div id="gal-modal">
+  <div class="galcard">
+    <div class="galhdr">
+      <span class="galttl">📁 Mis diseños ImgBB</span>
+      <button class="galx" id="gal-close">Cerrar</button>
     </div>
-    <div class="exp-opt" id="ex-pdf">
-      <div class="exp-ico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div>
-      <div><div class="exp-ttl">Descargar PDF</div><div class="exp-dsc">Para imprenta · Dimensiones exactas</div></div>
+
+    <div id="gal-search-wrap">
+      <input type="text" id="gal-search" placeholder="🔍 Buscar por nombre...">
     </div>
-    <div class="exp-opt" id="ex-dtf">
-      <div class="exp-ico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div>
-      <div><div class="exp-ttl">Enviar pedido DTF</div><div class="exp-dsc">Enviar directamente a impresión</div></div>
+
+    <div class="galtools">
+      <label id="gal-imgbtn">🖼️ Buscar por imagen <input type="file" id="gal-imgfile" accept="image/*" style="display:none;"></label>
+      <button id="gal-clearvs">✕ Quitar filtro</button>
     </div>
-    <div class="exp-opt" id="ex-save">
-      <div class="exp-ico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div>
-      <div><div class="exp-ttl">Guardar sesión</div><div class="exp-dsc">Continuar el montaje después</div></div>
+
+    <div id="gal-status">Cargando...</div>
+    <div id="gal-progress-wrap"><div id="gal-progress-bar"></div></div>
+
+    <div id="gal-multibar">
+      <span id="gal-sel-count" style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);">Clic = seleccionar · Doble clic = cargar</span>
+      <button id="gal-load-sel">⬆️ Cargar</button>
+      <button id="gal-clear-sel">✕</button>
     </div>
-    <div class="exp-opt" id="ex-load">
-      <div class="exp-ico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div>
-      <div><div class="exp-ttl">Cargar sesión guardada</div><div class="exp-dsc">Restaurar último montaje</div></div>
+
+    <div id="gal-grid"></div>
+    <div id="gal-pag"></div>
+  </div>
+</div>
+
+<!-- ════ LOGIN MODAL ════ -->
+<div id="login-modal">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-badge">DTF</div>
+      <div>
+        <div class="login-name">EstampaHub</div>
+        <div class="login-sub">Editor Pro · DTF</div>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:1.05rem;color:var(--text);">Bienvenido</div>
+    <div style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);margin-bottom:4px;">Ingresa tus credenciales</div>
+    <label class="flbl">USUARIO</label>
+    <input class="fi" type="text" id="l-user" placeholder="tu_usuario" autocomplete="username">
+    <label class="flbl">CONTRASEÑA</label>
+    <input class="fi" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+    <div id="l-error"></div>
+    <button class="mbpri" id="l-btn">Acceder al Editor</button>
+    <div class="lbtns">
+      <button class="lbtn g" id="l-dtf">📤 Enviar DTF</button>
+      <button class="lbtn p" id="l-oc">🧾 OC Termo</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════
-     MODAL GALERÍA
-════════════════════════════ -->
-<div id="mod-wrap" id="gal-modal">
-  <div class="mod-card centered">
-    <div class="mod-hdr">
-      <span class="mod-ttl">📁 Mis diseños ImgBB</span>
-      <button class="mod-close" id="close-gal">✕</button>
-    </div>
-    <div id="searchContainer"></div>
-    <div id="imgbb-designs-grid"></div>
-    <div id="pagination"></div>
-  </div>
-</div>
-
-<!-- ════════════════════════════
-     CONTROLLER JS
-════════════════════════════ -->
+<!-- Script -->
 <script>
 (function(){
-  /* ── Variables del editor (se llenan al cargar el iframe) ── */
-  let EW = null;   // editor iframe contentWindow
+  'use strict';
+
+  /* ══ ESTADO ══ */
+  let EW = null;        // editor iframe contentWindow
   let ready = false;
-  let mirrorRAF = null;
 
-  const mirrorCanvas = document.getElementById('mirror-canvas');
-  const mirrorCtx    = mirrorCanvas.getContext('2d');
+  /* ══ GALERÍA: estado propio ══ */
+  let allDes     = [];
+  let galPage    = 1;
+  const perPage  = 20;
+  let galSearch  = '';
+  let vsMode     = false;
+  let vsScores   = new Map();
+  let selItems   = new Set();
+  let galIO      = null;   // IntersectionObserver para lazy load
+  const histCache = new Map();
 
-  /* ════════════════════════════
+  /* ══ CANVAS ESPEJO ══ */
+  const mc    = document.getElementById('mc');
+  const mctx  = mc.getContext('2d');
+
+  /* ══════════════════════════════════
      MENSAJES
-  ════════════════════════════ */
+  ══════════════════════════════════ */
   function msg(text, type, ms) {
     const c = document.getElementById('msgs');
     const el = document.createElement('div');
-    el.className = `mmsg ${type||'info'}`;
+    el.className = `mm ${type||'info'}`;
     el.innerHTML = `<span>${text}</span>`;
     c.appendChild(el);
     const rm = () => { el.style.opacity='0'; setTimeout(()=>el.remove(),280); };
     el.addEventListener('click', rm);
-    if(ms !== 0) setTimeout(rm, ms||4000);
+    if(ms !== 0) setTimeout(rm, (ms == null ? 4000 : ms));
     return { remove: rm };
   }
 
-  /* ════════════════════════════
-     IFRAME LOAD
-  ════════════════════════════ */
+  /* ══════════════════════════════════
+     IFRAME
+  ══════════════════════════════════ */
   const iframe = document.getElementById('editor-iframe');
 
-  iframe.addEventListener('load', () => {
+  iframe.addEventListener('load', ()=>{
     try {
       EW = iframe.contentWindow;
-      // Esperar a que el editor base termine de inicializar
       waitForEditor();
-    } catch(e) {
-      msg('Error al cargar el editor base', 'error');
-      console.error(e);
-    }
+    } catch(e){ console.error('iframe load error:', e); }
   });
 
   function waitForEditor() {
     if(!EW) return;
-    // Verificar que las funciones core estén disponibles
     if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') {
       onEditorReady();
     } else {
@@ -726,139 +609,219 @@
 
   function onEditorReady() {
     ready = true;
-    console.log('✅ Editor base listo, conectando UI móvil');
 
-    // Parchar showMessage del editor para que use nuestros mensajes
-    EW.showMessage = (text, type, ms) => msg(text, type, ms);
+    // Parchar showMessage del editor
+    EW.showMessage = (text, type, ms) => {
+      const m = msg(text, type, ms);
+      return m;
+    };
 
-    // Configurar canvas espejo
-    setupMirrorCanvas();
+    // Canvas espejo
+    setupMirror();
 
-    // Conectar todos los botones
+    // Botones
     initButtons();
 
-    // Iniciar sincronización
+    // Sync loop
     syncLoop();
 
-    // Ocultar el login si el editor ya está desbloqueado
-    const lockOverlay = EW.document.getElementById('lock-overlay');
-    if(lockOverlay && lockOverlay.style.display !== 'none') {
-      showLoginMobile();
-    }
+    // Login: verificar si necesita autenticarse
+    checkLogin();
 
-    // Observar cuando el editor abre la galería
-    patchGalleryOverlay();
+    // Parchear botón galería del editor
+    patchEditorGallery();
 
-    msg('✅ Editor listo', 'success', 2000);
+    // Parchar botones de profile/dtf overlay del editor
+    patchEditorOverlays();
+
+    msg('✅ Editor listo','success',2000);
   }
 
-  /* ════════════════════════════
+  /* ══════════════════════════════════
+     LOGIN — PROPIO (no depende del iframe)
+  ══════════════════════════════════ */
+  function checkLogin() {
+    // Verificar en el sessionStorage DEL IFRAME si ya inició sesión
+    try {
+      const unlocked = EW.sessionStorage.getItem('dtf_unlocked');
+      if(unlocked !== '1') {
+        document.getElementById('login-modal').classList.add('open');
+      }
+    } catch(e) {
+      // Si no hay acceso al sessionStorage del iframe, mostrar login
+      document.getElementById('login-modal').classList.add('open');
+    }
+  }
+
+  function hideLogin() {
+    document.getElementById('login-modal').classList.remove('open');
+  }
+
+  // Botón ingresar
+  document.getElementById('l-btn').addEventListener('click', doLogin);
+  document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+  async function doLogin() {
+    const usuario  = document.getElementById('l-user').value.trim();
+    const password = document.getElementById('l-pass').value.trim();
+    const errEl    = document.getElementById('l-error');
+
+    if(!usuario || !password) { errEl.textContent = 'Completa usuario y contraseña'; return; }
+    errEl.textContent = 'Verificando...';
+
+    try {
+      const params = new URLSearchParams();
+      params.append('action', 'validar_login');
+      params.append('usuario', usuario);
+      params.append('contrasena', password);
+
+      const res = await fetch(
+        'https://script.google.com/macros/s/AKfycbyXg2frQnrPl0bSRNretUUBPrr2j4_-NZE9C4AsjMogOKlhA0Ck14IVM7RLq5hsMESsNQ/exec',
+        { method:'POST', body:params }
+      );
+      const result = await res.json();
+
+      if(result.success === true) {
+        // Guardar en el sessionStorage del IFRAME
+        EW.sessionStorage.setItem('dtf_unlocked','1');
+
+        // Guardar userData en localStorage del IFRAME
+        const r = result;
+        const ui = {
+          usuario,
+          nombre:      r.nombre      || r.Nombre      || 'Usuario',
+          correo:      r.correo      || r.Correo      || '',
+          edad:        r.edad        || r.Edad        || '',
+          genero:      r.genero      || r.genero      || '',
+          membresia:   r.membresia   || r.Membresia   || 'Básica',
+          fotoPerfil:  r.fotoPerfil  || r.fotoperfil  || 'https://via.placeholder.com/80',
+          fechaInicio: r.fechaInicio || r['fecha de inicio del plan'] || 'N/A',
+          fechaFin:    r.fechaFin    || r['fecha final del plan']     || 'N/A'
+        };
+        EW.localStorage.setItem('userData', JSON.stringify(ui));
+
+        // También desbloquear el app-root del iframe
+        try { EW.unlock?.(); } catch(e){}
+
+        hideLogin();
+        msg(`🔓 Bienvenido, ${ui.nombre}`,'success',3000);
+      } else {
+        errEl.textContent = result.message || 'Usuario o contraseña incorrectos';
+      }
+    } catch(e) {
+      errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+      console.error(e);
+    }
+  }
+
+  // Botones secundarios del login
+  document.getElementById('l-dtf').addEventListener('click', ()=>{
+    hideLogin();
+    const ov = EW?.document?.getElementById('dtf-overlay');
+    if(ov) ov.style.display = 'flex';
+  });
+  document.getElementById('l-oc').addEventListener('click', ()=>{
+    hideLogin();
+    const ov = EW?.document?.getElementById('oc-overlay');
+    if(ov) ov.style.display = 'flex';
+  });
+
+  /* ══════════════════════════════════
      CANVAS ESPEJO
-  ════════════════════════════ */
-  function setupMirrorCanvas() {
-    const editorCanvas = EW.document.getElementById('canvas');
-    if(!editorCanvas) return;
-
-    // Sincronizar dimensiones
-    mirrorCanvas.width  = editorCanvas.width;
-    mirrorCanvas.height = editorCanvas.height;
-
-    // Ajustar tamaño visual al viewport
+  ══════════════════════════════════ */
+  function setupMirror() {
+    const ec = EW.document.getElementById('canvas');
+    if(!ec) return;
+    mc.width  = ec.width;
+    mc.height = ec.height;
     fitMirror();
     window.addEventListener('resize', fitMirror);
 
-    // Iniciar loop de espejado
-    function loop() {
-      if(!ready) { mirrorRAF = requestAnimationFrame(loop); return; }
-      try {
-        const ec = EW.document.getElementById('canvas');
-        if(ec) {
-          if(mirrorCanvas.width !== ec.width || mirrorCanvas.height !== ec.height) {
-            mirrorCanvas.width  = ec.width;
-            mirrorCanvas.height = ec.height;
-            fitMirror();
+    // RAF loop
+    (function loop() {
+      if(ready) {
+        try {
+          const c = EW.document.getElementById('canvas');
+          if(c) {
+            if(mc.width !== c.width || mc.height !== c.height) {
+              mc.width  = c.width;
+              mc.height = c.height;
+              fitMirror();
+            }
+            mctx.clearRect(0, 0, mc.width, mc.height);
+            mctx.drawImage(c, 0, 0);
           }
-          mirrorCtx.clearRect(0,0,mirrorCanvas.width,mirrorCanvas.height);
-          mirrorCtx.drawImage(ec, 0, 0);
-        }
-      } catch(e) {}
-      mirrorRAF = requestAnimationFrame(loop);
-    }
-    loop();
+        } catch(e) {}
+      }
+      requestAnimationFrame(loop);
+    })();
 
-    // Redirigir eventos táctiles al canvas original
-    setupTouchForwarding(editorCanvas);
+    setupTouch(ec);
   }
 
   function fitMirror() {
-    const area = document.getElementById('canvas-area');
-    if(!area || !mirrorCanvas.width) return;
-    const aw = area.clientWidth  - 20;
-    const ah = area.clientHeight - 20;
-    const sc = Math.min(aw / mirrorCanvas.width, ah / mirrorCanvas.height, 1);
-    mirrorCanvas.style.width  = Math.round(mirrorCanvas.width  * sc) + 'px';
-    mirrorCanvas.style.height = Math.round(mirrorCanvas.height * sc) + 'px';
+    const a = document.getElementById('carea');
+    if(!a || !mc.width) return;
+    const sw = (a.clientWidth  - 20) / mc.width;
+    const sh = (a.clientHeight - 20) / mc.height;
+    const sc = Math.min(sw, sh, 1);
+    mc.style.width  = Math.round(mc.width  * sc) + 'px';
+    mc.style.height = Math.round(mc.height * sc) + 'px';
   }
 
-  /* ════════════════════════════
-     REENVIAR TOUCH → CANVAS EDITOR
-  ════════════════════════════ */
-  function setupTouchForwarding(editorCanvas) {
-    function getEditorPoint(touch) {
-      const mr = mirrorCanvas.getBoundingClientRect();
-      const scaleX = mirrorCanvas.width  / mr.width;
-      const scaleY = mirrorCanvas.height / mr.height;
+  /* ══════════════════════════════════
+     TOUCH FORWARDING
+  ══════════════════════════════════ */
+  function setupTouch(ec) {
+    // Coordenadas: mirror → editor canvas
+    function toEditor(touch) {
+      const mr  = mc.getBoundingClientRect();
+      const scx = mc.width  / mr.width;
+      const scy = mc.height / mr.height;
+      const er  = ec.getBoundingClientRect();
       return {
-        clientX: editorCanvas.getBoundingClientRect().left + (touch.clientX - mr.left) * scaleX / (mirrorCanvas.width / editorCanvas.width),
-        clientY: editorCanvas.getBoundingClientRect().top  + (touch.clientY - mr.top)  * scaleY / (mirrorCanvas.height / editorCanvas.height),
+        clientX: er.left + (touch.clientX - mr.left) * scx,
+        clientY: er.top  + (touch.clientY - mr.top)  * scy,
       };
     }
-
-    function forward(e, type) {
+    function fwd(e, type) {
       e.preventDefault();
       const t = e.touches[0] || e.changedTouches[0];
       if(!t) return;
-      const pt = getEditorPoint(t);
-      try {
-        const me = new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true });
-        editorCanvas.dispatchEvent(me);
-      } catch(err) {}
+      const pt = toEditor(t);
+      ec.dispatchEvent(new MouseEvent(type, { clientX:pt.clientX, clientY:pt.clientY, bubbles:true }));
     }
 
-    mirrorCanvas.addEventListener('touchstart',  e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
-    mirrorCanvas.addEventListener('touchmove',   e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
-    mirrorCanvas.addEventListener('touchend',    e => forward(e,'mouseup'),   { passive: false });
-    mirrorCanvas.addEventListener('touchcancel', e => forward(e,'mouseleave'), { passive: false });
+    mc.addEventListener('touchstart',  e => { if(e.touches.length===1) fwd(e,'mousedown'); }, {passive:false});
+    mc.addEventListener('touchmove',   e => { if(e.touches.length===1) fwd(e,'mousemove'); e.preventDefault(); }, {passive:false});
+    mc.addEventListener('touchend',    e => fwd(e,'mouseup'),    {passive:false});
+    mc.addEventListener('touchcancel', e => fwd(e,'mouseleave'), {passive:false});
 
-    // Pinch zoom (2 dedos)
-    let lastPinchDist = 0;
-    mirrorCanvas.addEventListener('touchmove', e => {
-      if(e.touches.length === 2) {
-        e.preventDefault();
-        const d = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        if(lastPinchDist) {
-          const delta = d - lastPinchDist;
-          const sl = EW.document.getElementById('zoom-slider');
-          if(sl) {
-            const nv = Math.max(20, Math.min(200, parseInt(sl.value)+( delta>0?5:-5)));
-            sl.value = nv;
-            sl.dispatchEvent(new Event('input'));
-            document.getElementById('sl-zoom').value = nv;
-            document.getElementById('sl-zoom-v').textContent = nv + '%';
-          }
+    // Pinch zoom
+    let pDist = 0;
+    mc.addEventListener('touchmove', e => {
+      if(e.touches.length !== 2) return;
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      if(pDist) {
+        const delta = d - pDist;
+        const sl = EW.document.getElementById('zoom-slider');
+        if(sl) {
+          const nv = Math.max(20, Math.min(200, parseInt(sl.value) + (delta>0 ? 5 : -5)));
+          sl.value = nv;
+          sl.dispatchEvent(new Event('input'));
+          const msl = document.getElementById('sl-zoom');
+          if(msl){ msl.value = nv; document.getElementById('sl-zoom-v').textContent = nv+'%'; }
         }
-        lastPinchDist = d;
       }
-    }, { passive: false });
-    mirrorCanvas.addEventListener('touchend', () => { lastPinchDist = 0; });
+      pDist = d;
+    }, {passive:false});
+    mc.addEventListener('touchend', ()=>{ pDist=0; });
   }
 
-  /* ════════════════════════════
+  /* ══════════════════════════════════
      SHEETS
-  ════════════════════════════ */
+  ══════════════════════════════════ */
   let activeSheet = null;
 
   function openSheet(id) {
@@ -868,29 +831,20 @@
     sh.classList.add('open');
     document.getElementById('backdrop').classList.add('show');
     activeSheet = id;
-    if(id === 'sh-designs') refreshDesignsGrid();
-    if(id === 'sh-tools')   syncToolsSliders();
+    if(id==='sh-designs') refreshDsGrid();
+    if(id==='sh-tools')   syncSliders();
   }
-
   function closeSheet(id) {
-    const sh = document.getElementById(id);
-    if(sh) sh.classList.remove('open');
+    document.getElementById(id)?.classList.remove('open');
     document.getElementById('backdrop').classList.remove('show');
     document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
     activeSheet = null;
   }
-
-  document.getElementById('backdrop').addEventListener('click', ()=>{
-    if(activeSheet) closeSheet(activeSheet);
-  });
-
-  document.querySelectorAll('[data-close]').forEach(btn=>{
-    btn.addEventListener('click',()=>{ closeSheet(btn.dataset.close); });
-  });
-
+  document.getElementById('backdrop').addEventListener('click',()=>{ if(activeSheet) closeSheet(activeSheet); });
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeSheet(b.dataset.close)));
   document.querySelectorAll('.ntab').forEach(tab=>{
     tab.addEventListener('click',()=>{
-      const id = tab.dataset.sheet;
+      const id=tab.dataset.sh;
       document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');
       if(activeSheet===id){ closeSheet(id); return; }
@@ -898,103 +852,385 @@
     });
   });
 
-  /* ════════════════════════════
-     PARCHEAR GALERÍA DEL EDITOR
-  ════════════════════════════ */
-  function patchGalleryOverlay() {
-    // Cuando gallery.js abre el overlay del editor, lo redirigimos a nuestro modal
-    const editorOverlay = EW.document.getElementById('imgbb-gallery-overlay');
-    if(!editorOverlay) return;
+  /* ══════════════════════════════════
+     GALERÍA — RENDERIZADO PROPIO
+  ══════════════════════════════════ */
+  function openGallery() {
+    document.getElementById('gal-modal').classList.add('open');
+    galPage=1; galSearch=''; vsMode=false; vsScores.clear(); selItems.clear();
+    document.getElementById('gal-search').value='';
+    document.getElementById('gal-clearvs').style.display='none';
+    document.getElementById('gal-load-sel').style.display='none';
+    document.getElementById('gal-clear-sel').style.display='none';
+    document.getElementById('gal-sel-count').textContent='Clic = seleccionar · Doble clic = cargar';
 
-    // Observar cambios de display
-    const obs = new MutationObserver(muts => {
-      muts.forEach(m => {
-        if(m.attributeName === 'style') {
-          const display = editorOverlay.style.display;
-          const mod = document.getElementById('mod-wrap');
-          if(display !== 'none' && display !== '') {
-            // El editor abrió la galería - mostramos el nuestro y movemos el contenido
-            moveGalleryContent();
-            mod.classList.add('open');
-            mod.classList.add('center');
-            // Ocultar el del editor
-            editorOverlay.style.display = 'none';
-          }
-        }
-      });
-    });
-    obs.observe(editorOverlay, { attributes: true });
-
-    // Botón cerrar del modal móvil
-    document.getElementById('close-gal').addEventListener('click', ()=>{
-      document.getElementById('mod-wrap').classList.remove('open','center');
-    });
-  }
-
-  function moveGalleryContent() {
-    // Mover los elementos de búsqueda y grid del editor a nuestro modal
-    const editorGrid   = EW.document.getElementById('imgbb-designs-grid');
-    const editorSearch = EW.document.getElementById('searchContainer');
-    const editorPag    = EW.document.getElementById('pagination');
-    const myGrid       = document.getElementById('imgbb-designs-grid');
-    const mySearch     = document.getElementById('searchContainer');
-    const myPag        = document.getElementById('pagination');
-
-    if(editorGrid   && myGrid)   { myGrid.innerHTML   = editorGrid.innerHTML; }
-    if(editorSearch && mySearch) { mySearch.innerHTML  = editorSearch.innerHTML; }
-    if(editorPag    && myPag)    { myPag.innerHTML     = editorPag.innerHTML; }
-
-    // Reenviar clicks de items al editor
-    myGrid.querySelectorAll('[data-url],.gal-item').forEach(item=>{
-      item.addEventListener('click', ()=>{
-        const url = item.dataset.url;
-        if(!url) return;
-        // Llamar loadOne del gallery del editor
-        if(typeof EW.loadOne === 'function') EW.loadOne(url);
-        else if(typeof EW.loadSingleDesign === 'function') EW.loadSingleDesign(url);
-        document.getElementById('mod-wrap').classList.remove('open','center');
-      });
-    });
-
-    // Sincronizar búsqueda
-    const inp = mySearch.querySelector('input');
-    const origInp = EW.document.getElementById('searchInput');
-    if(inp && origInp) {
-      inp.addEventListener('input', e => {
-        origInp.value = e.target.value;
-        origInp.dispatchEvent(new Event('input'));
-        // Resincronizar grid
-        setTimeout(moveGalleryContent, 300);
-      });
+    // Cargar datos: si el editor ya los tiene usar esos, si no fetch propio
+    if(EW && EW.allDesigns && EW.allDesigns.length > 0) {
+      allDes = EW.allDesigns;
+      renderGal();
+      document.getElementById('gal-status').textContent = `${allDes.length} diseños disponibles`;
+    } else {
+      loadGalData();
     }
-
-    // Paginación
-    myPag.querySelectorAll('button').forEach((btn,i)=>{
-      const origBtns = editorPag ? editorPag.querySelectorAll('button') : [];
-      if(origBtns[i]) {
-        btn.addEventListener('click', ()=>{
-          origBtns[i].click();
-          setTimeout(moveGalleryContent, 300);
-        });
-      }
-    });
   }
 
-  /* ════════════════════════════
-     GRID DE DISEÑOS
-  ════════════════════════════ */
-  function refreshDesignsGrid() {
-    const grid = document.getElementById('mob-ds-grid');
-    if(!grid || !EW) return;
-    const ds = EW.designs;
-    if(!ds || !ds.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.74rem;color:var(--muted);">Sin diseños. Usa "Añadir" para cargar.</div>';
+  async function loadGalData() {
+    setGalStatus('Cargando diseños...');
+    try {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbz2PEEGbuX_jHPqye8a4qaheFUyfdxsyj8j5DZB-2St_7pi47RM1wPG_P-TvJGzsiT4XQ/exec');
+      allDes = await res.json();
+      if(EW) EW.allDesigns = allDes;
+      setGalStatus(`${allDes.length} diseños cargados`);
+      renderGal();
+    } catch(e) {
+      setGalStatus('Error al cargar. Verifica la conexión.');
+    }
+  }
+
+  function setGalStatus(t) {
+    document.getElementById('gal-status').textContent = t;
+  }
+
+  function getFilteredList() {
+    const term = galSearch.toLowerCase().trim();
+    let list = allDes.filter(d => {
+      if(!term) return true;
+      const n = (d.nombre||d.Nombre||'').toLowerCase();
+      return n.includes(term);
+    });
+    if(vsMode && vsScores.size>0) {
+      list = [...list].sort((a,b)=>(vsScores.get(a.url)||999)-(vsScores.get(b.url)||999));
+    }
+    return list;
+  }
+
+  function renderGal() {
+    const grid = document.getElementById('gal-grid');
+    if(!grid) return;
+
+    // Desconectar observer anterior
+    if(galIO) galIO.disconnect();
+
+    grid.innerHTML = '';
+
+    const list  = getFilteredList();
+    const total = Math.ceil(list.length / perPage);
+    const page  = list.slice((galPage-1)*perPage, galPage*perPage);
+
+    if(!page.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin resultados</div>';
+      renderGalPag(total);
       return;
     }
-    grid.innerHTML = '';
+
+    // IntersectionObserver para lazy load
+    galIO = new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => {
+        if(!e.isIntersecting) return;
+        obs.unobserve(e.target);
+        const img = e.target.querySelector('img[data-src]');
+        if(img) {
+          img.src = img.dataset.src;
+          img.onload  = ()=>img.classList.add('loaded');
+          img.onerror = ()=>img.classList.add('loaded');
+          delete img.dataset.src;
+        }
+      });
+    }, { rootMargin:'80px', root: grid });
+
+    page.forEach(d => {
+      const url   = d.url;
+      const isSel = selItems.has(url);
+      const sc    = vsScores.get(url);
+
+      const el = document.createElement('div');
+      el.className = 'gi' + (isSel?' sel':'');
+
+      const pct = (sc != null && sc < 998)
+        ? Math.round(Math.max(0, 1 - (sc/1.5)) * 100) : 0;
+
+      el.innerHTML = `
+        <img data-src="${url}" alt="${d.nombre||''}">
+        <div class="gi-name">${d.nombre||'—'}</div>
+        ${pct>0?`<div class="gi-score">${pct}%</div>`:''}
+        <div class="gi-chk">${isSel?'✓':''}</div>`;
+
+      // Clic simple: toggle selección (SIN re-render para no romper lazy load)
+      el.addEventListener('click', ()=>{
+        if(selItems.has(url)) { selItems.delete(url); el.classList.remove('sel'); el.querySelector('.gi-chk').textContent=''; }
+        else                  { selItems.add(url);    el.classList.add('sel');    el.querySelector('.gi-chk').textContent='✓'; }
+        updateGalMultibar();
+      });
+
+      // Doble clic: cargar directo
+      el.addEventListener('dblclick', e => {
+        e.stopImmediatePropagation();
+        loadGalOne(url);
+      });
+
+      galIO.observe(el);
+      grid.appendChild(el);
+    });
+
+    renderGalPag(total);
+    setGalStatus(`${list.length} diseño${list.length!==1?'s':''} · Pág. ${galPage}/${total||1}`);
+  }
+
+  function renderGalPag(total) {
+    const pag = document.getElementById('gal-pag');
+    pag.innerHTML = '';
+    if(total<=1) return;
+    if(galPage>1) {
+      const b=document.createElement('button');
+      b.textContent='← Ant.';
+      b.onclick=()=>{ galPage--; renderGal(); };
+      pag.appendChild(b);
+    }
+    const sp=document.createElement('span');
+    sp.textContent=`${galPage}/${total}`;
+    pag.appendChild(sp);
+    if(galPage<total) {
+      const b=document.createElement('button');
+      b.textContent='Sig. →';
+      b.onclick=()=>{ galPage++; renderGal(); };
+      pag.appendChild(b);
+    }
+  }
+
+  function updateGalMultibar() {
+    const n = selItems.size;
+    const ls = document.getElementById('gal-load-sel');
+    const cs = document.getElementById('gal-clear-sel');
+    const sc = document.getElementById('gal-sel-count');
+    if(n===0){
+      ls.style.display='none'; cs.style.display='none';
+      sc.textContent='Clic = seleccionar · Doble clic = cargar';
+    } else {
+      ls.style.display='inline-block'; cs.style.display='inline-block';
+      sc.textContent=`${n} seleccionado(s)`;
+    }
+  }
+
+  // Cargar uno
+  function loadGalOne(url) {
+    const m = msg('Cargando...','loading',0);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>{
+      try {
+        const t  = EW.trimTransparentPixels(img);
+        const id = 'gal-'+Date.now();
+        const d  = new EW.Design(id, t);
+        d.scale  = Math.min(1, Math.min((EW.canvas.width-40)/d.width, (EW.canvas.height-40)/d.height));
+        EW.designs.push(d);
+        EW.window.designs = EW.designs;
+        EW.selectedDesignId = id;
+        EW.updateDesignsList?.(); EW.updateControls?.(); EW.drawCanvas?.();
+        m.remove();
+        msg('✅ Diseño cargado','success',1800);
+        closeGallery();
+      } catch(e){ m.remove(); msg('Error: '+e.message,'error'); }
+    };
+    img.onerror = ()=>{ m.remove(); msg('No se pudo cargar','error'); };
+    img.src = url;
+  }
+
+  // Cargar seleccionados
+  async function loadGalSel() {
+    const urls = Array.from(selItems);
+    if(!urls.length) return;
+    const m = msg(`Cargando ${urls.length} diseño(s)...`,'loading',0);
+    let ok = 0;
+    for(const url of urls) {
+      await new Promise(res=>{
+        const img=new Image(); img.crossOrigin='anonymous';
+        img.onload=()=>{
+          try {
+            const t=EW.trimTransparentPixels(img);
+            const id='gal-'+Date.now()+Math.random().toString(36).slice(2,5);
+            const d=new EW.Design(id,t);
+            d.scale=Math.min(1,Math.min((EW.canvas.width-40)/d.width,(EW.canvas.height-40)/d.height));
+            EW.designs.push(d); EW.window.designs=EW.designs;
+            EW.selectedDesignId=id; ok++;
+          } catch(e){}
+          res();
+        };
+        img.onerror=()=>res();
+        img.src=url;
+      });
+    }
+    EW.updateDesignsList?.(); EW.updateControls?.(); EW.drawCanvas?.();
+    m.remove();
+    msg(`✅ ${ok} diseño(s) cargados`,'success',2500);
+    closeGallery();
+  }
+
+  function closeGallery() {
+    document.getElementById('gal-modal').classList.remove('open');
+    selItems.clear(); updateGalMultibar();
+  }
+
+  // Búsqueda por texto
+  document.getElementById('gal-search').addEventListener('input', e=>{
+    galSearch = e.target.value; galPage=1; renderGal();
+  });
+
+  // Botón cerrar galería
+  document.getElementById('gal-close').addEventListener('click', closeGallery);
+
+  // Cargar seleccionados
+  document.getElementById('gal-load-sel').addEventListener('click', loadGalSel);
+  document.getElementById('gal-clear-sel').addEventListener('click',()=>{
+    selItems.clear(); updateGalMultibar();
+    document.querySelectorAll('.gi.sel').forEach(el=>{ el.classList.remove('sel'); el.querySelector('.gi-chk').textContent=''; });
+  });
+
+  /* ── BÚSQUEDA VISUAL ── */
+  document.getElementById('gal-imgfile').addEventListener('change', e=>{
+    const file=e.target.files[0]; if(!file) return;
+    runVS(file); e.target.value='';
+  });
+  document.getElementById('gal-clearvs').addEventListener('click',()=>{
+    vsMode=false; vsScores.clear(); galPage=1;
+    document.getElementById('gal-clearvs').style.display='none';
+    document.getElementById('gal-progress-wrap').style.display='none';
+    renderGal();
+  });
+
+  function getHist(img, size, bins) {
+    try {
+      const c=document.createElement('canvas'); c.width=size; c.height=size;
+      const x=c.getContext('2d'); x.drawImage(img,0,0,size,size);
+      const d=x.getImageData(0,0,size,size).data;
+      const h=new Float32Array(bins*3); const n=size*size;
+      for(let i=0;i<d.length;i+=4){
+        if(d[i+3]<30) continue;
+        h[Math.floor(d[i]  /256*bins)]      +=1;
+        h[bins  +Math.floor(d[i+1]/256*bins)]+=1;
+        h[bins*2+Math.floor(d[i+2]/256*bins)]+=1;
+      }
+      for(let i=0;i<h.length;i++) h[i]/=n;
+      return h;
+    } catch(e){ return null; }
+  }
+  function histDist(a,b){ if(!a||!b) return 999; let d=0; for(let i=0;i<a.length;i++){const x=a[i]-b[i];d+=x*x;} return Math.sqrt(d); }
+
+  async function runVS(file) {
+    vsScores.clear(); vsMode=false;
+    const pw = document.getElementById('gal-progress-wrap');
+    const pb = document.getElementById('gal-progress-bar');
+    pw.style.display='block'; pb.style.width='5%';
+    setGalStatus('Analizando imagen...');
+
+    let qImg;
+    try {
+      qImg = await new Promise((res,rej)=>{ const i=new Image(); const u=URL.createObjectURL(file); i.onload=()=>{URL.revokeObjectURL(u);res(i);}; i.onerror=rej; i.src=u; });
+    } catch(e){ setGalStatus('Error al cargar la imagen'); pw.style.display='none'; return; }
+
+    const qH8  = getHist(qImg,8,4);
+    const qH16 = getHist(qImg,16,8);
+
+    const list = allDes.slice(0, Math.min(allDes.length, 300));
+    const total = list.length;
+    let done = 0;
+
+    const BATCH=5;
+    for(let i=0;i<list.length;i+=BATCH) {
+      const batch=list.slice(i,i+BATCH);
+      await Promise.all(batch.map(d=>new Promise(res=>{
+        if(histCache.has(d.url)) {
+          const h=histCache.get(d.url);
+          vsScores.set(d.url, h?histDist(qH16,h):999);
+          done++; res(); return;
+        }
+        const img=new Image(); img.crossOrigin='anonymous';
+        img.onload=()=>{
+          const h8=getHist(img,8,4);
+          if(h8 && histDist(qH8,h8)>0.6){ vsScores.set(d.url,999); done++; res(); return; }
+          const h16=getHist(img,16,8);
+          histCache.set(d.url,h16);
+          vsScores.set(d.url,h16?histDist(qH16,h16):999);
+          done++; res();
+        };
+        img.onerror=()=>{ vsScores.set(d.url,999); done++; res(); };
+        img.src=d.url;
+      })));
+      pb.style.width=`${Math.round((done/total)*95+5)}%`;
+    }
+
+    allDes.forEach(d=>{ if(!vsScores.has(d.url)) vsScores.set(d.url,998); });
+    vsMode=true; galPage=1;
+    document.getElementById('gal-clearvs').style.display='inline-block';
+    setGalStatus(`Mostrando diseños más similares (${done} comparados)`);
+    pb.style.width='100%';
+    setTimeout(()=>pw.style.display='none',600);
+    renderGal();
+  }
+
+  /* ══════════════════════════════════
+     PARCHEAR BOTÓN GALERÍA DEL EDITOR
+  ══════════════════════════════════ */
+  function patchEditorGallery() {
+    if(!EW) return;
+    // Interceptar el botón de galería del editor para abrir nuestra versión
+    const btn = EW.document.getElementById('open-imgbb-gallery');
+    if(btn) {
+      const clone = btn.cloneNode(true);
+      btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', e=>{ e.stopImmediatePropagation(); openGallery(); });
+    }
+    // También el botón de la toolbar
+    const tbBtn = EW.document.getElementById('tb-imgbb-btn');
+    if(tbBtn) tbBtn.addEventListener('click', e=>{ e.stopImmediatePropagation(); openGallery(); });
+  }
+
+  /* ══════════════════════════════════
+     PARCHEAR OVERLAYS DEL EDITOR
+     (profile, dtf, oc para que se vean en mobile)
+  ══════════════════════════════════ */
+  function patchEditorOverlays() {
+    if(!EW) return;
+    // Mover overlays del editor al documento mobile
+    ['profile-overlay','dtf-overlay','oc-overlay'].forEach(id=>{
+      const el = EW.document.getElementById(id);
+      if(!el) return;
+      // Observar: cuando el editor los muestre, los mostramos nosotros
+      new MutationObserver(()=>{
+        if(el.style.display && el.style.display!=='none') {
+          // Clonar y mostrar en mobile context si no existe ya
+          let mob = document.getElementById('mob-'+id);
+          if(!mob) {
+            mob = el.cloneNode(true);
+            mob.id = 'mob-'+id;
+            mob.style.position = 'fixed';
+            mob.style.zIndex   = '6000';
+            document.body.appendChild(mob);
+            // Botones de cierre
+            mob.querySelectorAll('[id*="close"]').forEach(b=>{
+              b.addEventListener('click',()=>{ mob.style.display='none'; el.style.display='none'; });
+            });
+          }
+          mob.style.display = el.style.display;
+          el.style.display  = 'none';
+        }
+      }).observe(el,{attributes:true,attributeFilter:['style']});
+    });
+  }
+
+  /* ══════════════════════════════════
+     GRID DE DISEÑOS (propios del lienzo)
+  ══════════════════════════════════ */
+  function refreshDsGrid() {
+    const grid = document.getElementById('ds-grid');
+    if(!grid||!EW) return;
+    const ds = EW.designs;
+    if(!ds||!ds.length) {
+      grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div>';
+      return;
+    }
+    grid.innerHTML='';
     ds.forEach((d,i)=>{
-      const tc = document.createElement('canvas');
-      tc.width=80; tc.height=80;
+      const tc=document.createElement('canvas'); tc.width=80; tc.height=80;
       const tctx=tc.getContext('2d');
       const sc=Math.min(80/d.width,80/d.height)*0.88;
       tctx.fillStyle='#fff'; tctx.fillRect(0,0,80,80);
@@ -1002,59 +1238,99 @@
       tctx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height);
       tctx.restore();
       const el=document.createElement('div');
-      el.className='ds-thumb'+(d.id===EW.selectedDesignId?' active':'');
-      el.innerHTML=`<img src="${tc.toDataURL()}"><span class="ds-num">${i+1}</span>`;
+      el.className='dst'+(d.id===EW.selectedDesignId?' active':'');
+      el.innerHTML=`<img src="${tc.toDataURL()}"><span class="dsn">${i+1}</span>`;
       el.addEventListener('click',()=>{
         EW.selectedDesignId=d.id;
-        if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
-        if(typeof EW.updateControls==='function') EW.updateControls();
-        if(typeof EW.drawCanvas==='function') EW.drawCanvas();
-        refreshDesignsGrid();
-        syncToolsSliders();
-        msg(`Diseño ${i+1} seleccionado`,'info',1200);
+        EW.updateDesignsList?.(); EW.updateControls?.(); EW.drawCanvas?.();
+        refreshDsGrid(); syncSliders();
+        msg(`Diseño ${i+1} seleccionado`,'info',1000);
       });
       grid.appendChild(el);
     });
   }
 
-  /* ════════════════════════════
-     SINCRONIZAR SLIDERS
-  ════════════════════════════ */
-  function syncToolsSliders() {
-    if(!EW || !EW.getSelectedDesign) return;
-    const d = EW.getSelectedDesign();
+  /* ══════════════════════════════════
+     SINCRONIZAR SLIDERS CON DISEÑO ACTIVO
+  ══════════════════════════════════ */
+  function syncSliders() {
+    if(!EW?.getSelectedDesign) return;
+    const d=EW.getSelectedDesign();
     if(!d) return;
-    const r=document.getElementById('sl-rot');
-    const rv=document.getElementById('sl-rot-v');
-    const o=document.getElementById('sl-op');
-    const ov=document.getElementById('sl-op-v');
-    if(r){r.value=Math.round(d.rotation);rv.textContent=Math.round(d.rotation)+'°';}
-    if(o){o.value=Math.round(d.opacity*100);ov.textContent=Math.round(d.opacity*100)+'%';}
-    const w=document.getElementById('sz-w');
-    const h=document.getElementById('sz-h');
+    const sr=document.getElementById('sl-rot'), srv=document.getElementById('sl-rot-v');
+    const so=document.getElementById('sl-op'),  sov=document.getElementById('sl-op-v');
+    const sw=document.getElementById('sz-w'),   sh=document.getElementById('sz-h');
+    if(sr){sr.value=Math.round(d.rotation);srv.textContent=Math.round(d.rotation)+'°';}
+    if(so){so.value=Math.round(d.opacity*100);sov.textContent=Math.round(d.opacity*100)+'%';}
     const c=d.getDimensionsInCm();
-    if(w)w.value=c.width.toFixed(1);
-    if(h)h.value=c.height.toFixed(1);
+    if(sw) sw.value=c.width.toFixed(1);
+    if(sh) sh.value=c.height.toFixed(1);
   }
 
-  /* ════════════════════════════
+  /* ══════════════════════════════════
+     EXPORTAR PNG CON TRANSPARENCIA
+     (propia, no depende del botón del editor)
+  ══════════════════════════════════ */
+  function exportPNG() {
+    if(!EW||!EW.designs||!EW.designs.length){msg('No hay diseños para exportar','warning');return;}
+    const m=msg('Preparando PNG...','loading',0);
+
+    try {
+      const dpi    = parseInt(EW.document.getElementById('quality-select')?.value || '150');
+      const W_CM   = EW.CANVAS_WIDTH_CM  || 58;
+      const H_CM   = EW.CANVAS_HEIGHT_CM || 100;
+      const PPM    = 0.3937007874;
+      const pw     = Math.round(W_CM * PPM * dpi);
+      const ph     = Math.round(H_CM * PPM * dpi);
+      const ec     = EW.document.getElementById('canvas');
+      const scX    = pw / ec.width;
+      const scY    = ph / ec.height;
+
+      const out = document.createElement('canvas');
+      out.width = pw; out.height = ph;
+      const octx = out.getContext('2d');
+      octx.imageSmoothingEnabled=true; octx.imageSmoothingQuality='high';
+      octx.clearRect(0,0,pw,ph);  // sin fondo → transparencia
+
+      EW.designs.forEach(d=>{
+        octx.save();
+        octx.globalAlpha=d.opacity;
+        octx.translate(d.x*scX, d.y*scY);
+        octx.rotate(d.rotation*Math.PI/180);
+        octx.scale(d.scale*scX, d.scale*scY);
+        octx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height);
+        octx.restore();
+      });
+
+      out.toBlob(blob=>{
+        if(!blob){m.remove();msg('Error al generar PNG','error');return;}
+        const a=document.createElement('a');
+        a.download='montaje-dtf.png';
+        a.href=URL.createObjectURL(blob);
+        a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+        m.remove(); msg('✅ PNG descargado con transparencia','success');
+      },'image/png',1.0);
+    } catch(e){ m.remove(); msg('Error: '+e.message,'error'); }
+  }
+
+  /* ══════════════════════════════════
      BOTONES
-  ════════════════════════════ */
-  function ew(id){ return EW ? EW.document.getElementById(id) : null; }
-  function click(id){ const el=ew(id); if(el) el.click(); }
+  ══════════════════════════════════ */
+  function ew(id){ return EW?.document?.getElementById(id); }
+  function click(id){ ew(id)?.click(); }
 
   function initButtons() {
-
     // Header
     document.getElementById('btn-save').addEventListener('click',()=>{
-      if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
+      if(EW&&typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
       else msg('Guardado no disponible','error');
     });
     document.getElementById('btn-profile').addEventListener('click',()=>click('open-profile-btn'));
 
     // Añadir
     document.getElementById('ac-upload').addEventListener('click',()=>{ ew('file-input')?.click(); closeSheet('sh-add'); });
-    document.getElementById('ac-gallery').addEventListener('click',()=>{ click('open-imgbb-gallery'); closeSheet('sh-add'); });
+    document.getElementById('ac-gallery').addEventListener('click',()=>{ openGallery(); closeSheet('sh-add'); });
     document.getElementById('ac-text').addEventListener('click',()=>{ click('add-text-btn'); closeSheet('sh-add'); });
 
     // Diseños
@@ -1071,53 +1347,63 @@
 
     // Barra selección
     document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
-    document.getElementById('sel-desel').addEventListener('click',()=>{
-      if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); }
+    document.getElementById('sel-x').addEventListener('click',()=>{ if(EW){EW.selectedDesignId=null;EW.drawCanvas?.();} });
+    document.getElementById('sel-dup').addEventListener('click',()=>{
+      if(!EW) return;
+      const d=EW.getSelectedDesign?.();
+      if(!d) return;
+      const id='dup-'+Date.now();
+      const dup=new EW.Design(id,d.image,d.x+10,d.y+10);
+      dup.scale=d.scale; dup.rotation=d.rotation; dup.opacity=d.opacity;
+      EW.designs.push(dup); EW.selectedDesignId=id;
+      EW.updateDesignsList?.(); EW.updateControls?.(); EW.drawCanvas?.();
+      msg('✅ Diseño duplicado','success',1200);
     });
 
-    // Sliders rotación / opacidad
+    // Sliders rotación/opacidad
     document.getElementById('sl-rot').addEventListener('input',e=>{
       document.getElementById('sl-rot-v').textContent=e.target.value+'°';
-      const s=ew('rotation-slider');
-      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+      const s=ew('rotation-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
     });
     document.getElementById('sl-op').addEventListener('input',e=>{
       document.getElementById('sl-op-v').textContent=e.target.value+'%';
-      const s=ew('opacity-slider');
-      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+      const s=ew('opacity-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
     });
 
-    // Tamaño
+    // Tamaño — AMBAS DIRECCIONES
     const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h');
     const szlk=document.getElementById('sz-lock');
     szw.addEventListener('input',()=>{
-      if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d)szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1);}
+      if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d&&szw.value>0)szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1);}
+    });
+    // FIX: alto → actualiza ancho
+    szh.addEventListener('input',()=>{
+      if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d&&szh.value>0)szw.value=(parseFloat(szh.value)*d.aspectRatio).toFixed(1);}
     });
     document.getElementById('p-szapply').addEventListener('click',()=>{
-      const wi=ew('width-input'), hi=ew('height-input');
+      const wi=ew('width-input'),hi=ew('height-input');
       if(wi)wi.value=szw.value; if(hi)hi.value=szh.value;
       click('apply-size');
+      syncSliders();
     });
 
     // Zoom
     document.getElementById('sl-zoom').addEventListener('input',e=>{
       document.getElementById('sl-zoom-v').textContent=e.target.value+'%';
-      const s=ew('zoom-slider');
-      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+      const s=ew('zoom-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
     });
 
     // Alto lienzo
     document.getElementById('p-cvh').addEventListener('click',()=>{
       const hi=ew('canvas-height-cm');
-      if(hi)hi.value=document.getElementById('cv-h').value;
+      if(hi) hi.value=document.getElementById('cv-h').value;
       click('apply-canvas-height');
       setTimeout(fitMirror,300);
     });
 
     // Color fondo
     document.getElementById('cv-color').addEventListener('input',e=>{
-      const cc=ew('canvas-color');
-      if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));}
+      const cc=ew('canvas-color'); if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));}
     });
 
     // Auto-pack
@@ -1128,12 +1414,12 @@
       } else msg('Motor PRO no disponible','error');
     });
 
-    // Exportar
-    document.getElementById('ex-png').addEventListener('click',()=>{ click('download-png'); closeSheet('sh-export'); });
+    // Exportar PNG — usa función propia con transparencia correcta
+    document.getElementById('ex-png').addEventListener('click',()=>{ exportPNG(); closeSheet('sh-export'); });
     document.getElementById('ex-pdf').addEventListener('click',()=>{ click('download-pdf'); closeSheet('sh-export'); });
     document.getElementById('ex-dtf').addEventListener('click',()=>{
-      const ov=EW.document.getElementById('dtf-overlay');
-      if(ov){ov.style.display='flex';} closeSheet('sh-export');
+      const ov=EW?.document?.getElementById('dtf-overlay'); if(ov)ov.style.display='flex';
+      closeSheet('sh-export');
     });
     document.getElementById('ex-save').addEventListener('click',()=>{
       if(EW&&typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
@@ -1145,59 +1431,35 @@
     });
 
     // Resolución
-    document.querySelectorAll('.res-pill').forEach(btn=>{
+    document.querySelectorAll('.rp').forEach(btn=>{
       btn.addEventListener('click',()=>{
-        document.querySelectorAll('.res-pill').forEach(b=>{
-          b.classList.remove('acc');
-          b.style.borderColor=''; b.style.color='';
-        });
+        document.querySelectorAll('.rp').forEach(b=>{ b.classList.remove('acc'); b.style.borderColor=''; b.style.color=''; });
         btn.classList.add('acc');
-        const s=ew('quality-select');
-        if(s)s.value=btn.dataset.dpi;
+        const s=ew('quality-select'); if(s)s.value=btn.dataset.dpi;
       });
     });
   }
 
-  /* ════════════════════════════
-     LOGIN MÓVIL
-  ════════════════════════════ */
-  function showLoginMobile() {
-    // El login del editor (en el iframe) ya se encarga,
-    // solo necesitamos escuchar cuando se desbloquea
-    const lo = EW.document.getElementById('lock-overlay');
-    if(!lo) return;
-
-    const obs = new MutationObserver(()=>{
-      if(lo.style.display==='none' || !lo.style.display){
-        obs.disconnect();
-        msg('🔓 Sesión iniciada','success',2500);
-      }
-    });
-    obs.observe(lo,{attributes:true,attributeFilter:['style']});
-
-    // Hacer visible el login del editor dentro del iframe
-    // (ya se muestra automáticamente)
-  }
-
-  /* ════════════════════════════
+  /* ══════════════════════════════════
      SYNC LOOP
-  ════════════════════════════ */
+  ══════════════════════════════════ */
   function syncLoop() {
     setInterval(()=>{
       if(!ready||!EW) return;
 
       // Zoom badge
-      const zb=document.getElementById('zoom-badge');
+      const zb=document.getElementById('zbadge');
       if(zb&&EW.canvasZoom!=null) zb.textContent=`${Math.round(EW.canvasZoom*100)}%`;
 
       // Barra selección
-      const bar=document.getElementById('sel-bar');
+      const bar=document.getElementById('selbar');
       const si=document.getElementById('sel-info');
       let sel=null;
-      try{ sel=typeof EW.getSelectedDesign==='function'?EW.getSelectedDesign():null; }catch(e){}
+      try{ sel=EW.getSelectedDesign?.(); }catch(e){}
       if(sel&&bar){
         bar.classList.add('show');
-        if(si){const c=sel.getDimensionsInCm();si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`;}
+        const c=sel.getDimensionsInCm();
+        if(si) si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`;
       } else if(bar) bar.classList.remove('show');
 
       // Precio
@@ -1215,5 +1477,6 @@
 
 })();
 </script>
+
 </body>
 </html>
