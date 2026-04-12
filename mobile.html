@@ -547,6 +547,25 @@
   </div>
 </div>
 
+<!-- ════ MODAL DE RECORTE MANUAL (MÓVIL) ════ -->
+<div id="crop-mobile-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:7000; align-items:center; justify-content:center; flex-direction:column; backdrop-filter:blur(8px);">
+  <div style="background:var(--s2); border:1px solid var(--bmd); border-radius:24px; padding:16px; width:96vw; max-width:500px; max-height:90vh; display:flex; flex-direction:column; gap:12px; box-shadow:0 0 40px rgba(14,165,233,0.3);">
+    <div style="display:flex; align-items:center; justify-content:space-between; color:var(--accent); font-family:var(--mono);">
+      <h3 style="margin:0; font-size:1rem;">✂️ Recorte Manual</h3>
+      <span style="font-size:0.7rem; opacity:0.7;">Arrastra las esquinas o lados</span>
+    </div>
+    <div style="overflow:auto; display:flex; justify-content:center; background:#111827; border-radius:12px;">
+      <canvas id="crop-mobile-canvas" style="max-width:100%; height:auto; cursor:crosshair; touch-action:none;"></canvas>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button id="crop-mobile-reset" class="pill" style="flex:0;">↺ Resetear</button>
+      <button id="crop-mobile-auto" class="pill amb" style="flex:0;">✂️ Auto</button>
+      <button id="crop-mobile-cancel" class="pill red" style="flex:0;">Cancelar</button>
+      <button id="crop-mobile-apply" class="pill grn" style="flex:0;">✅ Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Script -->
 <script>
 (function(){
@@ -1292,6 +1311,276 @@
       },'image/png',1.0);
     } catch(e){ m.remove(); msg('Error: '+e.message,'error'); }
   }
+
+
+/* ═══════════════════════════════════════
+   RECORTE MANUAL (versión móvil)
+═══════════════════════════════════════ */
+let cropState = {
+  design: null,
+  srcCanvas: null,
+  cropRect: { x:0, y:0, w:0, h:0 },
+  sc: 1,
+  dragHandle: null,
+  startCrop: null,
+  startX: 0, startY: 0
+};
+
+function openMobileCrop(design) {
+  if (!design) { msg('Selecciona un diseño primero', 'warning'); return; }
+  cropState.design = design;
+  // Convertir imagen a canvas
+  const img = design.image;
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  cropState.srcCanvas = c;
+  // Calcular escala para que quepa en el modal
+  const modal = document.getElementById('crop-mobile-modal');
+  const canvasEl = document.getElementById('crop-mobile-canvas');
+  const maxW = window.innerWidth * 0.85;
+  const maxH = window.innerHeight * 0.7;
+  const sc = Math.min(maxW / c.width, maxH / c.height, 1);
+  cropState.sc = sc;
+  canvasEl.width = c.width;
+  canvasEl.height = c.height;
+  canvasEl.style.width = Math.round(c.width * sc) + 'px';
+  canvasEl.style.height = Math.round(c.height * sc) + 'px';
+  // Recorte inicial: todo el canvas
+  cropState.cropRect = { x:0, y:0, w:c.width, h:c.height };
+  modal.style.display = 'flex';
+  renderCropCanvas();
+  attachCropEvents();
+}
+
+function renderCropCanvas() {
+  const canvas = document.getElementById('crop-mobile-canvas');
+  const ctx = canvas.getContext('2d');
+  const src = cropState.srcCanvas;
+  const rect = cropState.cropRect;
+  const sc = cropState.sc;
+  // Dibujar imagen completa atenuada
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.globalAlpha = 0.3;
+  ctx.drawImage(src, 0, 0);
+  ctx.globalAlpha = 1;
+  // Dibujar área de recorte nítida
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+  ctx.drawImage(src, 0, 0);
+  ctx.restore();
+  // Dibujar borde y handles
+  ctx.strokeStyle = '#0ea5e9';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+  // Handles (cuadrados)
+  const hs = 8;
+  const handles = [
+    { x: rect.x, y: rect.y }, // tl
+    { x: rect.x + rect.w/2, y: rect.y }, // tc
+    { x: rect.x + rect.w, y: rect.y }, // tr
+    { x: rect.x, y: rect.y + rect.h/2 }, // ml
+    { x: rect.x + rect.w, y: rect.y + rect.h/2 }, // mr
+    { x: rect.x, y: rect.y + rect.h }, // bl
+    { x: rect.x + rect.w/2, y: rect.y + rect.h }, // bc
+    { x: rect.x + rect.w, y: rect.y + rect.h } // br
+  ];
+  ctx.fillStyle = '#0ea5e9';
+  handles.forEach(h => {
+    ctx.fillRect(h.x - hs/2, h.y - hs/2, hs, hs);
+  });
+}
+
+function attachCropEvents() {
+  const canvas = document.getElementById('crop-mobile-canvas');
+  const getPos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
+  const hitHandle = (x, y) => {
+    const r = cropState.cropRect;
+    const hs = 8;
+    const handles = [
+      { id: 'tl', x: r.x, y: r.y },
+      { id: 'tc', x: r.x + r.w/2, y: r.y },
+      { id: 'tr', x: r.x + r.w, y: r.y },
+      { id: 'ml', x: r.x, y: r.y + r.h/2 },
+      { id: 'mr', x: r.x + r.w, y: r.y + r.h/2 },
+      { id: 'bl', x: r.x, y: r.y + r.h },
+      { id: 'bc', x: r.x + r.w/2, y: r.y + r.h },
+      { id: 'br', x: r.x + r.w, y: r.y + r.h }
+    ];
+    for (let h of handles) {
+      if (Math.abs(x - h.x) <= hs && Math.abs(y - h.y) <= hs) return h.id;
+    }
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return 'move';
+    return null;
+  };
+  let dragging = false;
+  let dragType = null;
+  let startRect = null;
+  let startPos = null;
+  const onStart = (e) => {
+    e.preventDefault();
+    const pos = getPos(e);
+    dragType = hitHandle(pos.x, pos.y);
+    if (!dragType) return;
+    dragging = true;
+    startRect = { ...cropState.cropRect };
+    startPos = { x: pos.x, y: pos.y };
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    const dx = pos.x - startPos.x;
+    const dy = pos.y - startPos.y;
+    let newRect = { ...startRect };
+    const maxX = cropState.srcCanvas.width;
+    const maxY = cropState.srcCanvas.height;
+    if (dragType === 'move') {
+      newRect.x = Math.min(Math.max(0, startRect.x + dx), maxX - startRect.w);
+      newRect.y = Math.min(Math.max(0, startRect.y + dy), maxY - startRect.h);
+    } else {
+      // Redimensionar
+      if (dragType.includes('l')) {
+        const nx = Math.min(startRect.x + dx, startRect.x + startRect.w - 10);
+        newRect.w += startRect.x - nx;
+        newRect.x = nx;
+      }
+      if (dragType.includes('r')) {
+        newRect.w = Math.min(startRect.w + dx, maxX - startRect.x);
+        newRect.w = Math.max(10, newRect.w);
+      }
+      if (dragType.includes('t')) {
+        const ny = Math.min(startRect.y + dy, startRect.y + startRect.h - 10);
+        newRect.h += startRect.y - ny;
+        newRect.y = ny;
+      }
+      if (dragType.includes('b')) {
+        newRect.h = Math.min(startRect.h + dy, maxY - startRect.y);
+        newRect.h = Math.max(10, newRect.h);
+      }
+    }
+    cropState.cropRect = newRect;
+    renderCropCanvas();
+  };
+  const onEnd = () => {
+    dragging = false;
+  };
+  canvas.addEventListener('touchstart', onStart, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  canvas.addEventListener('touchend', onEnd);
+  canvas.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+  // Guardar referencia para eliminar eventos después
+  cropState.cleanupEvents = () => {
+    canvas.removeEventListener('touchstart', onStart);
+    canvas.removeEventListener('touchmove', onMove);
+    canvas.removeEventListener('touchend', onEnd);
+    canvas.removeEventListener('mousedown', onStart);
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onEnd);
+  };
+}
+
+function autoCropBounds() {
+  if (!cropState.srcCanvas) return;
+  const c = cropState.srcCanvas;
+  const ctx = c.getContext('2d');
+  const imgData = ctx.getImageData(0, 0, c.width, c.height);
+  const data = imgData.data;
+  let top = c.height, left = c.width, right = 0, bottom = 0;
+  let found = false;
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) {
+      const alpha = data[(y * c.width + x) * 4 + 3];
+      if (alpha > 10) {
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+        if (x < left) left = x;
+        if (x > right) right = x;
+        found = true;
+      }
+    }
+  }
+  if (found) {
+    cropState.cropRect = {
+      x: left, y: top,
+      w: right - left + 1,
+      h: bottom - top + 1
+    };
+    renderCropCanvas();
+  }
+}
+
+function applyMobileCrop() {
+  if (!cropState.design || !cropState.srcCanvas) return;
+  const rect = cropState.cropRect;
+  if (rect.w < 2 || rect.h < 2) return;
+  const out = document.createElement('canvas');
+  out.width = rect.w;
+  out.height = rect.h;
+  const octx = out.getContext('2d');
+  octx.drawImage(cropState.srcCanvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  // Reemplazar imagen del diseño
+  cropState.design.image = out;
+  cropState.design.width = out.width;
+  cropState.design.height = out.height;
+  cropState.design.originalWidth = out.width;
+  cropState.design.originalHeight = out.height;
+  cropState.design.aspectRatio = out.width / out.height;
+  cropState.design.updateInputs();
+  if (EW && EW.drawCanvas) EW.drawCanvas();
+  if (EW && typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
+  if (EW && typeof EW.updateControls === 'function') EW.updateControls();
+  msg(`✅ Recorte aplicado: ${(rect.w/10).toFixed(1)}cm × ${(rect.h/10).toFixed(1)}cm`, 'success', 2500);
+  closeMobileCrop();
+}
+
+function closeMobileCrop() {
+  if (cropState.cleanupEvents) cropState.cleanupEvents();
+  document.getElementById('crop-mobile-modal').style.display = 'none';
+  cropState.design = null;
+  cropState.srcCanvas = null;
+}
+
+// Eventos de los botones del recorte móvil
+document.getElementById('crop-mobile-reset').addEventListener('click', () => {
+  if (cropState.srcCanvas) {
+    cropState.cropRect = { x:0, y:0, w: cropState.srcCanvas.width, h: cropState.srcCanvas.height };
+    renderCropCanvas();
+  }
+});
+document.getElementById('crop-mobile-auto').addEventListener('click', autoCropBounds);
+document.getElementById('crop-mobile-cancel').addEventListener('click', closeMobileCrop);
+document.getElementById('crop-mobile-apply').addEventListener('click', applyMobileCrop);
+
+// Reemplazar el botón de recorte original para que use la versión móvil
+// En initButtons, modificar el comportamiento de p-trim
+// Ya tenemos el botón p-trim, debemos sobreescribir su evento
+// Añadir esto dentro de initButtons (reemplazar la línea actual)
+// Buscar: document.getElementById('p-trim').addEventListener('click',()=>click('tb-trim-btn'));
+// Y reemplazar por:
+
 
   /* ══════════════════════════════════
      BOTONES
