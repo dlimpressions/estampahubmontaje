@@ -1195,114 +1195,44 @@ function updateGalMultibar(){
   if(n===0){ls.style.display='none';cs.style.display='none';sc.textContent='Toca para seleccionar · 2 toques para cargar';}
   else{ls.style.display='inline-block';cs.style.display='inline-block';sc.textContent=`${n} seleccionado(s)`;}
 }
-
-function loadGalOne(url) {
-  if (!EW || typeof EW.trimTransparentPixels !== 'function' || typeof EW.Design !== 'function') {
-    msg('Editor no listo. Reintentando...', 'warning');
-    setTimeout(() => loadGalOne(url), 500);
-    return;
-  }
-
-  const m = msg('Cargando diseño...', 'loading', 0);
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    try {
-      const trimmed = EW.trimTransparentPixels(img);
-      const id = 'gal-' + Date.now();
-      const design = new EW.Design(id, trimmed);
-      const maxW = EW.canvas.width - 40;
-      const maxH = EW.canvas.height - 40;
-      let scaleFit = Math.min(maxW / design.width, maxH / design.height);
-      scaleFit = Math.max(0.1, Math.min(1, scaleFit));
-      design.scale = scaleFit;
-      design.x = EW.canvas.width / 2;
-      design.y = EW.canvas.height / 2;
-      EW.designs.push(design);
-      EW.window.designs = EW.designs;
-      EW.selectedDesignId = id;
-      // Actualizaciones inmediatas
-      if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
-      if (typeof EW.updateControls === 'function') EW.updateControls();
-      if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-      // Redibujados en cadena para asegurar
-      setTimeout(() => {
-        if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-        if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
-      }, 100);
-      setTimeout(() => {
-        if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-      }, 300);
-      setTimeout(() => {
-        if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-        console.log('🔁 Redibujado forzado completo. Total diseños:', EW.designs.length);
-      }, 600);
-      m.remove();
-      msg('✅ Diseño cargado correctamente', 'success', 2000);
-      closeGallery();
-    } catch (err) {
-      console.error('Error en loadGalOne:', err);
-      m.remove();
-      msg('Error al cargar: ' + err.message, 'error');
-    }
+function loadGalOne(url){
+  const m=msg('Cargando...','loading',0);
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{
+    try{
+      const t=EW.trimTransparentPixels(img);
+      const id='gal-'+Date.now();
+      const d=new EW.Design(id,t);
+      d.scale=Math.min(1,Math.min((EW.canvas.width-40)/d.width,(EW.canvas.height-40)/d.height));
+      EW.designs.push(d);EW.window.designs=EW.designs;EW.selectedDesignId=id;
+      EW.updateDesignsList?.();EW.updateControls?.();EW.drawCanvas?.();
+      m.remove();msg('◆ Diseño cargado','success',1800);closeGallery();
+    }catch(e){m.remove();msg('Error: '+e.message,'error');}
   };
-  img.onerror = () => {
-    m.remove();
-    msg('No se pudo cargar la imagen (error de red o CORS)', 'error');
-  };
-  img.src = url;
+  img.onerror=()=>{m.remove();msg('No se pudo cargar','error');};
+  img.src=url;
 }
-
-async function loadGalSel() {
-  const urls = Array.from(selItems);
-  if (!urls.length) return;
-
-  if (!EW || typeof EW.trimTransparentPixels !== 'function' || typeof EW.Design !== 'function') {
-    msg('Editor no listo. Reintentando...', 'warning');
-    setTimeout(() => loadGalSel(), 500);
-    return;
-  }
-
-  const m = msg(`Cargando ${urls.length} diseño(s)...`, 'loading', 0);
-  let ok = 0;
-  for (const url of urls) {
-    await new Promise(resolve => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const trimmed = EW.trimTransparentPixels(img);
-          const id = 'gal-' + Date.now() + Math.random().toString(36).slice(2, 5);
-          const design = new EW.Design(id, trimmed);
-          const maxW = EW.canvas.width - 40;
-          const maxH = EW.canvas.height - 40;
-          const scaleFit = Math.min(maxW / design.width, maxH / design.height);
-          design.scale = Math.min(1, scaleFit);
-          EW.designs.push(design);
-          EW.window.designs = EW.designs;
-          EW.selectedDesignId = id;
-          ok++;
-        } catch (err) {
-          console.error('Error cargando diseño individual:', err);
-        }
-        resolve();
+async function loadGalSel(){
+  const urls=Array.from(selItems);if(!urls.length)return;
+  const m=msg(`Cargando ${urls.length} diseño(s)...`,'loading',0);let ok=0;
+  for(const url of urls){
+    await new Promise(res=>{
+      const img=new Image();img.crossOrigin='anonymous';
+      img.onload=()=>{
+        try{
+          const t=EW.trimTransparentPixels(img);
+          const id='gal-'+Date.now()+Math.random().toString(36).slice(2,5);
+          const d=new EW.Design(id,t);
+          d.scale=Math.min(1,Math.min((EW.canvas.width-40)/d.width,(EW.canvas.height-40)/d.height));
+          EW.designs.push(d);EW.window.designs=EW.designs;EW.selectedDesignId=id;ok++;
+        }catch(e){}res();
       };
-      img.onerror = () => resolve();
-      img.src = url;
+      img.onerror=()=>res();img.src=url;
     });
   }
-  if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
-  if (typeof EW.updateControls === 'function') EW.updateControls();
-  if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-  // Forzar segundo redibujado
-  setTimeout(() => {
-    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-  }, 100);
-  m.remove();
-  msg(`✅ ${ok} de ${urls.length} diseño(s) cargados`, 'success', 2500);
-  closeGallery();
+  EW.updateDesignsList?.();EW.updateControls?.();EW.drawCanvas?.();
+  m.remove();msg(`◆ ${ok} diseño(s) cargados`,'success',2500);closeGallery();
 }
-
 function closeGallery(){document.getElementById('gal-modal').classList.remove('open');selItems.clear();updateGalMultibar();}
 
 document.getElementById('gal-search').addEventListener('input',e=>{galSearch=e.target.value;galPage=1;renderGal();});
@@ -1589,26 +1519,18 @@ function initCropTool(){
     cropModal.classList.remove('open');
   });
   document.getElementById('crop-apply-btn').addEventListener('click',()=>{
-  if(!dRef||!src||crop.w<2||crop.h<2)return;
-  const out=document.createElement('canvas');
-  out.width=Math.round(crop.w);out.height=Math.round(crop.h);
-  out.getContext('2d').drawImage(src,crop.x,crop.y,crop.w,crop.h,0,0,out.width,out.height);
-  dRef.image=out;dRef.width=out.width;dRef.height=out.height;
-  dRef.originalWidth=out.width;dRef.originalHeight=out.height;
-  dRef.aspectRatio=out.width/out.height;
-  if (typeof dRef.updateInputs === 'function') dRef.updateInputs();
-  // Forzar actualizaciones del editor
-  if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
-  if (typeof EW.updateControls === 'function') EW.updateControls();
-  if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-  // Segundo redibujado para asegurar
-  setTimeout(() => {
-    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-  }, 100);
-  cropModal.classList.remove('open');
-  const cm=v=>(v/(EW?.PIXELS_PER_CM||10)).toFixed(1);
-  msg(`◆ Recorte: ${cm(out.width)}cm × ${cm(out.height)}cm`,'success',2500);
-});
+    if(!dRef||!src||crop.w<2||crop.h<2)return;
+    const out=document.createElement('canvas');
+    out.width=Math.round(crop.w);out.height=Math.round(crop.h);
+    out.getContext('2d').drawImage(src,crop.x,crop.y,crop.w,crop.h,0,0,out.width,out.height);
+    dRef.image=out;dRef.width=out.width;dRef.height=out.height;
+    dRef.originalWidth=out.width;dRef.originalHeight=out.height;
+    dRef.aspectRatio=out.width/out.height;
+    dRef.updateInputs?.();EW.drawCanvas?.();
+    cropModal.classList.remove('open');
+    const cm=v=>(v/(EW?.PIXELS_PER_CM||10)).toFixed(1);
+    msg(`◆ Recorte: ${cm(out.width)}cm × ${cm(out.height)}cm`,'success',2500);
+  });
 }
 
 /* ────────────────────────────
@@ -1718,38 +1640,24 @@ function initButtons(){
     if(typeof window.openCropToolMobile==='function')window.openCropToolMobile(d);
     closeSheet('sh-tools');
   });
- document.getElementById('p-remove').addEventListener('click',()=>{
-  click('remove-btn');
-});
+  document.getElementById('p-remove').addEventListener('click',()=>click('remove-btn'));
   document.getElementById('p-sback').addEventListener('click',()=>click('send-back'));
   document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
   document.getElementById('p-fwd').addEventListener('click',()=>click('step-forward'));
   document.getElementById('p-front').addEventListener('click',()=>click('bring-front'));
 
   // Selección bar
-document.getElementById('sel-del').addEventListener('click',()=>{
-  click('remove-btn');
-});
+  document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
   document.getElementById('sel-x').addEventListener('click',()=>{if(EW){EW.selectedDesignId=null;EW.drawCanvas?.();}});
- document.getElementById('sel-dup').addEventListener('click',()=>{
-  if(!EW)return;const d=EW.getSelectedDesign?.();if(!d)return;
-  const id='dup-'+Date.now();
-  const dup=new EW.Design(id,d.image,d.x+10,d.y+10);
-  dup.scale=d.scale;dup.rotation=d.rotation;dup.opacity=d.opacity;
-  EW.designs.push(dup);EW.selectedDesignId=id;
-  if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
-  if(typeof EW.updateControls==='function') EW.updateControls();
-  if(typeof EW.drawCanvas==='function') EW.drawCanvas();
-  // Forzar redibujados adicionales para evitar congelamiento
-  setTimeout(()=>{
-    if(typeof EW.drawCanvas==='function') EW.drawCanvas();
-    if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
-  }, 100);
-  setTimeout(()=>{
-    if(typeof EW.drawCanvas==='function') EW.drawCanvas();
-  }, 300);
-  msg('◆ Diseño duplicado','success',1200);
-});
+  document.getElementById('sel-dup').addEventListener('click',()=>{
+    if(!EW)return;const d=EW.getSelectedDesign?.();if(!d)return;
+    const id='dup-'+Date.now();
+    const dup=new EW.Design(id,d.image,d.x+10,d.y+10);
+    dup.scale=d.scale;dup.rotation=d.rotation;dup.opacity=d.opacity;
+    EW.designs.push(dup);EW.selectedDesignId=id;
+    EW.updateDesignsList?.();EW.updateControls?.();EW.drawCanvas?.();
+    msg('◆ Diseño duplicado','success',1200);
+  });
 
   // Sliders con actualización del track
   function bindSlider(sliderId,valId,suffix,origId){
@@ -1832,16 +1740,6 @@ function syncLoop(){
 
 })();
 </script>
-
-function forceMirrorSync() {
-  if (!EW) return;
-  const ec = EW.document.getElementById('canvas');
-  if (ec && mc) {
-    mctx.clearRect(0, 0, mc.width, mc.height);
-    mctx.drawImage(ec, 0, 0);
-    console.log('🔄 Espejo sincronizado manualmente');
-  }
-}
 
 <!--
   ══════════════════════════════════════════════
