@@ -1718,18 +1718,38 @@ function initButtons(){
     if(typeof window.openCropToolMobile==='function')window.openCropToolMobile(d);
     closeSheet('sh-tools');
   });
-  document.getElementById('p-remove').addEventListener('click',()=>{
-  click('remove-btn');
-  // Forzar actualización del canvas espejo y redibujado
+ document.getElementById('p-remove').addEventListener('click', () => {
+  if (!EW) return;
+  // Eliminar diseño seleccionado
+  const d = EW.getSelectedDesign?.();
+  if (!d) {
+    msg('Selecciona un diseño para eliminar', 'warning');
+    return;
+  }
+  const idx = EW.designs.findIndex(x => x.id === d.id);
+  if (idx !== -1) EW.designs.splice(idx, 1);
+  EW.selectedDesignId = null;
+  // Forzar actualizaciones múltiples
+  if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
+  if (typeof EW.updateControls === 'function') EW.updateControls();
+  if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+  // Redibujar el espejo y forzar sincronización
   setTimeout(() => {
     if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
     const ec = EW.document.getElementById('canvas');
     if (ec && mc) {
+      mctx.clearRect(0, 0, mc.width, mc.height);
       mctx.drawImage(ec, 0, 0);
     }
     refreshDsGrid();
     syncSliders();
   }, 100);
+  setTimeout(() => {
+    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+    const ec = EW.document.getElementById('canvas');
+    if (ec && mc) mctx.drawImage(ec, 0, 0);
+  }, 300);
+  msg('◆ Diseño eliminado', 'success', 1200);
 });
   document.getElementById('p-sback').addEventListener('click',()=>click('send-back'));
   document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
@@ -1851,6 +1871,16 @@ function syncLoop(){
 
 })();
 </script>
+
+function forceMirrorSync() {
+  if (!EW) return;
+  const ec = EW.document.getElementById('canvas');
+  if (ec && mc) {
+    mctx.clearRect(0, 0, mc.width, mc.height);
+    mctx.drawImage(ec, 0, 0);
+    console.log('🔄 Espejo sincronizado manualmente');
+  }
+}
 
 <!--
   ══════════════════════════════════════════════
