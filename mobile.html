@@ -1195,43 +1195,97 @@ function updateGalMultibar(){
   if(n===0){ls.style.display='none';cs.style.display='none';sc.textContent='Toca para seleccionar · 2 toques para cargar';}
   else{ls.style.display='inline-block';cs.style.display='inline-block';sc.textContent=`${n} seleccionado(s)`;}
 }
-function loadGalOne(url){
-  const m=msg('Cargando...','loading',0);
-  const img=new Image();img.crossOrigin='anonymous';
-  img.onload=()=>{
-    try{
-      const t=EW.trimTransparentPixels(img);
-      const id='gal-'+Date.now();
-      const d=new EW.Design(id,t);
-      d.scale=Math.min(1,Math.min((EW.canvas.width-40)/d.width,(EW.canvas.height-40)/d.height));
-      EW.designs.push(d);EW.window.designs=EW.designs;EW.selectedDesignId=id;
-      EW.updateDesignsList?.();EW.updateControls?.();EW.drawCanvas?.();
-      m.remove();msg('◆ Diseño cargado','success',1800);closeGallery();
-    }catch(e){m.remove();msg('Error: '+e.message,'error');}
+function loadGalOne(url) {
+  // Verificar que el editor esté listo
+  if (!EW || typeof EW.trimTransparentPixels !== 'function' || typeof EW.Design !== 'function') {
+    msg('Editor no listo. Reintentando...', 'warning');
+    setTimeout(() => loadGalOne(url), 500);
+    return;
+  }
+
+  const m = msg('Cargando diseño...', 'loading', 0);
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      // Recortar transparencia usando la función del editor
+      const trimmed = EW.trimTransparentPixels(img);
+      const id = 'gal-' + Date.now();
+      const design = new EW.Design(id, trimmed);
+      // Escalar para que quepa en el canvas
+      const maxW = EW.canvas.width - 40;
+      const maxH = EW.canvas.height - 40;
+      const scaleFit = Math.min(maxW / design.width, maxH / design.height);
+      design.scale = Math.min(1, scaleFit);
+      // Añadir al array de diseños del editor
+      EW.designs.push(design);
+      EW.window.designs = EW.designs;
+      EW.selectedDesignId = id;
+      // Actualizar la interfaz del editor
+      if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
+      if (typeof EW.updateControls === 'function') EW.updateControls();
+      if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+      m.remove();
+      msg('✅ Diseño cargado correctamente', 'success', 2000);
+      closeGallery();
+    } catch (err) {
+      console.error('Error en loadGalOne:', err);
+      m.remove();
+      msg('Error al cargar: ' + err.message, 'error');
+    }
   };
-  img.onerror=()=>{m.remove();msg('No se pudo cargar','error');};
-  img.src=url;
+  img.onerror = () => {
+    m.remove();
+    msg('No se pudo cargar la imagen (error de red o CORS)', 'error');
+  };
+  img.src = url;
 }
-async function loadGalSel(){
-  const urls=Array.from(selItems);if(!urls.length)return;
-  const m=msg(`Cargando ${urls.length} diseño(s)...`,'loading',0);let ok=0;
-  for(const url of urls){
-    await new Promise(res=>{
-      const img=new Image();img.crossOrigin='anonymous';
-      img.onload=()=>{
-        try{
-          const t=EW.trimTransparentPixels(img);
-          const id='gal-'+Date.now()+Math.random().toString(36).slice(2,5);
-          const d=new EW.Design(id,t);
-          d.scale=Math.min(1,Math.min((EW.canvas.width-40)/d.width,(EW.canvas.height-40)/d.height));
-          EW.designs.push(d);EW.window.designs=EW.designs;EW.selectedDesignId=id;ok++;
-        }catch(e){}res();
+
+async function loadGalSel() {
+  const urls = Array.from(selItems);
+  if (!urls.length) return;
+
+  // Verificar que el editor esté listo
+  if (!EW || typeof EW.trimTransparentPixels !== 'function' || typeof EW.Design !== 'function') {
+    msg('Editor no listo. Reintentando...', 'warning');
+    setTimeout(() => loadGalSel(), 500);
+    return;
+  }
+
+  const m = msg(`Cargando ${urls.length} diseño(s)...`, 'loading', 0);
+  let ok = 0;
+  for (const url of urls) {
+    await new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const trimmed = EW.trimTransparentPixels(img);
+          const id = 'gal-' + Date.now() + Math.random().toString(36).slice(2, 5);
+          const design = new EW.Design(id, trimmed);
+          const maxW = EW.canvas.width - 40;
+          const maxH = EW.canvas.height - 40;
+          const scaleFit = Math.min(maxW / design.width, maxH / design.height);
+          design.scale = Math.min(1, scaleFit);
+          EW.designs.push(design);
+          EW.window.designs = EW.designs;
+          EW.selectedDesignId = id;
+          ok++;
+        } catch (err) {
+          console.error('Error cargando diseño individual:', err);
+        }
+        resolve();
       };
-      img.onerror=()=>res();img.src=url;
+      img.onerror = () => resolve();
+      img.src = url;
     });
   }
-  EW.updateDesignsList?.();EW.updateControls?.();EW.drawCanvas?.();
-  m.remove();msg(`◆ ${ok} diseño(s) cargados`,'success',2500);closeGallery();
+  if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
+  if (typeof EW.updateControls === 'function') EW.updateControls();
+  if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+  m.remove();
+  msg(`✅ ${ok} de ${urls.length} diseño(s) cargados`, 'success', 2500);
+  closeGallery();
 }
 function closeGallery(){document.getElementById('gal-modal').classList.remove('open');selItems.clear();updateGalMultibar();}
 
