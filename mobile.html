@@ -1329,7 +1329,7 @@ function initCropTool(){
   const cc=document.getElementById('crop-canvas');
   const cctx=cc.getContext('2d');
   const infoEl=document.getElementById('crop-info');
-  const HR=22; // radio del handle en px del CANVAS lógico (no de pantalla)
+  const HR=44; // radio del handle en px del CANVAS lógico (no de pantalla)
   let src=null,dRef=null,sc=1;
   let crop={x:0,y:0,w:0,h:0};
   let drag=null,startCrop=null,sMX=0,sMY=0;
@@ -1426,7 +1426,7 @@ function initCropTool(){
       cctx.beginPath();cctx.arc(h.x,h.y,HR,0,Math.PI*2);
       cctx.fillStyle='rgba(0,212,255,0.15)';cctx.fill();
       // Círculo interior (handle visible)
-      cctx.beginPath();cctx.arc(h.x,h.y,HR*0.55,0,Math.PI*2);
+      cctx.beginPath();cctx.arc(h.x,h.y,HR*0.65,0,Math.PI*2);
       cctx.fillStyle='#00d4ff';cctx.fill();
       cctx.strokeStyle='#fff';cctx.lineWidth=2;
       cctx.shadowColor='#00d4ff';cctx.shadowBlur=12;
