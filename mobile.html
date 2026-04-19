@@ -1211,24 +1211,21 @@ function loadGalOne(url) {
       const trimmed = EW.trimTransparentPixels(img);
       const id = 'gal-' + Date.now();
       const design = new EW.Design(id, trimmed);
-      // Escalar para que quepa en el canvas
       const maxW = EW.canvas.width - 40;
       const maxH = EW.canvas.height - 40;
       let scaleFit = Math.min(maxW / design.width, maxH / design.height);
-      scaleFit = Math.max(0.1, Math.min(1, scaleFit)); // asegurar escala positiva
+      scaleFit = Math.max(0.1, Math.min(1, scaleFit));
       design.scale = scaleFit;
-      // Posicionar en el centro
       design.x = EW.canvas.width / 2;
       design.y = EW.canvas.height / 2;
-      // Añadir al array
       EW.designs.push(design);
       EW.window.designs = EW.designs;
-      EW.selectedDesignId = id;
-      // Forzar actualizaciones
+      EW.selectedDesignId = id;  // seleccionar el nuevo diseño
+      // Forzar actualizaciones múltiples
       if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
       if (typeof EW.updateControls === 'function') EW.updateControls();
       if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-      // Redibujar varias veces para asegurar
+      // Redibujar varias veces con retardos
       setTimeout(() => {
         if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
         if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
@@ -1236,7 +1233,9 @@ function loadGalOne(url) {
       setTimeout(() => {
         if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
       }, 300);
-      // Verificar en consola
+      setTimeout(() => {
+        if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+      }, 600);
       console.log('✅ Diseño añadido. Total diseños:', EW.designs.length);
       m.remove();
       msg('✅ Diseño cargado correctamente', 'success', 2000);
@@ -1590,18 +1589,26 @@ function initCropTool(){
     cropModal.classList.remove('open');
   });
   document.getElementById('crop-apply-btn').addEventListener('click',()=>{
-    if(!dRef||!src||crop.w<2||crop.h<2)return;
-    const out=document.createElement('canvas');
-    out.width=Math.round(crop.w);out.height=Math.round(crop.h);
-    out.getContext('2d').drawImage(src,crop.x,crop.y,crop.w,crop.h,0,0,out.width,out.height);
-    dRef.image=out;dRef.width=out.width;dRef.height=out.height;
-    dRef.originalWidth=out.width;dRef.originalHeight=out.height;
-    dRef.aspectRatio=out.width/out.height;
-    dRef.updateInputs?.();EW.drawCanvas?.();
-    cropModal.classList.remove('open');
-    const cm=v=>(v/(EW?.PIXELS_PER_CM||10)).toFixed(1);
-    msg(`◆ Recorte: ${cm(out.width)}cm × ${cm(out.height)}cm`,'success',2500);
-  });
+  if(!dRef||!src||crop.w<2||crop.h<2)return;
+  const out=document.createElement('canvas');
+  out.width=Math.round(crop.w);out.height=Math.round(crop.h);
+  out.getContext('2d').drawImage(src,crop.x,crop.y,crop.w,crop.h,0,0,out.width,out.height);
+  dRef.image=out;dRef.width=out.width;dRef.height=out.height;
+  dRef.originalWidth=out.width;dRef.originalHeight=out.height;
+  dRef.aspectRatio=out.width/out.height;
+  if (typeof dRef.updateInputs === 'function') dRef.updateInputs();
+  // Forzar actualizaciones del editor
+  if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
+  if (typeof EW.updateControls === 'function') EW.updateControls();
+  if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+  // Segundo redibujado para asegurar
+  setTimeout(() => {
+    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+  }, 100);
+  cropModal.classList.remove('open');
+  const cm=v=>(v/(EW?.PIXELS_PER_CM||10)).toFixed(1);
+  msg(`◆ Recorte: ${cm(out.width)}cm × ${cm(out.height)}cm`,'success',2500);
+});
 }
 
 /* ────────────────────────────
