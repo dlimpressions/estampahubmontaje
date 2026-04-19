@@ -3,74 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>EstampaHub · DTF Móvil Pro</title>
+  <title>EstampaHub · DTF Móvil</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
     :root {
-      --bg: #06080f;
-      --surface: #0b0d17;
-      --s2: #0f1220;
-      --s3: #151826;
-      --border: rgba(14,165,233,0.14);
-      --bmd: rgba(14,165,233,0.28);
-      --accent: #0ea5e9;
-      --adim: rgba(14,165,233,0.12);
-      --emerald: #10b981;
-      --rose: #f43f5e;
-      --amber: #f59e0b;
-      --purple: #a855f7;
-      --indigo: #6366f1;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --ui: 'Exo 2', sans-serif;
-      --mono: 'DM Mono', monospace;
-      --safe-b: env(safe-area-inset-bottom, 0px);
-      --safe-t: env(safe-area-inset-top, 0px);
-      --nav-h: 68px;
-      --hdr-h: 54px;
+      --bg:       #06080f;
+      --surface:  #0b0d17;
+      --s2:       #0f1220;
+      --s3:       #151826;
+      --border:   rgba(14,165,233,0.14);
+      --bmd:      rgba(14,165,233,0.28);
+      --accent:   #0ea5e9;
+      --adim:     rgba(14,165,233,0.12);
+      --emerald:  #10b981;
+      --rose:     #f43f5e;
+      --amber:    #f59e0b;
+      --purple:   #a855f7;
+      --indigo:   #6366f1;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --ui:       'Exo 2', sans-serif;
+      --mono:     'DM Mono', monospace;
+      --safe-b:   env(safe-area-inset-bottom, 0px);
+      --safe-t:   env(safe-area-inset-top, 0px);
+      --nav-h:    68px;
+      --hdr-h:    54px;
     }
+
     html, body {
-      height: 100%;
-      height: 100dvh;
+      height: 100%; height: 100dvh;
       overflow: hidden;
       background: var(--bg);
       color: var(--text);
       font-family: var(--ui);
+      -webkit-font-smoothing: antialiased;
     }
+
+    /* ── iframe oculto del editor base ── */
     #editor-iframe {
       position: fixed;
-      top: -9999px;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      border: none;
-      opacity: 0;
+      top: -9999px; left: -9999px;
+      width: 1px; height: 1px;
+      border: none; opacity: 0;
       pointer-events: none;
     }
+
+    /* ── SHELL ── */
     #shell {
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;
-      position: relative;
+      display: flex; flex-direction: column;
+      height: 100dvh; position: relative;
     }
+
+    /* ── HEADER ── */
     #hdr {
       height: var(--hdr-h);
       padding: 0 14px;
       padding-top: var(--safe-t);
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.45);
       z-index: 100;
     }
     .hdr-logo { display: flex; align-items: center; gap: 8px; }
@@ -79,10 +78,15 @@
       background: linear-gradient(135deg, var(--accent), var(--indigo));
       display: flex; align-items: center; justify-content: center;
       font-weight: 900; font-size: 0.7rem; color: #fff;
-      box-shadow: 0 0 10px rgba(14,165,233,0.35);
+      box-shadow: 0 0 10px rgba(14,165,233,0.35); flex-shrink: 0;
     }
-    .hdr-name { font-weight: 800; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; }
-    .hdr-sub { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); }
+    .hdr-name {
+      font-weight: 800; font-size: 0.88rem;
+      letter-spacing: 1.2px; text-transform: uppercase; color: var(--text);
+    }
+    .hdr-sub {
+      font-family: var(--mono); font-size: 0.55rem; color: var(--muted);
+    }
     .hdr-actions { display: flex; gap: 6px; }
     .hdr-btn {
       width: 34px; height: 34px;
@@ -92,13 +96,22 @@
       transition: all 0.13s;
     }
     .hdr-btn:active { background: var(--s3); transform: scale(0.92); }
+    .hdr-btn.accent { background: var(--adim); border-color: var(--bmd); }
+
+    /* ── CANVAS AREA ── */
     #canvas-area {
       flex: 1; position: relative; overflow: hidden;
-      background: radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
-                  radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
-                  var(--bg);
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 15%, rgba(14,165,233,0.04) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.04) 0%, transparent 65%),
+        var(--bg);
       display: flex; align-items: center; justify-content: center;
       touch-action: none;
+    }
+    #canvas-area::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image: radial-gradient(circle, rgba(14,165,233,0.06) 1px, transparent 1px);
+      background-size: 22px 22px;
     }
     #mirror-canvas {
       position: relative; z-index: 1;
@@ -108,6 +121,8 @@
       max-width: 96%;
       max-height: 96%;
     }
+
+    /* Info flotante */
     #zoom-badge {
       position: absolute; top: 10px; right: 10px;
       background: rgba(11,13,23,0.88); border: 1px solid var(--border);
@@ -131,6 +146,8 @@
       color: var(--text); font-size: 0.65rem; cursor: pointer;
     }
     .sel-btn.red { color: var(--rose); }
+
+    /* ── BOTTOM NAV ── */
     #nav {
       height: calc(var(--nav-h) + var(--safe-b));
       padding-bottom: var(--safe-b);
@@ -146,7 +163,7 @@
       transition: color 0.14s;
     }
     .ntab.active { color: var(--accent); }
-    .ntab .nicon { font-size: 1.22rem; }
+    .ntab .nicon { font-size: 1.22rem; line-height: 1; }
     .ntab .nlabel { font-size: 0.56rem; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
     .ntab.ncenter .nbadge {
       width: 44px; height: 44px;
@@ -156,6 +173,8 @@
       font-size: 1.3rem; margin-top: -10px;
       box-shadow: 0 4px 14px rgba(14,165,233,0.4);
     }
+
+    /* ── SHEETS ── */
     .sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: var(--s2);
@@ -177,7 +196,7 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 12px 18px 8px; flex-shrink: 0;
     }
-    .sh-title { font-weight: 700; font-size: 0.96rem; }
+    .sh-title { font-weight: 700; font-size: 0.96rem; color: var(--text); }
     .sh-x {
       width: 26px; height: 26px; border-radius: 50%;
       background: rgba(255,255,255,0.08); border: none;
@@ -188,12 +207,16 @@
       overflow-y: auto; padding: 0 15px calc(16px + var(--safe-b)); flex: 1;
       -webkit-overflow-scrolling: touch;
     }
+
+    /* ── Backdrop ── */
     #backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,0.65);
       backdrop-filter: blur(3px); z-index: 400;
       display: none; opacity: 0; transition: opacity 0.22s;
     }
     #backdrop.show { display: block; opacity: 1; }
+
+    /* ── Components inside sheets ── */
     .sec-label {
       font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
       letter-spacing: 0.8px; text-transform: uppercase;
@@ -212,54 +235,71 @@
     .add-card:active { transform: scale(0.94); background: var(--s2); }
     .add-card .ac-icon { font-size: 1.7rem; }
     .add-card .ac-lbl { font-size: 0.68rem; font-weight: 600; color: var(--muted); text-align: center; }
+    .add-card.hi { border-color: var(--bmd); background: var(--adim); }
+    .add-card.hi .ac-lbl { color: var(--accent); }
+
     .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
     .pill {
       flex: 1; min-width: 90px;
       display: flex; align-items: center; justify-content: center; gap: 5px;
       padding: 10px 12px;
       background: var(--s3); border: 1px solid var(--border);
-      border-radius: 12px; font-size: 0.76rem; font-weight: 600;
-      cursor: pointer;
+      border-radius: 12px; font-size: 0.76rem; font-weight: 600; color: var(--text);
+      cursor: pointer; transition: all 0.13s;
     }
     .pill:active { background: var(--s2); transform: scale(0.96); }
     .pill.red  { border-color: rgba(244,63,94,0.35); color: var(--rose); }
     .pill.grn  { border-color: rgba(16,185,129,0.35); color: var(--emerald); }
+    .pill.prp  { border-color: rgba(168,85,247,0.35); color: var(--purple); }
+    .pill.amb  { border-color: rgba(245,158,11,0.35); color: var(--amber); }
     .pill.acc  { border-color: var(--bmd); color: var(--accent); background: var(--adim); }
+
     .slider-row {
       display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
     }
-    .sl-lbl { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); width: 58px; }
-    .sl-val { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); width: 38px; text-align: right; }
+    .sl-lbl { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); width: 58px; flex-shrink: 0; }
+    .sl-val { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); width: 38px; text-align: right; flex-shrink: 0; }
     input[type=range].mslider {
-      flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--s3);
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 2px; background: var(--s3); outline: none; cursor: pointer;
     }
     input[type=range].mslider::-webkit-slider-thumb {
       -webkit-appearance: none; width: 22px; height: 22px;
       border-radius: 50%; background: var(--accent);
       box-shadow: 0 0 8px rgba(14,165,233,0.5); cursor: pointer;
     }
+
     .info-box {
       padding: 12px 14px; background: var(--adim);
       border: 1px solid var(--bmd); border-radius: 12px; margin-bottom: 10px;
     }
+    .info-box .ib-lbl { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-bottom: 3px; }
+    .info-box .ib-val { font-family: var(--mono); font-size: 0.9rem; color: var(--accent); font-weight: 700; }
+
     .ninput {
       width: 100%; padding: 11px 13px;
       background: var(--s3); border: 1px solid var(--bmd);
       border-radius: 12px; color: var(--text);
       font-family: var(--mono); font-size: 0.85rem; outline: none;
+      transition: border-color 0.18s; margin-bottom: 0;
     }
+    .ninput:focus { border-color: var(--accent); }
+
     .exp-opt {
       display: flex; align-items: center; gap: 12px;
       padding: 13px 14px; background: var(--s3);
       border: 1px solid var(--border); border-radius: 14px;
-      margin-bottom: 9px; cursor: pointer;
+      margin-bottom: 9px; cursor: pointer; transition: all 0.13s;
     }
     .exp-opt:active { background: var(--s2); }
     .exp-ico {
       width: 40px; height: 40px; border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.2rem; flex-shrink: 0;
     }
+    .exp-ttl { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .exp-dsc { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+
     .dsgrid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(70px,1fr)); gap: 8px;
       padding: 4px 0;
@@ -267,15 +307,18 @@
     .ds-thumb {
       background: var(--s3); border: 2px solid var(--border);
       border-radius: 12px; aspect-ratio: 1/1; overflow: hidden;
-      cursor: pointer; position: relative;
+      cursor: pointer; position: relative; transition: all 0.13s;
     }
     .ds-thumb.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(14,165,233,0.3); }
+    .ds-thumb:active { transform: scale(0.93); }
     .ds-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .ds-num {
       position: absolute; bottom: 2px; right: 3px;
       background: rgba(0,0,0,0.72); border-radius: 4px;
       padding: 1px 4px; font-family: var(--mono); font-size: 0.52rem; color: #fff;
     }
+
+    /* ── Mensajes ── */
     #msgs {
       position: fixed; top: 58px; left: 10px; right: 10px;
       z-index: 9999; display: flex; flex-direction: column; gap: 5px;
@@ -290,425 +333,734 @@
     }
     .mmsg.success { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
     .mmsg.error   { background: rgba(244,63,94,0.12);  color: #fda4af; border-color: rgba(244,63,94,0.3); }
+    .mmsg.info    { background: rgba(14,165,233,0.12); color: #7dd3fc; border-color: rgba(14,165,233,0.3); }
+    .mmsg.loading { background: rgba(168,85,247,0.12); color: #d8b4fe; border-color: rgba(168,85,247,0.3); }
+    .mmsg.warning { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
     @keyframes msgin { from { transform: translateY(-8px); opacity:0; } to { transform: none; opacity:1; } }
+
+    /* ── Overlay genérico para modales del editor ── */
     #mod-wrap {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
       z-index: 3000; display: none;
-      align-items: center; justify-content: center;
+      align-items: flex-end; justify-content: center;
     }
     #mod-wrap.open { display: flex; }
+    #mod-wrap.center { align-items: center; }
     .mod-card {
       background: var(--s2); border: 1px solid var(--bmd);
-      border-radius: 22px;
-      padding: 20px 17px;
-      width: 94vw; max-width: 520px;
-      max-height: 85dvh; overflow-y: auto;
+      border-radius: 22px 22px 0 0;
+      padding: 20px 17px calc(20px + var(--safe-b));
+      width: 100%; max-height: 88dvh; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .mod-ttl { font-weight: 800; font-size: 1rem; margin-bottom: 12px; }
+    .mod-card.centered {
+      border-radius: 22px; max-width: 500px; width: 96vw;
+      padding: 20px 17px 20px;
+    }
+    .mod-ttl { font-weight: 800; font-size: 1rem; color: var(--text); margin-bottom: 12px; }
     .mod-close {
       width: 28px; height: 28px; border-radius: 50%;
       background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);
       color: var(--rose); font-size: 0.75rem;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
-    .mod-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .mod-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+    .mbtn-primary {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, var(--accent), #0284c7);
+      border: none; border-radius: 13px;
+      color: #fff; font-family: var(--ui); font-weight: 700;
+      font-size: 0.88rem; letter-spacing: 0.8px; text-transform: uppercase;
+      cursor: pointer; box-shadow: 0 3px 14px rgba(14,165,233,0.3);
+      margin-top: 6px;
+    }
+    .mbtn-sec {
+      width: 100%; padding: 11px;
+      background: transparent; border: 1px solid var(--bmd);
+      border-radius: 13px; color: var(--text); font-family: var(--ui);
+      font-weight: 600; font-size: 0.84rem; cursor: pointer; margin-top: 8px;
+    }
+    .finput {
+      width: 100%; padding: 12px 14px;
+      background: var(--s3); border: 1px solid var(--bmd);
+      border-radius: 12px; color: var(--text);
+      font-family: var(--mono); font-size: 0.86rem; outline: none;
+      margin-bottom: 0; transition: border-color 0.18s;
+    }
+    .finput:focus { border-color: var(--accent); }
+    .flbl {
+      display: block; font-family: var(--mono); font-size: 0.62rem;
+      color: var(--muted); letter-spacing: 0.5px;
+      margin-bottom: 4px; margin-top: 10px;
+    }
+
+    /* Gallery grid */
     #imgbb-designs-grid {
       display: grid !important;
-      grid-template-columns: repeat(auto-fill, minmax(80px,1fr)) !important;
+      grid-template-columns: repeat(auto-fill, minmax(85px,1fr)) !important;
       gap: 8px !important;
-      margin-top: 8px;
     }
-    .gal-item {
-      background: var(--s3); border: 2px solid var(--border);
-      border-radius: 12px; overflow: hidden; cursor: pointer;
-      aspect-ratio: 1/1;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .gal-item img { width: 100%; height: 100%; object-fit: cover; }
     #searchContainer input {
       width: 100%; padding: 10px 13px; margin-bottom: 10px;
       background: var(--s3); border: 1px solid var(--bmd);
-      border-radius: 11px; color: var(--text); font-size: 0.86rem;
+      border-radius: 11px; color: var(--text); font-size: 0.86rem; outline: none;
     }
-    #pagination { display: flex; justify-content: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    #searchContainer input:focus { border-color: var(--accent); }
+    #pagination { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     #pagination button {
       padding: 6px 14px; border-radius: 8px;
       background: var(--adim); border: 1px solid var(--bmd);
       color: var(--accent); font-size: 0.75rem; cursor: pointer;
     }
-    .lds-ring { display: inline-block; width: 24px; height: 24px; margin: 10px auto; }
-    .lds-ring div { box-sizing: border-box; display: block; position: absolute; width: 20px; height: 20px; border: 2px solid var(--accent); border-radius: 50%; animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: var(--accent) transparent transparent transparent; }
-    @keyframes lds-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+
+<!-- ════════════════════════════
+     IFRAME DEL EDITOR BASE
+════════════════════════════ -->
 <iframe id="editor-iframe" src="index.html"></iframe>
+
+<!-- ════════════════════════════
+     MENSAJES
+════════════════════════════ -->
 <div id="msgs"></div>
+
+<!-- ════════════════════════════
+     BACKDROP
+════════════════════════════ -->
 <div id="backdrop"></div>
+
+<!-- ════════════════════════════
+     SHELL PRINCIPAL
+════════════════════════════ -->
 <div id="shell">
+
+  <!-- HEADER -->
   <div id="hdr">
-    <div class="hdr-logo"><div class="hdr-badge">DTF</div><div><div class="hdr-name">EstampaHub</div><div class="hdr-sub">Editor Pro · Móvil</div></div></div>
-    <div class="hdr-actions"><button class="hdr-btn" id="btn-save">💾</button><button class="hdr-btn accent" id="btn-profile">👤</button></div>
+    <div class="hdr-logo">
+      <div class="hdr-badge">DTF</div>
+      <div>
+        <div class="hdr-name">EstampaHub</div>
+        <div class="hdr-sub">Editor Pro · Móvil</div>
+      </div>
+    </div>
+    <div class="hdr-actions">
+      <button class="hdr-btn" id="btn-save" title="Guardar">💾</button>
+      <button class="hdr-btn accent" id="btn-profile" title="Perfil">👤</button>
+    </div>
   </div>
-  <div id="canvas-area"><canvas id="mirror-canvas"></canvas><div id="zoom-badge">100%</div><div id="sel-bar"><span id="sel-info"></span><button class="sel-btn" id="sel-del">🗑️</button><button class="sel-btn" id="sel-desel">✕</button></div></div>
+
+  <!-- CANVAS (espejo del editor) -->
+  <div id="canvas-area">
+    <canvas id="mirror-canvas"></canvas>
+    <div id="zoom-badge">100%</div>
+    <div id="sel-bar">
+      <span id="sel-info">Seleccionado</span>
+      <button class="sel-btn" id="sel-del">🗑️</button>
+      <button class="sel-btn" id="sel-desel">✕</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
   <nav id="nav">
-    <button class="ntab" data-sheet="sh-designs"><span class="nicon">🖼️</span><span class="nlabel">Diseños</span></button>
-    <button class="ntab" data-sheet="sh-tools"><span class="nicon">⚙️</span><span class="nlabel">Ajustar</span></button>
-    <button class="ntab ncenter" data-sheet="sh-add"><div class="nbadge">➕</div><span class="nlabel">Añadir</span></button>
-    <button class="ntab" data-sheet="sh-canvas"><span class="nicon">🖼</span><span class="nlabel">Lienzo</span></button>
-    <button class="ntab" data-sheet="sh-export"><span class="nicon">💾</span><span class="nlabel">Exportar</span></button>
+    <button class="ntab" data-sheet="sh-designs" id="nt-designs">
+      <span class="nicon">🖼️</span><span class="nlabel">Diseños</span>
+    </button>
+    <button class="ntab" data-sheet="sh-tools" id="nt-tools">
+      <span class="nicon">⚙️</span><span class="nlabel">Ajustar</span>
+    </button>
+    <button class="ntab ncenter" data-sheet="sh-add" id="nt-add">
+      <div class="nbadge">➕</div>
+      <span class="nlabel" style="margin-top:2px;">Añadir</span>
+    </button>
+    <button class="ntab" data-sheet="sh-canvas" id="nt-canvas">
+      <span class="nicon">🖼</span><span class="nlabel">Lienzo</span>
+    </button>
+    <button class="ntab" data-sheet="sh-export" id="nt-export">
+      <span class="nicon">💾</span><span class="nlabel">Exportar</span>
+    </button>
   </nav>
 </div>
 
-<!-- SHEETS -->
-<div class="sheet" id="sh-add"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Añadir</div><button class="sh-x" data-close="sh-add">✕</button></div><div class="sh-body"><div class="add-grid"><div class="add-card hi" id="ac-upload"><span class="ac-icon">📷</span><span class="ac-lbl">Subir imagen</span></div><div class="add-card" id="ac-gallery"><span class="ac-icon">🖼️</span><span class="ac-lbl">Galería ImgBB</span></div><div class="add-card" id="ac-text"><span class="ac-icon">✏️</span><span class="ac-lbl">Texto</span></div></div></div></div>
-<div class="sheet" id="sh-designs"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Mis diseños</div><button class="sh-x" data-close="sh-designs">✕</button></div><div class="sh-body"><div class="dsgrid" id="mob-ds-grid"><div style="text-align:center;padding:20px;">Cargando...</div></div><button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar lienzo</button></div></div>
-<div class="sheet" id="sh-tools"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Ajustar</div><button class="sh-x" data-close="sh-tools">✕</button></div><div class="sh-body"><p class="sec-label">Transformar</p><div class="slider-row"><span class="sl-lbl">Rotación</span><input type="range" class="mslider" id="sl-rot" min="0" max="360" value="0"><span class="sl-val" id="sl-rot-v">0°</span></div><div class="slider-row"><span class="sl-lbl">Opacidad</span><input type="range" class="mslider" id="sl-op" min="10" max="100" value="100"><span class="sl-val" id="sl-op-v">100%</span></div><p class="sec-label">Tamaño (cm)</p><div style="display:flex;gap:8px;margin-bottom:8px;"><div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;">ANCHO</div><input type="number" class="ninput" id="sz-w" step="0.5"></div><div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;">ALTO</div><input type="number" class="ninput" id="sz-h" step="0.5"></div></div><label style="display:flex;align-items:center;gap:6px;margin-bottom:9px;"><input type="checkbox" id="sz-lock" checked> Mantener proporción</label><button class="pill grn" style="width:100%;" id="p-szapply">Aplicar tamaño</button><p class="sec-label">Herramientas</p><div class="pill-row"><button class="pill" id="p-mirror">🪞 Espejo</button><button class="pill amb" id="p-trim">✂️ Recortar</button></div><p class="sec-label">Orden</p><div class="pill-row"><button class="pill" id="p-sback">⤵️ Fondo</button><button class="pill" id="p-back">⬇️ Atrás</button><button class="pill" id="p-fwd">⬆️ Adelante</button><button class="pill" id="p-front">⤴️ Frente</button></div><button class="pill red" id="p-remove">🗑️ Eliminar</button><div class="info-box"><div class="ib-lbl">DIMENSIONES</div><div class="ib-val" id="ib-size">0cm × 0cm</div></div></div></div>
-<div class="sheet" id="sh-canvas"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Lienzo</div><button class="sh-x" data-close="sh-canvas">✕</button></div><div class="sh-body"><p class="sec-label">Zoom</p><div class="slider-row"><span class="sl-lbl">Zoom</span><input type="range" class="mslider" id="sl-zoom" min="20" max="200" value="100"><span class="sl-val" id="sl-zoom-v">100%</span></div><p class="sec-label">Dimensiones</p><div style="display:flex;gap:8px;"><div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;">ALTO (cm, máx 100)</div><input type="number" class="ninput" id="cv-h" min="10" max="100" step="0.5" value="100"></div><button class="pill grn" id="p-cvh">Aplicar</button></div><div style="font-family:var(--mono);font-size:0.62rem;">Ancho fijo: 58 cm</div><p class="sec-label">Color fondo (solo vista)</p><input type="color" id="cv-color" value="#ffffff" style="width:100%;height:42px;margin-bottom:10px;"><div class="info-box"><div class="ib-lbl">PRECIO APROX.</div><div class="ib-val" id="ib-precio">$0</div></div><button class="pill prp" id="p-pack">🧠 Ordenar automático</button></div></div>
-<div class="sheet" id="sh-export"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Exportar</div><button class="sh-x" data-close="sh-export">✕</button></div><div class="sh-body"><div class="pill-row"><button class="pill res-pill" data-dpi="300">300 DPI</button><button class="pill res-pill acc" data-dpi="150">150 DPI ★</button><button class="pill res-pill" data-dpi="72">72 DPI</button></div><div class="exp-opt" id="ex-png"><div class="exp-ico">💾</div><div><div class="exp-ttl">PNG transparente</div><div class="exp-dsc">Sin fondo · Alpha real</div></div></div><div class="exp-opt" id="ex-pdf"><div class="exp-ico">📄</div><div><div class="exp-ttl">PDF para imprenta</div></div></div><div class="exp-opt" id="ex-dtf"><div class="exp-ico">📤</div><div><div class="exp-ttl">Enviar pedido DTF</div></div></div><div class="exp-opt" id="ex-save"><div class="exp-ico">☁️</div><div><div class="exp-ttl">Guardar sesión</div></div></div><div class="exp-opt" id="ex-load"><div class="exp-ico">📂</div><div><div class="exp-ttl">Cargar sesión</div></div></div></div></div>
+<!-- ════════════════════════════
+     SHEETS
+════════════════════════════ -->
 
-<div id="mod-wrap"><div class="mod-card"><div class="mod-hdr"><span class="mod-ttl">📁 Galería ImgBB</span><button class="mod-close" id="close-gal">✕</button></div><div id="searchContainer"></div><div id="imgbb-designs-grid" style="min-height:120px;"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div><div id="pagination"></div></div></div>
+<!-- Sheet: Añadir -->
+<div class="sheet" id="sh-add">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr">
+    <div class="sh-title">Añadir al lienzo</div>
+    <button class="sh-x" data-close="sh-add">✕</button>
+  </div>
+  <div class="sh-body">
+    <div class="add-grid">
+      <div class="add-card hi" id="ac-upload"><span class="ac-icon">📷</span><span class="ac-lbl">Subir imagen</span></div>
+      <div class="add-card" id="ac-gallery"><span class="ac-icon">🖼️</span><span class="ac-lbl">Galería ImgBB</span></div>
+      <div class="add-card" id="ac-text"><span class="ac-icon">✏️</span><span class="ac-lbl">Texto</span></div>
+    </div>
+  </div>
+</div>
 
+<!-- Sheet: Diseños -->
+<div class="sheet" id="sh-designs">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr">
+    <div class="sh-title">Mis diseños</div>
+    <button class="sh-x" data-close="sh-designs">✕</button>
+  </div>
+  <div class="sh-body">
+    <div class="dsgrid" id="mob-ds-grid"><div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños cargados</div></div>
+    <div style="margin-top:10px;">
+      <button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Ajustar -->
+<div class="sheet" id="sh-tools">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr">
+    <div class="sh-title">Ajustar diseño</div>
+    <button class="sh-x" data-close="sh-tools">✕</button>
+  </div>
+  <div class="sh-body">
+    <p class="sec-label">Transformar</p>
+    <div class="slider-row">
+      <span class="sl-lbl">Rotación</span>
+      <input type="range" class="mslider" id="sl-rot" min="0" max="360" value="0">
+      <span class="sl-val" id="sl-rot-v">0°</span>
+    </div>
+    <div class="slider-row">
+      <span class="sl-lbl">Opacidad</span>
+      <input type="range" class="mslider" id="sl-op" min="10" max="100" value="100">
+      <span class="sl-val" id="sl-op-v">100%</span>
+    </div>
+
+    <p class="sec-label">Tamaño (cm)</p>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ANCHO</div>
+        <input type="number" class="ninput" id="sz-w" min="1" step="0.5" placeholder="0"></div>
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ALTO</div>
+        <input type="number" class="ninput" id="sz-h" min="1" step="0.5" placeholder="0"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.76rem;color:var(--muted);margin-bottom:9px;">
+      <input type="checkbox" id="sz-lock" checked style="accent-color:var(--accent);"> Mantener proporción
+    </label>
+    <button class="pill grn" style="width:100%;" id="p-szapply">Aplicar tamaño</button>
+
+    <p class="sec-label">Herramientas</p>
+    <div class="pill-row">
+      <button class="pill" id="p-mirror">🪞 Espejo</button>
+      <button class="pill amb" id="p-trim">✂️ Recortar</button>
+    </div>
+
+    <p class="sec-label">Orden de capas</p>
+    <div class="pill-row">
+      <button class="pill" id="p-sback">⤵️ Fondo</button>
+      <button class="pill" id="p-back">⬇️ Atrás</button>
+      <button class="pill" id="p-fwd">⬆️ Adelante</button>
+      <button class="pill" id="p-front">⤴️ Frente</button>
+    </div>
+    <div class="pill-row" style="margin-top:4px;">
+      <button class="pill red" id="p-remove" style="flex:1;">🗑️ Eliminar diseño seleccionado</button>
+    </div>
+
+    <div class="info-box" style="margin-top:12px;">
+      <div class="ib-lbl">DIMENSIONES DEL DISEÑO</div>
+      <div class="ib-val" id="ib-size">0cm × 0cm</div>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Lienzo -->
+<div class="sheet" id="sh-canvas">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr">
+    <div class="sh-title">Ajustar lienzo</div>
+    <button class="sh-x" data-close="sh-canvas">✕</button>
+  </div>
+  <div class="sh-body">
+    <p class="sec-label">Zoom</p>
+    <div class="slider-row">
+      <span class="sl-lbl">Zoom</span>
+      <input type="range" class="mslider" id="sl-zoom" min="20" max="200" value="100">
+      <span class="sl-val" id="sl-zoom-v">100%</span>
+    </div>
+
+    <p class="sec-label">Dimensiones</p>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;">
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">ALTO (cm, máx 100)</div>
+        <input type="number" class="ninput" id="cv-h" min="10" max="100" step="0.5" value="100">
+      </div>
+      <button class="pill grn" style="margin-bottom:0;white-space:nowrap;" id="p-cvh">Aplicar</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);">Ancho fijo: 58 cm</div>
+
+    <p class="sec-label">Color de fondo</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <input type="color" id="cv-color" value="#ffffff" style="width:42px;height:42px;border-radius:10px;border:2px solid var(--bmd);cursor:pointer;padding:2px;">
+      <span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);">Solo visual (no afecta PNG)</span>
+    </div>
+
+    <p class="sec-label">Precio estimado</p>
+    <div class="info-box">
+      <div class="ib-lbl">PRECIO APROX. IMPRESIÓN</div>
+      <div class="ib-val" id="ib-precio">$10.000 (mín.)</div>
+    </div>
+
+    <p class="sec-label">Auto-ordenar</p>
+    <button class="pill prp" style="width:100%;" id="p-pack">🧠 Ordenar diseños automáticamente</button>
+  </div>
+</div>
+
+<!-- Sheet: Exportar -->
+<div class="sheet" id="sh-export">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr">
+    <div class="sh-title">Exportar montaje</div>
+    <button class="sh-x" data-close="sh-export">✕</button>
+  </div>
+  <div class="sh-body">
+    <p class="sec-label">Resolución de exportación</p>
+    <div class="pill-row" style="margin-bottom:14px;">
+      <button class="pill res-pill" data-dpi="300">300 DPI</button>
+      <button class="pill res-pill acc" data-dpi="150">150 DPI ★</button>
+      <button class="pill res-pill" data-dpi="72">72 DPI</button>
+    </div>
+    <div class="exp-opt" id="ex-png">
+      <div class="exp-ico" style="background:rgba(99,102,241,0.12);color:var(--indigo);">💾</div>
+      <div><div class="exp-ttl">Descargar PNG</div><div class="exp-dsc">Con transparencia · Máxima calidad</div></div>
+    </div>
+    <div class="exp-opt" id="ex-pdf">
+      <div class="exp-ico" style="background:rgba(168,85,247,0.1);color:var(--purple);">📄</div>
+      <div><div class="exp-ttl">Descargar PDF</div><div class="exp-dsc">Para imprenta · Dimensiones exactas</div></div>
+    </div>
+    <div class="exp-opt" id="ex-dtf">
+      <div class="exp-ico" style="background:rgba(16,185,129,0.1);color:var(--emerald);">📤</div>
+      <div><div class="exp-ttl">Enviar pedido DTF</div><div class="exp-dsc">Enviar directamente a impresión</div></div>
+    </div>
+    <div class="exp-opt" id="ex-save">
+      <div class="exp-ico" style="background:rgba(245,158,11,0.1);color:var(--amber);">☁️</div>
+      <div><div class="exp-ttl">Guardar sesión</div><div class="exp-dsc">Continuar el montaje después</div></div>
+    </div>
+    <div class="exp-opt" id="ex-load">
+      <div class="exp-ico" style="background:rgba(14,165,233,0.08);color:var(--accent);">📂</div>
+      <div><div class="exp-ttl">Cargar sesión guardada</div><div class="exp-dsc">Restaurar último montaje</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     MODAL GALERÍA
+════════════════════════════ -->
+<div id="mod-wrap" id="gal-modal">
+  <div class="mod-card centered">
+    <div class="mod-hdr">
+      <span class="mod-ttl">📁 Mis diseños ImgBB</span>
+      <button class="mod-close" id="close-gal">✕</button>
+    </div>
+    <div id="searchContainer"></div>
+    <div id="imgbb-designs-grid"></div>
+    <div id="pagination"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     CONTROLLER JS
+════════════════════════════ -->
 <script>
 (function(){
-  // ----- UTILITIES -----
-  let EW = null, ready = false, mirrorRAF = null;
+  /* ── Variables del editor (se llenan al cargar el iframe) ── */
+  let EW = null;   // editor iframe contentWindow
+  let ready = false;
+  let mirrorRAF = null;
+
   const mirrorCanvas = document.getElementById('mirror-canvas');
-  const mirrorCtx = mirrorCanvas.getContext('2d');
-  function msg(text, type, ms=3000){ const c=document.getElementById('msgs'); const el=document.createElement('div'); el.className=`mmsg ${type||'info'}`; el.innerHTML=`<span>${text}</span>`; c.appendChild(el); setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),280); }, ms); }
-  
-  // ----- IFRAME LOAD -----
+  const mirrorCtx    = mirrorCanvas.getContext('2d');
+
+  /* ════════════════════════════
+     MENSAJES
+  ════════════════════════════ */
+  function msg(text, type, ms) {
+    const c = document.getElementById('msgs');
+    const el = document.createElement('div');
+    el.className = `mmsg ${type||'info'}`;
+    el.innerHTML = `<span>${text}</span>`;
+    c.appendChild(el);
+    const rm = () => { el.style.opacity='0'; setTimeout(()=>el.remove(),280); };
+    el.addEventListener('click', rm);
+    if(ms !== 0) setTimeout(rm, ms||4000);
+    return { remove: rm };
+  }
+
+  /* ════════════════════════════
+     IFRAME LOAD
+  ════════════════════════════ */
   const iframe = document.getElementById('editor-iframe');
+
   iframe.addEventListener('load', () => {
     try {
       EW = iframe.contentWindow;
+      // Esperar a que el editor base termine de inicializar
       waitForEditor();
-    } catch(e){ msg('Error cargando editor','error'); }
+    } catch(e) {
+      msg('Error al cargar el editor base', 'error');
+      console.error(e);
+    }
   });
-  function waitForEditor(){
+
+  function waitForEditor() {
     if(!EW) return;
-    if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') onEditorReady();
-    else setTimeout(waitForEditor, 200);
+    // Verificar que las funciones core estén disponibles
+    if(typeof EW.drawCanvas === 'function' && typeof EW.designs !== 'undefined') {
+      onEditorReady();
+    } else {
+      setTimeout(waitForEditor, 200);
+    }
   }
-  function onEditorReady(){
+
+  function onEditorReady() {
     ready = true;
+    console.log('✅ Editor base listo, conectando UI móvil');
+
+    // Parchar showMessage del editor para que use nuestros mensajes
     EW.showMessage = (text, type, ms) => msg(text, type, ms);
+
+    // Configurar canvas espejo
     setupMirrorCanvas();
+
+    // Conectar todos los botones
     initButtons();
+
+    // Iniciar sincronización
     syncLoop();
-    // Verificar login
-    const lock = EW.document.getElementById('lock-overlay');
-    if(lock && lock.style.display !== 'none') showLoginMobile();
-    else msg('✅ Editor listo','success',2000);
-    // Parche galería
-    patchGallery();
+
+    // Ocultar el login si el editor ya está desbloqueado
+    const lockOverlay = EW.document.getElementById('lock-overlay');
+    if(lockOverlay && lockOverlay.style.display !== 'none') {
+      showLoginMobile();
+    }
+
+    // Observar cuando el editor abre la galería
+    patchGalleryOverlay();
+
+    msg('✅ Editor listo', 'success', 2000);
   }
-  
-  // ----- CANVAS ESPEJO + TOUCH -----
-  function setupMirrorCanvas(){
+
+  /* ════════════════════════════
+     CANVAS ESPEJO
+  ════════════════════════════ */
+  function setupMirrorCanvas() {
     const editorCanvas = EW.document.getElementById('canvas');
     if(!editorCanvas) return;
-    mirrorCanvas.width = editorCanvas.width;
+
+    // Sincronizar dimensiones
+    mirrorCanvas.width  = editorCanvas.width;
     mirrorCanvas.height = editorCanvas.height;
+
+    // Ajustar tamaño visual al viewport
     fitMirror();
     window.addEventListener('resize', fitMirror);
-    function loop(){
-      if(!ready){ mirrorRAF = requestAnimationFrame(loop); return; }
+
+    // Iniciar loop de espejado
+    function loop() {
+      if(!ready) { mirrorRAF = requestAnimationFrame(loop); return; }
       try {
         const ec = EW.document.getElementById('canvas');
-        if(ec && mirrorCanvas.width === ec.width && mirrorCanvas.height === ec.height){
+        if(ec) {
+          if(mirrorCanvas.width !== ec.width || mirrorCanvas.height !== ec.height) {
+            mirrorCanvas.width  = ec.width;
+            mirrorCanvas.height = ec.height;
+            fitMirror();
+          }
           mirrorCtx.clearRect(0,0,mirrorCanvas.width,mirrorCanvas.height);
-          mirrorCtx.drawImage(ec,0,0);
-        } else if(ec){
-          mirrorCanvas.width = ec.width; mirrorCanvas.height = ec.height; fitMirror();
-          mirrorCtx.drawImage(ec,0,0);
+          mirrorCtx.drawImage(ec, 0, 0);
         }
-      } catch(e){}
+      } catch(e) {}
       mirrorRAF = requestAnimationFrame(loop);
     }
     loop();
-    // Reenviar eventos táctiles
-    function getEditorPoint(touch){
+
+    // Redirigir eventos táctiles al canvas original
+    setupTouchForwarding(editorCanvas);
+  }
+
+  function fitMirror() {
+    const area = document.getElementById('canvas-area');
+    if(!area || !mirrorCanvas.width) return;
+    const aw = area.clientWidth  - 20;
+    const ah = area.clientHeight - 20;
+    const sc = Math.min(aw / mirrorCanvas.width, ah / mirrorCanvas.height, 1);
+    mirrorCanvas.style.width  = Math.round(mirrorCanvas.width  * sc) + 'px';
+    mirrorCanvas.style.height = Math.round(mirrorCanvas.height * sc) + 'px';
+  }
+
+  /* ════════════════════════════
+     REENVIAR TOUCH → CANVAS EDITOR
+  ════════════════════════════ */
+  function setupTouchForwarding(editorCanvas) {
+    function getEditorPoint(touch) {
       const mr = mirrorCanvas.getBoundingClientRect();
-      const scaleX = mirrorCanvas.width / mr.width;
+      const scaleX = mirrorCanvas.width  / mr.width;
       const scaleY = mirrorCanvas.height / mr.height;
-      const editorRect = editorCanvas.getBoundingClientRect();
       return {
-        clientX: editorRect.left + (touch.clientX - mr.left) * scaleX / (mirrorCanvas.width / editorCanvas.width),
-        clientY: editorRect.top  + (touch.clientY - mr.top)  * scaleY / (mirrorCanvas.height / editorCanvas.height)
+        clientX: editorCanvas.getBoundingClientRect().left + (touch.clientX - mr.left) * scaleX / (mirrorCanvas.width / editorCanvas.width),
+        clientY: editorCanvas.getBoundingClientRect().top  + (touch.clientY - mr.top)  * scaleY / (mirrorCanvas.height / editorCanvas.height),
       };
     }
-    function forward(e, type){
+
+    function forward(e, type) {
       e.preventDefault();
       const t = e.touches[0] || e.changedTouches[0];
       if(!t) return;
       const pt = getEditorPoint(t);
-      editorCanvas.dispatchEvent(new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true }));
+      try {
+        const me = new MouseEvent(type, { clientX: pt.clientX, clientY: pt.clientY, bubbles: true });
+        editorCanvas.dispatchEvent(me);
+      } catch(err) {}
     }
-    mirrorCanvas.addEventListener('touchstart', e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
-    mirrorCanvas.addEventListener('touchmove', e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
-    mirrorCanvas.addEventListener('touchend', e => forward(e,'mouseup'), { passive: false });
-    // Pinch zoom
-    let lastDist=0;
+
+    mirrorCanvas.addEventListener('touchstart',  e => { if(e.touches.length===1) forward(e,'mousedown'); }, { passive: false });
+    mirrorCanvas.addEventListener('touchmove',   e => { if(e.touches.length===1) forward(e,'mousemove'); e.preventDefault(); }, { passive: false });
+    mirrorCanvas.addEventListener('touchend',    e => forward(e,'mouseup'),   { passive: false });
+    mirrorCanvas.addEventListener('touchcancel', e => forward(e,'mouseleave'), { passive: false });
+
+    // Pinch zoom (2 dedos)
+    let lastPinchDist = 0;
     mirrorCanvas.addEventListener('touchmove', e => {
-      if(e.touches.length===2){
+      if(e.touches.length === 2) {
         e.preventDefault();
-        const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-        if(lastDist){
-          const delta = d - lastDist;
-          const zsl = EW.document.getElementById('zoom-slider');
-          if(zsl){
-            let nv = Math.max(20, Math.min(200, parseInt(zsl.value)+(delta>0?5:-5)));
-            zsl.value = nv; zsl.dispatchEvent(new Event('input'));
+        const d = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if(lastPinchDist) {
+          const delta = d - lastPinchDist;
+          const sl = EW.document.getElementById('zoom-slider');
+          if(sl) {
+            const nv = Math.max(20, Math.min(200, parseInt(sl.value)+( delta>0?5:-5)));
+            sl.value = nv;
+            sl.dispatchEvent(new Event('input'));
             document.getElementById('sl-zoom').value = nv;
-            document.getElementById('sl-zoom-v').innerText = nv+'%';
+            document.getElementById('sl-zoom-v').textContent = nv + '%';
           }
         }
-        lastDist = d;
+        lastPinchDist = d;
       }
     }, { passive: false });
-    mirrorCanvas.addEventListener('touchend',()=>{ lastDist=0; });
+    mirrorCanvas.addEventListener('touchend', () => { lastPinchDist = 0; });
   }
-  function fitMirror(){
-    const area = document.getElementById('canvas-area');
-    if(!area || !mirrorCanvas.width) return;
-    const sc = Math.min((area.clientWidth-20)/mirrorCanvas.width, (area.clientHeight-20)/mirrorCanvas.height, 1);
-    mirrorCanvas.style.width = Math.round(mirrorCanvas.width * sc)+'px';
-    mirrorCanvas.style.height = Math.round(mirrorCanvas.height * sc)+'px';
-  }
-  
-  // ----- SHEETS -----
+
+  /* ════════════════════════════
+     SHEETS
+  ════════════════════════════ */
   let activeSheet = null;
-  function openSheet(id){
+
+  function openSheet(id) {
     if(activeSheet) closeSheet(activeSheet);
     const sh = document.getElementById(id);
-    if(sh){ sh.classList.add('open'); document.getElementById('backdrop').classList.add('show'); activeSheet = id; }
-    if(id==='sh-designs') refreshDesignsGrid();
-    if(id==='sh-tools') syncToolsSliders();
+    if(!sh) return;
+    sh.classList.add('open');
+    document.getElementById('backdrop').classList.add('show');
+    activeSheet = id;
+    if(id === 'sh-designs') refreshDesignsGrid();
+    if(id === 'sh-tools')   syncToolsSliders();
   }
-  function closeSheet(id){
+
+  function closeSheet(id) {
     const sh = document.getElementById(id);
     if(sh) sh.classList.remove('open');
     document.getElementById('backdrop').classList.remove('show');
     document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
     activeSheet = null;
   }
-  document.getElementById('backdrop').addEventListener('click',()=>{ if(activeSheet) closeSheet(activeSheet); });
-  document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click',()=>closeSheet(btn.dataset.close)); });
+
+  document.getElementById('backdrop').addEventListener('click', ()=>{
+    if(activeSheet) closeSheet(activeSheet);
+  });
+
+  document.querySelectorAll('[data-close]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ closeSheet(btn.dataset.close); });
+  });
+
   document.querySelectorAll('.ntab').forEach(tab=>{
     tab.addEventListener('click',()=>{
       const id = tab.dataset.sheet;
       document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');
-      if(activeSheet===id) closeSheet(id);
-      else openSheet(id);
+      if(activeSheet===id){ closeSheet(id); return; }
+      openSheet(id);
     });
   });
-  
-  // ----- GALERÍA ImgBB OPTIMIZADA (carga directa por fetch) -----
-  let currentPage = 1, totalPages = 1, searchTerm = '', abortCtrl = null;
-  const IMGBB_API_KEY = 'YOUR_API_KEY'; // Se debe leer del editor o pedir al usuario. Si el editor ya tiene key, la usamos.
-  function loadImgBBGallery(page=1, search=''){
-    const grid = document.getElementById('imgbb-designs-grid');
-    if(abortCtrl) abortCtrl.abort();
-    abortCtrl = new AbortController();
-    grid.innerHTML = '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>';
-    // Obtener API key del editor (si existe)
-    let apiKey = 'demo_key'; // fallback, pero idealmente el editor la provee
-    if(EW && EW.imgbbApiKey) apiKey = EW.imgbbApiKey;
-    else if(localStorage.getItem('imgbb_api_key')) apiKey = localStorage.getItem('imgbb_api_key');
-    let url = `https://api.imgbb.com/1/account/images?key=${apiKey}&page=${page}&per_page=20`;
-    if(search) url = `https://api.imgbb.com/1/account/images?key=${apiKey}&page=${page}&per_page=20&search=${encodeURIComponent(search)}`;
-    fetch(url, { signal: abortCtrl.signal })
-      .then(res=>res.json())
-      .then(data=>{
-        if(data.status===200 && data.data && data.data.images){
-          const images = data.data.images;
-          totalPages = Math.ceil(data.data.total_count / 20) || 1;
-          currentPage = page;
-          renderGallery(images);
-          renderPagination();
-        } else { grid.innerHTML = '<div style="padding:20px;text-align:center;">❌ Error al cargar</div>'; }
-      })
-      .catch(err=>{ if(err.name!=='AbortError') grid.innerHTML = '<div style="padding:20px;text-align:center;">Error de red o API key inválida</div>'; });
-  }
-  function renderGallery(images){
-    const grid = document.getElementById('imgbb-designs-grid');
-    if(!images.length){ grid.innerHTML = '<div style="padding:20px;text-align:center;">📭 No hay diseños</div>'; return; }
-    grid.innerHTML = '';
-    images.forEach(img=>{
-      const div = document.createElement('div');
-      div.className = 'gal-item';
-      const thumb = document.createElement('img');
-      thumb.src = img.thumb?.url || img.image?.url || img.url;
-      thumb.loading = 'lazy';
-      div.appendChild(thumb);
-      div.addEventListener('click', ()=>{
-        if(EW && typeof EW.loadSingleDesign === 'function') EW.loadSingleDesign(img.url);
-        else if(EW && EW.loadOne) EW.loadOne(img.url);
-        document.getElementById('mod-wrap').classList.remove('open');
-        msg('Diseño añadido al lienzo','success',1500);
+
+  /* ════════════════════════════
+     PARCHEAR GALERÍA DEL EDITOR
+  ════════════════════════════ */
+  function patchGalleryOverlay() {
+    // Cuando gallery.js abre el overlay del editor, lo redirigimos a nuestro modal
+    const editorOverlay = EW.document.getElementById('imgbb-gallery-overlay');
+    if(!editorOverlay) return;
+
+    // Observar cambios de display
+    const obs = new MutationObserver(muts => {
+      muts.forEach(m => {
+        if(m.attributeName === 'style') {
+          const display = editorOverlay.style.display;
+          const mod = document.getElementById('mod-wrap');
+          if(display !== 'none' && display !== '') {
+            // El editor abrió la galería - mostramos el nuestro y movemos el contenido
+            moveGalleryContent();
+            mod.classList.add('open');
+            mod.classList.add('center');
+            // Ocultar el del editor
+            editorOverlay.style.display = 'none';
+          }
+        }
       });
-      grid.appendChild(div);
+    });
+    obs.observe(editorOverlay, { attributes: true });
+
+    // Botón cerrar del modal móvil
+    document.getElementById('close-gal').addEventListener('click', ()=>{
+      document.getElementById('mod-wrap').classList.remove('open','center');
     });
   }
-  function renderPagination(){
-    const pagDiv = document.getElementById('pagination');
-    pagDiv.innerHTML = '';
-    if(totalPages<=1) return;
-    for(let i=1;i<=totalPages;i++){
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      if(i===currentPage) btn.style.background = 'var(--accent)';
-      btn.addEventListener('click',()=>loadImgBBGallery(i, searchTerm));
-      pagDiv.appendChild(btn);
+
+  function moveGalleryContent() {
+    // Mover los elementos de búsqueda y grid del editor a nuestro modal
+    const editorGrid   = EW.document.getElementById('imgbb-designs-grid');
+    const editorSearch = EW.document.getElementById('searchContainer');
+    const editorPag    = EW.document.getElementById('pagination');
+    const myGrid       = document.getElementById('imgbb-designs-grid');
+    const mySearch     = document.getElementById('searchContainer');
+    const myPag        = document.getElementById('pagination');
+
+    if(editorGrid   && myGrid)   { myGrid.innerHTML   = editorGrid.innerHTML; }
+    if(editorSearch && mySearch) { mySearch.innerHTML  = editorSearch.innerHTML; }
+    if(editorPag    && myPag)    { myPag.innerHTML     = editorPag.innerHTML; }
+
+    // Reenviar clicks de items al editor
+    myGrid.querySelectorAll('[data-url],.gal-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        const url = item.dataset.url;
+        if(!url) return;
+        // Llamar loadOne del gallery del editor
+        if(typeof EW.loadOne === 'function') EW.loadOne(url);
+        else if(typeof EW.loadSingleDesign === 'function') EW.loadSingleDesign(url);
+        document.getElementById('mod-wrap').classList.remove('open','center');
+      });
+    });
+
+    // Sincronizar búsqueda
+    const inp = mySearch.querySelector('input');
+    const origInp = EW.document.getElementById('searchInput');
+    if(inp && origInp) {
+      inp.addEventListener('input', e => {
+        origInp.value = e.target.value;
+        origInp.dispatchEvent(new Event('input'));
+        // Resincronizar grid
+        setTimeout(moveGalleryContent, 300);
+      });
     }
-  }
-  function patchGallery(){
-    // Reemplazar el botón de galería del editor para usar nuestro modal optimizado
-    const openBtn = EW.document.getElementById('open-imgbb-gallery');
-    if(openBtn){
-      openBtn.addEventListener('click', (e)=>{
-        e.preventDefault();
-        document.getElementById('mod-wrap').classList.add('open');
-        loadImgBBGallery(1, '');
-        // Configurar búsqueda
-        const searchContainer = document.getElementById('searchContainer');
-        searchContainer.innerHTML = '<input type="text" id="gallerySearch" placeholder="🔍 Buscar...">';
-        const searchInput = document.getElementById('gallerySearch');
-        searchInput.addEventListener('input', (e)=>{
-          searchTerm = e.target.value;
-          loadImgBBGallery(1, searchTerm);
+
+    // Paginación
+    myPag.querySelectorAll('button').forEach((btn,i)=>{
+      const origBtns = editorPag ? editorPag.querySelectorAll('button') : [];
+      if(origBtns[i]) {
+        btn.addEventListener('click', ()=>{
+          origBtns[i].click();
+          setTimeout(moveGalleryContent, 300);
         });
-      });
-    }
-    document.getElementById('close-gal').addEventListener('click',()=>{
-      document.getElementById('mod-wrap').classList.remove('open');
-    });
-  }
-  
-  // ----- LOGIN MÓVIL -----
-  function showLoginMobile(){
-    const lock = EW.document.getElementById('lock-overlay');
-    if(!lock) return;
-    lock.style.display = 'flex';
-    const obs = new MutationObserver(()=>{
-      if(lock.style.display === 'none'){
-        obs.disconnect();
-        msg('🔓 Sesión desbloqueada','success');
       }
     });
-    obs.observe(lock, { attributes: true, attributeFilter: ['style'] });
   }
-  
-  // ----- DISEÑOS GRID -----
-  function refreshDesignsGrid(){
+
+  /* ════════════════════════════
+     GRID DE DISEÑOS
+  ════════════════════════════ */
+  function refreshDesignsGrid() {
     const grid = document.getElementById('mob-ds-grid');
     if(!grid || !EW) return;
     const ds = EW.designs;
-    if(!ds || !ds.length){ grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;">➕ Agrega diseños</div>'; return; }
+    if(!ds || !ds.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.74rem;color:var(--muted);">Sin diseños. Usa "Añadir" para cargar.</div>';
+      return;
+    }
     grid.innerHTML = '';
     ds.forEach((d,i)=>{
-      const can = document.createElement('canvas'); can.width=80; can.height=80;
-      const ctx = can.getContext('2d');
-      const sc = Math.min(80/d.width,80/d.height)*0.88;
-      ctx.fillStyle='#fff'; ctx.fillRect(0,0,80,80);
-      ctx.save(); ctx.translate(40,40); ctx.scale(sc,sc);
-      ctx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height);
-      ctx.restore();
-      const el = document.createElement('div');
-      el.className = 'ds-thumb' + (d.id===EW.selectedDesignId ? ' active' : '');
-      el.innerHTML = `<img src="${can.toDataURL()}"><span class="ds-num">${i+1}</span>`;
+      const tc = document.createElement('canvas');
+      tc.width=80; tc.height=80;
+      const tctx=tc.getContext('2d');
+      const sc=Math.min(80/d.width,80/d.height)*0.88;
+      tctx.fillStyle='#fff'; tctx.fillRect(0,0,80,80);
+      tctx.save(); tctx.translate(40,40); tctx.scale(sc,sc);
+      tctx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height);
+      tctx.restore();
+      const el=document.createElement('div');
+      el.className='ds-thumb'+(d.id===EW.selectedDesignId?' active':'');
+      el.innerHTML=`<img src="${tc.toDataURL()}"><span class="ds-num">${i+1}</span>`;
       el.addEventListener('click',()=>{
-        EW.selectedDesignId = d.id;
-        if(typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
-        if(typeof EW.drawCanvas === 'function') EW.drawCanvas();
+        EW.selectedDesignId=d.id;
+        if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
+        if(typeof EW.updateControls==='function') EW.updateControls();
+        if(typeof EW.drawCanvas==='function') EW.drawCanvas();
         refreshDesignsGrid();
         syncToolsSliders();
+        msg(`Diseño ${i+1} seleccionado`,'info',1200);
       });
       grid.appendChild(el);
     });
   }
-  
-  // ----- SINCRONIZAR SLIDERS -----
-  function syncToolsSliders(){
+
+  /* ════════════════════════════
+     SINCRONIZAR SLIDERS
+  ════════════════════════════ */
+  function syncToolsSliders() {
     if(!EW || !EW.getSelectedDesign) return;
     const d = EW.getSelectedDesign();
     if(!d) return;
-    document.getElementById('sl-rot').value = Math.round(d.rotation);
-    document.getElementById('sl-rot-v').innerText = Math.round(d.rotation)+'°';
-    document.getElementById('sl-op').value = Math.round(d.opacity*100);
-    document.getElementById('sl-op-v').innerText = Math.round(d.opacity*100)+'%';
-    const dim = d.getDimensionsInCm();
-    document.getElementById('sz-w').value = dim.width.toFixed(1);
-    document.getElementById('sz-h').value = dim.height.toFixed(1);
+    const r=document.getElementById('sl-rot');
+    const rv=document.getElementById('sl-rot-v');
+    const o=document.getElementById('sl-op');
+    const ov=document.getElementById('sl-op-v');
+    if(r){r.value=Math.round(d.rotation);rv.textContent=Math.round(d.rotation)+'°';}
+    if(o){o.value=Math.round(d.opacity*100);ov.textContent=Math.round(d.opacity*100)+'%';}
+    const w=document.getElementById('sz-w');
+    const h=document.getElementById('sz-h');
+    const c=d.getDimensionsInCm();
+    if(w)w.value=c.width.toFixed(1);
+    if(h)h.value=c.height.toFixed(1);
   }
-  
-  // ----- PROPORCIÓN ANCHO/ALTO (corregida)-----
-  let lockRatio = true;
-  function updateAspect(){
-    const w = parseFloat(document.getElementById('sz-w').value);
-    const h = parseFloat(document.getElementById('sz-h').value);
-    if(isNaN(w) || isNaN(h)) return;
-    if(lockRatio && EW && EW.getSelectedDesign){
-      const d = EW.getSelectedDesign();
-      if(d){
-        const aspect = d.aspectRatio;
-        const newH = w / aspect;
-        document.getElementById('sz-h').value = newH.toFixed(1);
-      }
-    }
-  }
-  function updateAspectFromHeight(){
-    const w = parseFloat(document.getElementById('sz-w').value);
-    const h = parseFloat(document.getElementById('sz-h').value);
-    if(isNaN(w) || isNaN(h)) return;
-    if(lockRatio && EW && EW.getSelectedDesign){
-      const d = EW.getSelectedDesign();
-      if(d){
-        const aspect = d.aspectRatio;
-        const newW = h * aspect;
-        document.getElementById('sz-w').value = newW.toFixed(1);
-      }
-    }
-  }
-  
-  // ----- EXPORTAR PNG CON TRANSPARENCIA REAL -----
-  function exportTransparentPNG(){
-    if(!EW) return;
-    const editorCanvas = EW.document.getElementById('canvas');
-    if(!editorCanvas) return;
-    // Clonar y eliminar cualquier fondo visual (si existe)
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = editorCanvas.width;
-    tempCanvas.height = editorCanvas.height;
-    const ctx = tempCanvas.getContext('2d');
-    // Dibujar solo los diseños, sin fondo de color
-    if(EW.drawCanvasOnContext) EW.drawCanvasOnContext(ctx);
-    else {
-      // fallback: dibujar el canvas original pero con fondo transparente
-      ctx.clearRect(0,0,tempCanvas.width,tempCanvas.height);
-      ctx.drawImage(editorCanvas,0,0);
-      // Si el editor tiene un fondo sólido, lo ignoramos manualmente (se puede extraer capa)
-    }
-    const link = document.createElement('a');
-    link.download = `dtf_montaje_${Date.now()}.png`;
-    link.href = tempCanvas.toDataURL('image/png');
-    link.click();
-    msg('PNG con transparencia descargado','success');
-  }
-  
-  // ----- BOTONES -----
+
+  /* ════════════════════════════
+     BOTONES
+  ════════════════════════════ */
   function ew(id){ return EW ? EW.document.getElementById(id) : null; }
   function click(id){ const el=ew(id); if(el) el.click(); }
-  function initButtons(){
-    document.getElementById('btn-save').addEventListener('click',()=>{ if(EW && EW.saveWorkbench) EW.saveWorkbench(false); else msg('Guardado no disponible','error'); });
+
+  function initButtons() {
+
+    // Header
+    document.getElementById('btn-save').addEventListener('click',()=>{
+      if(EW && typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
+      else msg('Guardado no disponible','error');
+    });
     document.getElementById('btn-profile').addEventListener('click',()=>click('open-profile-btn'));
+
+    // Añadir
     document.getElementById('ac-upload').addEventListener('click',()=>{ ew('file-input')?.click(); closeSheet('sh-add'); });
-    document.getElementById('ac-gallery').addEventListener('click',()=>{ if(EW) EW.document.getElementById('open-imgbb-gallery')?.click(); closeSheet('sh-add'); });
+    document.getElementById('ac-gallery').addEventListener('click',()=>{ click('open-imgbb-gallery'); closeSheet('sh-add'); });
     document.getElementById('ac-text').addEventListener('click',()=>{ click('add-text-btn'); closeSheet('sh-add'); });
+
+    // Diseños
     document.getElementById('p-clear').addEventListener('click',()=>click('clear-btn'));
+
+    // Herramientas
     document.getElementById('p-mirror').addEventListener('click',()=>click('mirror-btn'));
     document.getElementById('p-trim').addEventListener('click',()=>click('tb-trim-btn'));
     document.getElementById('p-remove').addEventListener('click',()=>click('remove-btn'));
@@ -716,57 +1068,461 @@
     document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
     document.getElementById('p-fwd').addEventListener('click',()=>click('step-forward'));
     document.getElementById('p-front').addEventListener('click',()=>click('bring-front'));
+
+    // Barra selección
     document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
-    document.getElementById('sel-desel').addEventListener('click',()=>{ if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); } });
-    document.getElementById('sl-rot').addEventListener('input',e=>{ document.getElementById('sl-rot-v').innerText=e.target.value+'°'; const s=ew('rotation-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
-    document.getElementById('sl-op').addEventListener('input',e=>{ document.getElementById('sl-op-v').innerText=e.target.value+'%'; const s=ew('opacity-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
+    document.getElementById('sel-desel').addEventListener('click',()=>{
+      if(EW){ EW.selectedDesignId=null; EW.drawCanvas?.(); }
+    });
+
+    // Sliders rotación / opacidad
+    document.getElementById('sl-rot').addEventListener('input',e=>{
+      document.getElementById('sl-rot-v').textContent=e.target.value+'°';
+      const s=ew('rotation-slider');
+      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+    });
+    document.getElementById('sl-op').addEventListener('input',e=>{
+      document.getElementById('sl-op-v').textContent=e.target.value+'%';
+      const s=ew('opacity-slider');
+      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+    });
+
+    // Tamaño
     const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h');
-    document.getElementById('sz-lock').addEventListener('change',e=>{ lockRatio = e.target.checked; });
-    szw.addEventListener('input',()=>{ if(lockRatio) updateAspect(); });
-    szh.addEventListener('input',()=>{ if(lockRatio) updateAspectFromHeight(); });
+    const szlk=document.getElementById('sz-lock');
+    szw.addEventListener('input',()=>{
+      if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d)szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1);}
+    });
     document.getElementById('p-szapply').addEventListener('click',()=>{
       const wi=ew('width-input'), hi=ew('height-input');
-      if(wi) wi.value = szw.value; if(hi) hi.value = szh.value;
+      if(wi)wi.value=szw.value; if(hi)hi.value=szh.value;
       click('apply-size');
     });
-    document.getElementById('sl-zoom').addEventListener('input',e=>{ document.getElementById('sl-zoom-v').innerText=e.target.value+'%'; const s=ew('zoom-slider'); if(s){ s.value=e.target.value; s.dispatchEvent(new Event('input')); } });
-    document.getElementById('p-cvh').addEventListener('click',()=>{ const hi=ew('canvas-height-cm'); if(hi) hi.value=document.getElementById('cv-h').value; click('apply-canvas-height'); setTimeout(fitMirror,200); });
-    document.getElementById('cv-color').addEventListener('input',e=>{ const cc=ew('canvas-color'); if(cc){ cc.value=e.target.value; cc.dispatchEvent(new Event('input')); } });
-    document.getElementById('p-pack').addEventListener('click',()=>{ if(EW && EW.__autoPackDesignsPRO__) EW.__autoPackDesignsPRO__(8,false); else msg('Auto-pack no disponible','error'); });
-    document.getElementById('ex-png').addEventListener('click',()=>{ exportTransparentPNG(); closeSheet('sh-export'); });
+
+    // Zoom
+    document.getElementById('sl-zoom').addEventListener('input',e=>{
+      document.getElementById('sl-zoom-v').textContent=e.target.value+'%';
+      const s=ew('zoom-slider');
+      if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+    });
+
+    // Alto lienzo
+    document.getElementById('p-cvh').addEventListener('click',()=>{
+      const hi=ew('canvas-height-cm');
+      if(hi)hi.value=document.getElementById('cv-h').value;
+      click('apply-canvas-height');
+      setTimeout(fitMirror,300);
+    });
+
+    // Color fondo
+    document.getElementById('cv-color').addEventListener('input',e=>{
+      const cc=ew('canvas-color');
+      if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));}
+    });
+
+    // Auto-pack
+    document.getElementById('p-pack').addEventListener('click',()=>{
+      if(EW&&typeof EW.__autoPackDesignsPRO__==='function'){
+        EW.__autoPackDesignsPRO__(8,false);
+        msg('🧠 Diseños ordenados','success',2000);
+      } else msg('Motor PRO no disponible','error');
+    });
+
+    // Exportar
+    document.getElementById('ex-png').addEventListener('click',()=>{ click('download-png'); closeSheet('sh-export'); });
     document.getElementById('ex-pdf').addEventListener('click',()=>{ click('download-pdf'); closeSheet('sh-export'); });
-    document.getElementById('ex-dtf').addEventListener('click',()=>{ const ov=EW.document.getElementById('dtf-overlay'); if(ov) ov.style.display='flex'; closeSheet('sh-export'); });
-    document.getElementById('ex-save').addEventListener('click',()=>{ if(EW && EW.saveWorkbench) EW.saveWorkbench(false); });
-    document.getElementById('ex-load').addEventListener('click',()=>{ if(EW && EW.loadWorkbench) EW.loadWorkbench(); });
+    document.getElementById('ex-dtf').addEventListener('click',()=>{
+      const ov=EW.document.getElementById('dtf-overlay');
+      if(ov){ov.style.display='flex';} closeSheet('sh-export');
+    });
+    document.getElementById('ex-save').addEventListener('click',()=>{
+      if(EW&&typeof EW.saveWorkbench==='function') EW.saveWorkbench(false);
+      else msg('Guardado no disponible','error');
+    });
+    document.getElementById('ex-load').addEventListener('click',()=>{
+      if(EW&&typeof EW.loadWorkbench==='function') EW.loadWorkbench();
+      else msg('Carga no disponible','error');
+    });
+
+    // Resolución
     document.querySelectorAll('.res-pill').forEach(btn=>{
       btn.addEventListener('click',()=>{
-        document.querySelectorAll('.res-pill').forEach(b=>b.classList.remove('acc'));
+        document.querySelectorAll('.res-pill').forEach(b=>{
+          b.classList.remove('acc');
+          b.style.borderColor=''; b.style.color='';
+        });
         btn.classList.add('acc');
-        const s=ew('quality-select'); if(s) s.value=btn.dataset.dpi;
+        const s=ew('quality-select');
+        if(s)s.value=btn.dataset.dpi;
       });
     });
   }
-  
-  // ----- SYNC LOOP -----
-  function syncLoop(){
+
+  /* ════════════════════════════
+     LOGIN MÓVIL
+  ════════════════════════════ */
+  function showLoginMobile() {
+    // El login del editor (en el iframe) ya se encarga,
+    // solo necesitamos escuchar cuando se desbloquea
+    const lo = EW.document.getElementById('lock-overlay');
+    if(!lo) return;
+
+    const obs = new MutationObserver(()=>{
+      if(lo.style.display==='none' || !lo.style.display){
+        obs.disconnect();
+        msg('🔓 Sesión iniciada','success',2500);
+      }
+    });
+    obs.observe(lo,{attributes:true,attributeFilter:['style']});
+
+    // Hacer visible el login del editor dentro del iframe
+    // (ya se muestra automáticamente)
+  }
+
+  /* ════════════════════════════
+     SYNC LOOP
+  ════════════════════════════ */
+  function syncLoop() {
     setInterval(()=>{
       if(!ready||!EW) return;
+
+      // Zoom badge
       const zb=document.getElementById('zoom-badge');
-      if(zb && EW.canvasZoom!=null) zb.innerText = `${Math.round(EW.canvasZoom*100)}%`;
+      if(zb&&EW.canvasZoom!=null) zb.textContent=`${Math.round(EW.canvasZoom*100)}%`;
+
+      // Barra selección
       const bar=document.getElementById('sel-bar');
-      const sel=EW.getSelectedDesign ? EW.getSelectedDesign() : null;
-      if(sel && bar){
+      const si=document.getElementById('sel-info');
+      let sel=null;
+      try{ sel=typeof EW.getSelectedDesign==='function'?EW.getSelectedDesign():null; }catch(e){}
+      if(sel&&bar){
         bar.classList.add('show');
-        const dim=sel.getDimensionsInCm();
-        document.getElementById('sel-info').innerText = `${dim.width.toFixed(1)} × ${dim.height.toFixed(1)} cm`;
+        if(si){const c=sel.getDimensionsInCm();si.textContent=`${c.width.toFixed(1)} × ${c.height.toFixed(1)} cm`;}
       } else if(bar) bar.classList.remove('show');
-      const precio=EW.document.getElementById('precio-montaje');
-      if(precio) document.getElementById('ib-precio').innerText = precio.innerText;
-      const sizeInfo=EW.document.getElementById('size-info');
-      if(sizeInfo) document.getElementById('ib-size').innerText = sizeInfo.innerText;
-    }, 300);
+
+      // Precio
+      const ib=document.getElementById('ib-precio');
+      const op=EW.document.getElementById('precio-montaje');
+      if(ib&&op) ib.textContent=op.textContent;
+
+      // Tamaño info
+      const ibs=document.getElementById('ib-size');
+      const ops=EW.document.getElementById('size-info');
+      if(ibs&&ops) ibs.textContent=ops.textContent;
+
+    }, 400);
   }
+
+/* ═══════════════════════════════════════
+   RECORTE MANUAL CON HANDLES GRANDES (táctil)
+═══════════════════════════════════════ */
+let cropState = {
+  design: null,
+  srcCanvas: null,
+  cropRect: { x:0, y:0, w:0, h:0 },
+  sc: 1,
+  dragHandle: null,
+  startCrop: null,
+  startX: 0, startY: 0
+};
+
+function openMobileCrop(design) {
+  if (!design) { msg('Selecciona un diseño primero', 'warning'); return; }
+  cropState.design = design;
+  // Convertir imagen a canvas
+  const img = design.image;
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  cropState.srcCanvas = c;
+  // Calcular escala para que quepa en el modal
+  const modal = document.getElementById('crop-mobile-modal');
+  const canvasEl = document.getElementById('crop-mobile-canvas');
+  const maxW = window.innerWidth * 0.85;
+  const maxH = window.innerHeight * 0.7;
+  const sc = Math.min(maxW / c.width, maxH / c.height, 1);
+  cropState.sc = sc;
+  canvasEl.width = c.width;
+  canvasEl.height = c.height;
+  canvasEl.style.width = Math.round(c.width * sc) + 'px';
+  canvasEl.style.height = Math.round(c.height * sc) + 'px';
+  // Recorte inicial: todo el canvas
+  cropState.cropRect = { x:0, y:0, w:c.width, h:c.height };
+  modal.style.display = 'flex';
+  renderCropCanvas();
+  attachCropEvents();
+}
+
+function renderCropCanvas() {
+  const canvas = document.getElementById('crop-mobile-canvas');
+  const ctx = canvas.getContext('2d');
+  const src = cropState.srcCanvas;
+  const rect = cropState.cropRect;
+  const sc = cropState.sc;
+  // Dibujar imagen completa atenuada
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.globalAlpha = 0.3;
+  ctx.drawImage(src, 0, 0);
+  ctx.globalAlpha = 1;
+  // Dibujar área de recorte nítida
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+  ctx.drawImage(src, 0, 0);
+  ctx.restore();
+  // Dibujar borde y handles GRANDES
+  ctx.strokeStyle = '#0ea5e9';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+  // Handles grandes (32px de diámetro)
+  const hs = 32; // tamaño del handle en píxeles lógicos
+  const handles = [
+    { x: rect.x, y: rect.y }, // tl
+    { x: rect.x + rect.w/2, y: rect.y }, // tc
+    { x: rect.x + rect.w, y: rect.y }, // tr
+    { x: rect.x, y: rect.y + rect.h/2 }, // ml
+    { x: rect.x + rect.w, y: rect.y + rect.h/2 }, // mr
+    { x: rect.x, y: rect.y + rect.h }, // bl
+    { x: rect.x + rect.w/2, y: rect.y + rect.h }, // bc
+    { x: rect.x + rect.w, y: rect.y + rect.h } // br
+  ];
+  ctx.fillStyle = '#0ea5e9';
+  ctx.shadowColor = '#0ea5e9';
+  ctx.shadowBlur = 12;
+  handles.forEach(h => {
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, hs/2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.shadowBlur = 0;
+  // Información de tamaño
+  const cm = v => (v / (EW?.PIXELS_PER_CM || 10)).toFixed(1);
+  document.getElementById('crop-info').textContent = `${cm(rect.w)}cm × ${cm(rect.h)}cm`;
+}
+
+function attachCropEvents() {
+  const canvas = document.getElementById('crop-mobile-canvas');
+  const getPos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
+  const hitHandle = (x, y) => {
+    const r = cropState.cropRect;
+    const hs = 32; // mismo tamaño que el handle visual
+    const handles = [
+      { id: 'tl', x: r.x, y: r.y },
+      { id: 'tc', x: r.x + r.w/2, y: r.y },
+      { id: 'tr', x: r.x + r.w, y: r.y },
+      { id: 'ml', x: r.x, y: r.y + r.h/2 },
+      { id: 'mr', x: r.x + r.w, y: r.y + r.h/2 },
+      { id: 'bl', x: r.x, y: r.y + r.h },
+      { id: 'bc', x: r.x + r.w/2, y: r.y + r.h },
+      { id: 'br', x: r.x + r.w, y: r.y + r.h }
+    ];
+    for (let h of handles) {
+      if (Math.abs(x - h.x) <= hs/2 + 5 && Math.abs(y - h.y) <= hs/2 + 5) return h.id;
+    }
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return 'move';
+    return null;
+  };
+  let dragging = false;
+  let dragType = null;
+  let startRect = null;
+  let startPos = null;
+  const onStart = (e) => {
+    e.preventDefault();
+    const pos = getPos(e);
+    dragType = hitHandle(pos.x, pos.y);
+    if (!dragType) return;
+    dragging = true;
+    startRect = { ...cropState.cropRect };
+    startPos = { x: pos.x, y: pos.y };
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    const dx = pos.x - startPos.x;
+    const dy = pos.y - startPos.y;
+    let newRect = { ...startRect };
+    const maxX = cropState.srcCanvas.width;
+    const maxY = cropState.srcCanvas.height;
+    if (dragType === 'move') {
+      newRect.x = Math.min(Math.max(0, startRect.x + dx), maxX - startRect.w);
+      newRect.y = Math.min(Math.max(0, startRect.y + dy), maxY - startRect.h);
+    } else {
+      // Redimensionar
+      if (dragType.includes('l')) {
+        const nx = Math.min(startRect.x + dx, startRect.x + startRect.w - 15);
+        newRect.w += startRect.x - nx;
+        newRect.x = nx;
+      }
+      if (dragType.includes('r')) {
+        newRect.w = Math.min(startRect.w + dx, maxX - startRect.x);
+        newRect.w = Math.max(15, newRect.w);
+      }
+      if (dragType.includes('t')) {
+        const ny = Math.min(startRect.y + dy, startRect.y + startRect.h - 15);
+        newRect.h += startRect.y - ny;
+        newRect.y = ny;
+      }
+      if (dragType.includes('b')) {
+        newRect.h = Math.min(startRect.h + dy, maxY - startRect.y);
+        newRect.h = Math.max(15, newRect.h);
+      }
+    }
+    cropState.cropRect = newRect;
+    renderCropCanvas();
+  };
+  const onEnd = () => {
+    dragging = false;
+  };
+  canvas.addEventListener('touchstart', onStart, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  canvas.addEventListener('touchend', onEnd);
+  canvas.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+  cropState.cleanupEvents = () => {
+    canvas.removeEventListener('touchstart', onStart);
+    canvas.removeEventListener('touchmove', onMove);
+    canvas.removeEventListener('touchend', onEnd);
+    canvas.removeEventListener('mousedown', onStart);
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onEnd);
+  };
+}
+
+function autoCropBounds() {
+  if (!cropState.srcCanvas) return;
+  const c = cropState.srcCanvas;
+  const ctx = c.getContext('2d');
+  const imgData = ctx.getImageData(0, 0, c.width, c.height);
+  const data = imgData.data;
+  let top = c.height, left = c.width, right = 0, bottom = 0;
+  let found = false;
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) {
+      const alpha = data[(y * c.width + x) * 4 + 3];
+      if (alpha > 10) {
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+        if (x < left) left = x;
+        if (x > right) right = x;
+        found = true;
+      }
+    }
+  }
+  if (found) {
+    cropState.cropRect = {
+      x: left, y: top,
+      w: right - left + 1,
+      h: bottom - top + 1
+    };
+    renderCropCanvas();
+  }
+}
+
+function applyMobileCrop() {
+  if (!cropState.design || !cropState.srcCanvas) return;
+  const rect = cropState.cropRect;
+  if (rect.w < 5 || rect.h < 5) return;
+  const out = document.createElement('canvas');
+  out.width = rect.w;
+  out.height = rect.h;
+  const octx = out.getContext('2d');
+  octx.drawImage(cropState.srcCanvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  // Reemplazar imagen del diseño
+  cropState.design.image = out;
+  cropState.design.width = out.width;
+  cropState.design.height = out.height;
+  cropState.design.originalWidth = out.width;
+  cropState.design.originalHeight = out.height;
+  cropState.design.aspectRatio = out.width / out.height;
+  if (typeof cropState.design.updateInputs === 'function') cropState.design.updateInputs();
+  if (EW && EW.drawCanvas) EW.drawCanvas();
+  if (EW && typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
+  if (EW && typeof EW.updateControls === 'function') EW.updateControls();
+  const cm = v => (v / (EW?.PIXELS_PER_CM || 10)).toFixed(1);
+  msg(`✅ Recorte aplicado: ${cm(rect.w)}cm × ${cm(rect.h)}cm`, 'success', 2500);
+  closeMobileCrop();
+}
+
+function closeMobileCrop() {
+  if (cropState.cleanupEvents) cropState.cleanupEvents();
+  document.getElementById('crop-mobile-modal').style.display = 'none';
+  cropState.design = null;
+  cropState.srcCanvas = null;
+}
+
+// Eventos de los botones del recorte móvil
+document.getElementById('crop-mobile-reset').addEventListener('click', () => {
+  if (cropState.srcCanvas) {
+    cropState.cropRect = { x:0, y:0, w: cropState.srcCanvas.width, h: cropState.srcCanvas.height };
+    renderCropCanvas();
+  }
+});
+document.getElementById('crop-mobile-auto').addEventListener('click', autoCropBounds);
+document.getElementById('crop-mobile-cancel').addEventListener('click', closeMobileCrop);
+document.getElementById('crop-mobile-apply').addEventListener('click', applyMobileCrop);
+
+// Reemplazar el botón de recorte original para que use nuestra versión táctil
+// Buscar en initButtons la línea donde se asigna el evento a p-trim y reemplazarla
+// Pero como no podemos modificar initButtons desde fuera, lo haremos después de que se ejecute:
+setTimeout(() => {
+  const trimBtn = document.getElementById('p-trim');
+  if (trimBtn) {
+    // Eliminar eventos anteriores (clonar y reemplazar)
+    const newTrimBtn = trimBtn.cloneNode(true);
+    trimBtn.parentNode.replaceChild(newTrimBtn, trimBtn);
+    newTrimBtn.addEventListener('click', () => {
+      if (!EW) return;
+      const d = EW.getSelectedDesign?.();
+      if (!d) { msg('Selecciona un diseño primero', 'warning'); return; }
+      openMobileCrop(d);
+      closeSheet('sh-tools');
+    });
+  }
+}, 500);
+
+
 })();
 </script>
+
+<!-- ════ MODAL DE RECORTE MANUAL (HANDLES GRANDES) ════ -->
+<div id="crop-mobile-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:7000; align-items:center; justify-content:center; flex-direction:column; backdrop-filter:blur(8px);">
+  <div style="background:var(--s2); border:1px solid var(--bmd); border-radius:24px; padding:16px; width:96vw; max-width:500px; max-height:90vh; display:flex; flex-direction:column; gap:12px; box-shadow:0 0 40px rgba(14,165,233,0.3);">
+    <div style="display:flex; align-items:center; justify-content:space-between; color:var(--accent); font-family:var(--mono);">
+      <h3 style="margin:0; font-size:1rem;">✂️ Recorte Manual</h3>
+      <span style="font-size:0.7rem; opacity:0.7;">Arrastra los puntos grandes</span>
+    </div>
+    <div style="overflow:auto; display:flex; justify-content:center; background:#111827; border-radius:12px;">
+      <canvas id="crop-mobile-canvas" style="max-width:100%; height:auto; cursor:crosshair; touch-action:none;"></canvas>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button id="crop-mobile-reset" class="pill" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">↺ Resetear</button>
+      <button id="crop-mobile-auto" class="pill amb" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">⚡ Auto</button>
+      <button id="crop-mobile-cancel" class="pill red" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">✕ Cancelar</button>
+      <button id="crop-mobile-apply" class="pill grn" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">✓ Aplicar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
