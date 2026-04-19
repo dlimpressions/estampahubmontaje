@@ -3761,7 +3761,25 @@ if(tbDtfBtn){
 
 <script src="mesasave.js"></script>
 
-
+<script>
+  // Exportar funciones necesarias para que la versión móvil pueda usarlas
+  if (typeof trimTransparentPixels !== 'undefined') {
+    window.trimTransparentPixels = trimTransparentPixels;
+  }
+  if (typeof Design !== 'undefined') {
+    window.Design = Design;
+  }
+  if (typeof updateDesignsList !== 'undefined') {
+    window.updateDesignsList = updateDesignsList;
+  }
+  if (typeof updateControls !== 'undefined') {
+    window.updateControls = updateControls;
+  }
+  if (typeof drawCanvas !== 'undefined') {
+    window.drawCanvas = drawCanvas;
+  }
+  console.log('✅ Funciones del editor exportadas globalmente');
+</script>
 
 </body>
 
