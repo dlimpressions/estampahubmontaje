@@ -423,6 +423,26 @@
 ════════════════════════════ -->
 <iframe id="editor-iframe" src="index.html"></iframe>
 
+<!-- ════ MODAL DE RECORTE MANUAL (HANDLES GRANDES) ════ -->
+<div id="crop-mobile-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:7000; align-items:center; justify-content:center; flex-direction:column; backdrop-filter:blur(8px);">
+  <div style="background:var(--s2); border:1px solid var(--bmd); border-radius:24px; padding:16px; width:96vw; max-width:500px; max-height:90vh; display:flex; flex-direction:column; gap:12px; box-shadow:0 0 40px rgba(14,165,233,0.3);">
+    <div style="display:flex; align-items:center; justify-content:space-between; color:var(--accent); font-family:var(--mono);">
+      <h3 style="margin:0; font-size:1rem;">✂️ Recorte Manual</h3>
+      <span style="font-size:0.7rem; opacity:0.7;">Arrastra los puntos grandes</span>
+    </div>
+    <div style="overflow:auto; display:flex; justify-content:center; background:#111827; border-radius:12px;">
+      <canvas id="crop-mobile-canvas" style="max-width:100%; height:auto; cursor:crosshair; touch-action:none;"></canvas>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button id="crop-mobile-reset" class="pill" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">↺ Resetear</button>
+      <button id="crop-mobile-auto" class="pill amb" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">⚡ Auto</button>
+      <button id="crop-mobile-cancel" class="pill red" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">✕ Cancelar</button>
+      <button id="crop-mobile-apply" class="pill grn" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">✓ Aplicar</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ════════════════════════════
      MENSAJES
 ════════════════════════════ -->
@@ -463,6 +483,8 @@
       <button class="sel-btn" id="sel-desel">✕</button>
     </div>
   </div>
+
+<div id="crop-info" style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); padding:4px 12px; border-radius:8px; font-family:monospace; font-size:0.7rem; color:#0ea5e9;"></div>
 
   <!-- BOTTOM NAV -->
   <nav id="nav">
@@ -669,6 +691,7 @@
     <div id="pagination"></div>
   </div>
 </div>
+
 
 <!-- ════════════════════════════
      CONTROLLER JS
@@ -1504,25 +1527,6 @@ setTimeout(() => {
 
 })();
 </script>
-
-<!-- ════ MODAL DE RECORTE MANUAL (HANDLES GRANDES) ════ -->
-<div id="crop-mobile-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:7000; align-items:center; justify-content:center; flex-direction:column; backdrop-filter:blur(8px);">
-  <div style="background:var(--s2); border:1px solid var(--bmd); border-radius:24px; padding:16px; width:96vw; max-width:500px; max-height:90vh; display:flex; flex-direction:column; gap:12px; box-shadow:0 0 40px rgba(14,165,233,0.3);">
-    <div style="display:flex; align-items:center; justify-content:space-between; color:var(--accent); font-family:var(--mono);">
-      <h3 style="margin:0; font-size:1rem;">✂️ Recorte Manual</h3>
-      <span style="font-size:0.7rem; opacity:0.7;">Arrastra los puntos grandes</span>
-    </div>
-    <div style="overflow:auto; display:flex; justify-content:center; background:#111827; border-radius:12px;">
-      <canvas id="crop-mobile-canvas" style="max-width:100%; height:auto; cursor:crosshair; touch-action:none;"></canvas>
-    </div>
-    <div style="display:flex; gap:10px; justify-content:flex-end;">
-      <button id="crop-mobile-reset" class="pill" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">↺ Resetear</button>
-      <button id="crop-mobile-auto" class="pill amb" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">⚡ Auto</button>
-      <button id="crop-mobile-cancel" class="pill red" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">✕ Cancelar</button>
-      <button id="crop-mobile-apply" class="pill grn" style="flex:0; font-family:var(--mono); font-size:0.7rem; padding:10px 14px;">✓ Aplicar</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
