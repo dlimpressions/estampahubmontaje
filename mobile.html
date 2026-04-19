@@ -1211,20 +1211,33 @@ function loadGalOne(url) {
       const trimmed = EW.trimTransparentPixels(img);
       const id = 'gal-' + Date.now();
       const design = new EW.Design(id, trimmed);
+      // Escalar para que quepa en el canvas
       const maxW = EW.canvas.width - 40;
       const maxH = EW.canvas.height - 40;
-      const scaleFit = Math.min(maxW / design.width, maxH / design.height);
-      design.scale = Math.min(1, scaleFit);
+      let scaleFit = Math.min(maxW / design.width, maxH / design.height);
+      scaleFit = Math.max(0.1, Math.min(1, scaleFit)); // asegurar escala positiva
+      design.scale = scaleFit;
+      // Posicionar en el centro
+      design.x = EW.canvas.width / 2;
+      design.y = EW.canvas.height / 2;
+      // Añadir al array
       EW.designs.push(design);
       EW.window.designs = EW.designs;
       EW.selectedDesignId = id;
+      // Forzar actualizaciones
       if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
       if (typeof EW.updateControls === 'function') EW.updateControls();
       if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-      // Forzar un segundo redibujado después de 100ms para asegurar que se muestre
+      // Redibujar varias veces para asegurar
       setTimeout(() => {
         if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+        if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
       }, 100);
+      setTimeout(() => {
+        if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+      }, 300);
+      // Verificar en consola
+      console.log('✅ Diseño añadido. Total diseños:', EW.designs.length);
       m.remove();
       msg('✅ Diseño cargado correctamente', 'success', 2000);
       closeGallery();
