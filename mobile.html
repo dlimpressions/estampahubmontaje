@@ -1220,12 +1220,12 @@ function loadGalOne(url) {
       design.y = EW.canvas.height / 2;
       EW.designs.push(design);
       EW.window.designs = EW.designs;
-      EW.selectedDesignId = id;  // seleccionar el nuevo diseño
-      // Forzar actualizaciones múltiples
+      EW.selectedDesignId = id;
+      // Actualizaciones inmediatas
       if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
       if (typeof EW.updateControls === 'function') EW.updateControls();
       if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
-      // Redibujar varias veces con retardos
+      // Redibujados en cadena para asegurar
       setTimeout(() => {
         if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
         if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
@@ -1235,8 +1235,8 @@ function loadGalOne(url) {
       }, 300);
       setTimeout(() => {
         if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+        console.log('🔁 Redibujado forzado completo. Total diseños:', EW.designs.length);
       }, 600);
-      console.log('✅ Diseño añadido. Total diseños:', EW.designs.length);
       m.remove();
       msg('✅ Diseño cargado correctamente', 'success', 2000);
       closeGallery();
@@ -1727,15 +1727,25 @@ function initButtons(){
   // Selección bar
   document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
   document.getElementById('sel-x').addEventListener('click',()=>{if(EW){EW.selectedDesignId=null;EW.drawCanvas?.();}});
-  document.getElementById('sel-dup').addEventListener('click',()=>{
-    if(!EW)return;const d=EW.getSelectedDesign?.();if(!d)return;
-    const id='dup-'+Date.now();
-    const dup=new EW.Design(id,d.image,d.x+10,d.y+10);
-    dup.scale=d.scale;dup.rotation=d.rotation;dup.opacity=d.opacity;
-    EW.designs.push(dup);EW.selectedDesignId=id;
-    EW.updateDesignsList?.();EW.updateControls?.();EW.drawCanvas?.();
-    msg('◆ Diseño duplicado','success',1200);
-  });
+ document.getElementById('sel-dup').addEventListener('click',()=>{
+  if(!EW)return;const d=EW.getSelectedDesign?.();if(!d)return;
+  const id='dup-'+Date.now();
+  const dup=new EW.Design(id,d.image,d.x+10,d.y+10);
+  dup.scale=d.scale;dup.rotation=d.rotation;dup.opacity=d.opacity;
+  EW.designs.push(dup);EW.selectedDesignId=id;
+  if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
+  if(typeof EW.updateControls==='function') EW.updateControls();
+  if(typeof EW.drawCanvas==='function') EW.drawCanvas();
+  // Forzar redibujados adicionales para evitar congelamiento
+  setTimeout(()=>{
+    if(typeof EW.drawCanvas==='function') EW.drawCanvas();
+    if(typeof EW.updateDesignsList==='function') EW.updateDesignsList();
+  }, 100);
+  setTimeout(()=>{
+    if(typeof EW.drawCanvas==='function') EW.drawCanvas();
+  }, 300);
+  msg('◆ Diseño duplicado','success',1200);
+});
 
   // Sliders con actualización del track
   function bindSlider(sliderId,valId,suffix,origId){
