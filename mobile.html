@@ -1718,14 +1718,37 @@ function initButtons(){
     if(typeof window.openCropToolMobile==='function')window.openCropToolMobile(d);
     closeSheet('sh-tools');
   });
-  document.getElementById('p-remove').addEventListener('click',()=>click('remove-btn'));
+  document.getElementById('p-remove').addEventListener('click',()=>{
+  click('remove-btn');
+  // Forzar actualización del canvas espejo y redibujado
+  setTimeout(() => {
+    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+    const ec = EW.document.getElementById('canvas');
+    if (ec && mc) {
+      mctx.drawImage(ec, 0, 0);
+    }
+    refreshDsGrid();
+    syncSliders();
+  }, 100);
+});
   document.getElementById('p-sback').addEventListener('click',()=>click('send-back'));
   document.getElementById('p-back').addEventListener('click',()=>click('step-back'));
   document.getElementById('p-fwd').addEventListener('click',()=>click('step-forward'));
   document.getElementById('p-front').addEventListener('click',()=>click('bring-front'));
 
   // Selección bar
-  document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
+  document.getElementById('sel-del').addEventListener('click',()=>{
+  click('remove-btn');
+  setTimeout(() => {
+    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+    const ec = EW.document.getElementById('canvas');
+    if (ec && mc) {
+      mctx.drawImage(ec, 0, 0);
+    }
+    refreshDsGrid();
+    syncSliders();
+  }, 100);
+});
   document.getElementById('sel-x').addEventListener('click',()=>{if(EW){EW.selectedDesignId=null;EW.drawCanvas?.();}});
  document.getElementById('sel-dup').addEventListener('click',()=>{
   if(!EW)return;const d=EW.getSelectedDesign?.();if(!d)return;
