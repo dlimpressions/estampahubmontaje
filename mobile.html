@@ -1195,8 +1195,8 @@ function updateGalMultibar(){
   if(n===0){ls.style.display='none';cs.style.display='none';sc.textContent='Toca para seleccionar · 2 toques para cargar';}
   else{ls.style.display='inline-block';cs.style.display='inline-block';sc.textContent=`${n} seleccionado(s)`;}
 }
+
 function loadGalOne(url) {
-  // Verificar que el editor esté listo
   if (!EW || typeof EW.trimTransparentPixels !== 'function' || typeof EW.Design !== 'function') {
     msg('Editor no listo. Reintentando...', 'warning');
     setTimeout(() => loadGalOne(url), 500);
@@ -1208,23 +1208,23 @@ function loadGalOne(url) {
   img.crossOrigin = 'anonymous';
   img.onload = () => {
     try {
-      // Recortar transparencia usando la función del editor
       const trimmed = EW.trimTransparentPixels(img);
       const id = 'gal-' + Date.now();
       const design = new EW.Design(id, trimmed);
-      // Escalar para que quepa en el canvas
       const maxW = EW.canvas.width - 40;
       const maxH = EW.canvas.height - 40;
       const scaleFit = Math.min(maxW / design.width, maxH / design.height);
       design.scale = Math.min(1, scaleFit);
-      // Añadir al array de diseños del editor
       EW.designs.push(design);
       EW.window.designs = EW.designs;
       EW.selectedDesignId = id;
-      // Actualizar la interfaz del editor
       if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
       if (typeof EW.updateControls === 'function') EW.updateControls();
       if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+      // Forzar un segundo redibujado después de 100ms para asegurar que se muestre
+      setTimeout(() => {
+        if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+      }, 100);
       m.remove();
       msg('✅ Diseño cargado correctamente', 'success', 2000);
       closeGallery();
@@ -1245,7 +1245,6 @@ async function loadGalSel() {
   const urls = Array.from(selItems);
   if (!urls.length) return;
 
-  // Verificar que el editor esté listo
   if (!EW || typeof EW.trimTransparentPixels !== 'function' || typeof EW.Design !== 'function') {
     msg('Editor no listo. Reintentando...', 'warning');
     setTimeout(() => loadGalSel(), 500);
@@ -1283,10 +1282,15 @@ async function loadGalSel() {
   if (typeof EW.updateDesignsList === 'function') EW.updateDesignsList();
   if (typeof EW.updateControls === 'function') EW.updateControls();
   if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+  // Forzar segundo redibujado
+  setTimeout(() => {
+    if (typeof EW.drawCanvas === 'function') EW.drawCanvas();
+  }, 100);
   m.remove();
   msg(`✅ ${ok} de ${urls.length} diseño(s) cargados`, 'success', 2500);
   closeGallery();
 }
+
 function closeGallery(){document.getElementById('gal-modal').classList.remove('open');selItems.clear();updateGalMultibar();}
 
 document.getElementById('gal-search').addEventListener('input',e=>{galSearch=e.target.value;galPage=1;renderGal();});
