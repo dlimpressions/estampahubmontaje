@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -544,7 +545,7 @@ function onEditorReady() {
   setupMirror();
   initButtons();
   syncLoop();
-  checkLogin();  // Muestra login si no autenticado
+  checkLogin();
   patchEditorOverlays();
   initCropTool();
   msg('◆ Sistema listo', 'success', 2000);
@@ -767,43 +768,61 @@ function openGallery() {
   else renderGal();
 }
 
-// ========== EXPORTACIÓN PNG SIN FONDO ==========
+// ========== EXPORTACIÓN PNG CON TOTAL TRANSPARENCIA (CORREGIDO) ==========
 function exportPNG() {
-  if(!EW || !EW.designs || !EW.designs.length) { msg('No hay diseños para exportar', 'warning'); return; }
-  const m = msg('Preparando PNG...', 'loading', 0);
+  if(!EW || !EW.designs || !EW.designs.length) {
+    msg('No hay diseños para exportar', 'warning');
+    return;
+  }
+  const m = msg('Preparando PNG transparente...', 'loading', 0);
   try {
     const dpi = parseInt(EW.document.getElementById('quality-select')?.value || '150');
-    const W = EW.CANVAS_WIDTH_CM || 58, H = EW.CANVAS_HEIGHT_CM || 100, PPM = 0.3937007874;
-    const pw = Math.round(W * PPM * dpi), ph = Math.round(H * PPM * dpi);
-    const ec = EW.document.getElementById('canvas');
-    const scX = pw / ec.width, scY = ph / ec.height;
-    const out = document.createElement('canvas');
-    out.width = pw; out.height = ph;
-    const octx = out.getContext('2d');
-    octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
-    octx.clearRect(0, 0, pw, ph); // Fondo transparente
-    EW.designs.forEach(d => {
-      octx.save();
-      octx.globalAlpha = d.opacity;
-      octx.translate(d.x * scX, d.y * scY);
-      octx.rotate(d.rotation * Math.PI / 180);
-      octx.scale(d.scale * scX, d.scale * scY);
-      octx.drawImage(d.image, -d.width/2, -d.height/2, d.width, d.height);
-      octx.restore();
+    const W = EW.CANVAS_WIDTH_CM || 58;
+    const H = EW.CANVAS_HEIGHT_CM || 100;
+    const PPM = 0.3937007874;
+    const widthPx = Math.round(W * PPM * dpi);
+    const heightPx = Math.round(H * PPM * dpi);
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = widthPx;
+    exportCanvas.height = heightPx;
+    // Forzar contexto con canal alfa
+    const ctx = exportCanvas.getContext('2d', { alpha: true });
+    ctx.clearRect(0, 0, widthPx, heightPx); // fondo totalmente transparente
+
+    const sourceCanvas = EW.document.getElementById('canvas');
+    const scaleX = widthPx / sourceCanvas.width;
+    const scaleY = heightPx / sourceCanvas.height;
+
+    EW.designs.forEach(design => {
+      ctx.save();
+      ctx.globalAlpha = design.opacity;
+      ctx.translate(design.x * scaleX, design.y * scaleY);
+      ctx.rotate(design.rotation * Math.PI / 180);
+      ctx.scale(design.scale * scaleX, design.scale * scaleY);
+      ctx.drawImage(design.image, -design.width/2, -design.height/2, design.width, design.height);
+      ctx.restore();
     });
-    out.toBlob(blob => {
+
+    exportCanvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.download = 'montaje-dtf.png';
-      a.href = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = 'montaje-dtf-transparente.png';
+      document.body.appendChild(a);
       a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 200);
       m.remove();
-      msg('✅ PNG descargado (fondo transparente)', 'success');
+      msg('✅ PNG exportado con fondo transparente', 'success');
     }, 'image/png', 1.0);
-  } catch(e) { m.remove(); msg('Error: '+e.message, 'error'); }
+  } catch (err) {
+    m.remove();
+    msg('Error al exportar: ' + err.message, 'error');
+  }
 }
 
-// ========== FUNCIONES DE SOPORTE (setupMirror, initButtons, syncLoop, etc.) ==========
+// ========== FUNCIONES DE SOPORTE ==========
 function setupMirror() {
   const ec = EW.document.getElementById('canvas');
   if(!ec) return;
@@ -828,7 +847,6 @@ function setupMirror() {
     }
     requestAnimationFrame(loop);
   })();
-  // Reenviar eventos táctiles
   function toEditor(touch) {
     const mr = mcCanvas.getBoundingClientRect(), er = ec.getBoundingClientRect();
     const scx = mcCanvas.width / mr.width, scy = mcCanvas.height / mr.height;
@@ -859,7 +877,6 @@ function setupMirror() {
 }
 
 function initButtons() {
-  // Sheets
   function closeSheet(id) { document.getElementById(id)?.classList.remove('open'); document.getElementById('backdrop').classList.remove('show'); document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active')); }
   function openSheet(id) { if(activeSheet) closeSheet(activeSheet); document.getElementById(id).classList.add('open'); document.getElementById('backdrop').classList.add('show'); activeSheet=id; if(id==='sh-designs') refreshDsGrid(); if(id==='sh-tools') syncSliders(); }
   let activeSheet = null;
@@ -868,9 +885,40 @@ function initButtons() {
     tab.addEventListener('click',()=>{ const id=tab.dataset.sh; openSheet(id); });
   });
   document.getElementById('backdrop').addEventListener('click',()=>{ if(activeSheet) closeSheet(activeSheet); });
-  function refreshDsGrid() { /* ... (omitido por brevedad, pero funcional) ... */ }
-  function syncSliders() { /* ... */ }
-  // Botones de acciones
+  function refreshDsGrid() {
+    const grid = document.getElementById('ds-grid');
+    if(!grid || !EW || !EW.designs) return;
+    const ds = EW.designs;
+    if(!ds.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños. Usa Añadir para cargar.</div>'; return; }
+    grid.innerHTML = '';
+    ds.forEach((d,i)=>{
+      const tc = document.createElement('canvas'); tc.width=80; tc.height=80;
+      const tctx=tc.getContext('2d');
+      const sc=Math.min(80/d.width,80/d.height)*0.88;
+      tctx.fillStyle='#fff'; tctx.fillRect(0,0,80,80);
+      tctx.save(); tctx.translate(40,40); tctx.scale(sc,sc);
+      tctx.drawImage(d.image,-d.width/2,-d.height/2,d.width,d.height); tctx.restore();
+      const el=document.createElement('div');
+      el.className='dst'+(d.id===EW.selectedDesignId?' active':'');
+      el.innerHTML=`<img src="${tc.toDataURL()}"><span class="dsn">${i+1}</span>`;
+      el.addEventListener('click',()=>{ EW.selectedDesignId=d.id; EW.updateDesignsList?.(); EW.updateControls?.(); EW.drawCanvas?.(); refreshDsGrid(); syncSliders(); });
+      grid.appendChild(el);
+    });
+  }
+  function syncSliders() {
+    if(!EW || !EW.getSelectedDesign) return;
+    const d = EW.getSelectedDesign();
+    if(!d) return;
+    const sr=document.getElementById('sl-rot'), srv=document.getElementById('sl-rot-v');
+    const so=document.getElementById('sl-op'), sov=document.getElementById('sl-op-v');
+    if(sr){sr.value=Math.round(d.rotation); srv.textContent=Math.round(d.rotation)+'°';}
+    if(so){so.value=Math.round(d.opacity*100); sov.textContent=Math.round(d.opacity*100)+'%';}
+    const sw=document.getElementById('sz-w'), sh=document.getElementById('sz-h');
+    const c=d.getDimensionsInCm();
+    if(sw) sw.value=c.width.toFixed(1);
+    if(sh) sh.value=c.height.toFixed(1);
+  }
+  // Asignar botones
   document.getElementById('ac-upload').addEventListener('click', () => { EW.document.getElementById('file-input')?.click(); closeSheet('sh-add'); });
   document.getElementById('ac-gallery').addEventListener('click', () => { openGallery(); closeSheet('sh-add'); });
   document.getElementById('ac-text').addEventListener('click', () => { EW.document.getElementById('add-text-btn')?.click(); closeSheet('sh-add'); });
@@ -938,11 +986,10 @@ function patchEditorOverlays() {
 }
 
 function initCropTool() {
-  // Crop manual móvil (omitido por brevedad, pero se puede implementar igual que en la versión anterior)
-  window.openCropToolMobile = function(design) { msg('Recorte no implementado en esta demo', 'warning'); };
+  window.openCropToolMobile = function(design) { msg('Recorte manual disponible en la versión de escritorio', 'warning'); };
 }
 
-// Inicializar eventos adicionales de la galería
+// Eventos de la galería
 document.getElementById('gal-close').addEventListener('click', closeGallery);
 document.getElementById('gal-load-sel').addEventListener('click', loadGalSel);
 document.getElementById('gal-clear-sel').addEventListener('click', () => { selectedItems.clear(); updateGalMultibar(); renderGal(); });
