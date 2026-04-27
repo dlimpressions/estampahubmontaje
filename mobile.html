@@ -1089,136 +1089,275 @@ function syncSliders() {
 
 // ========== CROP TOOL ==========
 function initCropTool() {
-  const cm=document.getElementById('crop-modal');
-  const cc=document.getElementById('crop-canvas');
-  const cctx=cc.getContext('2d');
-  const infoEl=document.getElementById('crop-info');
-  const HR=28, HIT=38;
-  let src=null, dRef=null, sc=1;
-  let crop={x:0,y:0,w:0,h:0};
-  let drag=null, startCrop=null, sMX=0, sMY=0;
-  function toCanvas(img){
-    if(img instanceof HTMLCanvasElement)return img;
-    const c=document.createElement('canvas');
-    c.width=img.naturalWidth||img.width;
-    c.height=img.naturalHeight||img.height;
-    c.getContext('2d').drawImage(img,0,0);return c;
+  const cm = document.getElementById('crop-modal');
+  const cc = document.getElementById('crop-canvas');
+  const cctx = cc.getContext('2d');
+  const infoEl = document.getElementById('crop-info');
+  const HR = 28, HIT = 38;
+  let src = null, dRef = null, sc = 1;
+  let crop = { x: 0, y: 0, w: 0, h: 0 };
+  let drag = null, startCrop = null, sMX = 0, sMY = 0;
+  let originalScale = 1; // Guardar la escala original del diseño antes del recorte
+  let originalWidthCm = 0, originalHeightCm = 0; // Dimensiones en cm antes del recorte
+
+  function toCanvas(img) {
+    if (img instanceof HTMLCanvasElement) return img;
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth || img.width;
+    c.height = img.naturalHeight || img.height;
+    c.getContext('2d').drawImage(img, 0, 0);
+    return c;
   }
-  function autoBounds(c){
-    const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
-    let t=c.height,l=c.width,r=0,b=0,found=false;
-    for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){
-      if(d[(y*c.width+x)*4+3]>10){if(y<t)t=y;if(y>b)b=y;if(x<l)l=x;if(x>r)r=x;found=true;}
+
+  function autoBounds(c) {
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let t = c.height, l = c.width, r = 0, b = 0, found = false;
+    for (let y = 0; y < c.height; y++) {
+      for (let x = 0; x < c.width; x++) {
+        if (d[(y * c.width + x) * 4 + 3] > 10) {
+          if (y < t) t = y;
+          if (y > b) b = y;
+          if (x < l) l = x;
+          if (x > r) r = x;
+          found = true;
+        }
+      }
     }
-    return found?{x:l,y:t,w:r-l+1,h:b-t+1}:{x:0,y:0,w:c.width,h:c.height};
+    return found ? { x: l, y: t, w: r - l + 1, h: b - t + 1 } : { x: 0, y: 0, w: c.width, h: c.height };
   }
-  function getCS(){const r=cc.getBoundingClientRect();return{x:cc.width/(r.width||1),y:cc.height/(r.height||1)};}
-  function toLogical(tx,ty){const r=cc.getBoundingClientRect(),cs=getCS();return{lx:(tx-r.left)*cs.x,ly:(ty-r.top)*cs.y};}
-  function getHandles(){
-    const sx=crop.x*sc,sy=crop.y*sc,sw=crop.w*sc,sh=crop.h*sc;
-    return[{id:'tl',x:sx,y:sy},{id:'tc',x:sx+sw/2,y:sy},{id:'tr',x:sx+sw,y:sy},{id:'ml',x:sx,y:sy+sh/2},{id:'mr',x:sx+sw,y:sy+sh/2},{id:'bl',x:sx,y:sy+sh},{id:'bc',x:sx+sw/2,y:sy+sh},{id:'br',x:sx+sw,y:sy+sh}];
+
+  function getCS() {
+    const r = cc.getBoundingClientRect();
+    return { x: cc.width / (r.width || 1), y: cc.height / (r.height || 1) };
   }
-  function hitHandle(lx,ly){
-    for(const h of getHandles())if(Math.abs(lx-h.x)<=HIT&&Math.abs(ly-h.y)<=HIT)return h.id;
-    const sx=crop.x*sc,sy=crop.y*sc,sw=crop.w*sc,sh=crop.h*sc;
-    if(lx>=sx&&lx<=sx+sw&&ly>=sy&&ly<=sy+sh)return'move';
+
+  function toLogical(tx, ty) {
+    const r = cc.getBoundingClientRect();
+    const cs = getCS();
+    return { lx: (tx - r.left) * cs.x, ly: (ty - r.top) * cs.y };
+  }
+
+  function getHandles() {
+    const sx = crop.x * sc, sy = crop.y * sc, sw = crop.w * sc, sh = crop.h * sc;
+    return [
+      { id: 'tl', x: sx, y: sy }, { id: 'tc', x: sx + sw / 2, y: sy },
+      { id: 'tr', x: sx + sw, y: sy }, { id: 'ml', x: sx, y: sy + sh / 2 },
+      { id: 'mr', x: sx + sw, y: sy + sh / 2 }, { id: 'bl', x: sx, y: sy + sh },
+      { id: 'bc', x: sx + sw / 2, y: sy + sh }, { id: 'br', x: sx + sw, y: sy + sh }
+    ];
+  }
+
+  function hitHandle(lx, ly) {
+    for (const h of getHandles()) if (Math.abs(lx - h.x) <= HIT && Math.abs(ly - h.y) <= HIT) return h.id;
+    const sx = crop.x * sc, sy = crop.y * sc, sw = crop.w * sc, sh = crop.h * sc;
+    if (lx >= sx && lx <= sx + sw && ly >= sy && ly <= sy + sh) return 'move';
     return null;
   }
-  function render(){
-    cctx.clearRect(0,0,cc.width,cc.height);
-    const gs=20;for(let y=0;y<cc.height;y+=gs)for(let x=0;x<cc.width;x+=gs){
-      cctx.fillStyle=((x/gs+y/gs)%2===0)?'#0a0e1a':'#080c18';cctx.fillRect(x,y,gs,gs);
-    }
-    cctx.globalAlpha=0.25;cctx.drawImage(src,0,0,cc.width,cc.height);cctx.globalAlpha=1;
-    const sx=crop.x*sc,sy=crop.y*sc,sw=crop.w*sc,sh=crop.h*sc;
-    cctx.save();cctx.beginPath();cctx.rect(sx,sy,sw,sh);cctx.clip();
-    cctx.drawImage(src,0,0,cc.width,cc.height);cctx.restore();
-    cctx.fillStyle='rgba(0,0,0,0.55)';
-    cctx.fillRect(0,0,cc.width,sy);cctx.fillRect(0,sy+sh,cc.width,cc.height);
-    cctx.fillRect(0,sy,sx,sh);cctx.fillRect(sx+sw,sy,cc.width,sh);
-    cctx.strokeStyle='#00d4ff';cctx.lineWidth=2;cctx.setLineDash([]);
-    cctx.shadowColor='#00d4ff';cctx.shadowBlur=8;cctx.strokeRect(sx,sy,sw,sh);cctx.shadowBlur=0;
-    cctx.strokeStyle='rgba(0,212,255,0.2)';cctx.lineWidth=1;cctx.setLineDash([4,5]);
-    for(let i=1;i<3;i++){cctx.beginPath();cctx.moveTo(sx+sw*i/3,sy);cctx.lineTo(sx+sw*i/3,sy+sh);cctx.stroke();cctx.beginPath();cctx.moveTo(sx,sy+sh*i/3);cctx.lineTo(sx+sw,sy+sh*i/3);cctx.stroke();}
+
+  function render() {
+    cctx.clearRect(0, 0, cc.width, cc.height);
+    const gs = 20;
+    for (let y = 0; y < cc.height; y += gs)
+      for (let x = 0; x < cc.width; x += gs) {
+        cctx.fillStyle = ((x / gs + y / gs) % 2 === 0) ? '#0a0e1a' : '#080c18';
+        cctx.fillRect(x, y, gs, gs);
+      }
+    cctx.globalAlpha = 0.25;
+    cctx.drawImage(src, 0, 0, cc.width, cc.height);
+    cctx.globalAlpha = 1;
+    const sx = crop.x * sc, sy = crop.y * sc, sw = crop.w * sc, sh = crop.h * sc;
+    cctx.save();
+    cctx.beginPath();
+    cctx.rect(sx, sy, sw, sh);
+    cctx.clip();
+    cctx.drawImage(src, 0, 0, cc.width, cc.height);
+    cctx.restore();
+    cctx.fillStyle = 'rgba(0,0,0,0.55)';
+    cctx.fillRect(0, 0, cc.width, sy);
+    cctx.fillRect(0, sy + sh, cc.width, cc.height);
+    cctx.fillRect(0, sy, sx, sh);
+    cctx.fillRect(sx + sw, sy, cc.width, sh);
+    cctx.strokeStyle = '#00d4ff';
+    cctx.lineWidth = 2;
     cctx.setLineDash([]);
-    getHandles().forEach(h=>{
-      cctx.beginPath();cctx.arc(h.x,h.y,HR,0,Math.PI*2);
-      cctx.fillStyle='rgba(0,212,255,0.18)';cctx.fill();
-      cctx.beginPath();cctx.arc(h.x,h.y,HR*0.5,0,Math.PI*2);
-      cctx.fillStyle='#00d4ff';cctx.fill();
-      cctx.strokeStyle='#ffffff';cctx.lineWidth=2;
-      cctx.shadowColor='#00d4ff';cctx.shadowBlur=14;cctx.stroke();cctx.shadowBlur=0;
+    cctx.shadowColor = '#00d4ff';
+    cctx.shadowBlur = 8;
+    cctx.strokeRect(sx, sy, sw, sh);
+    cctx.shadowBlur = 0;
+    cctx.strokeStyle = 'rgba(0,212,255,0.2)';
+    cctx.lineWidth = 1;
+    cctx.setLineDash([4, 5]);
+    for (let i = 1; i < 3; i++) {
+      cctx.beginPath();
+      cctx.moveTo(sx + sw * i / 3, sy);
+      cctx.lineTo(sx + sw * i / 3, sy + sh);
+      cctx.stroke();
+      cctx.beginPath();
+      cctx.moveTo(sx, sy + sh * i / 3);
+      cctx.lineTo(sx + sw, sy + sh * i / 3);
+      cctx.stroke();
+    }
+    cctx.setLineDash([]);
+    getHandles().forEach(h => {
+      cctx.beginPath();
+      cctx.arc(h.x, h.y, HR, 0, Math.PI * 2);
+      cctx.fillStyle = 'rgba(0,212,255,0.18)';
+      cctx.fill();
+      cctx.beginPath();
+      cctx.arc(h.x, h.y, HR * 0.5, 0, Math.PI * 2);
+      cctx.fillStyle = '#00d4ff';
+      cctx.fill();
+      cctx.strokeStyle = '#ffffff';
+      cctx.lineWidth = 2;
+      cctx.shadowColor = '#00d4ff';
+      cctx.shadowBlur = 14;
+      cctx.stroke();
+      cctx.shadowBlur = 0;
     });
-    const ppc=EW?.PIXELS_PER_CM||10;
-    infoEl.textContent=`${(crop.w/ppc).toFixed(1)}cm × ${(crop.h/ppc).toFixed(1)}cm`;
+    const ppc = EW?.PIXELS_PER_CM || 10;
+    infoEl.textContent = `${(crop.w / ppc).toFixed(1)}cm × ${(crop.h / ppc).toFixed(1)}cm`;
   }
 
-  window.openCropToolMobile = function(design){
-    if(!design)return; dRef=design; src=toCanvas(design.imageOriginal || design.image);
-    const maxW=window.innerWidth-32, maxH=window.innerHeight*0.60;
-    sc=Math.max(0.06, Math.min(maxW/src.width, maxH/src.height, 1));
-    cc.width=Math.round(src.width*sc); cc.height=Math.round(src.height*sc);
-    cc.style.width=cc.width+'px'; cc.style.height=cc.height+'px';
-    crop=autoBounds(src);
-    cm.classList.add('open');render();
+  window.openCropToolMobile = function (design) {
+    if (!design) return;
+    dRef = design;
+    // Usar la imagen original de alta resolución para recortar
+    src = toCanvas(design.imageOriginal || design.image);
+    // Guardar escala y dimensiones actuales en cm
+    originalScale = design.scale;
+    const dims = design.getDimensionsInCm();
+    originalWidthCm = dims.width;
+    originalHeightCm = dims.height;
+    const maxW = window.innerWidth - 32, maxH = window.innerHeight * 0.60;
+    sc = Math.max(0.06, Math.min(maxW / src.width, maxH / src.height, 1));
+    cc.width = Math.round(src.width * sc);
+    cc.height = Math.round(src.height * sc);
+    cc.style.width = cc.width + 'px';
+    cc.style.height = cc.height + 'px';
+    crop = autoBounds(src);
+    cm.classList.add('open');
+    render();
   };
-  function getTouchPt(e){const t=e.touches[0]||e.changedTouches[0];return t?{x:t.clientX,y:t.clientY}:null;}
-  cc.addEventListener('touchstart',e=>{
-    e.preventDefault();const t=getTouchPt(e);if(!t)return;
-    const {lx,ly}=toLogical(t.x,t.y);
-    drag=hitHandle(lx,ly)||'new';
-    startCrop={...crop};sMX=lx;sMY=ly;
-  },{passive:false});
-  let lastTapCrop=0;
-  cc.addEventListener('touchend',e=>{
-    const now=Date.now();
-    if(now-lastTapCrop<380&&drag==='move'){crop=autoBounds(src);render();msg('⚡ Auto-recorte','info',1200);}
-    lastTapCrop=now; drag=null;
-  });
-  window.addEventListener('touchmove',e=>{
-    if(!drag||!src||!cm.classList.contains('open'))return;
+
+  function getTouchPt(e) {
+    const t = e.touches[0] || e.changedTouches[0];
+    return t ? { x: t.clientX, y: t.clientY } : null;
+  }
+
+  cc.addEventListener('touchstart', e => {
     e.preventDefault();
-    const t=getTouchPt(e);if(!t)return;
-    const {lx,ly}=toLogical(t.x,t.y);
-    const dx=(lx-sMX)/sc, dy=(ly-sMY)/sc;
-    const iW=src.width,iH=src.height;
-    const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-    let c={...startCrop};
-    if(drag==='new'){const x1=cl(sMX/sc,0,iW),y1=cl(sMY/sc,0,iH),x2=cl(lx/sc,0,iW),y2=cl(ly/sc,0,iH);c={x:Math.min(x1,x2),y:Math.min(y1,y2),w:Math.abs(x2-x1),h:Math.abs(y2-y1)};}
-    else if(drag==='move'){c.x=cl(c.x+dx,0,iW-c.w);c.y=cl(c.y+dy,0,iH-c.h);}
-    else{
-      if(drag==='tl'||drag==='ml'){const nx=cl(c.x+dx,0,c.x+c.w-10);c.w+=c.x-nx;c.x=nx;}
-      if(drag==='tl'||drag==='tc'){const ny=cl(c.y+dy,0,c.y+c.h-10);c.h+=c.y-ny;c.y=ny;}
-      if(drag==='tr'){c.w=cl(c.w+dx,10,iW-c.x);const ny=cl(c.y+dy,0,c.y+c.h-10);c.h+=c.y-ny;c.y=ny;}
-      if(drag==='bl'){const nx=cl(c.x+dx,0,c.x+c.w-10);c.w+=c.x-nx;c.x=nx;c.h=cl(c.h+dy,10,iH-c.y);}
-      if(drag==='br'){c.w=cl(c.w+dx,10,iW-c.x);c.h=cl(c.h+dy,10,iH-c.y);}
-      if(drag==='mr'){c.w=cl(c.w+dx,10,iW-c.x);}
-      if(drag==='bc'){c.h=cl(c.h+dy,10,iH-c.y);}
+    const t = getTouchPt(e);
+    if (!t) return;
+    const { lx, ly } = toLogical(t.x, t.y);
+    drag = hitHandle(lx, ly) || 'new';
+    startCrop = { ...crop };
+    sMX = lx;
+    sMY = ly;
+  }, { passive: false });
+
+  let lastTapCrop = 0;
+  cc.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTapCrop < 380 && drag === 'move') {
+      crop = autoBounds(src);
+      render();
+      msg('⚡ Auto-recorte', 'info', 1200);
     }
-    crop=c;render();
-  },{passive:false});
-  window.addEventListener('touchend',()=>{drag=null;});
-  document.getElementById('crop-reset-btn').addEventListener('click',()=>{if(!src)return;crop={x:0,y:0,w:src.width,h:src.height};render();msg('Recorte reiniciado','info',1000);});
-  document.getElementById('crop-auto-btn').addEventListener('click',()=>{if(!src)return;crop=autoBounds(src);render();msg('⚡ Auto-recorte aplicado','info',1200);});
-  document.getElementById('crop-cancel-btn').addEventListener('click',()=>{ cm.classList.remove('open'); drag=null; });
-  document.getElementById('crop-apply-btn').addEventListener('click',()=>{
-    if(!dRef||!src||crop.w<2||crop.h<2)return;
-    const out=document.createElement('canvas');
-    out.width=Math.round(crop.w);out.height=Math.round(crop.h);
-    out.getContext('2d').drawImage(src,crop.x,crop.y,crop.w,crop.h,0,0,out.width,out.height);
-    dRef.image=out; dRef.imageOriginal=out;
-    dRef.width=out.width; dRef.height=out.height;
-    dRef.originalWidth=out.width; dRef.originalHeight=out.height;
-    dRef.highResWidth=out.width; dRef.highResHeight=out.height;
-    dRef.aspectRatio=out.width/out.height;
-    if(dRef.updateInputs) dRef.updateInputs();
-    if(EW.drawCanvas) EW.drawCanvas();
-    cm.classList.remove('open'); drag=null;
-    const ppc=EW?.PIXELS_PER_CM||10;
-    msg(`◆ Recorte: ${(out.width/ppc).toFixed(1)}cm × ${(out.height/ppc).toFixed(1)}cm`,'success',2500);
+    lastTapCrop = now;
+    drag = null;
+  });
+
+  window.addEventListener('touchmove', e => {
+    if (!drag || !src || !cm.classList.contains('open')) return;
+    e.preventDefault();
+    const t = getTouchPt(e);
+    if (!t) return;
+    const { lx, ly } = toLogical(t.x, t.y);
+    const dx = (lx - sMX) / sc, dy = (ly - sMY) / sc;
+    const iW = src.width, iH = src.height;
+    const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    let c = { ...startCrop };
+    if (drag === 'new') {
+      const x1 = cl(sMX / sc, 0, iW), y1 = cl(sMY / sc, 0, iH);
+      const x2 = cl(lx / sc, 0, iW), y2 = cl(ly / sc, 0, iH);
+      c = { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
+    } else if (drag === 'move') {
+      c.x = cl(c.x + dx, 0, iW - c.w);
+      c.y = cl(c.y + dy, 0, iH - c.h);
+    } else {
+      if (drag === 'tl' || drag === 'ml') { const nx = cl(c.x + dx, 0, c.x + c.w - 10); c.w += c.x - nx; c.x = nx; }
+      if (drag === 'tl' || drag === 'tc') { const ny = cl(c.y + dy, 0, c.y + c.h - 10); c.h += c.y - ny; c.y = ny; }
+      if (drag === 'tr') { c.w = cl(c.w + dx, 10, iW - c.x); const ny = cl(c.y + dy, 0, c.y + c.h - 10); c.h += c.y - ny; c.y = ny; }
+      if (drag === 'bl') { const nx = cl(c.x + dx, 0, c.x + c.w - 10); c.w += c.x - nx; c.x = nx; c.h = cl(c.h + dy, 10, iH - c.y); }
+      if (drag === 'br') { c.w = cl(c.w + dx, 10, iW - c.x); c.h = cl(c.h + dy, 10, iH - c.y); }
+      if (drag === 'mr') { c.w = cl(c.w + dx, 10, iW - c.x); }
+      if (drag === 'bc') { c.h = cl(c.h + dy, 10, iH - c.y); }
+    }
+    crop = c;
+    render();
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => { drag = null; });
+
+  document.getElementById('crop-reset-btn').addEventListener('click', () => {
+    if (!src) return;
+    crop = { x: 0, y: 0, w: src.width, h: src.height };
+    render();
+    msg('Recorte reiniciado', 'info', 1000);
+  });
+  document.getElementById('crop-auto-btn').addEventListener('click', () => {
+    if (!src) return;
+    crop = autoBounds(src);
+    render();
+    msg('⚡ Auto-recorte aplicado', 'info', 1200);
+  });
+  document.getElementById('crop-cancel-btn').addEventListener('click', () => { cm.classList.remove('open'); drag = null; });
+  document.getElementById('crop-apply-btn').addEventListener('click', () => {
+    if (!dRef || !src || crop.w < 2 || crop.h < 2) return;
+    // Crear canvas del recorte (imagen recortada en alta resolución)
+    const croppedCanvas = document.createElement('canvas');
+    croppedCanvas.width = Math.round(crop.w);
+    croppedCanvas.height = Math.round(crop.h);
+    croppedCanvas.getContext('2d').drawImage(src, crop.x, crop.y, crop.w, crop.h, 0, 0, croppedCanvas.width, croppedCanvas.height);
+    
+    // Crear miniatura para edición (máximo 200px)
+    const thumbCanvas = document.createElement('canvas');
+    let tw = croppedCanvas.width, th = croppedCanvas.height;
+    const maxThumb = 200;
+    if (tw > maxThumb || th > maxThumb) {
+      if (tw > th) { th = (th * maxThumb) / tw; tw = maxThumb; }
+      else { tw = (tw * maxThumb) / th; th = maxThumb; }
+    }
+    thumbCanvas.width = tw;
+    thumbCanvas.height = th;
+    thumbCanvas.getContext('2d').drawImage(croppedCanvas, 0, 0, tw, th);
+    
+    // Actualizar el diseño con la nueva imagen (miniatura) y la original recortada
+    dRef.image = thumbCanvas;
+    dRef.imageOriginal = croppedCanvas;
+    dRef.width = thumbCanvas.width;
+    dRef.height = thumbCanvas.height;
+    dRef.originalWidth = thumbCanvas.width;
+    dRef.originalHeight = thumbCanvas.height;
+    dRef.highResWidth = croppedCanvas.width;
+    dRef.highResHeight = croppedCanvas.height;
+    dRef.aspectRatio = thumbCanvas.width / thumbCanvas.height;
+    
+    // Mantener la misma escala en cm que tenía antes del recorte
+    // La nueva escala debe ser tal que (thumbCanvas.width * nuevaEscala) / PIXELS_PER_CM = originalWidthCm
+    const ppc = EW?.PIXELS_PER_CM || 10;
+    const newScale = (originalWidthCm * ppc) / thumbCanvas.width;
+    dRef.scale = newScale;
+    
+    // Actualizar posición si es necesario (opcional: mantener el centro)
+    // No cambiamos x,y
+    if (dRef.updateInputs) dRef.updateInputs();
+    if (EW.drawCanvas) EW.drawCanvas();
+    cm.classList.remove('open');
+    drag = null;
+    msg(`◆ Recorte aplicado: ${(croppedCanvas.width / ppc).toFixed(1)}cm × ${(croppedCanvas.height / ppc).toFixed(1)}cm`, 'success', 2500);
   });
 }
-
 // ========== BOTONES ==========
 function ew(id){return EW?.document?.getElementById(id);}
 function click(id){ew(id)?.click();}
