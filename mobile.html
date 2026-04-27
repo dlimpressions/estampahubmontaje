@@ -238,6 +238,7 @@ input[type=range].ms::-webkit-slider-thumb{-webkit-appearance:none;width:24px;he
     <div class="hdr-btns">
       <button class="hbtn" id="btn-save">💾</button>
       <button class="hbtn hi" id="btn-profile">👤</button>
+      <button class="hbtn" id="btn-chat">💬</button>
     </div>
   </div>
 
@@ -1364,6 +1365,9 @@ function click(id){ew(id)?.click();}
 function initButtons() {
   document.getElementById('btn-save').addEventListener('click',()=>{ if(EW&&typeof EW.saveWorkbench==='function')EW.saveWorkbench(false); else msg('Guardado no disponible','error'); });
   document.getElementById('btn-profile').addEventListener('click',()=>click('open-profile-btn'));
+  document.getElementById('btn-chat')?.addEventListener('click', () => {
+    window.open('chat.html', '_blank', 'width=380,height=550');
+});
   document.getElementById('ac-upload').addEventListener('click',()=>{ ew('file-input')?.click(); closeSheet('sh-add'); });
   document.getElementById('ac-gallery').addEventListener('click',()=>{ openGallery(); closeSheet('sh-add'); });
   document.getElementById('ac-text').addEventListener('click',()=>{ click('add-text-btn'); closeSheet('sh-add'); });
@@ -1472,20 +1476,5 @@ function syncLoop() {
 
 })();
 </script>
-
-  <!--Start of Tawk.to Script-->
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/69efdedf051d811c3359b88a/1jn8ft6qr';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
-</script>
-<!--End of Tawk.to Script-->
-  
 </body>
 </html>
