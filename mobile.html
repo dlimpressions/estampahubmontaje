@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>EstampaHub · DTF Móvil (Optimizado)</title>
+<title>EstampaHub · DTF Móvil (Pro)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-/* ===== ESTILOS MODERNOS (idénticos a la versión anterior, pero conservo solo lo necesario) ===== */
+/* ===== ESTILOS MODERNOS TIPO CANVA ===== */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#02040a;--s0:#060810;--s1:#080c18;--s2:#0b0f1e;--s3:#0f1526;
@@ -264,21 +264,143 @@ input[type=range].ms::-webkit-slider-thumb{-webkit-appearance:none;width:24px;he
   </nav>
 </div>
 
-<!-- SHEETS (simplificadas, iguales) -->
-<div class="sheet" id="sh-add"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Añadir al lienzo</div><button class="sh-x" data-close="sh-add">✕</button></div><div class="sh-body"><div class="add-grid"><div class="add-card hi" id="ac-upload"><span class="ac-i">📷</span><span class="ac-l">Subir imagen</span></div><div class="add-card" id="ac-gallery"><span class="ac-i">🖼️</span><span class="ac-l">Galería</span></div><div class="add-card" id="ac-text"><span class="ac-i">✏️</span><span class="ac-l">Texto</span></div></div></div></div>
-<div class="sheet" id="sh-designs"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Mis diseños en el lienzo</div><button class="sh-x" data-close="sh-designs">✕</button></div><div class="sh-body"><div class="dsgrid" id="ds-grid"><div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños. Usa Añadir para cargar.</div></div><div style="margin-top:12px;"><button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button></div></div></div>
-<div class="sheet" id="sh-tools"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Ajustar diseño</div><button class="sh-x" data-close="sh-tools">✕</button></div><div class="sh-body"><p class="slbl">Transformar</p><div class="sr"><span class="srl">Rotación</span><input type="range" class="ms" id="sl-rot" min="0" max="360" value="0"><span class="srv" id="sl-rot-v">0°</span></div><div class="sr"><span class="srl">Opacidad</span><input type="range" class="ms" id="sl-op" min="10" max="100" value="100"><span class="srv" id="sl-op-v">100%</span></div><p class="slbl">Tamaño (cm)</p><div style="display:flex;gap:8px;margin-bottom:8px;"><div style="flex:1;"><div style="font-family:var(--mono);font-size:0.6rem;color:#a0b0cc;margin-bottom:5px;letter-spacing:1px;">ANCHO</div><input type="number" class="ni" id="sz-w" min="0.5" step="0.5" placeholder="0.0"></div><div style="flex:1;"><div style="font-family:var(--mono);font-size:0.6rem;color:#a0b0cc;margin-bottom:5px;letter-spacing:1px;">ALTO</div><input type="number" class="ni" id="sz-h" min="0.5" step="0.5" placeholder="0.0"></div></div><label style="display:flex;align-items:center;gap:6px;font-size:0.76rem;color:#a0b0cc;margin-bottom:10px;font-family:var(--mono);"><input type="checkbox" id="sz-lock" checked style="accent-color:var(--accent);">Mantener proporción</label><button class="pill grn" style="width:100%;" id="p-szapply">✓ Aplicar tamaño</button><p class="slbl">Herramientas</p><div class="pr"><button class="pill" id="p-mirror">🪞 Espejo</button><button class="pill amb" id="p-trim">✂️ Recortar</button></div><p class="slbl">Orden de capas</p><div class="pr"><button class="pill" id="p-sback">⤵ Fondo</button><button class="pill" id="p-back">↓ Atrás</button><button class="pill" id="p-fwd">↑ Adelante</button><button class="pill" id="p-front">⤴ Frente</button></div><div class="pr" style="margin-top:4px;"><button class="pill red" id="p-remove" style="flex:1;">🗑 Eliminar diseño</button></div><div class="ibox" style="margin-top:14px;"><div class="il">DIMENSIONES</div><div class="iv" id="ib-size">0cm × 0cm</div></div></div></div>
-<div class="sheet" id="sh-canvas"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Ajustar lienzo</div><button class="sh-x" data-close="sh-canvas">✕</button></div><div class="sh-body"><p class="slbl">Zoom</p><div class="sr"><span class="srl">Zoom</span><input type="range" class="ms" id="sl-zoom" min="20" max="200" value="100"><span class="srv" id="sl-zoom-v">100%</span></div><p class="slbl">Alto del lienzo</p><div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;"><div style="flex:1;"><div style="font-family:var(--mono);font-size:0.6rem;color:#a0b0cc;margin-bottom:5px;letter-spacing:1px;">ALTO (cm, máx 100)</div><input type="number" class="ni" id="cv-h" min="10" max="100" step="0.5" value="100"></div><button class="pill grn" style="white-space:nowrap;flex:0;" id="p-cvh">Aplicar</button></div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Ancho fijo: 58 cm</div><p class="slbl">Color de fondo</p><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;"><input type="color" id="cv-color" value="#ffffff" style="width:44px;height:44px;border-radius:11px;border:2px solid var(--bmd);cursor:pointer;padding:2px;flex-shrink:0;"><span style="font-family:var(--mono);font-size:0.65rem;color:#a0b0cc;line-height:1.4;">Solo visual<br>PNG = siempre transparente</span></div><p class="slbl">Precio estimado</p><div class="ibox"><div class="il">PRECIO APROX. IMPRESIÓN</div><div class="iv" id="ib-precio">$10.000 (mín.)</div></div><p class="slbl">Optimización</p><button class="pill prp" style="width:100%;" id="p-pack">🧠 Auto-ordenar diseños</button></div></div>
-<div class="sheet" id="sh-export"><div class="sh-handle"></div><div class="sh-hdr"><div class="sh-title">Exportar montaje</div><button class="sh-x" data-close="sh-export">✕</button></div><div class="sh-body"><p class="slbl">Resolución</p><div class="pr" style="margin-bottom:14px;"><button class="pill rp" data-dpi="300">300 DPI</button><button class="pill rp acc" data-dpi="150">150 DPI ★</button><button class="pill rp" data-dpi="72">72 DPI</button></div><div class="exopt" id="ex-png"><div class="exico" style="background:rgba(99,102,241,0.12);color:#818cf8;">💾</div><div><div class="extl">Descargar PNG</div><div class="exds">Con transparencia · Sin fondo</div></div></div><div class="exopt" id="ex-pdf"><div class="exico" style="background:rgba(123,47,255,0.1);color:#c084fc;">📄</div><div><div class="extl">Descargar PDF</div><div class="exds">Para imprenta · Dimensiones exactas</div></div></div><div class="exopt" id="ex-dtf"><div class="exico" style="background:rgba(0,255,159,0.08);color:var(--emerald);">📤</div><div><div class="extl">Enviar pedido DTF</div><div class="exds">Enviar directamente a impresión</div></div></div><div class="exopt" id="ex-save"><div class="exico" style="background:rgba(255,170,0,0.08);color:var(--amber);">☁️</div><div><div class="extl">Guardar sesión</div><div class="exds">Continuar el montaje después</div></div></div><div class="exopt" id="ex-load"><div class="exico" style="background:rgba(0,212,255,0.06);color:var(--accent);">📂</div><div><div class="extl">Cargar sesión guardada</div><div class="exds">Restaurar último montaje</div></div></div></div></div>
+<!-- SHEET AÑADIR -->
+<div class="sheet" id="sh-add">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr"><div class="sh-title">Añadir al lienzo</div><button class="sh-x" data-close="sh-add">✕</button></div>
+  <div class="sh-body">
+    <div class="add-grid">
+      <div class="add-card hi" id="ac-upload"><span class="ac-i">📷</span><span class="ac-l">Subir imagen</span></div>
+      <div class="add-card" id="ac-gallery"><span class="ac-i">🖼️</span><span class="ac-l">Galería</span></div>
+      <div class="add-card" id="ac-text"><span class="ac-i">✏️</span><span class="ac-l">Texto</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET MIS DISEÑOS -->
+<div class="sheet" id="sh-designs">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr"><div class="sh-title">Mis diseños en el lienzo</div><button class="sh-x" data-close="sh-designs">✕</button></div>
+  <div class="sh-body">
+    <div class="dsgrid" id="ds-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Sin diseños. Usa Añadir para cargar.</div>
+    </div>
+    <div style="margin-top:12px;"><button class="pill red" style="width:100%;" id="p-clear">🧹 Limpiar todo el lienzo</button></div>
+  </div>
+</div>
+
+<!-- SHEET AJUSTAR (con input numérico para rotación) -->
+<div class="sheet" id="sh-tools">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr"><div class="sh-title">Ajustar diseño</div><button class="sh-x" data-close="sh-tools">✕</button></div>
+  <div class="sh-body">
+    <p class="slbl">Transformar</p>
+    <div class="sr"><span class="srl">Rotación</span><input type="range" class="ms" id="sl-rot" min="0" max="360" value="0"><input type="number" id="rot-num" min="0" max="360" step="1" value="0" style="width:65px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; text-align:center; padding:6px 4px;"><span class="srv" id="sl-rot-v">0°</span></div>
+    <div class="sr"><span class="srl">Opacidad</span><input type="range" class="ms" id="sl-op" min="10" max="100" value="100"><span class="srv" id="sl-op-v">100%</span></div>
+    <p class="slbl">Tamaño (cm)</p>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.6rem;color:#a0b0cc;margin-bottom:5px;letter-spacing:1px;">ANCHO</div><input type="number" class="ni" id="sz-w" min="0.5" step="0.5" placeholder="0.0"></div>
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.6rem;color:#a0b0cc;margin-bottom:5px;letter-spacing:1px;">ALTO</div><input type="number" class="ni" id="sz-h" min="0.5" step="0.5" placeholder="0.0"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.76rem;color:#a0b0cc;margin-bottom:10px;font-family:var(--mono);">
+      <input type="checkbox" id="sz-lock" checked style="accent-color:var(--accent);">Mantener proporción
+    </label>
+    <button class="pill grn" style="width:100%;" id="p-szapply">✓ Aplicar tamaño</button>
+    <p class="slbl">Herramientas</p>
+    <div class="pr">
+      <button class="pill" id="p-mirror">🪞 Espejo</button>
+      <button class="pill amb" id="p-trim">✂️ Recortar</button>
+    </div>
+    <p class="slbl">Orden de capas</p>
+    <div class="pr">
+      <button class="pill" id="p-sback">⤵ Fondo</button>
+      <button class="pill" id="p-back">↓ Atrás</button>
+      <button class="pill" id="p-fwd">↑ Adelante</button>
+      <button class="pill" id="p-front">⤴ Frente</button>
+    </div>
+    <div class="pr" style="margin-top:4px;"><button class="pill red" id="p-remove" style="flex:1;">🗑 Eliminar diseño</button></div>
+    <div class="ibox" style="margin-top:14px;"><div class="il">DIMENSIONES</div><div class="iv" id="ib-size">0cm × 0cm</div></div>
+  </div>
+</div>
+
+<!-- SHEET LIENZO -->
+<div class="sheet" id="sh-canvas">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr"><div class="sh-title">Ajustar lienzo</div><button class="sh-x" data-close="sh-canvas">✕</button></div>
+  <div class="sh-body">
+    <p class="slbl">Zoom</p>
+    <div class="sr"><span class="srl">Zoom</span><input type="range" class="ms" id="sl-zoom" min="20" max="200" value="100"><span class="srv" id="sl-zoom-v">100%</span></div>
+    <p class="slbl">Alto del lienzo</p>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;">
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:0.6rem;color:#a0b0cc;margin-bottom:5px;letter-spacing:1px;">ALTO (cm, máx 100)</div><input type="number" class="ni" id="cv-h" min="10" max="100" step="0.5" value="100"></div>
+      <button class="pill grn" style="white-space:nowrap;flex:0;" id="p-cvh">Aplicar</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Ancho fijo: 58 cm</div>
+    <p class="slbl">Color de fondo</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <input type="color" id="cv-color" value="#ffffff" style="width:44px;height:44px;border-radius:11px;border:2px solid var(--bmd);cursor:pointer;padding:2px;flex-shrink:0;">
+      <span style="font-family:var(--mono);font-size:0.65rem;color:#a0b0cc;line-height:1.4;">Solo visual<br>PNG = siempre transparente</span>
+    </div>
+    <p class="slbl">Precio estimado</p>
+    <div class="ibox"><div class="il">PRECIO APROX. IMPRESIÓN</div><div class="iv" id="ib-precio">$10.000 (mín.)</div></div>
+    <p class="slbl">Optimización</p>
+    <button class="pill prp" style="width:100%;" id="p-pack">🧠 Auto-ordenar diseños</button>
+  </div>
+</div>
+
+<!-- SHEET EXPORTAR -->
+<div class="sheet" id="sh-export">
+  <div class="sh-handle"></div>
+  <div class="sh-hdr"><div class="sh-title">Exportar montaje</div><button class="sh-x" data-close="sh-export">✕</button></div>
+  <div class="sh-body">
+    <p class="slbl">Resolución</p>
+    <div class="pr" style="margin-bottom:14px;">
+      <button class="pill rp" data-dpi="300">300 DPI</button>
+      <button class="pill rp acc" data-dpi="150">150 DPI ★</button>
+      <button class="pill rp" data-dpi="72">72 DPI</button>
+    </div>
+    <div class="exopt" id="ex-png"><div class="exico" style="background:rgba(99,102,241,0.12);color:#818cf8;">💾</div><div><div class="extl">Descargar PNG</div><div class="exds">Con transparencia · Sin fondo</div></div></div>
+    <div class="exopt" id="ex-pdf"><div class="exico" style="background:rgba(123,47,255,0.1);color:#c084fc;">📄</div><div><div class="extl">Descargar PDF</div><div class="exds">Para imprenta · Dimensiones exactas</div></div></div>
+    <div class="exopt" id="ex-dtf"><div class="exico" style="background:rgba(0,255,159,0.08);color:var(--emerald);">📤</div><div><div class="extl">Enviar pedido DTF</div><div class="exds">Enviar directamente a impresión</div></div></div>
+    <div class="exopt" id="ex-save"><div class="exico" style="background:rgba(255,170,0,0.08);color:var(--amber);">☁️</div><div><div class="extl">Guardar sesión</div><div class="exds">Continuar el montaje después</div></div></div>
+    <div class="exopt" id="ex-load"><div class="exico" style="background:rgba(0,212,255,0.06);color:var(--accent);">📂</div><div><div class="extl">Cargar sesión guardada</div><div class="exds">Restaurar último montaje</div></div></div>
+  </div>
+</div>
 
 <!-- GALERÍA MODAL -->
-<div id="gal-modal"><div class="galcard"><div class="galhdr"><span class="galttl">Galería de Diseños</span><button class="galx" id="gal-close">✕ Cerrar</button></div><div id="gal-search-wrap"><div class="gal-si"><span class="gal-ic">⌕</span><input type="text" id="gal-search" placeholder="Buscar por nombre..."></div></div><div class="galtools"><label id="gal-imgbtn">🔮 Buscar por imagen<input type="file" id="gal-imgfile" accept="image/*" style="display:none;"></label><button id="gal-clearvs">✕ Quitar filtro</button></div><div id="gal-progress-wrap"><div id="gal-progress-bar"></div></div><div id="gal-status">Iniciando...</div><div id="gal-multibar"><span id="gal-sel-count">Toca para seleccionar · 2 toques para cargar</span><button id="gal-load-sel">↑ Cargar</button><button id="gal-clear-sel">✕</button></div><div id="gal-grid"></div><div id="gal-pag"></div></div></div>
+<div id="gal-modal">
+  <div class="galcard">
+    <div class="galhdr"><span class="galttl">Galería de Diseños</span><button class="galx" id="gal-close">✕ Cerrar</button></div>
+    <div id="gal-search-wrap"><div class="gal-si"><span class="gal-ic">⌕</span><input type="text" id="gal-search" placeholder="Buscar por nombre..."></div></div>
+    <div class="galtools"><label id="gal-imgbtn">🔮 Buscar por imagen<input type="file" id="gal-imgfile" accept="image/*" style="display:none;"></label><button id="gal-clearvs">✕ Quitar filtro</button></div>
+    <div id="gal-progress-wrap"><div id="gal-progress-bar"></div></div>
+    <div id="gal-status">Iniciando...</div>
+    <div id="gal-multibar"><span id="gal-sel-count">Toca para seleccionar · 2 toques para cargar</span><button id="gal-load-sel">↑ Cargar</button><button id="gal-clear-sel">✕</button></div>
+    <div id="gal-grid"></div>
+    <div id="gal-pag"></div>
+  </div>
+</div>
 
 <!-- LOGIN MODAL -->
-<div id="login-modal"><div class="lcard"><div class="llogo"><div class="lbadge">DTF</div><div><div class="lname">EstampaHub</div><div class="lsub">EDITOR PRO · DTF</div></div></div><div class="lwelc">Acceso al sistema</div><div class="lsubt">Ingresa tus credenciales de acceso</div><label class="flbl">USUARIO</label><input class="fi" type="text" id="l-user" placeholder="tu_usuario" autocomplete="username"><label class="flbl">CONTRASEÑA</label><input class="fi" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"><div id="l-error"></div><button class="mbpri" id="l-btn">▶ Acceder al Editor</button><div class="lbtns"><button class="lbtn g" id="l-dtf">📤 Enviar DTF</button><button class="lbtn p" id="l-oc">🧾 OC Termo</button></div></div></div>
+<div id="login-modal">
+  <div class="lcard">
+    <div class="llogo"><div class="lbadge">DTF</div><div><div class="lname">EstampaHub</div><div class="lsub">EDITOR PRO · DTF</div></div></div>
+    <div class="lwelc">Acceso al sistema</div>
+    <div class="lsubt">Ingresa tus credenciales de acceso</div>
+    <label class="flbl">USUARIO</label><input class="fi" type="text" id="l-user" placeholder="tu_usuario" autocomplete="username">
+    <label class="flbl">CONTRASEÑA</label><input class="fi" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+    <div id="l-error"></div>
+    <button class="mbpri" id="l-btn">▶ Acceder al Editor</button>
+    <div class="lbtns"><button class="lbtn g" id="l-dtf">📤 Enviar DTF</button><button class="lbtn p" id="l-oc">🧾 OC Termo</button></div>
+  </div>
+</div>
 
 <!-- CROP MODAL -->
-<div id="crop-modal"><div id="crop-hdr"><div id="crop-title">✂️ Recorte manual</div><div id="crop-hint">Arrastra los puntos · 2x toque = auto</div></div><div id="crop-canvas-wrap"><canvas id="crop-canvas"></canvas><div id="crop-info">0cm × 0cm</div></div><div id="crop-footer"><button class="pill" id="crop-reset-btn" style="flex:0;white-space:nowrap;font-family:var(--mono);font-size:0.72rem;padding:12px 14px;">↺ Reset</button><button class="pill amb" id="crop-auto-btn" style="flex:0;white-space:nowrap;font-family:var(--mono);font-size:0.72rem;padding:12px 14px;">⚡ Auto</button><button class="pill red" id="crop-cancel-btn" style="flex:0;white-space:nowrap;font-family:var(--mono);font-size:0.72rem;padding:12px 14px;">✕</button><button id="crop-apply-btn">✓ Aplicar recorte</button></div></div>
+<div id="crop-modal">
+  <div id="crop-hdr"><div id="crop-title">✂️ Recorte manual</div><div id="crop-hint">Arrastra los puntos · 2x toque = auto</div></div>
+  <div id="crop-canvas-wrap"><canvas id="crop-canvas"></canvas><div id="crop-info">0cm × 0cm</div></div>
+  <div id="crop-footer"><button class="pill" id="crop-reset-btn">↺ Reset</button><button class="pill amb" id="crop-auto-btn">⚡ Auto</button><button class="pill red" id="crop-cancel-btn">✕</button><button id="crop-apply-btn">✓ Aplicar recorte</button></div>
+</div>
 
 <script>
 (function(){
@@ -338,42 +460,18 @@ function msg(text, type, ms) {
   return { remove: rm };
 }
 
-// ========== INYECTAR HELPER OPTIMIZADO CON MINIATURAS ==========
+// ========== INYECTAR HELPER OPTIMIZADO CON MINIATURAS Y CORRECCIÓN DE TAMAÑO ==========
 function injectOptimizedHelper() {
   try {
     if(EW.document.getElementById('__mob_optimized_helper__')) return;
     const script = EW.document.createElement('script');
     script.id = '__mob_optimized_helper__';
     script.textContent = `
-      // Guardar referencia original a la clase Design para no pisarla
-      if (typeof window.OriginalDesign === 'undefined') window.OriginalDesign = window.Design;
-      
-      // Nueva clase Design optimizada (con miniatura y original)
+      // Nueva clase Design optimizada (con miniatura y original) - CORREGIDA
       window.Design = class OptimizedDesign {
         constructor(id, image, x, y) {
           this.id = id;
-          // Si la imagen es un canvas, asumimos que es la miniatura
-          if (image instanceof HTMLCanvasElement) {
-            this.image = image;
-          } else if (image.tagName === 'IMG') {
-            // Generamos miniatura de hasta 200px
-            const maxThumb = 200;
-            let w = image.width, h = image.height;
-            if (w > maxThumb || h > maxThumb) {
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              if (w > h) { h = (h * maxThumb) / w; w = maxThumb; }
-              else { w = (w * maxThumb) / h; h = maxThumb; }
-              canvas.width = w; canvas.height = h;
-              ctx.drawImage(image, 0, 0, w, h);
-              this.image = canvas;
-            } else {
-              this.image = image;
-            }
-          } else {
-            this.image = image;
-          }
-          // Guardar la imagen original completa
+          this.image = image;  // miniatura (canvas o imagen redimensionada)
           this.imageOriginal = image;
           this.x = x || canvas.width/2;
           this.y = y || canvas.height/2;
@@ -382,9 +480,11 @@ function injectOptimizedHelper() {
           this.opacity = 1.0;
           this.width = this.image.width;
           this.height = this.image.height;
-          this.aspectRatio = this.image.width / this.image.height;
-          this.originalWidth = this.imageOriginal.width;
-          this.originalHeight = this.imageOriginal.height;
+          this.aspectRatio = this.width / this.height;
+          this.originalWidth = this.width;
+          this.originalHeight = this.height;
+          this.highResWidth = this.imageOriginal.width;
+          this.highResHeight = this.imageOriginal.height;
         }
         
         draw() {
@@ -394,7 +494,7 @@ function injectOptimizedHelper() {
           ctx.rotate(this.rotation * Math.PI / 180);
           ctx.scale(this.scale, this.scale);
           ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'low';  // más rápido en edición
+          ctx.imageSmoothingQuality = 'low';
           ctx.drawImage(this.image, -this.width/2, -this.height/2, this.width, this.height);
           if (this.id === selectedDesignId) {
             ctx.strokeStyle = '#4299e1';
@@ -412,15 +512,15 @@ function injectOptimizedHelper() {
         
         getDimensionsInCm() {
           return {
-            width:  (this.width  * this.scale) / PIXELS_PER_CM,
+            width:  (this.width * this.scale) / PIXELS_PER_CM,
             height: (this.height * this.scale) / PIXELS_PER_CM
           };
         }
         
         getOriginalDimensionsInCm() {
           return {
-            width:  (this.originalWidth)  / PIXELS_PER_CM,
-            height: (this.originalHeight) / PIXELS_PER_CM
+            width:  this.originalWidth / PIXELS_PER_CM,
+            height: this.originalHeight / PIXELS_PER_CM
           };
         }
         
@@ -428,10 +528,10 @@ function injectOptimizedHelper() {
           const targetWidthPx  = widthCm  * PIXELS_PER_CM;
           const targetHeightPx = heightCm * PIXELS_PER_CM;
           if (maintainProportion) {
-            this.scale = targetWidthPx / this.originalWidth;
+            this.scale = targetWidthPx / this.width;
           } else {
-            const scaleX = targetWidthPx  / this.originalWidth;
-            const scaleY = targetHeightPx / this.originalHeight;
+            const scaleX = targetWidthPx / this.width;
+            const scaleY = targetHeightPx / this.height;
             this.scale = (scaleX + scaleY) / 2;
           }
           if (typeof updateInputs === 'function') updateInputs();
@@ -484,13 +584,12 @@ function injectOptimizedHelper() {
         }
       };
       
-      // Redefinir globalmente la función addDesignWithThumbnail para que los diseños de galería también usen miniatura
+      // Método para añadir diseño con miniatura
       window.__mobAddDesignWithOriginal = function(url, doneCb) {
         var img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = function() {
           try {
-            // Crear miniatura pequeña
             var maxThumb = 200;
             var w = img.width, h = img.height;
             var thumbCanvas = document.createElement('canvas');
@@ -503,12 +602,9 @@ function injectOptimizedHelper() {
             tctx.drawImage(img, 0, 0, w, h);
             var id = 'mob-' + Date.now() + Math.random().toString(36).slice(2,5);
             var d = new Design(id, thumbCanvas, canvas.width/2, canvas.height/2);
-            // Guardar la imagen original en la propiedad imageOriginal
             d.imageOriginal = img;
-            d.originalWidth = img.width;
-            d.originalHeight = img.height;
-            d.width = thumbCanvas.width;
-            d.height = thumbCanvas.height;
+            d.highResWidth = img.width;
+            d.highResHeight = img.height;
             var maxW = canvas.width - 40;
             var maxH = canvas.height - 40;
             d.scale = Math.min(1, Math.min(maxW / d.width, maxH / d.height));
@@ -521,7 +617,6 @@ function injectOptimizedHelper() {
             if(typeof drawCanvas === 'function') drawCanvas();
             if(doneCb) doneCb(null, id);
           } catch(err) {
-            console.error('__mobAddDesignWithOriginal error:', err);
             if(doneCb) doneCb(err);
           }
         };
@@ -529,17 +624,17 @@ function injectOptimizedHelper() {
         img.src = url;
       };
       
-      // Mantener compatibilidad con llamadas antiguas
       window.__mobAddDesign = window.__mobAddDesignWithOriginal;
       window.__mobDeselect = function() { selectedDesignId = null; if(typeof drawCanvas === 'function') drawCanvas(); };
+      
       window.__mobDuplicate = function() {
         var d = typeof getSelectedDesign === 'function' ? getSelectedDesign() : null;
         if(!d) return false;
         var id = 'dup-' + Date.now();
         var dup = new Design(id, d.image, d.x + 12, d.y + 12);
         dup.imageOriginal = d.imageOriginal;
-        dup.originalWidth = d.originalWidth;
-        dup.originalHeight = d.originalHeight;
+        dup.highResWidth = d.highResWidth;
+        dup.highResHeight = d.highResHeight;
         dup.scale = d.scale; dup.rotation = d.rotation; dup.opacity = d.opacity;
         designs.push(dup);
         if(typeof syncDesignsRef === 'function') syncDesignsRef();
@@ -551,7 +646,7 @@ function injectOptimizedHelper() {
         return true;
       };
       
-      // Sobrescribir exportación PNG para que use imágenes originales
+      // Exportación PNG con alta calidad (usando imagen original)
       const originalExportPNG = typeof exportPNG === 'function' ? exportPNG : null;
       window.exportPNG = function() {
         if(!designs || designs.length === 0){ if(window.showMessage) window.showMessage('No hay diseños','warning'); return; }
@@ -569,7 +664,9 @@ function injectOptimizedHelper() {
           octx.translate(d.x * scaleX, d.y * scaleY);
           octx.rotate(d.rotation * Math.PI/180);
           octx.scale(d.scale * scaleX, d.scale * scaleY);
-          octx.drawImage(originalImg, -d.originalWidth/2, -d.originalHeight/2, d.originalWidth, d.originalHeight);
+          const drawW = d.highResWidth || originalImg.width;
+          const drawH = d.highResHeight || originalImg.height;
+          octx.drawImage(originalImg, -drawW/2, -drawH/2, drawW, drawH);
           octx.restore();
         });
         out.toBlob(blob => {
@@ -579,8 +676,7 @@ function injectOptimizedHelper() {
         },'image/png',1.0);
       };
       
-      // También sobrescribir exportación PDF de forma similar
-      const originalExportPDF = typeof exportPDF === 'function' ? exportPDF : null;
+      // Exportación PDF con alta calidad
       window.exportPDF = async function() {
         if(!designs || designs.length === 0){ if(window.showMessage) window.showMessage('No hay diseños','warning'); return; }
         const dpi = Math.min(parseInt(document.getElementById('quality-select')?.value||'150'),150);
@@ -597,7 +693,9 @@ function injectOptimizedHelper() {
           octx.translate(d.x * scaleX, d.y * scaleY);
           octx.rotate(d.rotation * Math.PI/180);
           octx.scale(d.scale * scaleX, d.scale * scaleY);
-          octx.drawImage(originalImg, -d.originalWidth/2, -d.originalHeight/2, d.originalWidth, d.originalHeight);
+          const drawW = d.highResWidth || originalImg.width;
+          const drawH = d.highResHeight || originalImg.height;
+          octx.drawImage(originalImg, -drawW/2, -drawH/2, drawW, drawH);
           octx.restore();
         });
         const blob = await new Promise(resolve => out.toBlob(resolve, 'image/png', 1.0));
@@ -609,7 +707,7 @@ function injectOptimizedHelper() {
         doc.save('montaje-dtf.pdf');
         if(window.showMessage) window.showMessage('✅ PDF generado con alta calidad','success');
       };
-      console.log('✅ Helper optimizado inyectado (miniaturas para edición, originales para exportación)');
+      console.log('✅ Helper optimizado corregido inyectado');
     `;
     EW.document.head.appendChild(script);
   } catch(e) { console.error('Error inyectando helper optimizado:', e); }
@@ -629,7 +727,6 @@ function waitForEditor() {
 function onEditorReady() {
   ready = true;
   EW.showMessage = (text, type, ms) => msg(text, type, ms);
-  // Inyectar helper optimizado ANTES de que se carguen diseños
   injectOptimizedHelper();
   setupMirror();
   initButtons();
@@ -641,7 +738,7 @@ function onEditorReady() {
   msg('◆ Sistema optimizado listo', 'success', 2000);
 }
 
-// ========== LOGIN (igual que antes) ==========
+// ========== LOGIN ==========
 function checkLogin() {
   try {
     if(EW.sessionStorage.getItem('dtf_unlocked') !== '1')
@@ -681,7 +778,7 @@ async function doLogin() {
 document.getElementById('l-dtf').addEventListener('click', () => { hideLogin(); const ov=EW?.document?.getElementById('dtf-overlay'); if(ov)ov.style.display='flex'; });
 document.getElementById('l-oc').addEventListener('click', () => { hideLogin(); const ov=EW?.document?.getElementById('oc-overlay'); if(ov)ov.style.display='flex'; });
 
-// ========== CANVAS MIRROR Y TOUCH (igual que antes) ==========
+// ========== CANVAS MIRROR Y TOUCH ==========
 const mc = document.getElementById('mc');
 const mctx = mc.getContext('2d');
 function setupMirror() {
@@ -949,7 +1046,7 @@ function patchEditorOverlays() {
   });
 }
 
-// ========== DESIGNS GRID (con compatibilidad) ==========
+// ========== DESIGNS GRID ==========
 function refreshDsGrid() {
   const grid=document.getElementById('ds-grid'); if(!grid||!EW)return;
   const ds=EW.designs;
@@ -980,16 +1077,17 @@ function syncSliders() {
   if(!EW||!EW.getSelectedDesign)return;
   const d=EW.getSelectedDesign(); if(!d)return;
   const sr=document.getElementById('sl-rot'), srv=document.getElementById('sl-rot-v');
+  const rotNum=document.getElementById('rot-num');
   const so=document.getElementById('sl-op'),  sov=document.getElementById('sl-op-v');
-  if(sr){sr.value=Math.round(d.rotation);srv.textContent=Math.round(d.rotation)+'°';}
-  if(so){so.value=Math.round(d.opacity*100);sov.textContent=Math.round(d.opacity*100)+'%';}
+  if(sr){ const val=Math.round(d.rotation); sr.value=val; srv.textContent=val+'°'; if(rotNum) rotNum.value=val; }
+  if(so){ const val=Math.round(d.opacity*100); so.value=val; sov.textContent=val+'%'; }
   const sw=document.getElementById('sz-w'), sh=document.getElementById('sz-h');
   const c=d.getDimensionsInCm();
   if(sw)sw.value=c.width.toFixed(1);
   if(sh)sh.value=c.height.toFixed(1);
 }
 
-// ========== CROP TOOL (idéntico) ==========
+// ========== CROP TOOL ==========
 function initCropTool() {
   const cm=document.getElementById('crop-modal');
   const cc=document.getElementById('crop-canvas');
@@ -1100,7 +1198,7 @@ function initCropTool() {
     crop=c;render();
   },{passive:false});
   window.addEventListener('touchend',()=>{drag=null;});
-  document.getElementById('crop-reset-btn').addEventListener('click',()=>{if(!src)return;crop={x:0,y:0,w:src.width,h:src.height};render();});
+  document.getElementById('crop-reset-btn').addEventListener('click',()=>{if(!src)return;crop={x:0,y:0,w:src.width,h:src.height};render();msg('Recorte reiniciado','info',1000);});
   document.getElementById('crop-auto-btn').addEventListener('click',()=>{if(!src)return;crop=autoBounds(src);render();msg('⚡ Auto-recorte aplicado','info',1200);});
   document.getElementById('crop-cancel-btn').addEventListener('click',()=>{ cm.classList.remove('open'); drag=null; });
   document.getElementById('crop-apply-btn').addEventListener('click',()=>{
@@ -1111,12 +1209,13 @@ function initCropTool() {
     dRef.image=out; dRef.imageOriginal=out;
     dRef.width=out.width; dRef.height=out.height;
     dRef.originalWidth=out.width; dRef.originalHeight=out.height;
+    dRef.highResWidth=out.width; dRef.highResHeight=out.height;
     dRef.aspectRatio=out.width/out.height;
     if(dRef.updateInputs) dRef.updateInputs();
     if(EW.drawCanvas) EW.drawCanvas();
     cm.classList.remove('open'); drag=null;
     const ppc=EW?.PIXELS_PER_CM||10;
-    msg(`◆ Recorte: ${(out.width/ppc).toFixed(1)}cm × ${(out.height/ppc).tofixed(1)}cm`,'success',2500);
+    msg(`◆ Recorte: ${(out.width/ppc).toFixed(1)}cm × ${(out.height/ppc).toFixed(1)}cm`,'success',2500);
   });
 }
 
@@ -1140,22 +1239,80 @@ function initButtons() {
   document.getElementById('sel-del').addEventListener('click',()=>click('remove-btn'));
   document.getElementById('sel-x').addEventListener('click',()=>{ if(EW&&typeof EW.__mobDeselect==='function') EW.__mobDeselect(); else if(EW){EW.selectedDesignId=null;EW.drawCanvas?.();} });
   document.getElementById('sel-dup').addEventListener('click',()=>{ if(!EW){msg('Editor no disponible','error');return;} if(typeof EW.__mobDuplicate==='function'){ const ok=EW.__mobDuplicate(); if(ok) msg('◆ Diseño duplicado','success',1200); else msg('Selecciona un diseño primero','warning'); } else msg('Helper no disponible','error'); });
-  document.getElementById('sl-rot').addEventListener('input',e=>{ document.getElementById('sl-rot-v').textContent=e.target.value+'°'; const s=ew('rotation-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));} });
-  document.getElementById('sl-op').addEventListener('input',e=>{ document.getElementById('sl-op-v').textContent=e.target.value+'%'; const s=ew('opacity-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));} });
+  
+  // Rotación: slider + input numérico bidireccional
+  const rotSlider = document.getElementById('sl-rot');
+  const rotNum = document.getElementById('rot-num');
+  const rotVal = document.getElementById('sl-rot-v');
+  function updateRotation(value) {
+    value = ((value % 360) + 360) % 360;
+    rotSlider.value = value;
+    if(rotNum) rotNum.value = value;
+    if(rotVal) rotVal.textContent = value + '°';
+    const s=ew('rotation-slider');
+    if(s){ s.value=value; s.dispatchEvent(new Event('input')); }
+  }
+  if(rotSlider){
+    rotSlider.addEventListener('input', e=>{ updateRotation(parseInt(e.target.value)); });
+  }
+  if(rotNum){
+    rotNum.addEventListener('input', e=>{ let v=parseInt(e.target.value); if(isNaN(v)) v=0; updateRotation(v); });
+  }
+
+  // Opacidad
+  document.getElementById('sl-op').addEventListener('input',e=>{
+    document.getElementById('sl-op-v').textContent=e.target.value+'%';
+    const s=ew('opacity-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+  });
+  
+  // Tamaño
   const szw=document.getElementById('sz-w'), szh=document.getElementById('sz-h'), szlk=document.getElementById('sz-lock');
   szw.addEventListener('input',()=>{ if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d&&szw.value>0)szh.value=(parseFloat(szw.value)/d.aspectRatio).toFixed(1);} });
   szh.addEventListener('input',()=>{ if(szlk.checked&&EW){const d=EW.getSelectedDesign?.();if(d&&szh.value>0)szw.value=(parseFloat(szh.value)*d.aspectRatio).toFixed(1);} });
-  document.getElementById('p-szapply').addEventListener('click',()=>{ const wi=ew('width-input'),hi=ew('height-input'); if(wi)wi.value=szw.value; if(hi)hi.value=szh.value; click('apply-size'); syncSliders(); });
-  document.getElementById('sl-zoom').addEventListener('input',e=>{ document.getElementById('sl-zoom-v').textContent=e.target.value+'%'; const s=ew('zoom-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));} });
-  document.getElementById('p-cvh').addEventListener('click',()=>{ const hi=ew('canvas-height-cm'); if(hi)hi.value=document.getElementById('cv-h').value; click('apply-canvas-height'); setTimeout(fitMirror,300); });
-  document.getElementById('cv-color').addEventListener('input',e=>{ const cc=ew('canvas-color'); if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));} });
-  document.getElementById('p-pack').addEventListener('click',()=>{ if(EW&&typeof EW.__autoPackDesignsPRO__==='function'){ EW.__autoPackDesignsPRO__(8,false); msg('🧠 Diseños ordenados','success',2000); } else msg('Motor PRO no disponible','error'); });
+  document.getElementById('p-szapply').addEventListener('click',()=>{
+    const wi=ew('width-input'),hi=ew('height-input');
+    if(wi)wi.value=szw.value; if(hi)hi.value=szh.value;
+    click('apply-size'); syncSliders();
+  });
+  
+  // Zoom
+  document.getElementById('sl-zoom').addEventListener('input',e=>{
+    document.getElementById('sl-zoom-v').textContent=e.target.value+'%';
+    const s=ew('zoom-slider'); if(s){s.value=e.target.value;s.dispatchEvent(new Event('input'));}
+  });
+  
+  // Alto lienzo
+  document.getElementById('p-cvh').addEventListener('click',()=>{
+    const hi=ew('canvas-height-cm'); if(hi)hi.value=document.getElementById('cv-h').value;
+    click('apply-canvas-height'); setTimeout(fitMirror,300);
+  });
+  
+  // Color fondo
+  document.getElementById('cv-color').addEventListener('input',e=>{
+    const cc=ew('canvas-color'); if(cc){cc.value=e.target.value;cc.dispatchEvent(new Event('input'));}
+  });
+  
+  // Auto ordenar
+  document.getElementById('p-pack').addEventListener('click',()=>{
+    if(EW&&typeof EW.__autoPackDesignsPRO__==='function'){ EW.__autoPackDesignsPRO__(8,false); msg('🧠 Diseños ordenados','success',2000); }
+    else msg('Motor PRO no disponible','error');
+  });
+  
+  // Exportaciones
   document.getElementById('ex-png').addEventListener('click',()=>{ if(EW && typeof EW.exportPNG === 'function') { EW.exportPNG(); } else { msg('Función de exportación no disponible','error'); } closeSheet('sh-export'); });
   document.getElementById('ex-pdf').addEventListener('click',()=>{ if(EW && typeof EW.exportPDF === 'function') { EW.exportPDF(); } else { msg('Función de exportación no disponible','error'); } closeSheet('sh-export'); });
   document.getElementById('ex-dtf').addEventListener('click',()=>{ const ov=EW?.document?.getElementById('dtf-overlay'); if(ov)ov.style.display='flex'; closeSheet('sh-export'); });
   document.getElementById('ex-save').addEventListener('click',()=>{ if(EW&&typeof EW.saveWorkbench==='function')EW.saveWorkbench(false); else msg('No disponible','error'); });
   document.getElementById('ex-load').addEventListener('click',()=>{ if(EW&&typeof EW.loadWorkbench==='function')EW.loadWorkbench(); else msg('No disponible','error'); });
-  document.querySelectorAll('.rp').forEach(btn=>{ btn.addEventListener('click',()=>{ document.querySelectorAll('.rp').forEach(b=>{b.classList.remove('acc');b.style.borderColor='';b.style.color='';}); btn.classList.add('acc'); const s=ew('quality-select'); if(s)s.value=btn.dataset.dpi; }); });
+  
+  // Selector de DPI
+  document.querySelectorAll('.rp').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.rp').forEach(b=>{b.classList.remove('acc');b.style.borderColor='';b.style.color='';});
+      btn.classList.add('acc');
+      const s=ew('quality-select'); if(s)s.value=btn.dataset.dpi;
+    });
+  });
 }
 
 function syncLoop() {
