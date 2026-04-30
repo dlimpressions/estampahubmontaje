@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Crowdsourcing de Diseños · EstampaHub</title>
+    <title>Mis Proyectos - Crowdsourcing | EstampaHub</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -12,62 +12,122 @@
             color: #e2e8f0;
             padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 20px; }
-        .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); backdrop-filter: blur(10px); }
-        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 10px 20px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card {
+            background: rgba(10,14,30,0.9);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,212,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            background: linear-gradient(135deg, #00d4ff, #7b2fff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00d4ff, #7b2fff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
         .btn:hover { transform: scale(1.02); }
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; font-size: 1rem; }
-        .proyecto { background: rgba(0,212,255,0.05); margin: 10px 0; padding: 15px; border-radius: 16px; }
-        .propuesta { background: rgba(123,47,255,0.1); margin: 10px 0; padding: 12px; border-radius: 12px; display: flex; gap: 15px; flex-wrap: wrap; }
-        .propuesta img { max-width: 150px; border-radius: 12px; }
-        .ganador { border: 2px solid #00ff9f; background: rgba(0,255,159,0.1); }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 40px; cursor: pointer; }
-        .tab.active { background: linear-gradient(135deg, #00d4ff, #7b2fff); color: white; }
-        .error-msg, .success-msg { margin-top: 10px; font-size: 0.85rem; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+        }
+        label { font-size: 0.9rem; color: #a0b0cc; display: block; margin-bottom: 4px; }
+        .error-msg, .success-msg { margin-top: 15px; font-size: 0.9rem; text-align: center; }
         .error-msg { color: #ff6666; }
         .success-msg { color: #88ff88; }
+        .proyecto {
+            background: rgba(0,212,255,0.08);
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 16px;
+            border-left: 4px solid #00d4ff;
+        }
+        .propuesta {
+            background: rgba(123,47,255,0.1);
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .propuesta img { max-width: 100px; border-radius: 10px; }
+        .ganador { border: 2px solid #00ff9f; background: rgba(0,255,159,0.1); }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; margin-left: 8px; }
+        .badge-abierto { background: #10b981; }
+        .badge-cerrado { background: #6b7280; }
+        .badge-pagado { background: #059669; }
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
+        .info-text { text-align: center; margin-bottom: 20px; color: #a0b0cc; }
+        hr { margin: 15px 0; border-color: rgba(255,255,255,0.1); }
+        button.link { background: none; border: none; color: #00d4ff; cursor: pointer; text-decoration: underline; margin-top: 5px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🎨 Crowdsourcing de Diseños</h1>
-    <p>Publica tu proyecto y recibe propuestas de diseñadores. Tú eliges el precio y seleccionas al ganador.</p>
-
-    <div class="tabs">
-        <div class="tab active" data-tab="crear">➕ Crear proyecto</div>
-        <div class="tab" data-tab="proyectos">📋 Proyectos activos</div>
-        <div class="tab" data-tab="mispropuestas">✏️ Mis propuestas</div>
+    <h1>📋 Mis Proyectos de Diseño</h1>
+    <div class="info-text">
+        Ingresa tu correo para ver los proyectos que has creado y las propuestas recibidas.
     </div>
 
-    <div id="panel-crear" class="card">
+    <!-- Identificación del cliente -->
+    <div id="identificacion" class="card">
+        <label>Correo electrónico</label>
+        <input type="email" id="email-cliente" placeholder="tu@email.com">
+        <button class="btn" id="btn-identificar">Ver mis proyectos</button>
+        <div id="ident-error" class="error-msg" style="display:none;"></div>
+    </div>
+
+    <!-- Panel donde se mostrarán sus proyectos -->
+    <div id="panel-mis-proyectos" style="display:none;">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Tus proyectos</h3>
+                <button class="btn" id="btn-nuevo-proyecto" style="padding:6px 12px;">➕ Nuevo proyecto</button>
+            </div>
+            <div id="lista-proyectos" class="loading">Cargando...</div>
+        </div>
+    </div>
+
+    <!-- Modal para crear nuevo proyecto (oculto inicialmente) -->
+    <div id="nuevo-proyecto-modal" class="card" style="display:none;">
         <h3>Nuevo proyecto</h3>
         <input type="text" id="titulo" placeholder="Título">
         <textarea id="descripcion" rows="3" placeholder="Descripción"></textarea>
-        <input type="number" id="precio" placeholder="Precio (COP)" step="1000">
-        <button class="btn" id="btn-crear">Publicar proyecto</button>
-        <div id="msg-crear" class="error-msg" style="display:none;"></div>
+        <input type="number" id="precio" placeholder="Presupuesto (COP)" step="1000">
+        <button class="btn" id="btn-crear-proyecto">Publicar proyecto</button>
+        <button class="btn" id="btn-cancelar-modal" style="background:#4a5568;">Cancelar</button>
+        <div id="msg-crear-error" class="error-msg" style="display:none;"></div>
         <div id="msg-crear-success" class="success-msg" style="display:none;"></div>
-    </div>
-
-    <div id="panel-proyectos" class="card" style="display:none;">
-        <h3>Proyectos abiertos</h3>
-        <div id="lista-proyectos" class="loading">Cargando...</div>
-    </div>
-
-    <div id="panel-mispropuestas" class="card" style="display:none;">
-        <h3>Mis propuestas</h3>
-        <div id="lista-mis-propuestas" class="loading">Cargando...</div>
     </div>
 </div>
 
 <script>
-// ⚠️ REEMPLAZA ESTA URL CON LA QUE COPIASSTE DE APPS SCRIPT ⚠️
+// === CONFIGURACIÓN ===
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec';
 
-// Función que usa GET para crear (evita CORS por completo)
+let currentEmail = '';
+
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) {
@@ -88,17 +148,13 @@ async function apiCall(action, data = {}) {
     }
 }
 
-async function getProyectos() {
-    const res = await apiCall('listarProyectos');
-    return res.success ? res.proyectos : [];
-}
-
 function mostrarError(id, texto) {
     const el = document.getElementById(id);
     el.textContent = texto;
     el.style.display = 'block';
     setTimeout(() => el.style.display = 'none', 5000);
 }
+
 function mostrarExito(id, texto) {
     const el = document.getElementById(id);
     el.textContent = texto;
@@ -106,172 +162,133 @@ function mostrarExito(id, texto) {
     setTimeout(() => el.style.display = 'none', 5000);
 }
 
-document.getElementById('btn-crear').onclick = async () => {
-    const titulo = document.getElementById('titulo').value.trim();
-    const descripcion = document.getElementById('descripcion').value.trim();
-    const precio = parseFloat(document.getElementById('precio').value);
-    if (!titulo || !descripcion || !precio) {
-        mostrarError('msg-crear', '❌ Completa todos los campos');
+// Identificar al cliente
+document.getElementById('btn-identificar').onclick = async () => {
+    const email = document.getElementById('email-cliente').value.trim();
+    if (!email || !email.includes('@')) {
+        mostrarError('ident-error', 'Ingresa un correo válido');
         return;
     }
-    const result = await apiCall('crearProyecto', { titulo, descripcion, precio });
-    if (result.success) {
-        mostrarExito('msg-crear-success', '✅ Proyecto creado correctamente');
-        document.getElementById('titulo').value = '';
-        document.getElementById('descripcion').value = '';
-        document.getElementById('precio').value = '';
-        if (document.getElementById('panel-proyectos').style.display !== 'none') cargarProyectos();
-    } else {
-        mostrarError('msg-crear', '❌ Error: ' + (result.error || 'Desconocido'));
-    }
+    currentEmail = email;
+    document.getElementById('identificacion').style.display = 'none';
+    document.getElementById('panel-mis-proyectos').style.display = 'block';
+    await cargarMisProyectos();
 };
 
-async function cargarProyectos() {
+// Cargar proyectos del cliente
+async function cargarMisProyectos() {
     const div = document.getElementById('lista-proyectos');
-    div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
-    const proyectos = await getProyectos();
-    if (!proyectos.length) {
-        div.innerHTML = '<p>No hay proyectos activos aún. ¡Crea el primero!</p>';
+    div.innerHTML = '<div class="loading">Cargando tus proyectos...</div>';
+    const result = await apiCall('listarMisProyectos', { correo: currentEmail });
+    if (!result.success || !result.proyectos.length) {
+        div.innerHTML = '<p>No tienes proyectos publicados aún. Crea uno nuevo.</p>';
         return;
     }
     div.innerHTML = '';
-    for (const proy of proyectos) {
-        if (proy.estado !== 'abierto') continue;
+    for (const proy of result.proyectos) {
+        const estadoBadge = proy.estado === 'abierto' ? '<span class="badge badge-abierto">🟢 Abierto</span>' : '<span class="badge badge-cerrado">🔒 Cerrado</span>';
+        const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge" style="background:#f43f5e;">⏳ Pendiente de pago</span>';
         const card = document.createElement('div');
         card.className = 'proyecto';
         card.innerHTML = `
             <h3>${escapeHtml(proy.titulo)}</h3>
-            <p>${escapeHtml(proy.descripcion)}</p>
-            <p><strong>💰 Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
-            <p><strong>📅 Publicado:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
-            <button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>
-            <button class="btn" data-ver="${proy.id}">👁️ Ver propuestas</button>
+            <p><strong>Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
+            <p><strong>Fecha:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
+            <p><strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
+            ${proy.enlace_entrega ? `<p><strong>🔗 Entrega:</strong> <a href="${proy.enlace_entrega}" target="_blank" style="color:#00d4ff;">Descargar diseño final</a></p>` : ''}
+            <button class="btn" data-id="${proy.id}" style="margin-top:8px;">👁️ Ver propuestas recibidas</button>
         `;
         div.appendChild(card);
-        card.querySelector(`[data-id="${proy.id}"]`).onclick = () => mostrarFormPropuesta(proy);
-        card.querySelector(`[data-ver="${proy.id}"]`).onclick = () => verPropuestas(proy.id);
+        card.querySelector(`[data-id="${proy.id}"]`).onclick = () => verPropuestas(proy.id);
     }
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        return m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;');
-    });
-}
-
-function mostrarFormPropuesta(proyecto) {
-    const nombre = prompt('Tu nombre (como diseñador):');
-    if (!nombre) return;
-    const email = prompt('Correo electrónico:');
-    if (!email) return;
-    const urlImagen = prompt('URL de la imagen (sube a ImgBB y pega el enlace):');
-    if (!urlImagen) return;
-    const comentario = prompt('Comentario (opcional):');
-    submitPropuesta(proyecto.id, nombre, email, urlImagen, comentario);
-}
-
-async function submitPropuesta(proyecto_id, disenador, email, imagen_url, comentario) {
-    const result = await apiCall('agregarPropuesta', { proyecto_id, disenador, email, imagen_url, comentario });
-    if (result.success) {
-        alert('✅ Propuesta enviada');
-        let mis = JSON.parse(localStorage.getItem('misPropuestas') || '[]');
-        mis.push({ proyecto_id, disenador, email, imagen_url, comentario, fecha: new Date().toISOString() });
-        localStorage.setItem('misPropuestas', JSON.stringify(mis));
-        cargarMisPropuestas();
-    } else {
-        alert('❌ Error: ' + (result.error || 'Desconocido'));
-    }
-}
-
+// Ver propuestas de un proyecto
 async function verPropuestas(proyecto_id) {
     const res = await apiCall('listarPropuestas', { proyecto_id });
-    if (!res.success || res.propuestas.length === 0) {
-        alert('No hay propuestas para este proyecto aún.');
+    if (!res.success) {
+        alert('Error al cargar propuestas');
         return;
     }
-    let html = `<h3>Propuestas</h3>`;
-    for (let p of res.propuestas) {
+    const propuestas = res.propuestas;
+    if (!propuestas.length) {
+        alert('Aún no has recibido propuestas para este proyecto.');
+        return;
+    }
+    let html = `<h3>Propuestas para tu proyecto</h3>`;
+    for (let p of propuestas) {
         html += `
             <div class="propuesta ${p.seleccionada ? 'ganador' : ''}">
-                <img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/150'">
-                <div>
+                <img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'">
+                <div style="flex:1">
                     <strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br>
                     <em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br>
-                    <small>${new Date(p.fecha).toLocaleString()}</small>
-                    ${!p.seleccionada ? `<br><button class="btn" data-prop="${p.id}" data-proy="${proyecto_id}">🏆 Seleccionar ganador</button>` : '<span style="color:#00ff9f;">✨ GANADOR ✨</span>'}
+                    <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
+                    ${p.seleccionada ? '<span style="color:#00ff9f; margin-left:10px;">🏆 PROPUESTA GANADORA 🏆</span>' : ''}
                 </div>
             </div>
         `;
     }
-    const modal = window.open('', '_blank', 'width=650,height=550');
+    const modal = window.open('', '_blank', 'width=650,height=500');
     modal.document.write(`
-        <html><head><title>Propuestas</title>
+        <html><head><title>Propuestas - Ver</title>
         <style>
             body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
             .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;flex-wrap:wrap;}
-            .propuesta img{max-width:150px;border-radius:12px;}
-            .ganador{border:2px solid #00ff9f;}
-            .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:6px 12px;border-radius:20px;color:white;cursor:pointer;}
+            .propuesta img{max-width:100px;border-radius:12px;}
+            .ganador{border:2px solid #00ff9f;background:rgba(0,255,159,0.1);}
         </style>
         </head>
-        <body>${html}
-        <script>
-            const SCRIPT_URL = '${SCRIPT_URL}';
-            async function seleccionar(propId, proyId) {
-                const url = \`\${SCRIPT_URL}?action=seleccionarGanador&proyecto_id=\${proyId}&propuesta_id=\${propId}\`;
-                const response = await fetch(url);
-                const data = await response.json();
-                if(data.success) {
-                    alert('✅ Ganador seleccionado');
-                    location.reload();
-                } else {
-                    alert('❌ Error: ' + (data.error || 'desconocido'));
-                }
-            }
-            document.querySelectorAll('[data-prop]').forEach(btn => {
-                btn.onclick = () => seleccionar(btn.dataset.prop, btn.dataset.proy);
-            });
-        <\/script>
-        </body>
+        <body>${html}</body>
         </html>
     `);
     modal.document.close();
 }
 
-function cargarMisPropuestas() {
-    const mis = JSON.parse(localStorage.getItem('misPropuestas') || '[]');
-    const div = document.getElementById('lista-mis-propuestas');
-    if (!mis.length) {
-        div.innerHTML = '<p>No has enviado ninguna propuesta aún.</p>';
+// Mostrar formulario para nuevo proyecto
+document.getElementById('btn-nuevo-proyecto').onclick = () => {
+    document.getElementById('nuevo-proyecto-modal').style.display = 'block';
+    document.getElementById('panel-mis-proyectos').style.display = 'none';
+};
+document.getElementById('btn-cancelar-modal').onclick = () => {
+    document.getElementById('nuevo-proyecto-modal').style.display = 'none';
+    document.getElementById('panel-mis-proyectos').style.display = 'block';
+    document.getElementById('titulo').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('precio').value = '';
+    document.getElementById('msg-crear-error').style.display = 'none';
+    document.getElementById('msg-crear-success').style.display = 'none';
+};
+
+// Crear proyecto
+document.getElementById('btn-crear-proyecto').onclick = async () => {
+    const titulo = document.getElementById('titulo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const precio = parseFloat(document.getElementById('precio').value);
+    if (!titulo || !descripcion || !precio || isNaN(precio) || precio <= 0) {
+        mostrarError('msg-crear-error', '❌ Completa todos los campos correctamente');
         return;
     }
-    div.innerHTML = mis.map(p => `
-        <div class="propuesta">
-            <img src="${p.imagen_url}" width="80">
-            <div>
-                <strong>Proyecto ID:</strong> ${p.proyecto_id}<br>
-                <small>${new Date(p.fecha).toLocaleString()}</small><br>
-                <em>${escapeHtml(p.comentario)}</em>
-            </div>
-        </div>
-    `).join('');
+    const result = await apiCall('crearProyecto', { titulo, descripcion, precio, correo_cliente: currentEmail });
+    if (result.success) {
+        mostrarExito('msg-crear-success', '✅ Proyecto creado correctamente');
+        setTimeout(() => {
+            document.getElementById('nuevo-proyecto-modal').style.display = 'none';
+            document.getElementById('panel-mis-proyectos').style.display = 'block';
+            cargarMisProyectos();
+            document.getElementById('titulo').value = '';
+            document.getElementById('descripcion').value = '';
+            document.getElementById('precio').value = '';
+        }, 2000);
+    } else {
+        mostrarError('msg-crear-error', '❌ Error: ' + (result.error || 'Desconocido'));
+    }
+};
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
 }
-
-// Pestañas
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = () => {
-        const target = tab.dataset.tab;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.querySelectorAll('[id^="panel-"]').forEach(p => p.style.display = 'none');
-        document.getElementById(`panel-${target}`).style.display = 'block';
-        if (target === 'proyectos') cargarProyectos();
-        if (target === 'mispropuestas') cargarMisPropuestas();
-    };
-});
-
-getProyectos(); // precarga
 </script>
 </body>
 </html>
