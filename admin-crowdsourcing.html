@@ -28,7 +28,7 @@
 </div>
 <div id="app" style="display:none;"><div class="container"><h1>🔐 Panel de Administración</h1><div class="card"><h3>Todos los proyectos</h3><div id="lista-proyectos" class="loading">Cargando...</div></div></div></div>
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec'; // <-- tu URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPpZPAUZ2sASejBCTJfo5REK_WTyvoorLAiIVD2gCQRLLo4ZKEUDZmhx_iYGtnfViReA/exec'; // <-- tu URL
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
