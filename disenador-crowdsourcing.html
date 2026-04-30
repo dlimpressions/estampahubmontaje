@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área de Diseñadores - Crowdsourcing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #02040a; font-family: 'Segoe UI', 'Exo 2', sans-serif; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); }
+        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 8px 16px; border-radius: 30px; color: white; cursor: pointer; margin: 5px; }
+        .proyecto { background: rgba(0,212,255,0.1); margin: 15px 0; padding: 15px; border-radius: 16px; }
+        .login-box { max-width: 400px; margin: 100px auto; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
+        .error { color: #ff6666; }
+        .loading { text-align: center; padding: 20px; }
+        h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    </style>
+</head>
+<body>
+<div id="login" class="login-box">
+    <div class="card">
+        <h2>Acceso para diseñadores</h2>
+        <input type="text" id="login-user" placeholder="Usuario">
+        <input type="password" id="login-pass" placeholder="Contraseña">
+        <button class="btn" id="btn-login">Ingresar</button>
+        <div id="login-error" class="error"></div>
+    </div>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="container">
+        <h1>🎨 Área de Diseñadores</h1>
+        <div class="card">
+            <h3>Proyectos abiertos</h3>
+            <div id="lista-proyectos" class="loading">Cargando...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec'; // <--- REEMPLAZA
+let usuarioActual = '';
+
+async function apiCall(action, data = {}) {
+    let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
+    for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
+    const res = await fetch(url);
+    return await res.json();
+}
+
+document.getElementById('btn-login').onclick = async () => {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if (!user || !pass) {
+        document.getElementById('login-error').innerText = 'Completa usuario y contraseña';
+        return;
+    }
+    const result = await apiCall('loginDisenador', { usuario: user, contrasena: pass });
+    if (result.success) {
+        usuarioActual = user;
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        cargarProyectos();
+    } else {
+        document.getElementById('login-error').innerText = result.error || 'Credenciales inválidas';
+    }
+};
+
+async function cargarProyectos() {
+    const div = document.getElementById('lista-proyectos');
+    div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
+    const res = await apiCall('listarProyectos', { soloAbiertos: 'true' });
+    if (!res.success || !res.proyectos.length) {
+        div.innerHTML = '<p>No hay proyectos abiertos en este momento.</p>';
+        return;
+    }
+    div.innerHTML = '';
+    for (const proy of res.proyectos) {
+        const card = document.createElement('div');
+        card.className = 'proyecto';
+        card.innerHTML = `
+            <h3>${escapeHtml(proy.titulo)}</h3>
+            <p>${escapeHtml(proy.descripcion)}</p>
+            <p><strong>💰 Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
+            <p><strong>📅 Publicado:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
+            <button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>
+        `;
+        div.appendChild(card);
+        card.querySelector('button').onclick = () => mostrarFormPropuesta(proy);
+    }
+}
+
+function mostrarFormPropuesta(proyecto) {
+    const nombre = prompt('Tu nombre (como aparecerá):', usuarioActual);
+    if (!nombre) return;
+    const email = prompt('Correo electrónico para contacto:');
+    if (!email) return;
+    const urlImagen = prompt('URL de la imagen de tu diseño:', 'https://i.imgur.com/ejemplo.jpg');
+    if (!urlImagen) return;
+    const comentario = prompt('Comentario adicional (opcional):');
+    enviarPropuesta(proyecto.id, nombre, email, urlImagen, comentario);
+}
+
+async function enviarPropuesta(proyecto_id, disenador, email, imagen_url, comentario) {
+    const result = await apiCall('agregarPropuesta', { proyecto_id, disenador, email, imagen_url, comentario });
+    if (result.success) {
+        alert('✅ Propuesta enviada correctamente');
+    } else {
+        alert('❌ Error: ' + (result.error || 'Desconocido'));
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+}
+</script>
+</body>
+</html>
