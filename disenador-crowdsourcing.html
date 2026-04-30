@@ -35,37 +35,79 @@
     </div>
 </div>
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPpZPAUZ2sASejBCTJfo5REK_WTyvoorLAiIVD2gCQRLLo4ZKEUDZmhx_iYGtnfViReA/exec'; // <-- tu URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPpZPAUZ2sASejBCTJfo5REK_WTyvoorLAiIVD2gCQRLLo4ZKEUDZmhx_iYGtnfViReA/exec'; // <-- tu URL (cámbiala si cambió)
+
+// Función con logs para depurar
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
-    for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
-    const res = await fetch(url);
-    return await res.json();
+    for (const key in data) {
+        url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
+    }
+    console.log(`Llamando a: ${url}`);
+    try {
+        const response = await fetch(url);
+        const text = await response.text();
+        console.log(`Respuesta de ${action}:`, text);
+        try {
+            return JSON.parse(text);
+        } catch(e) {
+            console.error('Error parseando JSON:', text);
+            return { success: false, error: 'Respuesta no es JSON válido' };
+        }
+    } catch (err) {
+        console.error('Error de red:', err);
+        return { success: false, error: err.message };
+    }
 }
+
 document.getElementById('btn-login').onclick = async () => {
     const user = document.getElementById('login-user').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
-    if (!user || !pass) { document.getElementById('login-error').innerText = 'Complete credenciales'; return; }
+    if (!user || !pass) {
+        document.getElementById('login-error').innerText = 'Complete credenciales';
+        return;
+    }
+    console.log(`Intentando login para: ${user}`);
     const result = await apiCall('loginDisenador', { usuario: user, contrasena: pass });
+    console.log('Resultado login:', result);
     if (result.success) {
         document.getElementById('login').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         cargarProyectos();
-    } else { document.getElementById('login-error').innerText = result.error; }
+    } else {
+        document.getElementById('login-error').innerText = result.error || 'Credenciales inválidas';
+    }
 };
+
 async function cargarProyectos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
     const res = await apiCall('listarProyectosAbiertos');
-    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos abiertos.</p>'; return; }
+    console.log('Resultado listarProyectosAbiertos:', res);
+    if (!res.success) {
+        div.innerHTML = '<p>Error al cargar proyectos: ' + (res.error || 'desconocido') + '</p>';
+        return;
+    }
+    if (!res.proyectos || res.proyectos.length === 0) {
+        div.innerHTML = '<p>No hay proyectos abiertos.</p>';
+        return;
+    }
     div.innerHTML = '';
     for (const proy of res.proyectos) {
-        const card = document.createElement('div'); card.className = 'proyecto';
-        card.innerHTML = `<h3>${escapeHtml(proy.titulo)}</h3><p>${escapeHtml(proy.descripcion)}</p><p><strong>💰 ${Number(proy.precio).toLocaleString('es-CO')}</strong></p><p>📅 ${new Date(proy.fecha).toLocaleDateString()}</p><button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>`;
+        const card = document.createElement('div');
+        card.className = 'proyecto';
+        card.innerHTML = `
+            <h3>${escapeHtml(proy.titulo)}</h3>
+            <p>${escapeHtml(proy.descripcion)}</p>
+            <p><strong>💰 ${Number(proy.precio).toLocaleString('es-CO')}</strong></p>
+            <p>📅 ${new Date(proy.fecha).toLocaleDateString()}</p>
+            <button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>
+        `;
         div.appendChild(card);
         card.querySelector('button').onclick = () => mostrarFormPropuesta(proy);
     }
 }
+
 function mostrarFormPropuesta(proyecto) {
     const nombre = prompt('Tu nombre:');
     if (!nombre) return;
@@ -76,11 +118,20 @@ function mostrarFormPropuesta(proyecto) {
     const comentario = prompt('Comentario (opcional):');
     enviarPropuesta(proyecto.id, nombre, email, urlImagen, comentario);
 }
+
 async function enviarPropuesta(proyecto_id, disenador, email, imagen_url, comentario) {
     const result = await apiCall('agregarPropuesta', { proyecto_id, disenador, email, imagen_url, comentario });
-    alert(result.success ? '✅ Propuesta enviada' : '❌ Error: ' + (result.error || 'Desconocido'));
+    if (result.success) {
+        alert('✅ Propuesta enviada');
+    } else {
+        alert('❌ Error: ' + (result.error || 'Desconocido'));
+    }
 }
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); }
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+}
 </script>
 </body>
 </html>
