@@ -2,75 +2,21 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Mis Proyectos - Crowdsourcing | EstampaHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis proyectos - Crowdsourcing | EstampaHub</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #02040a;
-            font-family: 'Segoe UI', 'Exo 2', sans-serif;
-            color: #e2e8f0;
-            padding: 20px;
-        }
-        .container { max-width: 900px; margin: 0 auto; }
-        .card {
-            background: rgba(10,14,30,0.9);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(0,212,255,0.2);
-            backdrop-filter: blur(10px);
-        }
-        h1 {
-            background: linear-gradient(135deg, #00d4ff, #7b2fff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .btn {
-            background: linear-gradient(135deg, #00d4ff, #7b2fff);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .btn:hover { transform: scale(1.02); }
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(0,212,255,0.3);
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-        }
-        label { font-size: 0.9rem; color: #a0b0cc; display: block; margin-bottom: 4px; }
-        .error-msg, .success-msg { margin-top: 15px; font-size: 0.9rem; text-align: center; }
-        .error-msg { color: #ff6666; }
-        .success-msg { color: #88ff88; }
-        .proyecto {
-            background: rgba(0,212,255,0.08);
-            margin: 15px 0;
-            padding: 15px;
-            border-radius: 16px;
-            border-left: 4px solid #00d4ff;
-        }
-        .propuesta {
-            background: rgba(123,47,255,0.1);
-            margin: 10px 0;
-            padding: 12px;
-            border-radius: 12px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+        body { background: #02040a; font-family: 'Segoe UI', 'Exo 2', sans-serif; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); }
+        h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; text-align: center; margin-bottom: 20px; }
+        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 10px 20px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
+        label { color: #a0b0cc; display: block; margin-bottom: 4px; }
+        .error-msg { color: #ff6666; margin-top: 10px; }
+        .success-msg { color: #88ff88; margin-top: 10px; }
+        .proyecto { background: rgba(0,212,255,0.08); margin: 15px 0; padding: 15px; border-radius: 16px; border-left: 4px solid #00d4ff; }
+        .propuesta { background: rgba(123,47,255,0.1); margin: 10px 0; padding: 12px; border-radius: 12px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
         .propuesta img { max-width: 100px; border-radius: 10px; }
         .ganador { border: 2px solid #00ff9f; background: rgba(0,255,159,0.1); }
         .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; margin-left: 8px; }
@@ -78,38 +24,26 @@
         .badge-cerrado { background: #6b7280; }
         .badge-pagado { background: #059669; }
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
-        .info-text { text-align: center; margin-bottom: 20px; color: #a0b0cc; }
-        hr { margin: 15px 0; border-color: rgba(255,255,255,0.1); }
-        button.link { background: none; border: none; color: #00d4ff; cursor: pointer; text-decoration: underline; margin-top: 5px; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>📋 Mis Proyectos de Diseño</h1>
-    <div class="info-text">
-        Ingresa tu correo para ver los proyectos que has creado y las propuestas recibidas.
-    </div>
-
-    <!-- Identificación del cliente -->
     <div id="identificacion" class="card">
         <label>Correo electrónico</label>
         <input type="email" id="email-cliente" placeholder="tu@email.com">
         <button class="btn" id="btn-identificar">Ver mis proyectos</button>
         <div id="ident-error" class="error-msg" style="display:none;"></div>
     </div>
-
-    <!-- Panel donde se mostrarán sus proyectos -->
     <div id="panel-mis-proyectos" style="display:none;">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3>Tus proyectos</h3>
-                <button class="btn" id="btn-nuevo-proyecto" style="padding:6px 12px;">➕ Nuevo proyecto</button>
+                <button class="btn" id="btn-nuevo-proyecto">➕ Nuevo proyecto</button>
             </div>
             <div id="lista-proyectos" class="loading">Cargando...</div>
         </div>
     </div>
-
-    <!-- Modal para crear nuevo proyecto (oculto inicialmente) -->
     <div id="nuevo-proyecto-modal" class="card" style="display:none;">
         <h3>Nuevo proyecto</h3>
         <input type="text" id="titulo" placeholder="Título">
@@ -121,73 +55,34 @@
         <div id="msg-crear-success" class="success-msg" style="display:none;"></div>
     </div>
 </div>
-
 <script>
-// === CONFIGURACIÓN ===
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec';
-
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec'; // <-- tu URL
 let currentEmail = '';
 
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
-    for (const key in data) {
-        url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
-    }
-    try {
-        const response = await fetch(url);
-        const text = await response.text();
-        try {
-            return JSON.parse(text);
-        } catch(e) {
-            console.error('Respuesta no JSON:', text);
-            return { success: false, error: 'Respuesta inválida' };
-        }
-    } catch (err) {
-        console.error('Error de red:', err);
-        return { success: false, error: err.message };
-    }
+    for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
+    const res = await fetch(url);
+    return await res.json();
 }
 
-function mostrarError(id, texto) {
-    const el = document.getElementById(id);
-    el.textContent = texto;
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 5000);
-}
-
-function mostrarExito(id, texto) {
-    const el = document.getElementById(id);
-    el.textContent = texto;
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 5000);
-}
-
-// Identificar al cliente
 document.getElementById('btn-identificar').onclick = async () => {
     const email = document.getElementById('email-cliente').value.trim();
-    if (!email || !email.includes('@')) {
-        mostrarError('ident-error', 'Ingresa un correo válido');
-        return;
-    }
+    if (!email || !email.includes('@')) { document.getElementById('ident-error').innerText = 'Correo inválido'; return; }
     currentEmail = email;
     document.getElementById('identificacion').style.display = 'none';
     document.getElementById('panel-mis-proyectos').style.display = 'block';
     await cargarMisProyectos();
 };
-
-// Cargar proyectos del cliente
 async function cargarMisProyectos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando tus proyectos...</div>';
-    const result = await apiCall('listarMisProyectos', { correo: currentEmail });
-    if (!result.success || !result.proyectos.length) {
-        div.innerHTML = '<p>No tienes proyectos publicados aún. Crea uno nuevo.</p>';
-        return;
-    }
+    const res = await apiCall('listarMisProyectos', { correo: currentEmail });
+    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No tienes proyectos aún. Crea uno nuevo.</p>'; return; }
     div.innerHTML = '';
-    for (const proy of result.proyectos) {
+    for (const proy of res.proyectos) {
         const estadoBadge = proy.estado === 'abierto' ? '<span class="badge badge-abierto">🟢 Abierto</span>' : '<span class="badge badge-cerrado">🔒 Cerrado</span>';
-        const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge" style="background:#f43f5e;">⏳ Pendiente de pago</span>';
+        const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge" style="background:#f43f5e;">⏳ Pendiente</span>';
         const card = document.createElement('div');
         card.className = 'proyecto';
         card.innerHTML = `
@@ -195,100 +90,41 @@ async function cargarMisProyectos() {
             <p><strong>Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
             <p><strong>Fecha:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
             <p><strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
-            ${proy.enlace_entrega ? `<p><strong>🔗 Entrega:</strong> <a href="${proy.enlace_entrega}" target="_blank" style="color:#00d4ff;">Descargar diseño final</a></p>` : ''}
-            <button class="btn" data-id="${proy.id}" style="margin-top:8px;">👁️ Ver propuestas recibidas</button>
+            ${proy.enlace_entrega ? `<p><strong>🔗 Entrega:</strong> <a href="${proy.enlace_entrega}" target="_blank">Descargar diseño final</a></p>` : ''}
+            <button class="btn" data-id="${proy.id}">👁️ Ver propuestas recibidas</button>
         `;
         div.appendChild(card);
-        card.querySelector(`[data-id="${proy.id}"]`).onclick = () => verPropuestas(proy.id);
+        card.querySelector('button').onclick = () => verPropuestas(proy.id);
     }
 }
-
-// Ver propuestas de un proyecto
 async function verPropuestas(proyecto_id) {
     const res = await apiCall('listarPropuestas', { proyecto_id });
-    if (!res.success) {
-        alert('Error al cargar propuestas');
-        return;
-    }
-    const propuestas = res.propuestas;
-    if (!propuestas.length) {
-        alert('Aún no has recibido propuestas para este proyecto.');
-        return;
-    }
-    let html = `<h3>Propuestas para tu proyecto</h3>`;
-    for (let p of propuestas) {
-        html += `
-            <div class="propuesta ${p.seleccionada ? 'ganador' : ''}">
-                <img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'">
-                <div style="flex:1">
-                    <strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br>
-                    <em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br>
-                    <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
-                    ${p.seleccionada ? '<span style="color:#00ff9f; margin-left:10px;">🏆 PROPUESTA GANADORA 🏆</span>' : ''}
-                </div>
-            </div>
-        `;
+    if (!res.success || !res.propuestas.length) { alert('No hay propuestas aún.'); return; }
+    let html = `<h3>Propuestas</h3>`;
+    for (let p of res.propuestas) {
+        html += `<div class="propuesta ${p.seleccionada ? 'ganador' : ''}">
+            <img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'">
+            <div><strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br><em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br><small>${new Date(p.fecha).toLocaleString()}</small>${p.seleccionada ? '<br><span style="color:#00ff9f;">🏆 GANADORA 🏆</span>' : ''}</div>
+        </div>`;
     }
     const modal = window.open('', '_blank', 'width=650,height=500');
-    modal.document.write(`
-        <html><head><title>Propuestas - Ver</title>
-        <style>
-            body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
-            .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;flex-wrap:wrap;}
-            .propuesta img{max-width:100px;border-radius:12px;}
-            .ganador{border:2px solid #00ff9f;background:rgba(0,255,159,0.1);}
-        </style>
-        </head>
-        <body>${html}</body>
-        </html>
-    `);
+    modal.document.write(`<html><head><title>Propuestas</title><style>body{background:#02040a;color:white;font-family:sans-serif;padding:20px;} .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;} .ganador{border:2px solid #00ff9f;}</style></head><body>${html}</body></html>`);
     modal.document.close();
 }
-
-// Mostrar formulario para nuevo proyecto
-document.getElementById('btn-nuevo-proyecto').onclick = () => {
-    document.getElementById('nuevo-proyecto-modal').style.display = 'block';
-    document.getElementById('panel-mis-proyectos').style.display = 'none';
-};
-document.getElementById('btn-cancelar-modal').onclick = () => {
-    document.getElementById('nuevo-proyecto-modal').style.display = 'none';
-    document.getElementById('panel-mis-proyectos').style.display = 'block';
-    document.getElementById('titulo').value = '';
-    document.getElementById('descripcion').value = '';
-    document.getElementById('precio').value = '';
-    document.getElementById('msg-crear-error').style.display = 'none';
-    document.getElementById('msg-crear-success').style.display = 'none';
-};
-
-// Crear proyecto
+document.getElementById('btn-nuevo-proyecto').onclick = () => { document.getElementById('nuevo-proyecto-modal').style.display = 'block'; document.getElementById('panel-mis-proyectos').style.display = 'none'; };
+document.getElementById('btn-cancelar-modal').onclick = () => { document.getElementById('nuevo-proyecto-modal').style.display = 'none'; document.getElementById('panel-mis-proyectos').style.display = 'block'; };
 document.getElementById('btn-crear-proyecto').onclick = async () => {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
     const precio = parseFloat(document.getElementById('precio').value);
-    if (!titulo || !descripcion || !precio || isNaN(precio) || precio <= 0) {
-        mostrarError('msg-crear-error', '❌ Completa todos los campos correctamente');
-        return;
-    }
+    if (!titulo || !descripcion || !precio) { document.getElementById('msg-crear-error').innerText = 'Completa todos los campos'; return; }
     const result = await apiCall('crearProyecto', { titulo, descripcion, precio, correo_cliente: currentEmail });
     if (result.success) {
-        mostrarExito('msg-crear-success', '✅ Proyecto creado correctamente');
-        setTimeout(() => {
-            document.getElementById('nuevo-proyecto-modal').style.display = 'none';
-            document.getElementById('panel-mis-proyectos').style.display = 'block';
-            cargarMisProyectos();
-            document.getElementById('titulo').value = '';
-            document.getElementById('descripcion').value = '';
-            document.getElementById('precio').value = '';
-        }, 2000);
-    } else {
-        mostrarError('msg-crear-error', '❌ Error: ' + (result.error || 'Desconocido'));
-    }
+        document.getElementById('msg-crear-success').innerText = '✅ Proyecto creado';
+        setTimeout(() => { document.getElementById('nuevo-proyecto-modal').style.display = 'none'; document.getElementById('panel-mis-proyectos').style.display = 'block'; cargarMisProyectos(); }, 1500);
+    } else { document.getElementById('msg-crear-error').innerText = 'Error: ' + (result.error || 'Desconocido'); }
 };
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
-}
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); }
 </script>
 </body>
 </html>
