@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Crowdsourcing de Diseños · EstampaHub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #02040a;
+            font-family: 'Segoe UI', 'Exo 2', sans-serif;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            background: linear-gradient(135deg, #00d4ff, #7b2fff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: rgba(10,14,30,0.9);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,212,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .btn {
+            background: linear-gradient(135deg, #00d4ff, #7b2fff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.02); }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+        }
+        .proyecto {
+            background: rgba(0,212,255,0.05);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 16px;
+            cursor: pointer;
+        }
+        .propuesta {
+            background: rgba(123,47,255,0.1);
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .propuesta img {
+            max-width: 150px;
+            border-radius: 12px;
+        }
+        .ganador { border: 2px solid #00ff9f; background: rgba(0,255,159,0.1); }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            background: rgba(255,255,255,0.05);
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #00d4ff, #7b2fff);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎨 Crowdsourcing de Diseños</h1>
+    <p>Publica tu proyecto y recibe propuestas de diseñadores. Tú eliges el precio y seleccionas al ganador.</p>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="crear">➕ Crear proyecto</div>
+        <div class="tab" data-tab="proyectos">📋 Proyectos activos</div>
+        <div class="tab" data-tab="mispropuestas">✏️ Mis propuestas</div>
+    </div>
+
+    <!-- Panel CREAR PROYECTO -->
+    <div id="panel-crear" class="card">
+        <h3>Nuevo proyecto</h3>
+        <input type="text" id="titulo" placeholder="Título (ej: Logo para marca de café)">
+        <textarea id="descripcion" rows="3" placeholder="Describe lo que necesitas..."></textarea>
+        <input type="number" id="precio" placeholder="Precio que ofreces (COP)" step="1000">
+        <button class="btn" id="btn-crear">Publicar proyecto</button>
+        <div id="msg-crear" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Panel PROYECTOS ACTIVOS -->
+    <div id="panel-proyectos" class="card" style="display:none;">
+        <h3>Proyectos abiertos</h3>
+        <div id="lista-proyectos">Cargando...</div>
+    </div>
+
+    <!-- Panel MIS PROPUESTAS (solo para diseñadores, mostrará propuestas enviadas) -->
+    <div id="panel-mispropuestas" class="card" style="display:none;">
+        <h3>Mis propuestas enviadas</h3>
+        <div id="lista-mis-propuestas">Aquí aparecerán tus propuestas.</div>
+    </div>
+</div>
+
+<script>
+// === CONFIGURACIÓN ===
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3IZSqsBj3KSkFEt9mV21bzquTgWya-PKvxeX3n2hgcGGesheEGibSWP0JWuJtQJqrIw/exec'; // <-- REEMPLAZA CON TU URL
+let proyectosCache = [];
+
+// ========== FUNCIONES AUXILIARES ==========
+async function apiCall(action, data = {}) {
+    const payload = { action, ...data };
+    const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+}
+
+async function getProyectos() {
+    const res = await fetch(`${SCRIPT_URL}?action=listarProyectos`);
+    const json = await res.json();
+    if (json.success) proyectosCache = json.proyectos;
+    return proyectosCache;
+}
+
+function mostrarMensaje(elementoId, texto, esError = false) {
+    const div = document.getElementById(elementoId);
+    div.innerHTML = `<span style="color: ${esError ? '#ff6666' : '#88ff88'}">${texto}</span>`;
+    setTimeout(() => div.innerHTML = '', 5000);
+}
+
+// ========== CREAR PROYECTO ==========
+document.getElementById('btn-crear').onclick = async () => {
+    const titulo = document.getElementById('titulo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const precio = parseFloat(document.getElementById('precio').value);
+    if (!titulo || !descripcion || !precio) {
+        mostrarMensaje('msg-crear', 'Completa todos los campos', true);
+        return;
+    }
+    const result = await apiCall('crearProyecto', { titulo, descripcion, precio });
+    if (result.success) {
+        mostrarMensaje('msg-crear', '✅ Proyecto creado correctamente');
+        document.getElementById('titulo').value = '';
+        document.getElementById('descripcion').value = '';
+        document.getElementById('precio').value = '';
+        // Recargar lista
+        await getProyectos();
+        cargarProyectos();
+    } else {
+        mostrarMensaje('msg-crear', '❌ Error al crear', true);
+    }
+};
+
+// ========== LISTAR PROYECTOS ==========
+async function cargarProyectos() {
+    const proyectos = await getProyectos();
+    const div = document.getElementById('lista-proyectos');
+    if (!proyectos.length) {
+        div.innerHTML = '<p>No hay proyectos activos aún. ¡Crea el primero!</p>';
+        return;
+    }
+    div.innerHTML = '';
+    for (const proy of proyectos) {
+        if (proy.estado !== 'abierto') continue;
+        const card = document.createElement('div');
+        card.className = 'proyecto';
+        card.innerHTML = `
+            <h3>${proy.titulo}</h3>
+            <p>${proy.descripcion}</p>
+            <p><strong>💰 Presupuesto:</strong> $${proy.precio.toLocaleString('es-CO')}</p>
+            <p><strong>📅 Publicado:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
+            <button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>
+            <button class="btn" data-ver="ver_${proy.id}">👁️ Ver propuestas</button>
+        `;
+        div.appendChild(card);
+        // Evento para enviar propuesta
+        card.querySelector(`button[data-id="${proy.id}"]`).onclick = () => mostrarFormPropuesta(proy);
+        // Evento para ver propuestas existentes
+        card.querySelector(`button[data-ver="ver_${proy.id}"]`).onclick = () => verPropuestas(proy.id);
+    }
+}
+
+function mostrarFormPropuesta(proyecto) {
+    const nombre = prompt('Tu nombre (como diseñador):');
+    if (!nombre) return;
+    const email = prompt('Correo electrónico (para contactarte):');
+    if (!email) return;
+    const urlImagen = prompt('URL de la imagen de tu diseño (sube a ImgBB y pega el enlace):', 'https://i.imgur.com/ejemplo.jpg');
+    if (!urlImagen) return;
+    const comentario = prompt('Comentario o explicación de tu propuesta (opcional):');
+    submitPropuesta(proyecto.id, nombre, email, urlImagen, comentario);
+}
+
+async function submitPropuesta(proyecto_id, disenador, email, imagen_url, comentario) {
+    const result = await apiCall('agregarPropuesta', { proyecto_id, disenador, email, imagen_url, comentario });
+    if (result.success) alert('✅ Propuesta enviada correctamente');
+    else alert('❌ Error al enviar');
+}
+
+async function verPropuestas(proyecto_id) {
+    const res = await fetch(`${SCRIPT_URL}?action=listarPropuestas&proyecto_id=${proyecto_id}`);
+    const data = await res.json();
+    if (!data.success || data.propuestas.length === 0) {
+        alert('No hay propuestas para este proyecto aún.');
+        return;
+    }
+    let html = `<h3>Propuestas para el proyecto</h3>`;
+    for (let p of data.propuestas) {
+        html += `
+            <div class="propuesta ${p.seleccionada ? 'ganador' : ''}">
+                <img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/150'">
+                <div>
+                    <strong>${p.disenador}</strong> (${p.email})<br>
+                    <em>${p.comentario || 'Sin comentarios'}</em><br>
+                    <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
+                    ${!p.seleccionada ? `<br><button class="btn" data-prop="${p.id}" data-proy="${proyecto_id}">🏆 Seleccionar como ganador</button>` : '<span style="color:#00ff9f;">✨ GANADOR ✨</span>'}
+                </div>
+            </div>
+        `;
+    }
+    const modal = window.open('', '_blank', 'width=600,height=500');
+    modal.document.write(`<html><head><title>Propuestas</title><style>body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}</style></head><body>${html}<script>
+        function seleccionar(propId, proyId) {
+            fetch('${SCRIPT_URL}', {
+                method: 'POST',
+                body: JSON.stringify({ action: 'seleccionarGanador', proyecto_id: proyId, propuesta_id: propId }),
+                headers: {'Content-Type':'application/json'}
+            }).then(r=>r.json()).then(data=>{ if(data.success) alert('Ganador seleccionado'); location.reload(); });
+        }
+        document.querySelectorAll('[data-prop]').forEach(btn=>{
+            btn.onclick = () => seleccionar(btn.dataset.prop, btn.dataset.proy);
+        });
+    <\/script></body></html>`);
+}
+
+// ========== MIS PROPUESTAS (usando localStorage para guardar las que envías) ==========
+let misPropuestas = JSON.parse(localStorage.getItem('misPropuestas') || '[]');
+function guardarPropuestaLocal(proyecto_titulo, imagen_url) {
+    misPropuestas.push({ proyecto: proyecto_titulo, imagen: imagen_url, fecha: new Date().toISOString() });
+    localStorage.setItem('misPropuestas', JSON.stringify(misPropuestas));
+    cargarMisPropuestas();
+}
+function cargarMisPropuestas() {
+    const div = document.getElementById('lista-mis-propuestas');
+    if (!misPropuestas.length) {
+        div.innerHTML = '<p>No has enviado ninguna propuesta aún.</p>';
+        return;
+    }
+    div.innerHTML = misPropuestas.map(p => `
+        <div class="propuesta">
+            <img src="${p.imagen}" width="80">
+            <div><strong>Proyecto:</strong> ${p.proyecto}<br><small>${new Date(p.fecha).toLocaleString()}</small></div>
+        </div>
+    `).join('');
+}
+
+// ========== PESTAÑAS ==========
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+        const target = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('[id^="panel-"]').forEach(panel => panel.style.display = 'none');
+        document.getElementById(`panel-${target}`).style.display = 'block';
+        if (target === 'proyectos') cargarProyectos();
+        if (target === 'mispropuestas') cargarMisPropuestas();
+    };
+});
+
+// Cargar proyectos al iniciar
+cargarProyectos();
+</script>
+</body>
+</html>
