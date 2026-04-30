@@ -116,7 +116,6 @@
         <div class="tab" data-tab="mispropuestas">✏️ Mis propuestas</div>
     </div>
 
-    <!-- Panel CREAR PROYECTO -->
     <div id="panel-crear" class="card">
         <h3>Nuevo proyecto</h3>
         <input type="text" id="titulo" placeholder="Título (ej: Logo para marca de café)">
@@ -127,13 +126,11 @@
         <div id="msg-crear-success" class="success-msg" style="display:none;"></div>
     </div>
 
-    <!-- Panel PROYECTOS ACTIVOS -->
     <div id="panel-proyectos" class="card" style="display:none;">
         <h3>Proyectos abiertos</h3>
         <div id="lista-proyectos" class="loading">Cargando proyectos...</div>
     </div>
 
-    <!-- Panel MIS PROPUESTAS -->
     <div id="panel-mispropuestas" class="card" style="display:none;">
         <h3>Mis propuestas enviadas</h3>
         <div id="lista-mis-propuestas" class="loading">Cargando...</div>
@@ -141,17 +138,22 @@
 </div>
 
 <script>
-// ==================== CONFIGURACIÓN ====================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3IZSqsBj3KSkFEt9mV21bzquTgWya-PKvxeX3n2hgcGGesheEGibSWP0JWuJtQJqrIw/exec';
+// === CONFIGURACIÓN ===
+// Coloca AQUÍ la URL que copiaste al desplegar el Apps Script
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFxEd6__lwGetRcXtumPjagHh60vNM1b3i_PmwvqxJW0RR3gSwIrLo3MRlkT74zqeEgQ/exec';
 
-// ==================== FUNCIONES AUXILIARES ====================
+// === Función para llamar al Apps Script sin problemas de CORS ===
 async function apiCall(action, data = {}) {
-    const payload = { action, ...data };
+    const params = new URLSearchParams();
+    params.append('action', action);
+    for (const key in data) {
+        params.append(key, data[key]);
+    }
     try {
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'application/json' }
+            body: params,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         const text = await response.text();
         try {
@@ -198,7 +200,7 @@ function mostrarExito(id, texto) {
     setTimeout(() => el.style.display = 'none', 5000);
 }
 
-// ==================== CREAR PROYECTO ====================
+// === Crear proyecto ===
 document.getElementById('btn-crear').onclick = async () => {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
@@ -213,9 +215,7 @@ document.getElementById('btn-crear').onclick = async () => {
         document.getElementById('titulo').value = '';
         document.getElementById('descripcion').value = '';
         document.getElementById('precio').value = '';
-        // Recargar lista de proyectos si la pestaña está activa
-        const panelProyectos = document.getElementById('panel-proyectos');
-        if (panelProyectos.style.display !== 'none') {
+        if (document.getElementById('panel-proyectos').style.display !== 'none') {
             cargarProyectos();
         }
     } else {
@@ -223,7 +223,7 @@ document.getElementById('btn-crear').onclick = async () => {
     }
 };
 
-// ==================== LISTAR PROYECTOS ====================
+// === Listar proyectos ===
 async function cargarProyectos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
@@ -261,7 +261,7 @@ function escapeHtml(str) {
     });
 }
 
-// ==================== ENVIAR PROPUESTA ====================
+// === Enviar propuesta ===
 function mostrarFormPropuesta(proyecto) {
     const nombre = prompt('Tu nombre (como diseñador):');
     if (!nombre) return;
@@ -277,7 +277,6 @@ async function submitPropuesta(proyecto_id, disenador, email, imagen_url, coment
     const result = await apiCall('agregarPropuesta', { proyecto_id, disenador, email, imagen_url, comentario });
     if (result.success) {
         alert('✅ Propuesta enviada correctamente');
-        // Guardar localmente para el panel "Mis propuestas"
         let misPropuestas = JSON.parse(localStorage.getItem('misPropuestas') || '[]');
         misPropuestas.push({ proyecto_id, disenador, email, imagen_url, comentario, fecha: new Date().toISOString() });
         localStorage.setItem('misPropuestas', JSON.stringify(misPropuestas));
@@ -287,7 +286,7 @@ async function submitPropuesta(proyecto_id, disenador, email, imagen_url, coment
     }
 }
 
-// ==================== VER PROPUESTAS DE UN PROYECTO ====================
+// === Ver propuestas ===
 async function verPropuestas(proyecto_id) {
     try {
         const res = await fetch(`${SCRIPT_URL}?action=listarPropuestas&proyecto_id=${proyecto_id}`);
@@ -313,24 +312,27 @@ async function verPropuestas(proyecto_id) {
         const modal = window.open('', '_blank', 'width=650,height=550');
         modal.document.write(`
             <html>
-            <head>
-                <title>Propuestas - EstampaHub</title>
-                <style>
-                    body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
-                    .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;flex-wrap:wrap;}
-                    .propuesta img{max-width:150px;border-radius:12px;}
-                    .ganador{border:2px solid #00ff9f;background:rgba(0,255,159,0.1);}
-                    .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:6px 12px;border-radius:20px;color:white;cursor:pointer;}
-                </style>
+            <head><title>Propuestas - EstampaHub</title>
+            <style>
+                body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
+                .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;flex-wrap:wrap;}
+                .propuesta img{max-width:150px;border-radius:12px;}
+                .ganador{border:2px solid #00ff9f;background:rgba(0,255,159,0.1);}
+                .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:6px 12px;border-radius:20px;color:white;cursor:pointer;}
+            </style>
             </head>
             <body>${html}
             <script>
                 const SCRIPT_URL = '${SCRIPT_URL}';
                 async function seleccionar(propId, proyId) {
+                    const params = new URLSearchParams();
+                    params.append('action', 'seleccionarGanador');
+                    params.append('proyecto_id', proyId);
+                    params.append('propuesta_id', propId);
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ action: 'seleccionarGanador', proyecto_id: proyId, propuesta_id: propId }),
-                        headers: {'Content-Type':'application/json'}
+                        body: params,
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                     });
                     const data = await response.json();
                     if(data.success) {
@@ -353,7 +355,7 @@ async function verPropuestas(proyecto_id) {
     }
 }
 
-// ==================== MIS PROPUESTAS (localStorage) ====================
+// === Mis propuestas ===
 function cargarMisPropuestas() {
     const misPropuestas = JSON.parse(localStorage.getItem('misPropuestas') || '[]');
     const div = document.getElementById('lista-mis-propuestas');
@@ -373,7 +375,7 @@ function cargarMisPropuestas() {
     `).join('');
 }
 
-// ==================== PESTAÑAS ====================
+// === Pestañas ===
 document.querySelectorAll('.tab').forEach(tab => {
     tab.onclick = () => {
         const target = tab.dataset.tab;
@@ -386,8 +388,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     };
 });
 
-// Cargar proyectos al iniciar (pero la pestaña visible es "crear", así que no es necesario)
-// Sin embargo, precargamos para que cuando cambien a proyectos ya estén en caché
+// Precarga de proyectos
 getProyectos().then(() => console.log('Proyectos precargados'));
 </script>
 </body>
