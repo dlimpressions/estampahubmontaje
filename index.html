@@ -851,6 +851,7 @@ footer {
       color:var(--accent);font-family:var(--font-ui);font-size:0.76rem;font-weight:500;
       cursor:pointer;transition:all 0.15s;white-space:nowrap;
     ">👤 Mi Perfil</button>
+<button id="btn-crowd" class="hbtn" style="background:linear-gradient(135deg,#00d4ff,#7b2fff);">🎨 Crowdsourcing</button>
   </div>
 </header>
 
@@ -3779,6 +3780,11 @@ if(tbDtfBtn){
     window.drawCanvas = drawCanvas;
   }
   console.log('✅ Funciones del editor exportadas globalmente');
+
+document.getElementById('btn-crowd')?.addEventListener('click', () => {
+    window.open('crowdsourcing.html', '_blank');
+});
+
 </script>
 
 
@@ -3795,6 +3801,8 @@ s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
 <!--End of Tawk.to Script-->
+
+
 
   
 </body>
