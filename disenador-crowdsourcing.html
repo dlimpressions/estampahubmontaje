@@ -28,94 +28,59 @@
         <div id="login-error" class="error"></div>
     </div>
 </div>
-
 <div id="app" style="display:none;">
     <div class="container">
         <h1>🎨 Área de Diseñadores</h1>
-        <div class="card">
-            <h3>Proyectos abiertos</h3>
-            <div id="lista-proyectos" class="loading">Cargando...</div>
-        </div>
+        <div class="card"><h3>Proyectos abiertos</h3><div id="lista-proyectos" class="loading">Cargando...</div></div>
     </div>
 </div>
-
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec'; // <--- REEMPLAZA
-let usuarioActual = '';
-
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ1WSBzyRf1ZSb5PUnOIek30CGaNOk1gz1JdfiwG6_IbAAPrGEMSoYNsPuJy-5v7scdg/exec'; // <-- tu URL
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
     const res = await fetch(url);
     return await res.json();
 }
-
 document.getElementById('btn-login').onclick = async () => {
     const user = document.getElementById('login-user').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
-    if (!user || !pass) {
-        document.getElementById('login-error').innerText = 'Completa usuario y contraseña';
-        return;
-    }
+    if (!user || !pass) { document.getElementById('login-error').innerText = 'Complete credenciales'; return; }
     const result = await apiCall('loginDisenador', { usuario: user, contrasena: pass });
     if (result.success) {
-        usuarioActual = user;
         document.getElementById('login').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         cargarProyectos();
-    } else {
-        document.getElementById('login-error').innerText = result.error || 'Credenciales inválidas';
-    }
+    } else { document.getElementById('login-error').innerText = result.error; }
 };
-
 async function cargarProyectos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
-    const res = await apiCall('listarProyectos', { soloAbiertos: 'true' });
-    if (!res.success || !res.proyectos.length) {
-        div.innerHTML = '<p>No hay proyectos abiertos en este momento.</p>';
-        return;
-    }
+    const res = await apiCall('listarProyectosAbiertos');
+    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos abiertos.</p>'; return; }
     div.innerHTML = '';
     for (const proy of res.proyectos) {
-        const card = document.createElement('div');
-        card.className = 'proyecto';
-        card.innerHTML = `
-            <h3>${escapeHtml(proy.titulo)}</h3>
-            <p>${escapeHtml(proy.descripcion)}</p>
-            <p><strong>💰 Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
-            <p><strong>📅 Publicado:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
-            <button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>
-        `;
+        const card = document.createElement('div'); card.className = 'proyecto';
+        card.innerHTML = `<h3>${escapeHtml(proy.titulo)}</h3><p>${escapeHtml(proy.descripcion)}</p><p><strong>💰 ${Number(proy.precio).toLocaleString('es-CO')}</strong></p><p>📅 ${new Date(proy.fecha).toLocaleDateString()}</p><button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>`;
         div.appendChild(card);
         card.querySelector('button').onclick = () => mostrarFormPropuesta(proy);
     }
 }
-
 function mostrarFormPropuesta(proyecto) {
-    const nombre = prompt('Tu nombre (como aparecerá):', usuarioActual);
+    const nombre = prompt('Tu nombre:');
     if (!nombre) return;
-    const email = prompt('Correo electrónico para contacto:');
+    const email = prompt('Correo:');
     if (!email) return;
-    const urlImagen = prompt('URL de la imagen de tu diseño:', 'https://i.imgur.com/ejemplo.jpg');
+    const urlImagen = prompt('URL de la imagen (sube a ImgBB):');
     if (!urlImagen) return;
-    const comentario = prompt('Comentario adicional (opcional):');
+    const comentario = prompt('Comentario (opcional):');
     enviarPropuesta(proyecto.id, nombre, email, urlImagen, comentario);
 }
-
 async function enviarPropuesta(proyecto_id, disenador, email, imagen_url, comentario) {
     const result = await apiCall('agregarPropuesta', { proyecto_id, disenador, email, imagen_url, comentario });
-    if (result.success) {
-        alert('✅ Propuesta enviada correctamente');
-    } else {
-        alert('❌ Error: ' + (result.error || 'Desconocido'));
-    }
+    alert(result.success ? '✅ Propuesta enviada' : '❌ Error: ' + (result.error || 'Desconocido'));
 }
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
-}
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); }
 </script>
 </body>
 </html>
