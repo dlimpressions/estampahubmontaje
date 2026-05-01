@@ -6,131 +6,31 @@
     <title>Diseñadores - Crowdsourcing | EstampaHub</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #02040a;
-            font-family: 'Segoe UI', 'Exo 2', sans-serif;
-            color: #e2e8f0;
-            padding: 20px;
-        }
+        body { background: #02040a; font-family: 'Segoe UI', 'Exo 2', sans-serif; color: #e2e8f0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .card {
-            background: rgba(10,14,30,0.9);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(0,212,255,0.2);
-            backdrop-filter: blur(10px);
-        }
-        .btn {
-            background: linear-gradient(135deg, #00d4ff, #7b2fff);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 30px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-            margin: 5px;
-        }
+        .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); backdrop-filter: blur(10px); }
+        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 8px 16px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s; margin: 5px; }
         .btn-small { padding: 4px 10px; font-size: 0.8rem; }
         .btn-outline { background: transparent; border: 1px solid #00d4ff; color: #00d4ff; }
-        .btn-outline:hover { background: rgba(0,212,255,0.1); }
         .login-box { max-width: 400px; margin: 100px auto; text-align: center; }
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(0,212,255,0.3);
-            border-radius: 12px;
-            color: white;
-        }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
         label { color: #a0b0cc; display: block; margin-bottom: 4px; font-weight: 500; }
         .error { color: #ff6666; margin-top: 10px; }
-        .success { color: #88ff88; margin-top: 10px; }
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
         h1, h2, h3 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 15px; }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            border-bottom: 1px solid rgba(0,212,255,0.2);
-            padding-bottom: 10px;
-        }
-        .tab {
-            background: rgba(255,255,255,0.05);
-            padding: 10px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .tab.active {
-            background: linear-gradient(135deg, #00d4ff, #7b2fff);
-            color: white;
-        }
-        .proyecto {
-            background: rgba(0,212,255,0.08);
-            margin: 15px 0;
-            padding: 15px;
-            border-radius: 16px;
-            border-left: 4px solid #00d4ff;
-        }
-        .propuesta-item {
-            background: rgba(123,47,255,0.1);
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            margin-left: 8px;
-        }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(0,212,255,0.2); padding-bottom: 10px; }
+        .tab { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 40px; cursor: pointer; transition: 0.2s; }
+        .tab.active { background: linear-gradient(135deg, #00d4ff, #7b2fff); color: white; }
+        .proyecto { background: rgba(0,212,255,0.08); margin: 15px 0; padding: 15px; border-radius: 16px; border-left: 4px solid #00d4ff; }
+        .propuesta-item { background: rgba(123,47,255,0.1); margin: 10px 0; padding: 15px; border-radius: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; margin-left: 8px; }
         .badge-ganador { background: #00ff9f; color: #000; }
         .badge-pendiente { background: #f43f5e; }
         .badge-pagado { background: #10b981; }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-card {
-            background: #0f1220;
-            border-radius: 24px;
-            padding: 25px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 1px solid rgba(0,212,255,0.3);
-        }
-        .imagen-ref {
-            max-width: 100%;
-            border-radius: 12px;
-            margin: 10px 0;
-        }
-        .comision {
-            background: rgba(0,212,255,0.1);
-            padding: 8px;
-            border-radius: 12px;
-            margin: 10px 0;
-            text-align: center;
-        }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-card { background: #0f1220; border-radius: 24px; padding: 25px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(0,212,255,0.3); }
+        .imagen-ref { max-width: 100%; border-radius: 12px; margin: 10px 0; }
+        .comision { background: rgba(0,212,255,0.1); padding: 8px; border-radius: 12px; margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -178,7 +78,7 @@
         <label>¿Quieres hacer una contraoferta? (opcional)</label>
         <input type="number" id="contraoferta" placeholder="Dejar vacío para aceptar presupuesto original">
         <div class="comision">
-            🤝 Comisión EstampaHub: <span id="comision-porcentaje">15%</span><br>
+            🤝 Comisión EstampaHub: 15%<br>
             <strong>Tu ganancia neta estimada:</strong> <span id="ganancia-neta">0</span> COP
         </div>
         <label>Tu imagen de diseño (URL de ImgBB)</label>
@@ -192,10 +92,10 @@
 </div>
 
 <script>
-// ==================== CONFIGURACIÓN ====================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkbKiq-ApsROIv18jQOiuu73WnNWtKYS3Ovg6Pe6XPh2ueA4W8YBI2wSnT5J4BZnJb6A/exec'; // <--- REEMPLAZA
+const SCRIPT_URL = 'https://script.google.com/macros/s/TU_ID/exec'; // <--- REEMPLAZA CON TU URL
 let usuarioActual = '';
 let currentProjectForProposal = null;
+let misPropuestasIds = new Set(); // para saber si ya ofertó
 
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
@@ -212,12 +112,13 @@ document.getElementById('btn-login').onclick = async () => {
     const result = await apiCall('loginDisenador', { usuario: user, contrasena: pass });
     if (result.success) {
         usuarioActual = result.usuario;
-        // Obtener email del diseñador (lo pedimos una vez)
         const email = prompt('Por favor, ingresa tu correo electrónico (se usará para identificar tus propuestas):');
         if (!email) { alert('Correo requerido'); return; }
         localStorage.setItem('disenador_email', email);
         document.getElementById('login').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        // Cargar IDs de propuestas ya enviadas
+        await cargarMisPropuestasIds(email);
         cargarProyectosAbiertos();
         cargarMisOfertas();
         cargarPagos();
@@ -225,6 +126,16 @@ document.getElementById('btn-login').onclick = async () => {
         document.getElementById('login-error').innerText = result.error;
     }
 };
+
+async function cargarMisPropuestasIds(email) {
+    const res = await apiCall('listarMisPropuestasDisenador', { email });
+    if (res.success) {
+        misPropuestasIds.clear();
+        for (const p of res.propuestas) {
+            misPropuestasIds.add(p.proyecto_id);
+        }
+    }
+}
 
 // ==================== PROYECTOS ABIERTOS ====================
 async function cargarProyectosAbiertos() {
@@ -234,6 +145,7 @@ async function cargarProyectosAbiertos() {
     if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos abiertos.</p>'; return; }
     div.innerHTML = '';
     for (const proy of res.proyectos) {
+        const yaOferto = misPropuestasIds.has(proy.id);
         const card = document.createElement('div');
         card.className = 'proyecto';
         card.innerHTML = `
@@ -242,10 +154,12 @@ async function cargarProyectosAbiertos() {
             <p><strong>💰 Presupuesto base:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
             <p><strong>📅 Publicado:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
             ${proy.imagen_referencia ? `<p><strong>📷 Referencia:</strong><br><img src="${proy.imagen_referencia}" style="max-width:150px; border-radius:8px;"></p>` : ''}
-            <button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>
+            ${yaOferto ? '<button disabled style="opacity:0.5;">✅ Ya ofertaste</button>' : `<button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>`}
         `;
         div.appendChild(card);
-        card.querySelector('button').onclick = () => abrirModalPropuesta(proy);
+        if (!yaOferto) {
+            card.querySelector('button').onclick = () => abrirModalPropuesta(proy);
+        }
     }
 }
 
@@ -260,7 +174,6 @@ async function abrirModalPropuesta(proyecto) {
     document.getElementById('imagen-propuesta').value = '';
     document.getElementById('comentario-propuesta').value = '';
     document.getElementById('modal-error').innerText = '';
-    // Calcular ganancia neta
     actualizarGananciaNeta(proyecto.precio);
     document.getElementById('modal-propuesta').style.display = 'flex';
 }
@@ -268,8 +181,7 @@ async function abrirModalPropuesta(proyecto) {
 function actualizarGananciaNeta(precioBase) {
     const contra = parseFloat(document.getElementById('contraoferta').value);
     const monto = isNaN(contra) || contra === 0 ? precioBase : contra;
-    const comision = monto * 0.15;
-    const neto = monto - comision;
+    const neto = monto * 0.85;
     document.getElementById('ganancia-neta').innerText = neto.toLocaleString('es-CO');
 }
 
@@ -298,7 +210,10 @@ document.getElementById('btn-enviar-propuesta').onclick = async () => {
     if (result.success) {
         alert('✅ Propuesta enviada correctamente');
         document.getElementById('modal-propuesta').style.display = 'none';
-        cargarMisOfertas(); // actualizar lista
+        // Actualizar la lista de proyectos abiertos (deshabilitar botón)
+        misPropuestasIds.add(currentProjectForProposal.id);
+        cargarProyectosAbiertos();
+        cargarMisOfertas();
     } else {
         document.getElementById('modal-error').innerText = result.error || 'Error al enviar';
     }
@@ -320,8 +235,8 @@ async function cargarMisOfertas() {
     for (const oferta of res.propuestas) {
         const estado = oferta.seleccionada ? '🏆 Ganadora' : '📌 Pendiente';
         const pagadoBadge = oferta.pagado ? '<span class="badge badge-pagado">💰 Pagado</span>' : '';
-        const precioMostrar = oferta.contraoferta ? `Contraoferta: $${Number(oferta.contraoferta).toLocaleString('es-CO')}` : `Presupuesto base: $${Number(oferta.precio_base || 0).toLocaleString('es-CO')}`;
-        const neto = oferta.contraoferta ? oferta.contraoferta * 0.85 : (oferta.precio_base || 0) * 0.85;
+        const precioMostrar = oferta.precio_contraoferta ? `Contraoferta: $${Number(oferta.precio_contraoferta).toLocaleString('es-CO')}` : `Presupuesto base: $${Number(oferta.precio_base || 0).toLocaleString('es-CO')}`;
+        const neto = oferta.precio_contraoferta ? oferta.precio_contraoferta * 0.85 : (oferta.precio_base || 0) * 0.85;
         const card = document.createElement('div');
         card.className = 'propuesta-item';
         card.innerHTML = `
@@ -331,7 +246,7 @@ async function cargarMisOfertas() {
                 <span>${precioMostrar}</span><br>
                 <span>Tu ganancia neta (85%): $${Math.floor(neto).toLocaleString('es-CO')}</span><br>
                 <span class="badge ${oferta.seleccionada ? 'badge-ganador' : 'badge-pendiente'}">${estado}</span> ${pagadoBadge}
-                ${oferta.enlace_entrega ? `<br><a href="${oferta.enlace_entrega}" target="_blank">🔗 Descargar diseño final</a>` : ''}
+                ${oferta.enlace_entrega && oferta.seleccionada ? `<br><a href="${oferta.enlace_entrega}" target="_blank">🔗 Descargar diseño final</a>` : ''}
             </div>
         `;
         div.appendChild(card);
@@ -346,11 +261,11 @@ async function cargarPagos() {
     div.innerHTML = '<div class="loading">Cargando...</div>';
     const res = await apiCall('listarMisPropuestasDisenador', { email });
     if (!res.success) { div.innerHTML = '<p>Error al cargar pagos.</p>'; return; }
-    const pagos = res.propuestas.filter(p => p.pagado === true);
+    const pagos = res.propuestas.filter(p => p.pagado === true && p.seleccionada === true);
     if (!pagos.length) { div.innerHTML = '<p>Aún no has recibido pagos.</p>'; return; }
     div.innerHTML = '';
     for (const pago of pagos) {
-        const montoOriginal = pago.contraoferta || pago.precio_base || 0;
+        const montoOriginal = pago.precio_contraoferta || pago.precio_base || 0;
         const neto = montoOriginal * 0.85;
         const card = document.createElement('div');
         card.className = 'propuesta-item';
