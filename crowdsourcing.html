@@ -10,7 +10,9 @@
         .container { max-width: 1000px; margin: 0 auto; }
         .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); }
         h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; text-align: center; margin-bottom: 20px; }
-        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 10px 20px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; }
+        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 10px 20px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; margin: 5px; }
+        .btn-small { padding: 5px 12px; font-size: 0.8rem; }
+        .btn-secundario { background: #4a5568; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
         label { color: #a0b0cc; display: block; margin-bottom: 4px; }
         .error-msg { color: #ff6666; margin-top: 10px; }
@@ -24,6 +26,7 @@
         .badge-cerrado { background: #6b7280; }
         .badge-pagado { background: #059669; }
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
+        .imagen-ref { max-width: 150px; border-radius: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -49,16 +52,27 @@
         <input type="text" id="titulo" placeholder="Título">
         <textarea id="descripcion" rows="3" placeholder="Descripción"></textarea>
         <input type="number" id="precio" placeholder="Presupuesto (COP)" step="1000">
+        <label>Imagen de referencia (opcional)</label>
+        <input type="file" id="imagen-ref-input" accept="image/*">
+        <div id="preview-ref" style="margin:10px 0;"></div>
+        <button class="btn" id="btn-subir-imagen-ref">Subir imagen</button>
+        <p style="font-size:0.8rem; color:#a0b0cc;">O pega un enlace de referencia:</p>
+        <input type="url" id="enlace-ref" placeholder="https://...">
         <button class="btn" id="btn-crear-proyecto">Publicar proyecto</button>
-        <button class="btn" id="btn-cancelar-modal" style="background:#4a5568;">Cancelar</button>
+        <button class="btn btn-secundario" id="btn-cancelar-modal">Cancelar</button>
         <div id="msg-crear-error" class="error-msg" style="display:none;"></div>
         <div id="msg-crear-success" class="success-msg" style="display:none;"></div>
     </div>
 </div>
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzENqBJpGU-22ZGj8sa5iQlRRp8oY4rLkmxYEmElzAdBlHjLLiFqv2w-ojA439XV5xzA/exec'; // <-- tu URL
-let currentEmail = '';
+// ==================== CONFIGURACIÓN ====================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzENqBJpGU-22ZGj8sa5iQlRRp8oY4rLkmxYEmElzAdBlHjLLiFqv2w-ojA439XV5xzA/exec'; // <--- REEMPLAZA
+const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- REEMPLAZA CON TU CLAVE
 
+let currentEmail = '';
+let imagenReferenciaUrl = '';
+
+// ==================== FUNCIONES ====================
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
@@ -66,6 +80,27 @@ async function apiCall(action, data = {}) {
     return await res.json();
 }
 
+async function subirImagenABase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function subirImgBB(file) {
+    const base64 = await subirImagenABase64(file);
+    const formData = new FormData();
+    formData.append('key', IMGBB_API_KEY);
+    formData.append('image', base64);
+    const response = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+    const data = await response.json();
+    if (data.success) return data.data.url;
+    else throw new Error(data.error.message);
+}
+
+// ==================== MANEJO DE INTERFAZ ====================
 document.getElementById('btn-identificar').onclick = async () => {
     const email = document.getElementById('email-cliente').value.trim();
     if (!email || !email.includes('@')) { document.getElementById('ident-error').innerText = 'Correo inválido'; return; }
@@ -74,6 +109,7 @@ document.getElementById('btn-identificar').onclick = async () => {
     document.getElementById('panel-mis-proyectos').style.display = 'block';
     await cargarMisProyectos();
 };
+
 async function cargarMisProyectos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando tus proyectos...</div>';
@@ -87,44 +123,160 @@ async function cargarMisProyectos() {
         card.className = 'proyecto';
         card.innerHTML = `
             <h3>${escapeHtml(proy.titulo)}</h3>
-            <p><strong>Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
+            <p>${escapeHtml(proy.descripcion)}</p>
+            <p><strong>Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')} 
+            ${proy.estado === 'abierto' ? `<button class="btn btn-small" data-editar="${proy.id}" data-precio="${proy.precio}">✏️ Editar</button>` : ''}</p>
             <p><strong>Fecha:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
             <p><strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
             ${proy.enlace_entrega ? `<p><strong>🔗 Entrega:</strong> <a href="${proy.enlace_entrega}" target="_blank">Descargar diseño final</a></p>` : ''}
-            <button class="btn" data-id="${proy.id}">👁️ Ver propuestas recibidas</button>
+            ${proy.imagen_referencia ? `<p><strong>📷 Imagen de referencia:</strong><br><img src="${proy.imagen_referencia}" class="imagen-ref"></p>` : ''}
+            <button class="btn" data-ver="${proy.id}">👁️ Ver propuestas recibidas</button>
         `;
         div.appendChild(card);
-        card.querySelector('button').onclick = () => verPropuestas(proy.id);
+        card.querySelector(`[data-ver="${proy.id}"]`).onclick = () => verPropuestas(proy.id, proy.estado === 'abierto', proy.pagado);
+        const btnEditar = card.querySelector(`[data-editar="${proy.id}"]`);
+        if (btnEditar) btnEditar.onclick = () => editarPresupuesto(proy.id, proy.precio);
     }
 }
-async function verPropuestas(proyecto_id) {
+
+async function editarPresupuesto(proyecto_id, precioActual) {
+    const nuevoPrecio = prompt('Nuevo presupuesto (COP):', precioActual);
+    if (!nuevoPrecio) return;
+    const num = parseFloat(nuevoPrecio);
+    if (isNaN(num) || num <= 0) { alert('Monto inválido'); return; }
+    const result = await apiCall('actualizarPresupuesto', { proyecto_id, nuevo_precio: num });
+    if (result.success) {
+        alert('✅ Presupuesto actualizado');
+        await cargarMisProyectos();
+    } else {
+        alert('❌ Error: ' + (result.error || 'Desconocido'));
+    }
+}
+
+async function verPropuestas(proyecto_id, abierto, pagado) {
     const res = await apiCall('listarPropuestas', { proyecto_id });
     if (!res.success || !res.propuestas.length) { alert('No hay propuestas aún.'); return; }
-    let html = `<h3>Propuestas</h3>`;
+    let html = `<h3>Propuestas recibidas</h3>`;
     for (let p of res.propuestas) {
+        // Solo mostrar la imagen si el proyecto está pagado Y esta propuesta es la ganadora
+        let imagenHtml = '';
+        if (pagado && p.seleccionada) {
+            imagenHtml = `<img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'">`;
+        } else if (!pagado && p.seleccionada) {
+            imagenHtml = '<div style="background:#333; padding:5px; border-radius:8px;">🔒 Imagen disponible solo después del pago</div>';
+        }
         html += `<div class="propuesta ${p.seleccionada ? 'ganador' : ''}">
-            <img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'">
-            <div><strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br><em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br><small>${new Date(p.fecha).toLocaleString()}</small>${p.seleccionada ? '<br><span style="color:#00ff9f;">🏆 GANADORA 🏆</span>' : ''}</div>
+            ${imagenHtml}
+            <div>
+                <strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br>
+                <em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br>
+                <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
+                ${abierto && !p.seleccionada ? `<br><button class="btn btn-small" data-elegir="${p.id}" data-proy="${proyecto_id}">🏆 Elegir como ganadora</button>` : ''}
+                ${p.seleccionada ? '<br><span style="color:#00ff9f;">✨ PROPUESTA GANADORA ✨</span>' : ''}
+            </div>
         </div>`;
     }
-    const modal = window.open('', '_blank', 'width=650,height=500');
-    modal.document.write(`<html><head><title>Propuestas</title><style>body{background:#02040a;color:white;font-family:sans-serif;padding:20px;} .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;} .ganador{border:2px solid #00ff9f;}</style></head><body>${html}</body></html>`);
+    const modal = window.open('', '_blank', 'width=700,height=550');
+    modal.document.write(`
+        <html><head><title>Propuestas</title>
+        <style>
+            body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
+            .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;flex-wrap:wrap;}
+            .propuesta img{max-width:100px;border-radius:10px;}
+            .ganador{border:2px solid #00ff9f;}
+            .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:5px 10px;border-radius:20px;color:white;cursor:pointer;}
+        </style>
+        </head>
+        <body>${html}
+        <script>
+            const SCRIPT_URL = '${SCRIPT_URL}';
+            async function elegirGanador(propId, proyId) {
+                const url = \`\${SCRIPT_URL}?action=elegirGanadorCliente&proyecto_id=\${proyId}&propuesta_id=\${propId}\`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.success) {
+                    alert('✅ Ganador seleccionado. El proyecto se ha cerrado.');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'desconocido'));
+                }
+            }
+            document.querySelectorAll('[data-elegir]').forEach(btn => {
+                btn.onclick = () => elegirGanador(btn.dataset.elegir, btn.dataset.proy);
+            });
+        <\/script>
+        </body>
+        </html>
+    `);
     modal.document.close();
 }
-document.getElementById('btn-nuevo-proyecto').onclick = () => { document.getElementById('nuevo-proyecto-modal').style.display = 'block'; document.getElementById('panel-mis-proyectos').style.display = 'none'; };
-document.getElementById('btn-cancelar-modal').onclick = () => { document.getElementById('nuevo-proyecto-modal').style.display = 'none'; document.getElementById('panel-mis-proyectos').style.display = 'block'; };
+
+// ==================== CREAR PROYECTO CON IMAGEN ====================
+document.getElementById('btn-subir-imagen-ref').onclick = async () => {
+    const fileInput = document.getElementById('imagen-ref-input');
+    if (!fileInput.files.length) { alert('Selecciona una imagen primero'); return; }
+    const file = fileInput.files[0];
+    try {
+        const url = await subirImgBB(file);
+        imagenReferenciaUrl = url;
+        document.getElementById('preview-ref').innerHTML = `<img src="${url}" width="100" style="border-radius:8px;">`;
+        alert('Imagen subida correctamente');
+    } catch(e) {
+        alert('Error al subir imagen: ' + e.message);
+    }
+};
+
 document.getElementById('btn-crear-proyecto').onclick = async () => {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
     const precio = parseFloat(document.getElementById('precio').value);
-    if (!titulo || !descripcion || !precio) { document.getElementById('msg-crear-error').innerText = 'Completa todos los campos'; return; }
-    const result = await apiCall('crearProyecto', { titulo, descripcion, precio, correo_cliente: currentEmail });
+    const enlaceRef = document.getElementById('enlace-ref').value.trim();
+    const imagenRef = imagenReferenciaUrl || enlaceRef;
+    if (!titulo || !descripcion || !precio) {
+        document.getElementById('msg-crear-error').innerText = 'Completa todos los campos obligatorios';
+        return;
+    }
+    const result = await apiCall('crearProyecto', {
+        titulo, descripcion, precio,
+        correo_cliente: currentEmail,
+        imagen_referencia: imagenRef
+    });
     if (result.success) {
         document.getElementById('msg-crear-success').innerText = '✅ Proyecto creado';
-        setTimeout(() => { document.getElementById('nuevo-proyecto-modal').style.display = 'none'; document.getElementById('panel-mis-proyectos').style.display = 'block'; cargarMisProyectos(); }, 1500);
-    } else { document.getElementById('msg-crear-error').innerText = 'Error: ' + (result.error || 'Desconocido'); }
+        setTimeout(() => {
+            document.getElementById('nuevo-proyecto-modal').style.display = 'none';
+            document.getElementById('panel-mis-proyectos').style.display = 'block';
+            cargarMisProyectos();
+            limpiarFormularioNuevo();
+        }, 1500);
+    } else {
+        document.getElementById('msg-crear-error').innerText = 'Error: ' + (result.error || 'Desconocido');
+    }
 };
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); }
+
+function limpiarFormularioNuevo() {
+    document.getElementById('titulo').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('precio').value = '';
+    document.getElementById('imagen-ref-input').value = '';
+    document.getElementById('enlace-ref').value = '';
+    document.getElementById('preview-ref').innerHTML = '';
+    imagenReferenciaUrl = '';
+}
+
+document.getElementById('btn-nuevo-proyecto').onclick = () => {
+    document.getElementById('nuevo-proyecto-modal').style.display = 'block';
+    document.getElementById('panel-mis-proyectos').style.display = 'none';
+};
+document.getElementById('btn-cancelar-modal').onclick = () => {
+    document.getElementById('nuevo-proyecto-modal').style.display = 'none';
+    document.getElementById('panel-mis-proyectos').style.display = 'block';
+};
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+}
 </script>
 </body>
 </html>
