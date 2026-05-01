@@ -52,19 +52,9 @@
             <div class="tab" data-tab="misofertas">✏️ Mis ofertas</div>
             <div class="tab" data-tab="pagos">💰 Pagos recibidos</div>
         </div>
-
-        <div id="tab-abiertos" class="card">
-            <h3>Proyectos disponibles</h3>
-            <div id="lista-proyectos" class="loading">Cargando...</div>
-        </div>
-        <div id="tab-misofertas" class="card" style="display:none;">
-            <h3>Mis ofertas enviadas</h3>
-            <div id="lista-misofertas" class="loading">Cargando...</div>
-        </div>
-        <div id="tab-pagos" class="card" style="display:none;">
-            <h3>Pagos recibidos</h3>
-            <div id="lista-pagos" class="loading">Cargando...</div>
-        </div>
+        <div id="tab-abiertos" class="card"><h3>Proyectos disponibles</h3><div id="lista-proyectos" class="loading">Cargando...</div></div>
+        <div id="tab-misofertas" class="card" style="display:none;"><h3>Mis ofertas enviadas</h3><div id="lista-misofertas" class="loading">Cargando...</div></div>
+        <div id="tab-pagos" class="card" style="display:none;"><h3>Pagos recibidos</h3><div id="lista-pagos" class="loading">Cargando...</div></div>
     </div>
 </div>
 
@@ -92,10 +82,10 @@
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8iIn6E3Fg8djhgaDj-HnYpf_lG7ZO0uCmNPakD_fuA0aP3aAJohfnxHlfQ-8pmt_oaw/exec'; // <--- REEMPLAZA CON TU URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/TU_ID/exec'; // <--- REEMPLAZA
 let usuarioActual = '';
 let currentProjectForProposal = null;
-let misPropuestasIds = new Set(); // para saber si ya ofertó
+let misPropuestasIds = new Set();
 
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
@@ -104,7 +94,6 @@ async function apiCall(action, data = {}) {
     return await res.json();
 }
 
-// ==================== LOGIN ====================
 document.getElementById('btn-login').onclick = async () => {
     const user = document.getElementById('login-user').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
@@ -117,7 +106,6 @@ document.getElementById('btn-login').onclick = async () => {
         localStorage.setItem('disenador_email', email);
         document.getElementById('login').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        // Cargar IDs de propuestas ya enviadas
         await cargarMisPropuestasIds(email);
         cargarProyectosAbiertos();
         cargarMisOfertas();
@@ -131,13 +119,10 @@ async function cargarMisPropuestasIds(email) {
     const res = await apiCall('listarMisPropuestasDisenador', { email });
     if (res.success) {
         misPropuestasIds.clear();
-        for (const p of res.propuestas) {
-            misPropuestasIds.add(p.proyecto_id);
-        }
+        for (const p of res.propuestas) misPropuestasIds.add(p.proyecto_id);
     }
 }
 
-// ==================== PROYECTOS ABIERTOS ====================
 async function cargarProyectosAbiertos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
@@ -157,9 +142,7 @@ async function cargarProyectosAbiertos() {
             ${yaOferto ? '<button disabled style="opacity:0.5;">✅ Ya ofertaste</button>' : `<button class="btn" data-id="${proy.id}">✏️ Enviar propuesta</button>`}
         `;
         div.appendChild(card);
-        if (!yaOferto) {
-            card.querySelector('button').onclick = () => abrirModalPropuesta(proy);
-        }
+        if (!yaOferto) card.querySelector('button').onclick = () => abrirModalPropuesta(proy);
     }
 }
 
@@ -210,7 +193,6 @@ document.getElementById('btn-enviar-propuesta').onclick = async () => {
     if (result.success) {
         alert('✅ Propuesta enviada correctamente');
         document.getElementById('modal-propuesta').style.display = 'none';
-        // Actualizar la lista de proyectos abiertos (deshabilitar botón)
         misPropuestasIds.add(currentProjectForProposal.id);
         cargarProyectosAbiertos();
         cargarMisOfertas();
@@ -223,7 +205,6 @@ document.getElementById('btn-cerrar-modal').onclick = () => {
     document.getElementById('modal-propuesta').style.display = 'none';
 };
 
-// ==================== MIS OFERTAS ====================
 async function cargarMisOfertas() {
     const email = localStorage.getItem('disenador_email');
     if (!email) return;
@@ -253,7 +234,6 @@ async function cargarMisOfertas() {
     }
 }
 
-// ==================== PAGOS RECIBIDOS ====================
 async function cargarPagos() {
     const email = localStorage.getItem('disenador_email');
     if (!email) return;
@@ -267,21 +247,21 @@ async function cargarPagos() {
     for (const pago of pagos) {
         const montoOriginal = pago.precio_contraoferta || pago.precio_base || 0;
         const neto = montoOriginal * 0.85;
+        const fechaPago = pago.fecha_pago ? new Date(pago.fecha_pago).toLocaleString() : 'Fecha no registrada';
         const card = document.createElement('div');
         card.className = 'propuesta-item';
         card.innerHTML = `
             <div>
                 <strong>${escapeHtml(pago.proyecto_titulo)}</strong><br>
                 <span>💰 Monto pagado: $${Math.floor(neto).toLocaleString('es-CO')}</span><br>
-                <span>📅 Fecha de pago: ${pago.fecha_pago ? new Date(pago.fecha_pago).toLocaleString() : 'Pendiente de registrar'}</span><br>
-                ${pago.enlace_entrega ? `<a href="${pago.enlace_entrega}" target="_blank">🔗 Enlace de entrega</a>` : ''}
+                <span>📅 Fecha de pago: ${fechaPago}</span><br>
+                ${pago.enlace_entrega ? `<a href="${pago.enlace_entrega}" target="_blank">🔗 Descargar diseño final</a>` : ''}
             </div>
         `;
         div.appendChild(card);
     }
 }
 
-// ==================== PESTAÑAS ====================
 document.querySelectorAll('.tab').forEach(tab => {
     tab.onclick = () => {
         const target = tab.dataset.tab;
