@@ -27,6 +27,7 @@
         .badge-pagado { background: #059669; }
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
         .imagen-ref { max-width: 150px; border-radius: 10px; margin-top: 10px; }
+        .contraoferta { background: rgba(255,170,0,0.2); border-left: 4px solid #ffaa00; padding: 8px; margin-top: 5px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -66,8 +67,8 @@
 </div>
 <script>
 // ==================== CONFIGURACIÓN ====================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkbKiq-ApsROIv18jQOiuu73WnNWtKYS3Ovg6Pe6XPh2ueA4W8YBI2wSnT5J4BZnJb6A/exec'; // <--- REEMPLAZA
-const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- REEMPLAZA CON TU CLAVE
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkbKiq-ApsROIv18jQOiuu73WnNWtKYS3Ovg6Pe6XPh2ueA4W8YBI2wSnT5J4BZnJb6A/exec'; // <--- REEMPLAZA CON LA URL DE TU APPS SCRIPT
+const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- TU API KEY
 
 let currentEmail = '';
 let imagenReferenciaUrl = '';
@@ -153,6 +154,17 @@ async function editarPresupuesto(proyecto_id, precioActual) {
     }
 }
 
+async function aceptarContraOferta(propuesta_id, proyecto_id) {
+    const result = await apiCall('aceptarContraOferta', { propuesta_id, proyecto_id });
+    if (result.success) {
+        alert(`✅ Has aceptado la contraoferta. El nuevo presupuesto es: $${Number(result.nuevo_precio).toLocaleString('es-CO')}`);
+        await cargarMisProyectos(); // recargar proyectos para ver el nuevo precio
+        // También se puede recargar la ventana de propuestas si está abierta, pero no es necesario.
+    } else {
+        alert('❌ Error al aceptar la contraoferta: ' + (result.error || 'Desconocido'));
+    }
+}
+
 async function verPropuestas(proyecto_id, abierto, pagado) {
     const res = await apiCall('listarPropuestas', { proyecto_id });
     if (!res.success || !res.propuestas.length) { alert('No hay propuestas aún.'); return; }
@@ -165,6 +177,16 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
         } else if (!pagado && p.seleccionada) {
             imagenHtml = '<div style="background:#333; padding:5px; border-radius:8px;">🔒 Imagen disponible solo después del pago</div>';
         }
+        // Verificar si hay contraoferta pendiente
+        let contraOfertaHtml = '';
+        if (abierto && p.precio_contraoferta && p.estado_contraoferta === 'pendiente') {
+            contraOfertaHtml = `
+                <div class="contraoferta">
+                    💰 Contraoferta: $${Number(p.precio_contraoferta).toLocaleString('es-CO')}
+                    <button class="btn btn-small" data-aceptar-contra="${p.id}" data-proy="${proyecto_id}">✅ Aceptar contraoferta</button>
+                </div>
+            `;
+        }
         html += `<div class="propuesta ${p.seleccionada ? 'ganador' : ''}">
             ${imagenHtml}
             <div>
@@ -173,10 +195,11 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
                 <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
                 ${abierto && !p.seleccionada ? `<br><button class="btn btn-small" data-elegir="${p.id}" data-proy="${proyecto_id}">🏆 Elegir como ganadora</button>` : ''}
                 ${p.seleccionada ? '<br><span style="color:#00ff9f;">✨ PROPUESTA GANADORA ✨</span>' : ''}
+                ${contraOfertaHtml}
             </div>
         </div>`;
     }
-    const modal = window.open('', '_blank', 'width=700,height=550');
+    const modal = window.open('', '_blank', 'width=700,height=600');
     modal.document.write(`
         <html><head><title>Propuestas</title>
         <style>
@@ -184,6 +207,7 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
             .propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;flex-wrap:wrap;}
             .propuesta img{max-width:100px;border-radius:10px;}
             .ganador{border:2px solid #00ff9f;}
+            .contraoferta{background:rgba(255,170,0,0.2);border-left:4px solid #ffaa00;padding:8px;margin-top:5px;border-radius:8px;}
             .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:5px 10px;border-radius:20px;color:white;cursor:pointer;}
         </style>
         </head>
@@ -201,8 +225,22 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
                     alert('❌ Error: ' + (data.error || 'desconocido'));
                 }
             }
+            async function aceptarContra(propId, proyId) {
+                const url = \`\${SCRIPT_URL}?action=aceptarContraOferta&propuesta_id=\${propId}&proyecto_id=\${proyId}\`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.success) {
+                    alert(\`✅ Contraoferta aceptada. Nuevo presupuesto: $\${Number(data.nuevo_precio).toLocaleString('es-CO')}\`);
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'desconocido'));
+                }
+            }
             document.querySelectorAll('[data-elegir]').forEach(btn => {
                 btn.onclick = () => elegirGanador(btn.dataset.elegir, btn.dataset.proy);
+            });
+            document.querySelectorAll('[data-aceptar-contra]').forEach(btn => {
+                btn.onclick = () => aceptarContra(btn.dataset.aceptarContra, btn.dataset.proy);
             });
         <\/script>
         </body>
