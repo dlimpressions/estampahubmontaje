@@ -3,46 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Crowdsourcing</title>
+    <title>Admin Crowdsourcing | EstampaHub</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #02040a; font-family: 'Segoe UI', 'Exo 2', sans-serif; color: #e2e8f0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); }
-        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 6px 12px; border-radius: 20px; color: white; cursor: pointer; margin: 3px; }
-        .proyecto { background: rgba(0,212,255,0.1); margin: 15px 0; padding: 15px; border-radius: 16px; cursor: pointer; }
-        .propuesta { background: rgba(123,47,255,0.1); margin: 10px 0; padding: 12px; border-radius: 12px; display: flex; gap: 15px; align-items: center; }
-        .propuesta img { max-width: 100px; border-radius: 12px; }
-        .ganador { border: 2px solid #00ff9f; background: rgba(0,255,159,0.15); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); backdrop-filter: blur(10px); }
+        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 8px 16px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; margin: 5px; transition: transform 0.2s; }
+        .btn-small { padding: 4px 10px; font-size: 0.8rem; }
+        .btn-danger { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
         .login-box { max-width: 400px; margin: 100px auto; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
-        .error { color: #ff6666; }
-        .loading { text-align: center; padding: 20px; }
-        h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .badge-pagado { background: #10b981; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        input { width: 100%; padding: 12px; margin: 8px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
+        .error { color: #ff6666; margin-top: 10px; }
+        .loading { text-align: center; padding: 20px; color: #a0b0cc; }
+        h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 20px; }
+        .proyecto { background: rgba(0,212,255,0.08); margin: 15px 0; padding: 15px; border-radius: 16px; border-left: 4px solid #00d4ff; }
+        .propuesta-item { background: rgba(123,47,255,0.1); margin: 10px 0; padding: 15px; border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; margin-left: 8px; }
+        .badge-abierto { background: #10b981; }
+        .badge-cerrado { background: #6b7280; }
+        .badge-pagado { background: #059669; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-card { background: #0f1220; border-radius: 24px; padding: 25px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(0,212,255,0.3); }
+        .propuesta-img { max-width: 100px; border-radius: 8px; margin-right: 15px; }
     </style>
 </head>
 <body>
 <div id="login" class="login-box">
-    <div class="card"><h2>Acceso administrador</h2><input type="text" id="admin-user" placeholder="Usuario"><input type="password" id="admin-pass" placeholder="Contraseña"><button class="btn" id="btn-login">Ingresar</button><div id="login-error" class="error"></div></div>
+    <div class="card">
+        <h2>Acceso administrador</h2>
+        <input type="text" id="admin-user" placeholder="Usuario">
+        <input type="password" id="admin-pass" placeholder="Contraseña">
+        <button class="btn" id="btn-login">Ingresar</button>
+        <div id="login-error" class="error"></div>
+    </div>
 </div>
-<div id="app" style="display:none;"><div class="container"><h1>🔐 Panel de Administración</h1><div class="card"><h3>Todos los proyectos</h3><div id="lista-proyectos" class="loading">Cargando...</div></div></div></div>
+
+<div id="app" style="display:none;">
+    <div class="container">
+        <h1>🔐 Panel de Administración - Crowdsourcing</h1>
+        <div class="card">
+            <h3>Todos los proyectos</h3>
+            <div id="lista-proyectos" class="loading">Cargando...</div>
+        </div>
+    </div>
+</div>
+
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkbKiq-ApsROIv18jQOiuu73WnNWtKYS3Ovg6Pe6XPh2ueA4W8YBI2wSnT5J4BZnJb6A/exec'; // <-- tu URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/TU_ID/exec'; // <--- REEMPLAZA
+
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
     const res = await fetch(url);
     return await res.json();
 }
+
 document.getElementById('btn-login').onclick = async () => {
     const user = document.getElementById('admin-user').value.trim();
     const pass = document.getElementById('admin-pass').value.trim();
     if (!user || !pass) { document.getElementById('login-error').innerText = 'Complete credenciales'; return; }
     const result = await apiCall('loginAdmin', { usuario: user, contrasena: pass });
-    if (result.success) { document.getElementById('login').style.display = 'none'; document.getElementById('app').style.display = 'block'; cargarProyectos(); }
-    else { document.getElementById('login-error').innerText = result.error; }
+    if (result.success) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        cargarProyectos();
+    } else {
+        document.getElementById('login-error').innerText = result.error;
+    }
 };
+
 async function cargarProyectos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando...</div>';
@@ -50,34 +81,136 @@ async function cargarProyectos() {
     if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos.</p>'; return; }
     div.innerHTML = '';
     for (const proy of res.proyectos) {
-        const pagadoBadge = proy.pagado ? '<span class="badge-pagado">✅ Pagado</span>' : '<span class="badge-pagado" style="background:#f43f5e;">⏳ Pendiente</span>';
-        const card = document.createElement('div'); card.className = 'proyecto';
-        card.innerHTML = `<h3>${escapeHtml(proy.titulo)}</h3><p><strong>💰 ${Number(proy.precio).toLocaleString('es-CO')}</strong> | ${proy.estado === 'abierto' ? '🟢 Abierto' : '🔴 Cerrado'} ${pagadoBadge}</p><button class="btn" data-id="${proy.id}">👁️ Ver propuestas</button>${proy.estado === 'cerrado' && !proy.pagado ? `<button class="btn" data-pagar="${proy.id}">💸 Marcar pagado</button>` : ''}`;
+        const estadoBadge = proy.estado === 'abierto' ? '<span class="badge badge-abierto">🟢 Abierto</span>' : '<span class="badge badge-cerrado">🔒 Cerrado</span>';
+        const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge" style="background:#f43f5e;">⏳ Pendiente</span>';
+        const card = document.createElement('div');
+        card.className = 'proyecto';
+        card.innerHTML = `
+            <h3>${escapeHtml(proy.titulo)}</h3>
+            <p>${escapeHtml(proy.descripcion)}</p>
+            <p><strong>💰 Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
+            <p><strong>📅 Fecha:</strong> ${new Date(proy.fecha).toLocaleString()}</p>
+            <p><strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
+            ${proy.imagen_referencia ? `<p><strong>📷 Referencia:</strong><br><img src="${proy.imagen_referencia}" style="max-width:150px; border-radius:8px;"></p>` : ''}
+            <button class="btn btn-small" data-ver="${proy.id}">👁️ Ver propuestas</button>
+            ${proy.estado === 'cerrado' && !proy.pagado ? `<button class="btn btn-small btn-success" data-pagar="${proy.id}">💸 Marcar pagado</button>` : ''}
+            ${proy.estado === 'abierto' ? `<button class="btn btn-small btn-danger" data-cerrar="${proy.id}">🔒 Cerrar proyecto</button>` : ''}
+        `;
         div.appendChild(card);
-        card.querySelector(`[data-id="${proy.id}"]`).onclick = () => verPropuestas(proy.id);
+        card.querySelector(`[data-ver="${proy.id}"]`).onclick = () => verPropuestas(proy.id);
         const btnPagar = card.querySelector(`[data-pagar="${proy.id}"]`);
         if (btnPagar) btnPagar.onclick = () => marcarPagado(proy.id);
+        const btnCerrar = card.querySelector(`[data-cerrar="${proy.id}"]`);
+        if (btnCerrar) btnCerrar.onclick = () => cerrarProyecto(proy.id);
     }
 }
-async function verPropuestas(proyecto_id) {
-    const res = await apiCall('listarPropuestas', { proyecto_id });
-    if (!res.success || !res.propuestas.length) { alert('No hay propuestas.'); return; }
-    let html = `<h3>Propuestas</h3>`;
-    for (let p of res.propuestas) {
-        html += `<div class="propuesta ${p.seleccionada ? 'ganador' : ''}"><img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'"><div><strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br><em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br><small>${new Date(p.fecha).toLocaleString()}</small>${!p.seleccionada ? `<br><button class="btn" data-prop="${p.id}" data-proy="${proyecto_id}">🏆 Elegir ganador</button>` : '<span style="color:#00ff9f;">✨ GANADOR ✨</span>'}</div></div>`;
+
+async function cerrarProyecto(proyecto_id) {
+    if (!confirm('¿Cerrar este proyecto? Ya no recibirá más propuestas.')) return;
+    const result = await apiCall('cerrarProyecto', { proyecto_id });
+    if (result.success) {
+        alert('✅ Proyecto cerrado');
+        cargarProyectos();
+    } else {
+        alert('❌ Error: ' + (result.error || 'Desconocido'));
     }
-    const modal = window.open('', '_blank', 'width=700,height=600');
-    modal.document.write(`<html><head><title>Propuestas</title><style>body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}.propuesta{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;display:flex;gap:15px;}.ganador{border:2px solid #00ff9f;}.btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:6px 12px;border-radius:20px;color:white;cursor:pointer;}</style></head><body>${html}<script>const SCRIPT_URL='${SCRIPT_URL}';async function seleccionar(propId,proyId){const url=\`\${SCRIPT_URL}?action=seleccionarGanador&proyecto_id=\${proyId}&propuesta_id=\${propId}\`;const res=await fetch(url);const data=await res.json();if(data.success){alert('✅ Ganador seleccionado');location.reload();}else alert('Error');}document.querySelectorAll('[data-prop]').forEach(btn=>{btn.onclick=()=>seleccionar(btn.dataset.prop,btn.dataset.proy);});<\/script></body></html>`);
-    modal.document.close();
 }
+
 async function marcarPagado(proyecto_id) {
-    const enlace = prompt('Enlace de descarga del diseño final:');
+    const enlace = prompt('Ingresa el enlace de descarga del diseño final (URL):');
     if (!enlace) return;
     const result = await apiCall('marcarPagado', { proyecto_id, enlace_entrega: enlace });
-    alert(result.success ? '✅ Marcado como pagado' : '❌ Error');
-    if (result.success) cargarProyectos();
+    if (result.success) {
+        alert('✅ Proyecto marcado como pagado');
+        cargarProyectos();
+    } else {
+        alert('❌ Error al marcar pagado');
+    }
 }
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); }
+
+async function verPropuestas(proyecto_id) {
+    const res = await apiCall('listarPropuestas', { proyecto_id });
+    if (!res.success || !res.propuestas.length) {
+        alert('No hay propuestas para este proyecto.');
+        return;
+    }
+    let html = `<h3>Propuestas del proyecto</h3>`;
+    for (const p of res.propuestas) {
+        const esGanadora = p.seleccionada;
+        html += `
+            <div class="propuesta-item" style="${esGanadora ? 'border:2px solid #00ff9f;' : ''}">
+                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center; width:100%;">
+                    <img src="${p.imagen_url}" class="propuesta-img" onerror="this.src='https://via.placeholder.com/100'">
+                    <div style="flex:1">
+                        <strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br>
+                        <em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br>
+                        <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
+                        ${p.precio_contraoferta ? `<br><strong>💰 Contraoferta:</strong> $${Number(p.precio_contraoferta).toLocaleString('es-CO')} (${p.estado_contraoferta === 'aceptada' ? 'Aceptada' : 'Pendiente'})` : ''}
+                        ${esGanadora ? '<br><span style="color:#00ff9f;">🏆 PROPUESTA GANADORA</span>' : ''}
+                    </div>
+                    <div>
+                        ${!esGanadora ? `<button class="btn btn-small btn-success" data-elegir="${p.id}" data-proy="${proyecto_id}">🏆 Elegir ganador</button><br>` : ''}
+                        <button class="btn btn-small btn-danger" data-eliminar="${p.id}" data-proy="${proyecto_id}">🗑 Eliminar propuesta</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    const modal = window.open('', '_blank', 'width=800,height=600');
+    modal.document.write(`
+        <html><head><title>Propuestas del proyecto</title>
+        <style>
+            body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
+            .propuesta-item{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;}
+            .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:5px 10px;border-radius:20px;color:white;cursor:pointer;margin:5px;}
+            .btn-danger{background:linear-gradient(135deg,#f43f5e,#e11d48);}
+            .btn-success{background:linear-gradient(135deg,#10b981,#059669);}
+            .propuesta-img{max-width:80px;border-radius:8px;}
+        </style>
+        </head>
+        <body>${html}
+        <script>
+            const SCRIPT_URL = '${SCRIPT_URL}';
+            async function elegirGanador(propId, proyId) {
+                const url = \`\${SCRIPT_URL}?action=elegirGanadorCliente&proyecto_id=\${proyId}&propuesta_id=\${propId}\`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.success) {
+                    alert('✅ Ganador seleccionado. Proyecto cerrado.');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'desconocido'));
+                }
+            }
+            async function eliminarPropuesta(propId, proyId) {
+                if(!confirm('¿Eliminar esta propuesta? No se puede deshacer.')) return;
+                const url = \`\${SCRIPT_URL}?action=eliminarPropuesta&propuesta_id=\${propId}\`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.success) {
+                    alert('✅ Propuesta eliminada');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'desconocido'));
+                }
+            }
+            document.querySelectorAll('[data-elegir]').forEach(btn => {
+                btn.onclick = () => elegirGanador(btn.dataset.elegir, btn.dataset.proy);
+            });
+            document.querySelectorAll('[data-eliminar]').forEach(btn => {
+                btn.onclick = () => eliminarPropuesta(btn.dataset.eliminar, btn.dataset.proy);
+            });
+        <\/script>
+        </body>
+        </html>
+    `);
+    modal.document.close();
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+}
 </script>
 </body>
 </html>
