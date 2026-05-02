@@ -67,8 +67,8 @@
 </div>
 <script>
 // ==================== CONFIGURACIÓN ====================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymt0mQz0TA-I2IFJlGsoSAFUJ6NgRSDMvJO8_9HtEaoTMvbYKRz4ZZpgeEQjhGtP5vQA/exec'; // <--- REEMPLAZA CON LA URL DE TU APPS SCRIPT
-const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- TU API KEY
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA CON TU URL
+const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- REEMPLAZA CON TU CLAVE (si usas subida de imagen)
 
 let currentEmail = '';
 let imagenReferenciaUrl = '';
@@ -154,28 +154,22 @@ async function editarPresupuesto(proyecto_id, precioActual) {
     }
 }
 
-async function aceptarContraOferta(propuesta_id, proyecto_id) {
-    const result = await apiCall('aceptarContraOferta', { propuesta_id, proyecto_id });
-    if (result.success) {
-        alert(`✅ Has aceptado la contraoferta. El nuevo presupuesto es: $${Number(result.nuevo_precio).toLocaleString('es-CO')}`);
-        await cargarMisProyectos(); // recargar proyectos para ver el nuevo precio
-        // También se puede recargar la ventana de propuestas si está abierta, pero no es necesario.
-    } else {
-        alert('❌ Error al aceptar la contraoferta: ' + (result.error || 'Desconocido'));
-    }
-}
-
 async function verPropuestas(proyecto_id, abierto, pagado) {
     const res = await apiCall('listarPropuestas', { proyecto_id });
     if (!res.success || !res.propuestas.length) { alert('No hay propuestas aún.'); return; }
     let html = `<h3>Propuestas recibidas</h3>`;
     for (let p of res.propuestas) {
-        // Solo mostrar la imagen si el proyecto está pagado Y esta propuesta es la ganadora
+        // Solo mostrar la imagen final si el proyecto está pagado Y esta propuesta es la ganadora
         let imagenHtml = '';
-        if (pagado && p.seleccionada) {
-            imagenHtml = `<img src="${p.imagen_url}" onerror="this.src='https://via.placeholder.com/100'">`;
+        if (pagado && p.seleccionada && p.imagen_diseno) {
+            imagenHtml = `<img src="${p.imagen_diseno}" onerror="this.src='https://via.placeholder.com/100'" style="max-width:100px; border-radius:8px;">`;
         } else if (!pagado && p.seleccionada) {
-            imagenHtml = '<div style="background:#333; padding:5px; border-radius:8px;">🔒 Imagen disponible solo después del pago</div>';
+            imagenHtml = '<div style="background:#333; padding:5px; border-radius:8px;">🔒 Diseño disponible solo después del pago</div>';
+        }
+        // Mostrar fecha de entrega si existe
+        let fechaEntregaHtml = '';
+        if (p.fecha_entrega) {
+            fechaEntregaHtml = `<br><span>📅 Entrega estimada: ${new Date(p.fecha_entrega).toLocaleString()}</span>`;
         }
         // Verificar si hay contraoferta pendiente
         let contraOfertaHtml = '';
@@ -192,7 +186,7 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
             <div>
                 <strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br>
                 <em>${escapeHtml(p.comentario) || 'Sin comentarios'}</em><br>
-                <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
+                <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>${fechaEntregaHtml}
                 ${abierto && !p.seleccionada ? `<br><button class="btn btn-small" data-elegir="${p.id}" data-proy="${proyecto_id}">🏆 Elegir como ganadora</button>` : ''}
                 ${p.seleccionada ? '<br><span style="color:#00ff9f;">✨ PROPUESTA GANADORA ✨</span>' : ''}
                 ${contraOfertaHtml}
