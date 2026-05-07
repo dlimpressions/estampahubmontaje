@@ -7,26 +7,36 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #02040a; font-family: 'Segoe UI', 'Exo 2', sans-serif; color: #e2e8f0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1300px; margin: 0 auto; }
         .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); backdrop-filter: blur(10px); }
-        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 8px 16px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; margin: 5px; transition: transform 0.2s; }
-        .btn-small { padding: 4px 10px; font-size: 0.8rem; }
+        .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 8px 16px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s; margin: 5px; display: inline-block; text-align: center; }
+        .btn-small { padding: 4px 12px; font-size: 0.75rem; }
         .btn-danger { background: linear-gradient(135deg, #f43f5e, #e11d48); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .login-box { max-width: 400px; margin: 100px auto; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 8px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
+        label { color: #a0b0cc; display: block; margin-bottom: 4px; font-size: 0.85rem; }
         .error { color: #ff6666; margin-top: 10px; }
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
         h1 { background: linear-gradient(135deg, #00d4ff, #7b2fff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 20px; }
-        .proyecto { background: rgba(0,212,255,0.08); margin: 15px 0; padding: 15px; border-radius: 16px; border-left: 4px solid #00d4ff; }
-        .propuesta-item { background: rgba(123,47,255,0.1); margin: 10px 0; padding: 15px; border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+        .proyecto, .propuesta-card { background: rgba(0,212,255,0.08); margin: 15px 0; padding: 15px; border-radius: 16px; border-left: 4px solid #00d4ff; transition: 0.2s; }
+        .propuesta-card { background: rgba(123,47,255,0.08); }
         .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; margin-left: 8px; }
         .badge-abierto { background: #10b981; }
         .badge-cerrado { background: #6b7280; }
         .badge-pagado { background: #059669; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-card { background: #0f1220; border-radius: 24px; padding: 25px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(0,212,255,0.3); }
+        .badge-pendiente { background: #f43f5e; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(0,212,255,0.2); padding-bottom: 10px; flex-wrap: wrap; }
+        .tab { background: rgba(255,255,255,0.05); padding: 10px 24px; border-radius: 40px; cursor: pointer; transition: 0.2s; font-weight: 500; }
+        .tab.active { background: linear-gradient(135deg, #00d4ff, #7b2fff); color: white; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-card { background: #0f1220; border-radius: 24px; padding: 25px; max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid rgba(0,212,255,0.3); }
         .propuesta-img { max-width: 100px; border-radius: 8px; margin-right: 15px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .btn-outline { background: transparent; border: 1px solid #00d4ff; color: #00d4ff; }
+        .btn-outline:hover { background: rgba(0,212,255,0.1); }
     </style>
 </head>
 <body>
@@ -43,15 +53,61 @@
 <div id="app" style="display:none;">
     <div class="container">
         <h1>🔐 Panel de Administración - Crowdsourcing</h1>
-        <div class="card">
-            <h3>Todos los proyectos</h3>
-            <div id="lista-proyectos" class="loading">Cargando...</div>
+        <div class="tabs">
+            <div class="tab active" data-tab="proyectos">📋 Proyectos</div>
+            <div class="tab" data-tab="propuestas">📨 Todas las propuestas</div>
+            <div class="tab" data-tab="disenadores">👥 Diseñadores</div>
+        </div>
+
+        <!-- Pestaña Proyectos -->
+        <div id="tab-proyectos" class="card">
+            <div class="flex-between" style="margin-bottom:15px;">
+                <h3>Gestión de proyectos</h3>
+                <button class="btn btn-small" id="refresh-proyectos">⟳ Refrescar</button>
+            </div>
+            <div id="lista-proyectos" class="loading">Cargando proyectos...</div>
+        </div>
+
+        <!-- Pestaña Propuestas -->
+        <div id="tab-propuestas" class="card" style="display:none;">
+            <div class="flex-between" style="margin-bottom:15px;">
+                <h3>Todas las propuestas</h3>
+                <button class="btn btn-small" id="refresh-propuestas">⟳ Refrescar</button>
+            </div>
+            <div id="lista-propuestas" class="loading">Cargando propuestas...</div>
+        </div>
+
+        <!-- Pestaña Diseñadores -->
+        <div id="tab-disenadores" class="card" style="display:none;">
+            <h3>Diseñadores autorizados</h3>
+            <p>Los diseñadores con permiso pueden acceder al panel de diseñadores.</p>
+            <div id="lista-disenadores" class="loading">Cargando...</div>
+            <div style="margin-top:20px;">
+                <p>Para añadir o modificar diseñadores, edita directamente la hoja <strong>usuarios_crowd</strong> en Google Sheets.</p>
+                <p>Columnas: usuario, contraseña, rol (disenador), permiso_crowdsourcing (TRUE / FALSE)</p>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Editar Presupuesto -->
+<div id="modal-editar-presupuesto" class="modal" style="display:none;">
+    <div class="modal-card">
+        <h3>Editar presupuesto del proyecto</h3>
+        <input type="hidden" id="edit-proyecto-id">
+        <label>Nuevo presupuesto (COP)</label>
+        <input type="number" id="edit-precio" step="1000">
+        <div class="flex-between" style="margin-top:15px;">
+            <button class="btn btn-success" id="guardar-presupuesto">Guardar</button>
+            <button class="btn btn-outline" id="cancelar-editar-presupuesto">Cancelar</button>
+        </div>
+        <div id="error-editar" class="error"></div>
+    </div>
+</div>
+
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA
+// ==================== CONFIGURACIÓN ====================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA SI ES NECESARIO
 
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
@@ -60,6 +116,10 @@ async function apiCall(action, data = {}) {
     return await res.json();
 }
 
+let proyectosData = [];
+let currentTab = 'proyectos';
+
+// ==================== LOGIN ====================
 document.getElementById('btn-login').onclick = async () => {
     const user = document.getElementById('admin-user').value.trim();
     const pass = document.getElementById('admin-pass').value.trim();
@@ -69,48 +129,105 @@ document.getElementById('btn-login').onclick = async () => {
         document.getElementById('login').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         cargarProyectos();
+        cargarPropuestasGlobales();
+        cargarDisenadores();
     } else {
         document.getElementById('login-error').innerText = result.error;
     }
 };
 
+// ==================== PESTAÑAS ====================
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+        currentTab = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-proyectos').style.display = currentTab === 'proyectos' ? 'block' : 'none';
+        document.getElementById('tab-propuestas').style.display = currentTab === 'propuestas' ? 'block' : 'none';
+        document.getElementById('tab-disenadores').style.display = currentTab === 'disenadores' ? 'block' : 'none';
+        if (currentTab === 'proyectos') cargarProyectos();
+        if (currentTab === 'propuestas') cargarPropuestasGlobales();
+    };
+});
+
+document.getElementById('refresh-proyectos').onclick = () => cargarProyectos();
+document.getElementById('refresh-propuestas').onclick = () => cargarPropuestasGlobales();
+
+// ==================== PROYECTOS ====================
 async function cargarProyectos() {
     const div = document.getElementById('lista-proyectos');
-    div.innerHTML = '<div class="loading">Cargando...</div>';
+    div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
     const res = await apiCall('listarProyectos', { soloAbiertos: 'false' });
     if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos.</p>'; return; }
+    proyectosData = res.proyectos;
     div.innerHTML = '';
-    for (const proy of res.proyectos) {
+    for (const proy of proyectosData) {
         const estadoBadge = proy.estado === 'abierto' ? '<span class="badge badge-abierto">🟢 Abierto</span>' : '<span class="badge badge-cerrado">🔒 Cerrado</span>';
-        const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge" style="background:#f43f5e;">⏳ Pendiente</span>';
+        const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge badge-pendiente">⏳ Pendiente</span>';
         const card = document.createElement('div');
         card.className = 'proyecto';
         card.innerHTML = `
-            <h3>${escapeHtml(proy.titulo)}</h3>
+            <div class="flex-between">
+                <h3>${escapeHtml(proy.titulo)}</h3>
+                <div>
+                    <button class="btn btn-small" data-ver-prop="${proy.id}">👁️ Propuestas</button>
+                    <button class="btn btn-small btn-warning" data-editar-precio="${proy.id}" data-precio="${proy.precio}">✏️ Editar precio</button>
+                    ${proy.estado === 'abierto' ? `<button class="btn btn-small btn-danger" data-cerrar="${proy.id}">🔒 Cerrar</button>` : ''}
+                    ${proy.estado === 'cerrado' && !proy.pagado ? `<button class="btn btn-small btn-success" data-pagar="${proy.id}">💰 Marcar pagado</button>` : ''}
+                </div>
+            </div>
             <p>${escapeHtml(proy.descripcion)}</p>
             <p><strong>💰 Presupuesto:</strong> $${Number(proy.precio).toLocaleString('es-CO')}</p>
-            <p><strong>📅 Fecha:</strong> ${new Date(proy.fecha).toLocaleString()}</p>
-            <p><strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
-            ${proy.imagen_referencia ? `<p><strong>📷 Referencia:</strong><br><img src="${proy.imagen_referencia}" style="max-width:150px; border-radius:8px;"></p>` : ''}
-            <button class="btn btn-small" data-ver="${proy.id}">👁️ Ver propuestas</button>
-            ${proy.estado === 'cerrado' && !proy.pagado ? `<button class="btn btn-small btn-success" data-pagar="${proy.id}">💸 Marcar pagado</button>` : ''}
-            ${proy.estado === 'abierto' ? `<button class="btn btn-small btn-danger" data-cerrar="${proy.id}">🔒 Cerrar proyecto</button>` : ''}
+            <p><strong>📅 Creado:</strong> ${new Date(proy.fecha).toLocaleString()} | <strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
+            ${proy.imagen_referencia ? `<p><strong>📷 Referencia:</strong><br><img src="${proy.imagen_referencia}" style="max-width:120px; border-radius:8px;"></p>` : ''}
+            ${proy.ganador_id ? `<p><strong>🏆 ID Propuesta ganadora:</strong> ${proy.ganador_id}</p>` : ''}
+            ${proy.enlace_entrega ? `<p><strong>🔗 Entrega:</strong> <a href="${proy.enlace_entrega}" target="_blank">Descargar diseño final</a></p>` : ''}
         `;
         div.appendChild(card);
-        card.querySelector(`[data-ver="${proy.id}"]`).onclick = () => verPropuestas(proy.id);
-        const btnPagar = card.querySelector(`[data-pagar="${proy.id}"]`);
-        if (btnPagar) btnPagar.onclick = () => marcarPagado(proy.id);
+
+        card.querySelector(`[data-ver-prop="${proy.id}"]`).onclick = () => verPropuestasProyecto(proy.id);
+        card.querySelector(`[data-editar-precio="${proy.id}"]`).onclick = () => abrirModalEditarPrecio(proy.id, proy.precio);
         const btnCerrar = card.querySelector(`[data-cerrar="${proy.id}"]`);
         if (btnCerrar) btnCerrar.onclick = () => cerrarProyecto(proy.id);
+        const btnPagar = card.querySelector(`[data-pagar="${proy.id}"]`);
+        if (btnPagar) btnPagar.onclick = () => marcarPagado(proy.id);
     }
 }
 
+function abrirModalEditarPrecio(proyecto_id, precioActual) {
+    document.getElementById('edit-proyecto-id').value = proyecto_id;
+    document.getElementById('edit-precio').value = precioActual;
+    document.getElementById('modal-editar-presupuesto').style.display = 'flex';
+    document.getElementById('error-editar').innerText = '';
+}
+
+document.getElementById('guardar-presupuesto').onclick = async () => {
+    const proyecto_id = document.getElementById('edit-proyecto-id').value;
+    const nuevoPrecio = parseFloat(document.getElementById('edit-precio').value);
+    if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+        document.getElementById('error-editar').innerText = 'Monto inválido';
+        return;
+    }
+    const result = await apiCall('actualizarPresupuesto', { proyecto_id, nuevo_precio: nuevoPrecio });
+    if (result.success) {
+        alert('✅ Presupuesto actualizado');
+        document.getElementById('modal-editar-presupuesto').style.display = 'none';
+        cargarProyectos();
+    } else {
+        document.getElementById('error-editar').innerText = result.error || 'Error al actualizar';
+    }
+};
+document.getElementById('cancelar-editar-presupuesto').onclick = () => {
+    document.getElementById('modal-editar-presupuesto').style.display = 'none';
+};
+
 async function cerrarProyecto(proyecto_id) {
-    if (!confirm('¿Cerrar este proyecto? Ya no recibirá más propuestas.')) return;
+    if (!confirm('¿Cerrar este proyecto? No recibirá más propuestas.')) return;
     const result = await apiCall('cerrarProyecto', { proyecto_id });
     if (result.success) {
         alert('✅ Proyecto cerrado');
         cargarProyectos();
+        if (currentTab === 'propuestas') cargarPropuestasGlobales();
     } else {
         alert('❌ Error: ' + (result.error || 'Desconocido'));
     }
@@ -123,23 +240,104 @@ async function marcarPagado(proyecto_id) {
     if (result.success) {
         alert('✅ Proyecto marcado como pagado');
         cargarProyectos();
+        if (currentTab === 'propuestas') cargarPropuestasGlobales();
     } else {
         alert('❌ Error al marcar pagado');
     }
 }
 
-async function verPropuestas(proyecto_id) {
+// ==================== PROPUESTAS GLOBALES ====================
+async function cargarPropuestasGlobales() {
+    const div = document.getElementById('lista-propuestas');
+    div.innerHTML = '<div class="loading">Cargando propuestas...</div>';
+    const resProy = await apiCall('listarProyectos', { soloAbiertos: 'false' });
+    if (!resProy.success) { div.innerHTML = '<p>Error al cargar proyectos.</p>'; return; }
+    let todasPropuestas = [];
+    for (const proy of resProy.proyectos) {
+        const resProp = await apiCall('listarPropuestas', { proyecto_id: proy.id });
+        if (resProp.success && resProp.propuestas.length) {
+            resProp.propuestas.forEach(p => {
+                p.titulo_proyecto = proy.titulo;
+                p.precio_proyecto = proy.precio;
+                p.estado_proyecto = proy.estado;
+                p.proyecto_estado = proy.estado;
+            });
+            todasPropuestas.push(...resProp.propuestas);
+        }
+    }
+    if (todasPropuestas.length === 0) { div.innerHTML = '<p>No hay propuestas todavía.</p>'; return; }
+    div.innerHTML = '';
+    for (const p of todasPropuestas) {
+        const esGanadora = p.seleccionada;
+        const card = document.createElement('div');
+        card.className = 'propuesta-card';
+        card.innerHTML = `
+            <div class="flex-between">
+                <strong>${escapeHtml(p.disenador)}</strong> 
+                <span>${p.estado_proyecto === 'abierto' ? '🟢 Proyecto abierto' : '🔒 Cerrado'}</span>
+            </div>
+            <div><strong>Proyecto:</strong> ${escapeHtml(p.titulo_proyecto)}</div>
+            <div><strong>Presupuesto base:</strong> $${Number(p.precio_proyecto).toLocaleString('es-CO')}</div>
+            ${p.precio_contraoferta ? `<div><strong>💰 Contraoferta:</strong> $${Number(p.precio_contraoferta).toLocaleString('es-CO')} (${p.estado_contraoferta === 'aceptada' ? 'Aceptada' : 'Pendiente'})</div>` : ''}
+            <div><em>${escapeHtml(p.comentario) || 'Sin comentario'}</em></div>
+            <div><small>Enviado: ${new Date(p.fecha).toLocaleString()}</small></div>
+            <div class="flex-between" style="margin-top:10px;">
+                <button class="btn btn-small" data-ver-proyecto="${p.proyecto_id}">👁️ Ver proyecto</button>
+                ${!esGanadora && p.estado_proyecto === 'abierto' ? `<button class="btn btn-small btn-success" data-elegir="${p.id}" data-proyecto="${p.proyecto_id}">🏆 Elegir ganador</button>` : ''}
+                <button class="btn btn-small btn-danger" data-eliminar="${p.id}" data-proyecto="${p.proyecto_id}">🗑 Eliminar</button>
+            </div>
+        `;
+        div.appendChild(card);
+        card.querySelector(`[data-ver-proyecto="${p.proyecto_id}"]`).onclick = () => {
+            document.querySelector('.tab[data-tab="proyectos"]').click();
+            setTimeout(() => {
+                const elemento = document.querySelector(`.proyecto h3`); // Podría mejorarse, pero visibilidad
+                if (elemento) elemento.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        };
+        const btnElegir = card.querySelector(`[data-elegir="${p.id}"]`);
+        if (btnElegir) btnElegir.onclick = () => elegirGanador(p.id, p.proyecto_id);
+        card.querySelector(`[data-eliminar="${p.id}"]`).onclick = () => eliminarPropuesta(p.id, p.proyecto_id);
+    }
+}
+
+async function elegirGanador(propuesta_id, proyecto_id) {
+    if (!confirm('¿Seleccionar esta propuesta como ganadora? El proyecto se cerrará.')) return;
+    const result = await apiCall('elegirGanadorCliente', { propuesta_id, proyecto_id });
+    if (result.success) {
+        alert('✅ Ganador seleccionado');
+        cargarProyectos();
+        cargarPropuestasGlobales();
+    } else {
+        alert('❌ Error: ' + (result.error || 'desconocido'));
+    }
+}
+
+async function eliminarPropuesta(propuesta_id, proyecto_id) {
+    if (!confirm('¿Eliminar esta propuesta? No se puede deshacer.')) return;
+    const result = await apiCall('eliminarPropuesta', { propuesta_id });
+    if (result.success) {
+        alert('✅ Propuesta eliminada');
+        cargarProyectos();
+        cargarPropuestasGlobales();
+    } else {
+        alert('❌ Error: ' + (result.error || 'desconocido'));
+    }
+}
+
+// ==================== VER PROPUESTAS DE UN PROYECTO (MODAL) ====================
+async function verPropuestasProyecto(proyecto_id) {
     const res = await apiCall('listarPropuestas', { proyecto_id });
     if (!res.success || !res.propuestas.length) {
         alert('No hay propuestas para este proyecto.');
         return;
     }
-    let html = `<h3>Propuestas del proyecto</h3>`;
+    let html = `<h3>Propuestas del proyecto</h3><div style="max-height:500px; overflow-y:auto;">`;
     for (const p of res.propuestas) {
         const esGanadora = p.seleccionada;
         html += `
-            <div class="propuesta-item" style="${esGanadora ? 'border:2px solid #00ff9f;' : ''}">
-                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center; width:100%;">
+            <div class="propuesta-item" style="margin:10px 0; padding:12px; background:rgba(123,47,255,0.1); border-radius:12px;">
+                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:flex-start;">
                     <img src="${p.imagen_url}" class="propuesta-img" onerror="this.src='https://via.placeholder.com/100'">
                     <div style="flex:1">
                         <strong>${escapeHtml(p.disenador)}</strong> (${escapeHtml(p.email)})<br>
@@ -147,64 +345,48 @@ async function verPropuestas(proyecto_id) {
                         <small>Enviado: ${new Date(p.fecha).toLocaleString()}</small>
                         ${p.precio_contraoferta ? `<br><strong>💰 Contraoferta:</strong> $${Number(p.precio_contraoferta).toLocaleString('es-CO')} (${p.estado_contraoferta === 'aceptada' ? 'Aceptada' : 'Pendiente'})` : ''}
                         ${esGanadora ? '<br><span style="color:#00ff9f;">🏆 PROPUESTA GANADORA</span>' : ''}
-                    </div>
-                    <div>
-                        ${!esGanadora ? `<button class="btn btn-small btn-success" data-elegir="${p.id}" data-proy="${proyecto_id}">🏆 Elegir ganador</button><br>` : ''}
-                        <button class="btn btn-small btn-danger" data-eliminar="${p.id}" data-proy="${proyecto_id}">🗑 Eliminar propuesta</button>
+                        <div style="margin-top:8px;">
+                            ${!esGanadora ? `<button class="btn btn-small btn-success" data-elegir="${p.id}" data-proy="${proyecto_id}">🏆 Elegir ganador</button>` : ''}
+                            <button class="btn btn-small btn-danger" data-eliminar="${p.id}" data-proy="${proyecto_id}">🗑 Eliminar</button>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
     }
-    const modal = window.open('', '_blank', 'width=800,height=600');
-    modal.document.write(`
-        <html><head><title>Propuestas del proyecto</title>
-        <style>
-            body{background:#02040a;color:white;font-family:sans-serif;padding:20px;}
-            .propuesta-item{background:rgba(123,47,255,0.1);margin:10px 0;padding:12px;border-radius:12px;}
-            .btn{background:linear-gradient(135deg,#00d4ff,#7b2fff);border:none;padding:5px 10px;border-radius:20px;color:white;cursor:pointer;margin:5px;}
-            .btn-danger{background:linear-gradient(135deg,#f43f5e,#e11d48);}
-            .btn-success{background:linear-gradient(135deg,#10b981,#059669);}
-            .propuesta-img{max-width:80px;border-radius:8px;}
-        </style>
-        </head>
-        <body>${html}
-        <script>
-            const SCRIPT_URL = '${SCRIPT_URL}';
-            async function elegirGanador(propId, proyId) {
-                const url = \`\${SCRIPT_URL}?action=elegirGanadorCliente&proyecto_id=\${proyId}&propuesta_id=\${propId}\`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if(data.success) {
-                    alert('✅ Ganador seleccionado. Proyecto cerrado.');
-                    location.reload();
-                } else {
-                    alert('❌ Error: ' + (data.error || 'desconocido'));
-                }
-            }
-            async function eliminarPropuesta(propId, proyId) {
-                if(!confirm('¿Eliminar esta propuesta? No se puede deshacer.')) return;
-                const url = \`\${SCRIPT_URL}?action=eliminarPropuesta&propuesta_id=\${propId}\`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if(data.success) {
-                    alert('✅ Propuesta eliminada');
-                    location.reload();
-                } else {
-                    alert('❌ Error: ' + (data.error || 'desconocido'));
-                }
-            }
-            document.querySelectorAll('[data-elegir]').forEach(btn => {
-                btn.onclick = () => elegirGanador(btn.dataset.elegir, btn.dataset.proy);
-            });
-            document.querySelectorAll('[data-eliminar]').forEach(btn => {
-                btn.onclick = () => eliminarPropuesta(btn.dataset.eliminar, btn.dataset.proy);
-            });
-        <\/script>
-        </body>
-        </html>
-    `);
-    modal.document.close();
+    html += `</div><div style="margin-top:15px;"><button class="btn" id="cerrar-modal-prop">Cerrar</button></div>`;
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `<div class="modal-card">${html}</div>`;
+    document.body.appendChild(modal);
+    modal.querySelectorAll('[data-elegir]').forEach(btn => {
+        btn.onclick = async () => {
+            const propId = btn.dataset.elegir;
+            const proyId = btn.dataset.proy;
+            await elegirGanador(propId, proyId);
+            modal.remove();
+            cargarProyectos();
+            if (currentTab === 'propuestas') cargarPropuestasGlobales();
+        };
+    });
+    modal.querySelectorAll('[data-eliminar]').forEach(btn => {
+        btn.onclick = async () => {
+            const propId = btn.dataset.eliminar;
+            const proyId = btn.dataset.proy;
+            await eliminarPropuesta(propId, proyId);
+            modal.remove();
+            cargarProyectos();
+            if (currentTab === 'propuestas') cargarPropuestasGlobales();
+        };
+    });
+    modal.querySelector('#cerrar-modal-prop')?.addEventListener('click', () => modal.remove());
+}
+
+// ==================== DISEÑADORES (información) ====================
+function cargarDisenadores() {
+    const div = document.getElementById('lista-disenadores');
+    div.innerHTML = '<p>Para gestionar diseñadores, edita directamente la hoja <strong>usuarios_crowd</strong> en Google Sheets.</p><p>Campos: usuario, contraseña, rol (disenador), permiso_crowdsourcing (TRUE/FALSE).</p>';
 }
 
 function escapeHtml(str) {
