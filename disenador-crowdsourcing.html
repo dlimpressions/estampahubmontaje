@@ -10,7 +10,7 @@
         .container { max-width: 1200px; margin: 0 auto; }
         .card { background: rgba(10,14,30,0.9); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,212,255,0.2); backdrop-filter: blur(10px); }
         .btn { background: linear-gradient(135deg, #00d4ff, #7b2fff); border: none; padding: 8px 16px; border-radius: 30px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s; margin: 5px; }
-        .btn-small { padding: 4px 10px; font-size: 0.8rem; }
+        .btn-small { padding: 4px 10px; font-size: 0.75rem; }
         .btn-outline { background: transparent; border: 1px solid #00d4ff; color: #00d4ff; }
         .login-box { max-width: 400px; margin: 100px auto; text-align: center; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; color: white; }
@@ -31,6 +31,7 @@
         .modal-card { background: #0f1220; border-radius: 24px; padding: 25px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(0,212,255,0.3); }
         .imagen-ref { max-width: 100%; border-radius: 12px; margin: 10px 0; }
         .comision { background: rgba(0,212,255,0.1); padding: 8px; border-radius: 12px; margin: 10px 0; text-align: center; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     </style>
 </head>
 <body>
@@ -52,9 +53,33 @@
             <div class="tab" data-tab="misofertas">✏️ Mis ofertas</div>
             <div class="tab" data-tab="pagos">💰 Pagos recibidos</div>
         </div>
-        <div id="tab-abiertos" class="card"><h3>Proyectos disponibles</h3><div id="lista-proyectos" class="loading">Cargando...</div></div>
-        <div id="tab-misofertas" class="card" style="display:none;"><h3>Mis ofertas enviadas</h3><div id="lista-misofertas" class="loading">Cargando...</div></div>
-        <div id="tab-pagos" class="card" style="display:none;"><h3>Pagos recibidos</h3><div id="lista-pagos" class="loading">Cargando...</div></div>
+
+        <!-- Pestaña Proyectos abiertos -->
+        <div id="tab-abiertos" class="card">
+            <div class="flex-between" style="margin-bottom:15px;">
+                <h3>Proyectos disponibles</h3>
+                <button class="btn btn-small" id="refresh-abiertos">⟳ Refrescar</button>
+            </div>
+            <div id="lista-proyectos" class="loading">Cargando...</div>
+        </div>
+
+        <!-- Pestaña Mis ofertas -->
+        <div id="tab-misofertas" class="card" style="display:none;">
+            <div class="flex-between" style="margin-bottom:15px;">
+                <h3>Mis ofertas enviadas</h3>
+                <button class="btn btn-small" id="refresh-ofertas">⟳ Refrescar</button>
+            </div>
+            <div id="lista-misofertas" class="loading">Cargando...</div>
+        </div>
+
+        <!-- Pestaña Pagos recibidos -->
+        <div id="tab-pagos" class="card" style="display:none;">
+            <div class="flex-between" style="margin-bottom:15px;">
+                <h3>Pagos recibidos</h3>
+                <button class="btn btn-small" id="refresh-pagos">⟳ Refrescar</button>
+            </div>
+            <div id="lista-pagos" class="loading">Cargando...</div>
+        </div>
     </div>
 </div>
 
@@ -97,7 +122,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA SI ES NECESARIO
 let usuarioActual = '';
 let currentProjectForProposal = null;
 let misPropuestasIds = new Set();
@@ -138,6 +163,7 @@ async function cargarMisPropuestasIds(email) {
     }
 }
 
+// ==================== Pestaña Proyectos Abiertos ====================
 async function cargarProyectosAbiertos() {
     const div = document.getElementById('lista-proyectos');
     div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
@@ -196,12 +222,11 @@ document.getElementById('btn-enviar-propuesta').onclick = async () => {
     const contraoferta = parseFloat(document.getElementById('contraoferta').value);
     const fechaEntrega = document.getElementById('fecha-entrega').value;
     const comentario = document.getElementById('comentario-propuesta').value.trim();
-    // imagen_url ya no es obligatoria, la enviamos vacía
     const result = await apiCall('agregarPropuesta', {
         proyecto_id: currentProjectForProposal.id,
         disenador: nombre,
         email: email,
-        imagen_url: '', // no obligatoria
+        imagen_url: '',
         comentario: comentario,
         contraoferta: isNaN(contraoferta) ? '' : contraoferta,
         fecha_entrega: fechaEntrega
@@ -221,6 +246,7 @@ document.getElementById('btn-cerrar-modal').onclick = () => {
     document.getElementById('modal-propuesta').style.display = 'none';
 };
 
+// ==================== Pestaña Mis Ofertas ====================
 async function cargarMisOfertas() {
     const email = localStorage.getItem('disenador_email');
     if (!email) return;
@@ -287,6 +313,7 @@ document.getElementById('btn-cerrar-update').onclick = () => {
     document.getElementById('modal-actualizar-diseno').style.display = 'none';
 };
 
+// ==================== Pestaña Pagos Recibidos ====================
 async function cargarPagos() {
     const email = localStorage.getItem('disenador_email');
     if (!email) return;
@@ -315,6 +342,12 @@ async function cargarPagos() {
     }
 }
 
+// ==================== Botones de refrescar ====================
+document.getElementById('refresh-abiertos').onclick = () => cargarProyectosAbiertos();
+document.getElementById('refresh-ofertas').onclick = () => cargarMisOfertas();
+document.getElementById('refresh-pagos').onclick = () => cargarPagos();
+
+// ==================== Cambio de pestañas ====================
 document.querySelectorAll('.tab').forEach(tab => {
     tab.onclick = () => {
         const target = tab.dataset.tab;
