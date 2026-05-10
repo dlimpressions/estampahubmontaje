@@ -1334,28 +1334,6 @@ if (lockBtn) {
   console.log("RESULTADO DEL SERVIDOR:", result);
   console.log("Datos que se guardan en localStorage:", userInfo);
 
-
-  // Mantén el fetch del facturador (si lo necesitas)
-  try {
-    const paramsFact = new URLSearchParams();
-    paramsFact.append('action', 'get_facturador_url');
-    paramsFact.append('usuario', usuario);
-    const urlResponse = await fetch('https://script.google.com/macros/s/AKfycbwJOl_grF0Lp0Ff9aMc6v8qdc6olHirRsCw0UHnHbJDQX21qkOGksdn92lC_zgyW3o1/exec', {
-      method: 'POST',
-      body: paramsFact
-    });
-    const urlResult = await urlResponse.json();
-    if (urlResult.success) {
-      sessionStorage.setItem('facturador_url', urlResult.url);
-      showMessage('🔓 Acceso concedido. Bienvenido al Ecosistema EstampaHub.', 'success', 4000);
-    } else {
-      showMessage('No se encontró URL de facturador. Contacta al admin.', 'warning', 5000);
-    }
-  } catch (err) {
-    console.error('Error facturador:', err);
-    showMessage('Error al cargar facturador.', 'error');
-  }
-
   unlock();
 } else {
   lockError.textContent = result.message || 'Usuario o contraseña incorrectos';
