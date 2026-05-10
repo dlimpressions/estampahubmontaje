@@ -28,6 +28,7 @@
         .loading { text-align: center; padding: 20px; color: #a0b0cc; }
         .imagen-ref { max-width: 150px; border-radius: 10px; margin-top: 10px; }
         .contraoferta { background: rgba(255,170,0,0.2); border-left: 4px solid #ffaa00; padding: 8px; margin-top: 5px; border-radius: 8px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     </style>
 </head>
 <body>
@@ -41,9 +42,12 @@
     </div>
     <div id="panel-mis-proyectos" style="display:none;">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div class="flex-between" style="margin-bottom:15px;">
                 <h3>Tus proyectos</h3>
-                <button class="btn" id="btn-nuevo-proyecto">➕ Nuevo proyecto</button>
+                <div>
+                    <button class="btn btn-small" id="btn-refrescar-proyectos">⟳ Refrescar</button>
+                    <button class="btn btn-small" id="btn-nuevo-proyecto">➕ Nuevo proyecto</button>
+                </div>
             </div>
             <div id="lista-proyectos" class="loading">Cargando...</div>
         </div>
@@ -68,7 +72,7 @@
 <script>
 // ==================== CONFIGURACIÓN ====================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA CON TU URL
-const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- REEMPLAZA CON TU CLAVE (si usas subida de imagen)
+const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- REEMPLAZA CON TU CLAVE
 
 let currentEmail = '';
 let imagenReferenciaUrl = '';
@@ -159,19 +163,16 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
     if (!res.success || !res.propuestas.length) { alert('No hay propuestas aún.'); return; }
     let html = `<h3>Propuestas recibidas</h3>`;
     for (let p of res.propuestas) {
-        // Solo mostrar la imagen final si el proyecto está pagado Y esta propuesta es la ganadora
         let imagenHtml = '';
         if (pagado && p.seleccionada && p.imagen_diseno) {
             imagenHtml = `<img src="${p.imagen_diseno}" onerror="this.src='https://via.placeholder.com/100'" style="max-width:100px; border-radius:8px;">`;
         } else if (!pagado && p.seleccionada) {
             imagenHtml = '<div style="background:#333; padding:5px; border-radius:8px;">🔒 Diseño disponible solo después del pago</div>';
         }
-        // Mostrar fecha de entrega si existe
         let fechaEntregaHtml = '';
         if (p.fecha_entrega) {
             fechaEntregaHtml = `<br><span>📅 Entrega estimada: ${new Date(p.fecha_entrega).toLocaleString()}</span>`;
         }
-        // Verificar si hay contraoferta pendiente
         let contraOfertaHtml = '';
         if (abierto && p.precio_contraoferta && p.estado_contraoferta === 'pendiente') {
             contraOfertaHtml = `
@@ -242,6 +243,12 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
     `);
     modal.document.close();
 }
+
+// ==================== REFRESCAR PROYECTOS ====================
+document.getElementById('btn-refrescar-proyectos').onclick = () => {
+    if (currentEmail) cargarMisProyectos();
+    else alert('Primero identifícate con tu correo.');
+};
 
 // ==================== CREAR PROYECTO CON IMAGEN ====================
 document.getElementById('btn-subir-imagen-ref').onclick = async () => {
