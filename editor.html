@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Redirección inteligente al editor EstampaHub según el dispositivo." />
+  <title>Abriendo editor | EstampaHub</title>
+  <style>
+    :root { color-scheme: dark; --bg:#02040a; --cyan:#00d4ff; --violet:#7b2fff; --green:#00ff9f; --text:#eaf6ff; --muted:#9ab0cf; }
+    * { box-sizing: border-box; }
+    body { min-height:100vh; margin:0; display:grid; place-items:center; background:radial-gradient(circle at 20% 10%,rgba(123,47,255,.28),transparent 32%),radial-gradient(circle at 85% 12%,rgba(0,212,255,.25),transparent 30%),linear-gradient(135deg,var(--bg),#061123 55%,#09051b); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; }
+    .card { width:min(92vw,480px); padding:30px; border:1px solid rgba(0,212,255,.28); border-radius:28px; background:rgba(8,14,30,.82); backdrop-filter:blur(18px); box-shadow:0 30px 100px rgba(0,0,0,.48); text-align:center; }
+    .spinner { width:54px; height:54px; margin:0 auto 18px; border:4px solid rgba(0,212,255,.16); border-top-color:var(--cyan); border-radius:50%; animation:spin .8s linear infinite; }
+    h1 { margin:0 0 8px; font-size:1.45rem; }
+    p { margin:0; color:var(--muted); }
+    a { color:var(--green); font-weight:800; }
+    @keyframes spin { to { transform:rotate(1turn); } }
+  </style>
+  <script>
+    (function () {
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      try { sessionStorage.setItem('eh_open_editor', '1'); } catch (error) {}
+      window.location.replace(isMobile ? 'mobile.html?from=editor' : 'index.html?editor=1');
+    })();
+  </script>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>Preparando tu editor</h1>
+    <p>Estamos detectando tu dispositivo para abrir la mejor experiencia. Si no avanza, <a href="index.html?editor=1">abre el editor aquí</a>.</p>
+  </main>
+</body>
+</html>
