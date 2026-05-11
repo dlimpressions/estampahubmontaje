@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Módulo de cursos EstampaHub para aprender DTF, diseño, CorelDraw, Photoshop, Illustrator y ventas para emprendimientos de estampado." />
+  <title>Cursos | EstampaHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Exo+2:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #02040a;
+      --bg-2: #061123;
+      --panel: rgba(8, 14, 30, 0.78);
+      --panel-strong: rgba(10, 18, 40, 0.94);
+      --line: rgba(0, 212, 255, 0.18);
+      --line-hi: rgba(0, 212, 255, 0.46);
+      --cyan: #00d4ff;
+      --violet: #7b2fff;
+      --green: #00ff9f;
+      --pink: #ff3d8b;
+      --amber: #ffbc42;
+      --text: #eaf6ff;
+      --muted: #9ab0cf;
+      --dim: #62738f;
+      --shadow: 0 30px 100px rgba(0, 0, 0, 0.48);
+      --font-ui: 'Exo 2', system-ui, sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 16% 10%, rgba(123, 47, 255, 0.28), transparent 30%),
+        radial-gradient(circle at 86% 4%, rgba(0, 212, 255, 0.25), transparent 28%),
+        radial-gradient(circle at 48% 80%, rgba(0, 255, 159, 0.12), transparent 34%),
+        linear-gradient(135deg, var(--bg), var(--bg-2) 48%, #09051b);
+      color: var(--text);
+      font-family: var(--font-ui);
+      line-height: 1.6;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.18));
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; }
+
+    .page-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 16px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(2, 4, 10, 0.66);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: 0.03em; }
+    .brand-mark {
+      display: grid; place-items: center; width: 46px; height: 46px;
+      border: 1px solid var(--line-hi); border-radius: 16px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.22), rgba(123, 47, 255, 0.2));
+      box-shadow: 0 0 32px rgba(0, 212, 255, 0.24), inset 0 0 22px rgba(255, 255, 255, 0.06);
+      color: var(--green); font-family: var(--font-mono);
+    }
+    .nav-links { display: flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 600; }
+    .nav-links a { padding: 10px 12px; border-radius: 999px; transition: 0.2s ease; }
+    .nav-links a:hover, .nav-links a.active { background: rgba(0, 212, 255, 0.1); color: var(--text); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(330px, 0.98fr);
+      gap: 34px;
+      align-items: center;
+      padding: 82px 0 54px;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px; padding: 9px 14px;
+      border: 1px solid rgba(0, 255, 159, 0.28); border-radius: 999px; background: rgba(0, 255, 159, 0.08);
+      color: #baffdf; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .pulse-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 16px var(--green); animation: pulse 1.6s infinite; }
+    h1 { max-width: 780px; font-size: clamp(3rem, 7vw, 6.4rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.065em; }
+    .gradient-text { background: linear-gradient(110deg, #ffffff, var(--cyan) 36%, var(--green) 64%, #ffffff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 7s ease-in-out infinite; }
+    .hero-copy { max-width: 700px; margin-top: 28px; color: var(--muted); font-size: clamp(1.06rem, 2vw, 1.24rem); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 18px;
+      border: 1px solid transparent; border-radius: 999px; color: #fff; cursor: pointer; font-weight: 800; letter-spacing: 0.01em;
+      transition: transform 0.22s ease, filter 0.22s ease, border-color 0.22s ease; text-align: center;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--cyan), var(--violet)); box-shadow: 0 16px 44px rgba(0, 212, 255, 0.22), 0 10px 34px rgba(123, 47, 255, 0.2); }
+    .btn-secondary { border-color: var(--line-hi); background: rgba(255, 255, 255, 0.04); color: #d8ecff; }
+    .btn:hover { transform: translateY(-3px); filter: saturate(1.12); }
+
+    .learning-panel {
+      position: relative; min-height: 520px; padding: 24px; border: 1px solid var(--line); border-radius: 34px;
+      background: linear-gradient(160deg, rgba(12, 20, 42, 0.8), rgba(3, 7, 18, 0.94)); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .learning-panel::before {
+      content: ''; position: absolute; inset: -40%; background: conic-gradient(from 110deg, transparent, rgba(0, 212, 255, 0.16), transparent, rgba(123, 47, 255, 0.18), transparent); filter: blur(46px); animation: orbital 20s linear infinite;
+    }
+    .dashboard { position: relative; display: grid; gap: 14px; }
+    .dash-card { padding: 18px; border: 1px solid rgba(0, 212, 255, 0.18); border-radius: 22px; background: rgba(5, 10, 24, 0.72); backdrop-filter: blur(16px); }
+    .dash-card h3 { margin-bottom: 6px; color: #fff; }
+    .dash-card p { color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat { padding: 14px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; background: rgba(255, 255, 255, 0.055); }
+    .stat b { display: block; color: var(--green); font-family: var(--font-mono); font-size: 1.1rem; }
+    .progress-wrap { height: 10px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,0.08); }
+    .progress-bar { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--cyan), var(--violet)); transition: width 0.45s ease; }
+
+    .section { padding: 64px 0; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+    .section-kicker { color: var(--green); font-family: var(--font-mono); font-size: 0.84rem; letter-spacing: 0.11em; text-transform: uppercase; }
+    h2 { margin-top: 8px; font-size: clamp(2.2rem, 5vw, 4rem); line-height: 0.98; letter-spacing: -0.045em; }
+    .section-heading p { max-width: 540px; color: var(--muted); font-size: 1.05rem; }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+    .filter-btn { padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.04); color: var(--muted); cursor: pointer; font-weight: 800; transition: 0.2s ease; }
+    .filter-btn.active, .filter-btn:hover { border-color: var(--line-hi); background: rgba(0, 212, 255, 0.12); color: #fff; }
+
+    .courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .course-card { display: flex; flex-direction: column; min-height: 360px; padding: 20px; border: 1px solid var(--line); border-radius: 28px; background: linear-gradient(160deg, rgba(9, 17, 37, 0.9), rgba(5, 9, 20, 0.76)); transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
+    .course-card:hover { transform: translateY(-8px); border-color: var(--line-hi); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34); }
+    .course-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .course-icon { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid rgba(0, 212, 255, 0.28); border-radius: 18px; background: rgba(0, 212, 255, 0.1); font-size: 1.55rem; }
+    .level { align-self: start; padding: 6px 10px; border-radius: 999px; background: rgba(0, 255, 159, 0.08); color: #baffdf; font-family: var(--font-mono); font-size: 0.72rem; }
+    .course-card h3 { font-size: 1.35rem; line-height: 1.15; margin-bottom: 10px; }
+    .course-card p { color: var(--muted); margin-bottom: 14px; }
+    .course-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 18px; }
+    .course-meta span { padding: 7px 9px; border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; color: #c9d7ee; font-family: var(--font-mono); font-size: 0.74rem; background: rgba(255,255,255,0.04); }
+    .course-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .course-actions .btn { min-height: 40px; padding: 0 12px; font-size: 0.9rem; }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(320px, 0.62fr); gap: 16px; }
+    .player, .lesson-list, .contact-card { border: 1px solid var(--line); border-radius: 28px; background: var(--panel); backdrop-filter: blur(18px); box-shadow: 0 20px 70px rgba(0, 0, 0, 0.24); }
+    .player { min-height: 420px; padding: 22px; }
+    .player-screen { display: grid; place-items: center; min-height: 240px; margin-bottom: 18px; border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 22px; background: radial-gradient(circle at 50% 30%, rgba(0, 212, 255, 0.18), transparent 38%), rgba(0,0,0,0.3); text-align: center; }
+    .play-badge { display: inline-grid; place-items: center; width: 78px; height: 78px; margin-bottom: 14px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--violet)); box-shadow: 0 0 36px rgba(0, 212, 255, 0.35); font-size: 2rem; }
+    .player h3 { font-size: 1.6rem; margin-bottom: 8px; }
+    .player p, .lesson-list p { color: var(--muted); }
+    .player-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .lesson-list { padding: 18px; }
+    .lesson-item { width: 100%; display: flex; gap: 12px; align-items: start; padding: 14px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; background: rgba(255,255,255,0.035); color: var(--text); text-align: left; cursor: pointer; transition: 0.2s ease; }
+    .lesson-item:hover, .lesson-item.active { border-color: var(--line-hi); background: rgba(0, 212, 255, 0.09); }
+    .lesson-check { display: grid; place-items: center; flex: 0 0 28px; height: 28px; border: 1px solid rgba(0, 255, 159, 0.36); border-radius: 50%; color: var(--green); font-family: var(--font-mono); }
+    .lesson-title { display: block; font-weight: 800; }
+    .lesson-time { color: var(--muted); font-family: var(--font-mono); font-size: 0.74rem; }
+
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .contact-card { padding: 24px; }
+    .contact-card h3 { font-size: 1.45rem; margin-bottom: 8px; }
+    .contact-card p { color: var(--muted); margin-bottom: 18px; }
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    .field label { color: var(--muted); font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .field input, .field select, .field textarea { width: 100%; padding: 12px 13px; border: 1px solid rgba(0, 212, 255, 0.26); border-radius: 14px; background: rgba(255,255,255,0.045); color: var(--text); outline: none; }
+    .field select option { background: #071123; color: #eaf6ff; }
+    .field textarea { min-height: 110px; resize: vertical; }
+    .toast { display: none; margin-top: 12px; padding: 12px; border: 1px solid rgba(0,255,159,0.28); border-radius: 14px; background: rgba(0,255,159,0.08); color: #d4ffe9; }
+
+    footer { padding: 34px 0 44px; color: var(--dim); text-align: center; font-family: var(--font-mono); font-size: 0.86rem; }
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: 0.45; } }
+    @keyframes shine { 0%, 100% { background-position: 0% center; } 50% { background-position: 100% center; } }
+    @keyframes orbital { to { transform: rotate(1turn); } }
+
+    @media (max-width: 1020px) {
+      .hero, .workspace, .contact-grid { grid-template-columns: 1fr; }
+      .courses-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .page-shell { width: min(100% - 22px, 1180px); }
+      .topbar { position: relative; top: auto; align-items: flex-start; border-radius: 20px; }
+      .nav-links { display: none; }
+      .hero { padding-top: 54px; }
+      .stats, .courses-grid, .course-actions { grid-template-columns: 1fr; }
+      .section-heading { display: block; }
+      .section-heading p { margin-top: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar page-shell">
+    <a class="brand" href="inicio.html" aria-label="Volver al inicio de EstampaHub">
+      <span class="brand-mark">EH</span>
+      <span>EstampaHub</span>
+    </a>
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a href="inicio.html#servicios">Servicios</a>
+      <a class="active" href="cursos.html">Cursos</a>
+      <a href="inicio.html#unete">Únete</a>
+      <a href="index.html">Editor DTF</a>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-content reveal">
+        <span class="eyebrow"><span class="pulse-dot"></span> Academia práctica para estampar mejor</span>
+        <h1 id="hero-title">Aprende diseño, DTF y ventas con <span class="gradient-text">rutas guiadas</span></h1>
+        <p class="hero-copy">
+          Este módulo reúne cursos prácticos para emprendedores del estampado: desde preparar artes listas para imprimir hasta configurar producción, mejorar acabados y vender con más confianza.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#catalogo">Ver catálogo →</a>
+          <a class="btn btn-secondary" href="#aula">Continuar aprendizaje</a>
+        </div>
+      </div>
+
+      <aside class="learning-panel reveal" aria-label="Resumen del módulo de cursos">
+        <div class="dashboard">
+          <div class="dash-card">
+            <h3>Tu progreso</h3>
+            <p id="progress-label">0 lecciones completadas</p>
+            <div class="progress-wrap" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>
+          </div>
+          <div class="stats">
+            <div class="stat"><b>6</b><small>cursos base</small></div>
+            <div class="stat"><b>24</b><small>lecciones guía</small></div>
+            <div class="stat"><b>100%</b><small>enfocado en DTF</small></div>
+          </div>
+          <div class="dash-card">
+            <h3>Ruta recomendada</h3>
+            <p>Empieza por Diseño DTF desde cero, sigue con CorelDraw para estampado y cierra con costos, empaques y ventas.</p>
+          </div>
+          <div class="dash-card">
+            <h3>Material descargable</h3>
+            <p>Checklist de preprensa, guía de medidas, flujo de producción y plantilla para calcular precios.</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="catalogo" class="section" aria-labelledby="catalog-title">
+      <div class="section-heading reveal">
+        <div>
+          <span class="section-kicker">Catálogo</span>
+          <h2 id="catalog-title">Cursos listos para activar.</h2>
+        </div>
+        <p>Filtra por área, revisa el temario y guarda los cursos que quieres tomar. La selección queda guardada en este navegador.</p>
+      </div>
+      <div class="filters reveal" aria-label="Filtros de cursos">
+        <button class="filter-btn active" data-filter="todos">Todos</button>
+        <button class="filter-btn" data-filter="dtf">DTF</button>
+        <button class="filter-btn" data-filter="diseno">Diseño</button>
+        <button class="filter-btn" data-filter="negocio">Negocio</button>
+      </div>
+      <div class="courses-grid" id="courses-grid"></div>
+    </section>
+
+    <section id="aula" class="section" aria-labelledby="classroom-title">
+      <div class="section-heading reveal">
+        <div>
+          <span class="section-kicker">Aula virtual</span>
+          <h2 id="classroom-title">Lecciones y seguimiento.</h2>
+        </div>
+        <p>Marca lecciones como completadas para medir avance y organizar tu formación dentro de EstampaHub.</p>
+      </div>
+      <div class="workspace reveal">
+        <article class="player" aria-live="polite">
+          <div class="player-screen">
+            <div>
+              <span class="play-badge">▶</span>
+              <h3 id="current-lesson-title">Preparación de archivos DTF</h3>
+              <p id="current-lesson-desc">Aprende a configurar tamaño, resolución, fondo transparente y exportación correcta antes de imprimir.</p>
+            </div>
+          </div>
+          <h3 id="current-course-title">Diseño DTF desde cero</h3>
+          <p id="current-course-desc">Ruta inicial para pasar de una idea a un archivo limpio, escalable y listo para producción.</p>
+          <div class="player-actions">
+            <button class="btn btn-primary" id="complete-lesson">Marcar como completada</button>
+            <a class="btn btn-secondary" id="download-material" href="mailto:contacto@estampahub.com?subject=Solicito%20material%20del%20curso%20EstampaHub">Solicitar material</a>
+          </div>
+        </article>
+        <aside class="lesson-list" id="lesson-list" aria-label="Lista de lecciones"></aside>
+      </div>
+    </section>
+
+    <section id="inscripcion" class="section" aria-labelledby="signup-title">
+      <div class="contact-grid reveal">
+        <div class="contact-card">
+          <span class="section-kicker">Inscripción</span>
+          <h2 id="signup-title">Solicita acceso al módulo.</h2>
+          <p>Déjanos tus datos y el curso de interés. El botón prepara un correo con la solicitud para que el equipo de EstampaHub active tu acceso.</p>
+          <form id="course-form">
+            <div class="field">
+              <label for="student-name">Nombre</label>
+              <input id="student-name" name="name" type="text" placeholder="Tu nombre" required />
+            </div>
+            <div class="field">
+              <label for="student-email">Correo o WhatsApp</label>
+              <input id="student-email" name="contact" type="text" placeholder="correo@ejemplo.com / +57..." required />
+            </div>
+            <div class="field">
+              <label for="student-course">Curso</label>
+              <select id="student-course" name="course"></select>
+            </div>
+            <div class="field">
+              <label for="student-message">Mensaje</label>
+              <textarea id="student-message" name="message" placeholder="Cuéntanos qué quieres aprender o qué equipo usas."></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Enviar solicitud</button>
+            <div class="toast" id="form-toast">Solicitud preparada. Se abrirá tu cliente de correo.</div>
+          </form>
+        </div>
+        <div class="contact-card">
+          <span class="section-kicker">Beneficios</span>
+          <h2>Formación conectada a producción real.</h2>
+          <p>Los cursos están pensados para que puedas aplicar cada lección dentro del editor DTF, tu flujo de pedidos y tus ventas.</p>
+          <div class="promo-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;">
+            <span style="padding:9px 12px;border:1px solid rgba(0,255,159,0.22);border-radius:999px;background:rgba(0,255,159,0.075);color:#d4ffe9;font-weight:700;">Clases prácticas</span>
+            <span style="padding:9px 12px;border:1px solid rgba(0,255,159,0.22);border-radius:999px;background:rgba(0,255,159,0.075);color:#d4ffe9;font-weight:700;">Checklist DTF</span>
+            <span style="padding:9px 12px;border:1px solid rgba(0,255,159,0.22);border-radius:999px;background:rgba(0,255,159,0.075);color:#d4ffe9;font-weight:700;">Soporte guiado</span>
+            <span style="padding:9px 12px;border:1px solid rgba(0,255,159,0.22);border-radius:999px;background:rgba(0,255,159,0.075);color:#d4ffe9;font-weight:700;">Rutas por nivel</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="page-shell">
+    EstampaHub Cursos · Aprende, produce y vende mejores estampados.
+  </footer>
+
+  <script>
+    const courses = [
+      {
+        id: 'dtf-cero', category: 'dtf', icon: '⬡', level: 'Inicial', title: 'Diseño DTF desde cero',
+        description: 'Configura archivos limpios, prepara fondos transparentes y evita errores comunes antes de imprimir.', duration: '4 módulos', lessons: '4 lecciones',
+        lessonsList: [
+          ['Preparación de archivos DTF', 'Tamaño, resolución y fondo transparente.', '18 min'],
+          ['Color y contraste para textiles', 'Ajustes para colores vibrantes en diferentes telas.', '22 min'],
+          ['Exportación PNG/PDF correcta', 'Buenas prácticas para entregar a producción.', '16 min'],
+          ['Checklist antes de imprimir', 'Revisión final de medidas, sangrías y orden.', '12 min']
+        ]
+      },
+      {
+        id: 'corel-estampado', category: 'diseno', icon: '✎', level: 'Intermedio', title: 'CorelDraw para estampado',
+        description: 'Domina vectores, textos, contornos y montajes para optimizar diseños personalizados.', duration: '5 módulos', lessons: '4 lecciones',
+        lessonsList: [
+          ['Mesa de trabajo eficiente', 'Organización de páginas y medidas reales.', '14 min'],
+          ['Vectorización práctica', 'Limpieza de logos y artes de clientes.', '26 min'],
+          ['Textos, curvas y contornos', 'Preparación de nombres, números y frases.', '20 min'],
+          ['Salida para producción', 'Exportación y control de calidad.', '18 min']
+        ]
+      },
+      {
+        id: 'photoshop-textil', category: 'diseno', icon: '▣', level: 'Intermedio', title: 'Photoshop textil express',
+        description: 'Retoca imágenes, mejora resolución y crea composiciones llamativas para camisetas y productos.', duration: '4 módulos', lessons: '4 lecciones',
+        lessonsList: [
+          ['Limpieza de imágenes', 'Recorte, enfoque y corrección básica.', '19 min'],
+          ['Composición para camisetas', 'Jerarquía visual y uso de mockups.', '24 min'],
+          ['Efectos de tendencia', 'Sombras, brillos y texturas listas para venta.', '21 min'],
+          ['Exportación liviana', 'Archivos optimizados sin perder calidad.', '13 min']
+        ]
+      },
+      {
+        id: 'produccion-dtf', category: 'dtf', icon: '◈', level: 'Taller', title: 'Producción DTF sin desperdicio',
+        description: 'Organiza pedidos, calcula metros lineales y reduce pérdidas de film, polvo y tinta.', duration: '3 módulos', lessons: '4 lecciones',
+        lessonsList: [
+          ['Orden de montaje', 'Cómo agrupar diseños por tamaño y prioridad.', '17 min'],
+          ['Control de insumos', 'Consumo estimado y alertas de reposición.', '15 min'],
+          ['Curado y transferencia', 'Variables críticas de temperatura y presión.', '22 min'],
+          ['Entrega al cliente', 'Empaque, cuidado y recomendaciones.', '12 min']
+        ]
+      },
+      {
+        id: 'ventas-estampado', category: 'negocio', icon: '☄', level: 'Negocio', title: 'Ventas para emprendedores',
+        description: 'Crea ofertas, paquetes, catálogos y respuestas rápidas para cerrar más pedidos.', duration: '4 módulos', lessons: '4 lecciones',
+        lessonsList: [
+          ['Oferta irresistible', 'Combos y mensajes para clientes nuevos.', '16 min'],
+          ['Catálogo rápido', 'Fotos, mockups y descripciones que venden.', '20 min'],
+          ['Precios con margen', 'Costos, mano de obra y ganancia real.', '24 min'],
+          ['Seguimiento postventa', 'Recompra, garantías y testimonios.', '14 min']
+        ]
+      },
+      {
+        id: 'illustrator-marcas', category: 'diseno', icon: '✦', level: 'Avanzado', title: 'Illustrator para marcas',
+        description: 'Construye identidades, iconos y artes vectoriales consistentes para colecciones estampables.', duration: '5 módulos', lessons: '4 lecciones',
+        lessonsList: [
+          ['Sistema visual', 'Paletas, tipografías y estilos reutilizables.', '18 min'],
+          ['Iconos y formas', 'Construcción vectorial para producción limpia.', '23 min'],
+          ['Colecciones estampables', 'Series coherentes para vender más.', '25 min'],
+          ['Entrega profesional', 'Archivos maestros y versiones para cliente.', '15 min']
+        ]
+      }
+    ];
+
+    const grid = document.getElementById('courses-grid');
+    const courseSelect = document.getElementById('student-course');
+    const lessonList = document.getElementById('lesson-list');
+    const progressLabel = document.getElementById('progress-label');
+    const progressBar = document.getElementById('progress-bar');
+    let currentCourse = courses[0];
+    let currentLessonIndex = 0;
+    const completed = new Set(JSON.parse(localStorage.getItem('eh_course_completed') || '[]'));
+    const savedCourses = new Set(JSON.parse(localStorage.getItem('eh_saved_courses') || '[]'));
+
+    function saveState() {
+      localStorage.setItem('eh_course_completed', JSON.stringify([...completed]));
+      localStorage.setItem('eh_saved_courses', JSON.stringify([...savedCourses]));
+    }
+
+    function updateProgress() {
+      const totalLessons = courses.reduce((total, course) => total + course.lessonsList.length, 0);
+      const pct = Math.round((completed.size / totalLessons) * 100);
+      progressLabel.textContent = `${completed.size} de ${totalLessons} lecciones completadas · ${pct}%`;
+      progressBar.style.width = `${pct}%`;
+    }
+
+    function renderCourses(filter = 'todos') {
+      grid.innerHTML = '';
+      courses.filter(course => filter === 'todos' || course.category === filter).forEach(course => {
+        const card = document.createElement('article');
+        card.className = 'course-card reveal visible';
+        card.innerHTML = `
+          <div class="course-top">
+            <div class="course-icon">${course.icon}</div>
+            <span class="level">${course.level}</span>
+          </div>
+          <h3>${course.title}</h3>
+          <p>${course.description}</p>
+          <div class="course-meta">
+            <span>${course.duration}</span>
+            <span>${course.lessons}</span>
+            <span>${course.category.toUpperCase()}</span>
+          </div>
+          <div class="course-actions">
+            <button class="btn btn-primary" data-action="open" data-id="${course.id}">Ver lecciones</button>
+            <button class="btn btn-secondary" data-action="save" data-id="${course.id}">${savedCourses.has(course.id) ? 'Guardado ✓' : 'Guardar'}</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function populateSelect() {
+      courseSelect.innerHTML = courses.map(course => `<option value="${course.title}">${course.title}</option>`).join('');
+    }
+
+    function selectLesson(courseId, lessonIndex = 0) {
+      currentCourse = courses.find(course => course.id === courseId) || courses[0];
+      currentLessonIndex = lessonIndex;
+      const lesson = currentCourse.lessonsList[currentLessonIndex];
+      document.getElementById('current-course-title').textContent = currentCourse.title;
+      document.getElementById('current-course-desc').textContent = currentCourse.description;
+      document.getElementById('current-lesson-title').textContent = lesson[0];
+      document.getElementById('current-lesson-desc').textContent = lesson[1];
+      renderLessons();
+    }
+
+    function renderLessons() {
+      lessonList.innerHTML = `<h3>${currentCourse.title}</h3><p style="margin-bottom:14px;">Selecciona una lección para verla en el panel.</p>`;
+      currentCourse.lessonsList.forEach((lesson, index) => {
+        const key = `${currentCourse.id}:${index}`;
+        const item = document.createElement('button');
+        item.className = `lesson-item${index === currentLessonIndex ? ' active' : ''}`;
+        item.innerHTML = `
+          <span class="lesson-check">${completed.has(key) ? '✓' : index + 1}</span>
+          <span><span class="lesson-title">${lesson[0]}</span><span class="lesson-time">${lesson[2]} · ${lesson[1]}</span></span>
+        `;
+        item.addEventListener('click', () => selectLesson(currentCourse.id, index));
+        lessonList.appendChild(item);
+      });
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        renderCourses(button.dataset.filter);
+      });
+    });
+
+    grid.addEventListener('click', event => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      const courseId = button.dataset.id;
+      if (button.dataset.action === 'open') {
+        selectLesson(courseId, 0);
+        document.getElementById('aula').scrollIntoView({ behavior: 'smooth' });
+      } else {
+        savedCourses.has(courseId) ? savedCourses.delete(courseId) : savedCourses.add(courseId);
+        saveState();
+        renderCourses(document.querySelector('.filter-btn.active').dataset.filter);
+      }
+    });
+
+    document.getElementById('complete-lesson').addEventListener('click', () => {
+      completed.add(`${currentCourse.id}:${currentLessonIndex}`);
+      saveState();
+      updateProgress();
+      renderLessons();
+    });
+
+    document.getElementById('course-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const name = document.getElementById('student-name').value.trim();
+      const contact = document.getElementById('student-email').value.trim();
+      const course = document.getElementById('student-course').value;
+      const message = document.getElementById('student-message').value.trim();
+      const subject = encodeURIComponent(`Solicitud de acceso a curso: ${course}`);
+      const body = encodeURIComponent(`Hola EstampaHub,\n\nQuiero acceder al módulo de cursos.\n\nNombre: ${name}\nContacto: ${contact}\nCurso: ${course}\nMensaje: ${message || 'Sin mensaje adicional'}\n`);
+      document.getElementById('form-toast').style.display = 'block';
+      window.location.href = `mailto:contacto@estampahub.com?subject=${subject}&body=${body}`;
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
+
+    populateSelect();
+    renderCourses();
+    selectLesson(currentCourse.id, 0);
+    updateProgress();
+  </script>
+</body>
+</html>

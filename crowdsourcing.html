@@ -30,6 +30,7 @@
         .contraoferta { background: rgba(255,170,0,0.2); border-left: 4px solid #ffaa00; padding: 8px; margin-top: 5px; border-radius: 8px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     </style>
+    <link rel="stylesheet" href="crowdsourcing-ui.css">
 </head>
 <body>
 <div class="container">
@@ -69,6 +70,7 @@
         <div id="msg-crear-success" class="success-msg" style="display:none;"></div>
     </div>
 </div>
+<script src="crowdsourcing-realtime.js"></script>
 <script>
 // ==================== CONFIGURACIÓN ====================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA CON TU URL
@@ -76,13 +78,22 @@ const IMGBB_API_KEY = '4462519cb074f1cbc262c103c3f2dc3c'; // <--- REEMPLAZA CON 
 
 let currentEmail = '';
 let imagenReferenciaUrl = '';
+window.CrowdUI?.init({ role: 'Portal cliente' });
 
 // ==================== FUNCIONES ====================
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
-    const res = await fetch(url);
-    return await res.json();
+    window.CrowdUI?.networkStart(action);
+    try {
+        const res = await fetch(url);
+        const json = await res.json();
+        window.CrowdUI?.networkEnd(true);
+        return json;
+    } catch (error) {
+        window.CrowdUI?.networkEnd(false);
+        throw error;
+    }
 }
 
 async function subirImagenABase64(file) {
@@ -113,14 +124,17 @@ document.getElementById('btn-identificar').onclick = async () => {
     document.getElementById('identificacion').style.display = 'none';
     document.getElementById('panel-mis-proyectos').style.display = 'block';
     await cargarMisProyectos();
+    iniciarActualizacionCliente();
 };
 
-async function cargarMisProyectos() {
+async function cargarMisProyectos(options = {}) {
     const div = document.getElementById('lista-proyectos');
-    div.innerHTML = '<div class="loading">Cargando tus proyectos...</div>';
+    if (!options.silent) div.innerHTML = '<div class="loading">Cargando tus proyectos...</div>';
+    window.CrowdUI?.setStatus(options.silent ? 'Actualizando tus proyectos en segundo plano...' : 'Cargando tus proyectos...', 'busy');
     const res = await apiCall('listarMisProyectos', { correo: currentEmail });
-    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No tienes proyectos aún. Crea uno nuevo.</p>'; return; }
+    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No tienes proyectos aún. Crea uno nuevo.</p>'; window.CrowdUI?.setUpdated('Proyectos'); return; }
     div.innerHTML = '';
+    window.CrowdUI?.setUpdated('Proyectos');
     for (const proy of res.proyectos) {
         const estadoBadge = proy.estado === 'abierto' ? '<span class="badge badge-abierto">🟢 Abierto</span>' : '<span class="badge badge-cerrado">🔒 Cerrado</span>';
         const pagadoBadge = proy.pagado ? '<span class="badge badge-pagado">✅ Pagado</span>' : '<span class="badge" style="background:#f43f5e;">⏳ Pendiente</span>';
@@ -133,6 +147,7 @@ async function cargarMisProyectos() {
             ${proy.estado === 'abierto' ? `<button class="btn btn-small" data-editar="${proy.id}" data-precio="${proy.precio}">✏️ Editar</button>` : ''}</p>
             <p><strong>Fecha:</strong> ${new Date(proy.fecha).toLocaleDateString()}</p>
             <p><strong>Estado:</strong> ${estadoBadge} ${pagadoBadge}</p>
+            ${window.CrowdUI?.projectFlowHtml(proy) || ''}
             ${proy.enlace_entrega ? `<p><strong>🔗 Entrega:</strong> <a href="${proy.enlace_entrega}" target="_blank">Descargar diseño final</a></p>` : ''}
             ${proy.imagen_referencia ? `<p><strong>📷 Imagen de referencia:</strong><br><img src="${proy.imagen_referencia}" class="imagen-ref"></p>` : ''}
             <button class="btn" data-ver="${proy.id}">👁️ Ver propuestas recibidas</button>
@@ -148,18 +163,19 @@ async function editarPresupuesto(proyecto_id, precioActual) {
     const nuevoPrecio = prompt('Nuevo presupuesto (COP):', precioActual);
     if (!nuevoPrecio) return;
     const num = parseFloat(nuevoPrecio);
-    if (isNaN(num) || num <= 0) { alert('Monto inválido'); return; }
-    const result = await apiCall('actualizarPresupuesto', { proyecto_id, nuevo_precio: num });
+    if (isNaN(num) || num <= 0) { window.CrowdUI?.toast('Monto inválido', 'warning'); alert('Monto inválido'); return; }
+    const result = await window.CrowdUI.withAction('Actualizando presupuesto...', () => apiCall('actualizarPresupuesto', { proyecto_id, nuevo_precio: num }), { successMessage: 'Presupuesto actualizado' });
     if (result.success) {
         alert('✅ Presupuesto actualizado');
         await cargarMisProyectos();
+        iniciarActualizacionCliente();
     } else {
         alert('❌ Error: ' + (result.error || 'Desconocido'));
     }
 }
 
 async function verPropuestas(proyecto_id, abierto, pagado) {
-    const res = await apiCall('listarPropuestas', { proyecto_id });
+    const res = await window.CrowdUI.withAction('Cargando propuestas...', () => apiCall('listarPropuestas', { proyecto_id }), { updatedLabel: 'Propuestas' });
     if (!res.success || !res.propuestas.length) { alert('No hay propuestas aún.'); return; }
     let html = `<h3>Propuestas recibidas</h3>`;
     for (let p of res.propuestas) {
@@ -246,26 +262,27 @@ async function verPropuestas(proyecto_id, abierto, pagado) {
 
 // ==================== REFRESCAR PROYECTOS ====================
 document.getElementById('btn-refrescar-proyectos').onclick = () => {
-    if (currentEmail) cargarMisProyectos();
+    if (currentEmail) window.CrowdUI.withAction('Refrescando proyectos...', () => cargarMisProyectos(), { successMessage: 'Proyectos actualizados' });
     else alert('Primero identifícate con tu correo.');
 };
 
 // ==================== CREAR PROYECTO CON IMAGEN ====================
-document.getElementById('btn-subir-imagen-ref').onclick = async () => {
+document.getElementById('btn-subir-imagen-ref').onclick = async (event) => {
     const fileInput = document.getElementById('imagen-ref-input');
     if (!fileInput.files.length) { alert('Selecciona una imagen primero'); return; }
     const file = fileInput.files[0];
     try {
-        const url = await subirImgBB(file);
+        const url = await window.CrowdUI.withButton(event.currentTarget, 'Subiendo...', () => window.CrowdUI.withAction('Subiendo imagen de referencia...', () => subirImgBB(file), { successMessage: 'Imagen subida correctamente' }));
         imagenReferenciaUrl = url;
         document.getElementById('preview-ref').innerHTML = `<img src="${url}" width="100" style="border-radius:8px;">`;
-        alert('Imagen subida correctamente');
+        window.CrowdUI?.toast('Imagen de referencia lista', 'success');
     } catch(e) {
+        window.CrowdUI?.toast('Error al subir imagen', 'error', e.message);
         alert('Error al subir imagen: ' + e.message);
     }
 };
 
-document.getElementById('btn-crear-proyecto').onclick = async () => {
+document.getElementById('btn-crear-proyecto').onclick = async (event) => {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
     const precio = parseFloat(document.getElementById('precio').value);
@@ -273,15 +290,18 @@ document.getElementById('btn-crear-proyecto').onclick = async () => {
     const imagenRef = imagenReferenciaUrl || enlaceRef;
     if (!titulo || !descripcion || !precio) {
         document.getElementById('msg-crear-error').innerText = 'Completa todos los campos obligatorios';
+        document.getElementById('msg-crear-error').style.display = 'block';
+        window.CrowdUI?.toast('Completa los campos obligatorios', 'warning');
         return;
     }
-    const result = await apiCall('crearProyecto', {
+    const result = await window.CrowdUI.withButton(event.currentTarget, 'Publicando...', () => window.CrowdUI.withAction('Publicando proyecto...', () => apiCall('crearProyecto', {
         titulo, descripcion, precio,
         correo_cliente: currentEmail,
         imagen_referencia: imagenRef
-    });
+    }), { successMessage: 'Proyecto publicado correctamente' }));
     if (result.success) {
         document.getElementById('msg-crear-success').innerText = '✅ Proyecto creado';
+        document.getElementById('msg-crear-success').style.display = 'block';
         setTimeout(() => {
             document.getElementById('nuevo-proyecto-modal').style.display = 'none';
             document.getElementById('panel-mis-proyectos').style.display = 'block';
@@ -290,6 +310,8 @@ document.getElementById('btn-crear-proyecto').onclick = async () => {
         }, 1500);
     } else {
         document.getElementById('msg-crear-error').innerText = 'Error: ' + (result.error || 'Desconocido');
+        document.getElementById('msg-crear-error').style.display = 'block';
+        window.CrowdUI?.toast('No se pudo crear el proyecto', 'error', result.error || 'Desconocido');
     }
 };
 
@@ -311,6 +333,13 @@ document.getElementById('btn-cancelar-modal').onclick = () => {
     document.getElementById('nuevo-proyecto-modal').style.display = 'none';
     document.getElementById('panel-mis-proyectos').style.display = 'block';
 };
+
+
+function iniciarActualizacionCliente() {
+    window.CrowdUI?.startAutoRefresh([
+        { name: 'Mis proyectos', run: () => currentEmail ? cargarMisProyectos({ silent: true }) : Promise.resolve() }
+    ], 30000);
+}
 
 function escapeHtml(str) {
     if (!str) return '';

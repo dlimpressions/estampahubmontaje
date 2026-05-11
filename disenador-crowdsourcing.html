@@ -33,6 +33,7 @@
         .comision { background: rgba(0,212,255,0.1); padding: 8px; border-radius: 12px; margin: 10px 0; text-align: center; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     </style>
+    <link rel="stylesheet" href="crowdsourcing-ui.css">
 </head>
 <body>
 <div id="login" class="login-box">
@@ -121,24 +122,34 @@
     </div>
 </div>
 
+<script src="crowdsourcing-realtime.js"></script>
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7tPsabkyiBcVdoLOHzVadzuF2KLnodP7plV0Rl2Oa8GBDK-ZXR96AEzzqSRDiA8YvKw/exec'; // <--- REEMPLAZA SI ES NECESARIO
 let usuarioActual = '';
+window.CrowdUI?.init({ role: 'Área de diseñadores' });
 let currentProjectForProposal = null;
 let misPropuestasIds = new Set();
 
 async function apiCall(action, data = {}) {
     let url = `${SCRIPT_URL}?action=${encodeURIComponent(action)}`;
     for (const key in data) url += `&${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`;
-    const res = await fetch(url);
-    return await res.json();
+    window.CrowdUI?.networkStart(action);
+    try {
+        const res = await fetch(url);
+        const json = await res.json();
+        window.CrowdUI?.networkEnd(true);
+        return json;
+    } catch (error) {
+        window.CrowdUI?.networkEnd(false);
+        throw error;
+    }
 }
 
 document.getElementById('btn-login').onclick = async () => {
     const user = document.getElementById('login-user').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
     if (!user || !pass) { document.getElementById('login-error').innerText = 'Complete credenciales'; return; }
-    const result = await apiCall('loginDisenador', { usuario: user, contrasena: pass });
+    const result = await window.CrowdUI.withButton(document.getElementById('btn-login'), 'Ingresando...', () => window.CrowdUI.withAction('Validando diseñador...', () => apiCall('loginDisenador', { usuario: user, contrasena: pass }), { updatedLabel: 'Login' }));
     if (result.success) {
         usuarioActual = result.usuario;
         const email = prompt('Por favor, ingresa tu correo electrónico (se usará para identificar tus propuestas):');
@@ -150,6 +161,7 @@ document.getElementById('btn-login').onclick = async () => {
         cargarProyectosAbiertos();
         cargarMisOfertas();
         cargarPagos();
+        iniciarActualizacionDisenador();
     } else {
         document.getElementById('login-error').innerText = result.error;
     }
@@ -164,12 +176,14 @@ async function cargarMisPropuestasIds(email) {
 }
 
 // ==================== Pestaña Proyectos Abiertos ====================
-async function cargarProyectosAbiertos() {
+async function cargarProyectosAbiertos(options = {}) {
     const div = document.getElementById('lista-proyectos');
-    div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
+    if (!options.silent) div.innerHTML = '<div class="loading">Cargando proyectos...</div>';
+    window.CrowdUI?.setStatus(options.silent ? 'Actualizando proyectos abiertos...' : 'Cargando proyectos abiertos...', 'busy');
     const res = await apiCall('listarProyectosAbiertos');
-    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos abiertos.</p>'; return; }
+    if (!res.success || !res.proyectos.length) { div.innerHTML = '<p>No hay proyectos abiertos.</p>'; window.CrowdUI?.setUpdated('Proyectos abiertos'); return; }
     div.innerHTML = '';
+    window.CrowdUI?.setUpdated('Proyectos abiertos');
     for (const proy of res.proyectos) {
         const yaOferto = misPropuestasIds.has(proy.id);
         const card = document.createElement('div');
@@ -214,7 +228,7 @@ document.getElementById('contraoferta').addEventListener('input', () => {
     actualizarGananciaNeta(precioBase);
 });
 
-document.getElementById('btn-enviar-propuesta').onclick = async () => {
+document.getElementById('btn-enviar-propuesta').onclick = async (event) => {
     if (!currentProjectForProposal) return;
     const email = localStorage.getItem('disenador_email');
     if (!email) { alert('Correo no encontrado'); return; }
@@ -222,7 +236,7 @@ document.getElementById('btn-enviar-propuesta').onclick = async () => {
     const contraoferta = parseFloat(document.getElementById('contraoferta').value);
     const fechaEntrega = document.getElementById('fecha-entrega').value;
     const comentario = document.getElementById('comentario-propuesta').value.trim();
-    const result = await apiCall('agregarPropuesta', {
+    const result = await window.CrowdUI.withButton(event.currentTarget, 'Enviando...', () => window.CrowdUI.withAction('Enviando propuesta...', () => apiCall('agregarPropuesta', {
         proyecto_id: currentProjectForProposal.id,
         disenador: nombre,
         email: email,
@@ -230,15 +244,16 @@ document.getElementById('btn-enviar-propuesta').onclick = async () => {
         comentario: comentario,
         contraoferta: isNaN(contraoferta) ? '' : contraoferta,
         fecha_entrega: fechaEntrega
-    });
+    }), { successMessage: 'Propuesta enviada correctamente' }));
     if (result.success) {
-        alert('✅ Propuesta enviada correctamente');
+        window.CrowdUI?.toast('Propuesta enviada correctamente', 'success');
         document.getElementById('modal-propuesta').style.display = 'none';
         misPropuestasIds.add(currentProjectForProposal.id);
         cargarProyectosAbiertos();
         cargarMisOfertas();
     } else {
         document.getElementById('modal-error').innerText = result.error || 'Error al enviar';
+        window.CrowdUI?.toast('No se pudo enviar la propuesta', 'error', result.error || 'Error al enviar');
     }
 };
 
@@ -247,14 +262,15 @@ document.getElementById('btn-cerrar-modal').onclick = () => {
 };
 
 // ==================== Pestaña Mis Ofertas ====================
-async function cargarMisOfertas() {
+async function cargarMisOfertas(options = {}) {
     const email = localStorage.getItem('disenador_email');
     if (!email) return;
     const div = document.getElementById('lista-misofertas');
-    div.innerHTML = '<div class="loading">Cargando...</div>';
+    if (!options.silent) div.innerHTML = '<div class="loading">Cargando...</div>';
     const res = await apiCall('listarMisPropuestasDisenador', { email });
-    if (!res.success || !res.propuestas.length) { div.innerHTML = '<p>No has enviado propuestas aún.</p>'; return; }
+    if (!res.success || !res.propuestas.length) { div.innerHTML = '<p>No has enviado propuestas aún.</p>'; window.CrowdUI?.setUpdated('Mis ofertas'); return; }
     div.innerHTML = '';
+    window.CrowdUI?.setUpdated('Mis ofertas');
     for (const oferta of res.propuestas) {
         const estado = oferta.seleccionada ? '🏆 Ganadora' : '📌 Pendiente';
         const pagadoBadge = oferta.pagado ? '<span class="badge badge-pagado">💰 Pagado</span>' : '';
@@ -291,7 +307,7 @@ function abrirModalActualizarDiseno(propuestaId) {
     document.getElementById('modal-actualizar-diseno').style.display = 'flex';
 }
 
-document.getElementById('btn-actualizar-diseno').onclick = async () => {
+document.getElementById('btn-actualizar-diseno').onclick = async (event) => {
     const propuestaId = document.getElementById('update-propuesta-id').value;
     const imagenDiseno = document.getElementById('update-imagen-diseno').value.trim();
     const fechaEntrega = document.getElementById('update-fecha-entrega').value;
@@ -299,13 +315,14 @@ document.getElementById('btn-actualizar-diseno').onclick = async () => {
         document.getElementById('update-error').innerText = 'Al menos un campo es requerido';
         return;
     }
-    const result = await apiCall('actualizarDisenoPropuesta', { propuesta_id: propuestaId, imagen_diseno: imagenDiseno, fecha_entrega: fechaEntrega });
+    const result = await window.CrowdUI.withButton(event.currentTarget, 'Guardando...', () => window.CrowdUI.withAction('Actualizando diseño...', () => apiCall('actualizarDisenoPropuesta', { propuesta_id: propuestaId, imagen_diseno: imagenDiseno, fecha_entrega: fechaEntrega }), { successMessage: 'Diseño actualizado correctamente' }));
     if (result.success) {
-        alert('✅ Diseño actualizado correctamente');
+        window.CrowdUI?.toast('Diseño actualizado correctamente', 'success');
         document.getElementById('modal-actualizar-diseno').style.display = 'none';
         cargarMisOfertas();
     } else {
         document.getElementById('update-error').innerText = result.error || 'Error al actualizar';
+        window.CrowdUI?.toast('No se pudo actualizar el diseño', 'error', result.error || 'Error al actualizar');
     }
 };
 
@@ -314,16 +331,17 @@ document.getElementById('btn-cerrar-update').onclick = () => {
 };
 
 // ==================== Pestaña Pagos Recibidos ====================
-async function cargarPagos() {
+async function cargarPagos(options = {}) {
     const email = localStorage.getItem('disenador_email');
     if (!email) return;
     const div = document.getElementById('lista-pagos');
-    div.innerHTML = '<div class="loading">Cargando...</div>';
+    if (!options.silent) div.innerHTML = '<div class="loading">Cargando...</div>';
     const res = await apiCall('listarMisPropuestasDisenador', { email });
     if (!res.success) { div.innerHTML = '<p>Error al cargar pagos.</p>'; return; }
     const pagos = res.propuestas.filter(p => p.pagado === true && p.seleccionada === true);
-    if (!pagos.length) { div.innerHTML = '<p>Aún no has recibido pagos.</p>'; return; }
+    if (!pagos.length) { div.innerHTML = '<p>Aún no has recibido pagos.</p>'; window.CrowdUI?.setUpdated('Pagos'); return; }
     div.innerHTML = '';
+    window.CrowdUI?.setUpdated('Pagos');
     for (const pago of pagos) {
         const montoOriginal = pago.precio_contraoferta || pago.precio_base || 0;
         const neto = montoOriginal * 0.85;
@@ -343,9 +361,9 @@ async function cargarPagos() {
 }
 
 // ==================== Botones de refrescar ====================
-document.getElementById('refresh-abiertos').onclick = () => cargarProyectosAbiertos();
-document.getElementById('refresh-ofertas').onclick = () => cargarMisOfertas();
-document.getElementById('refresh-pagos').onclick = () => cargarPagos();
+document.getElementById('refresh-abiertos').onclick = () => window.CrowdUI.withAction('Refrescando proyectos...', () => cargarProyectosAbiertos(), { successMessage: 'Proyectos actualizados' });
+document.getElementById('refresh-ofertas').onclick = () => window.CrowdUI.withAction('Refrescando ofertas...', () => cargarMisOfertas(), { successMessage: 'Ofertas actualizadas' });
+document.getElementById('refresh-pagos').onclick = () => window.CrowdUI.withAction('Refrescando pagos...', () => cargarPagos(), { successMessage: 'Pagos actualizados' });
 
 // ==================== Cambio de pestañas ====================
 document.querySelectorAll('.tab').forEach(tab => {
@@ -360,6 +378,15 @@ document.querySelectorAll('.tab').forEach(tab => {
         if (target === 'pagos') cargarPagos();
     };
 });
+
+
+function iniciarActualizacionDisenador() {
+    window.CrowdUI?.startAutoRefresh([
+        { name: 'Proyectos abiertos', run: () => document.getElementById('tab-abiertos').style.display !== 'none' ? cargarProyectosAbiertos({ silent: true }) : Promise.resolve() },
+        { name: 'Mis ofertas', run: () => document.getElementById('tab-misofertas').style.display !== 'none' ? cargarMisOfertas({ silent: true }) : Promise.resolve() },
+        { name: 'Pagos', run: () => document.getElementById('tab-pagos').style.display !== 'none' ? cargarPagos({ silent: true }) : Promise.resolve() }
+    ], 30000);
+}
 
 function escapeHtml(str) {
     if (!str) return '';
