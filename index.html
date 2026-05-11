@@ -851,6 +851,13 @@ footer {
       color:var(--accent);font-family:var(--font-ui);font-size:0.76rem;font-weight:500;
       cursor:pointer;transition:all 0.15s;white-space:nowrap;
     ">👤 Mi Perfil</button>
+    <button id="open-courses-btn" style="
+      display:flex;align-items:center;gap:5px;padding:5px 12px;
+      border:1px solid rgba(0,255,159,0.34);border-radius:6px;
+      background:linear-gradient(135deg,rgba(0,255,159,0.16),rgba(0,212,255,0.12));
+      color:var(--green);font-family:var(--font-ui);font-size:0.76rem;font-weight:500;
+      cursor:pointer;transition:all 0.15s;white-space:nowrap;
+    ">🎓 Cursos</button>
 <button id="btn-crowd" class="hbtn" style="background:linear-gradient(135deg,#00d4ff,#7b2fff);">🎨 Crowdsourcing</button>
   </div>
 </header>
@@ -3437,6 +3444,14 @@ document.getElementById('dtfForm').addEventListener('submit', async (e) => {
     showMessage(`✅ Recorte aplicado: ${cm(out.width)}cm × ${cm(out.height)}cm`, 'success', 2500);
   });
 })();
+
+
+const coursesBtn = document.getElementById('open-courses-btn');
+if (coursesBtn) {
+  coursesBtn.addEventListener('click', () => {
+    window.location.href = 'cursos.html';
+  });
+}
 
 /* ── Botón Enviar DTF desde editor ── */
 const tbDtfBtn = document.getElementById('tb-dtf-send-btn');
