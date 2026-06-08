@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Manual dinámico EstampaHub para termofijadoras planas: especificaciones, paso a paso, simulador virtual y orden de compra." />
+  <title>Manual de Termofijadoras | EstampaHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Exo+2:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #020715;
+      --ink: #071125;
+      --navy: #08265c;
+      --red: #d80f16;
+      --red-2: #ff3b30;
+      --cyan: #00d4ff;
+      --green: #00ff9f;
+      --amber: #ffbc42;
+      --panel: rgba(8, 15, 32, 0.88);
+      --panel-soft: rgba(255, 255, 255, 0.08);
+      --line: rgba(59, 130, 246, 0.24);
+      --line-strong: rgba(0, 212, 255, 0.4);
+      --text: #eef7ff;
+      --muted: #a9b9d4;
+      --font: 'Exo 2', system-ui, sans-serif;
+      --mono: 'DM Mono', monospace;
+      --shadow: 0 26px 90px rgba(0, 0, 0, 0.42);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.55;
+      background:
+        radial-gradient(circle at 10% 5%, rgba(216, 15, 22, 0.22), transparent 28%),
+        radial-gradient(circle at 88% 10%, rgba(0, 212, 255, 0.22), transparent 32%),
+        linear-gradient(135deg, #f8fbff 0 34%, #e9eef7 34% 43%, #061226 43% 100%);
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(8, 38, 92, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(8, 38, 92, 0.06) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    .shell { width: min(1180px, calc(100% - 28px)); margin: auto; }
+
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 14px;
+      padding: 13px 16px;
+      border: 1px solid rgba(8, 38, 92, 0.18);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 18px 50px rgba(8, 38, 92, 0.14);
+      color: var(--ink);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, var(--navy), var(--red));
+      color: #fff;
+      font-family: var(--mono);
+    }
+    .nav { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav a { padding: 9px 12px; border-radius: 999px; color: #20304c; font-weight: 800; }
+    .nav a:hover, .nav a.active { background: rgba(216, 15, 22, 0.1); color: var(--red); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(350px, 0.9fr);
+      gap: 34px;
+      align-items: center;
+      padding: 72px 0 34px;
+      color: var(--ink);
+    }
+    .eyebrow {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 14px;
+      border: 1px solid rgba(8, 38, 92, 0.12);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 16px var(--red); }
+    h1 {
+      margin-top: 18px;
+      color: #071b43;
+      font-size: clamp(3rem, 7vw, 6.9rem);
+      font-weight: 900;
+      line-height: 0.88;
+      letter-spacing: -0.065em;
+      text-transform: uppercase;
+    }
+    .redbar { display: inline-block; margin-top: 8px; padding: 0 0.16em 0.08em; border-radius: 10px; background: var(--red); color: #fff; transform: skew(-6deg); }
+    .hero p { max-width: 700px; margin-top: 24px; color: #33415d; font-size: clamp(1.06rem, 2vw, 1.25rem); }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--red), #ff6b00); color: #fff; box-shadow: 0 16px 42px rgba(216, 15, 22, 0.24); }
+    .btn-secondary { border-color: rgba(8, 38, 92, 0.16); background: #fff; color: var(--navy); }
+    .btn-dark { border-color: rgba(0, 212, 255, 0.28); background: rgba(3, 7, 18, 0.78); color: var(--text); }
+    .btn:hover { transform: translateY(-2px); filter: saturate(1.1); }
+
+    .press-card {
+      position: relative;
+      min-height: 480px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.48);
+      border-radius: 34px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.28));
+      box-shadow: var(--shadow);
+    }
+    .slogan { position: absolute; right: 24px; top: 24px; max-width: 210px; color: #071b43; font-size: 1.45rem; font-weight: 900; line-height: 1.05; text-transform: uppercase; }
+    .slogan b { display: block; color: var(--red); font-size: 1.75rem; }
+
+    .heat-press, .virtual-machine { position: relative; }
+    .heat-press { position: absolute; left: 7%; right: 7%; bottom: 38px; height: 315px; }
+    .hp-base, .hp-platen, .hp-lid, .hp-tower, .hp-arm, .hp-handle, .hp-knob { position: absolute; }
+    .hp-base { left: 8%; right: 3%; bottom: 0; height: 70px; border-radius: 10px 10px 18px 18px; background: #101827; box-shadow: 0 22px 28px rgba(0, 0, 0, 0.24); }
+    .hp-platen { left: 15%; right: 8%; bottom: 48px; height: 72px; border: 8px solid #f7efe0; border-radius: 8px; background: linear-gradient(#f26722, #c73e1d); transform: skewX(-10deg); box-shadow: 0 12px 20px rgba(0,0,0,.24); }
+    .hp-lid { left: 30%; right: 0; bottom: 160px; height: 42px; border-bottom: 11px solid #f2d9c8; border-radius: 8px; background: #111827; transform: rotate(-7deg); transform-origin: left center; box-shadow: 0 16px 22px rgba(0,0,0,.24); }
+    .hp-tower { left: 10%; bottom: 92px; width: 92px; height: 175px; border-radius: 8px; background: #070b12; box-shadow: inset -14px 0 0 rgba(255,255,255,.05); }
+    .hp-knob { left: 118px; bottom: 272px; width: 58px; height: 18px; border-radius: 999px; background: #101827; }
+    .hp-arm { left: 43%; bottom: 178px; width: 18px; height: 190px; border-radius: 999px; background: #111827; transform: rotate(-24deg); box-shadow: 44px 14px 0 #111827; }
+    .hp-handle { left: 54%; bottom: 325px; width: 92px; height: 28px; border-radius: 999px; background: #111827; transform: rotate(-24deg); }
+
+    .section { padding: 52px 0; }
+    .section.dark { color: var(--text); }
+    .section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 22px; margin-bottom: 24px; }
+    .kicker { color: var(--green); font-family: var(--mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .section h2 { color: var(--red); font-size: clamp(2.2rem, 5vw, 4.1rem); font-weight: 900; line-height: 0.98; letter-spacing: -0.045em; }
+    .section-head p { max-width: 560px; color: var(--muted); }
+    .light-head p { color: #4d5f7b; }
+
+    .grid { display: grid; gap: 16px; }
+    .spec-grid { grid-template-columns: repeat(3, 1fr); }
+    .card { padding: 22px; border: 1px solid var(--line); border-radius: 26px; background: var(--panel); box-shadow: 0 20px 70px rgba(0,0,0,.18); }
+    .card.light { border-color: rgba(8,38,92,.14); background: rgba(255,255,255,.9); color: var(--ink); }
+    .spec { display: flex; gap: 14px; align-items: flex-start; }
+    .ico { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 16px; background: rgba(216,15,22,.12); font-size: 1.5rem; }
+    .spec b { display: block; font-size: 1.08rem; }
+    .spec span { color: #51627f; }
+    .models { grid-template-columns: 1fr 1fr; }
+    .model-card { min-height: 250px; overflow: hidden; background: linear-gradient(155deg,#08265c,#050b16); }
+    .model-card:nth-child(2) { background: linear-gradient(155deg,#d80f16,#4d0710); }
+    .model-badge { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+    .model-size { color: #fff; font-size: 3rem; font-weight: 900; line-height: .86; }
+    .model-size small { display: block; color: #ffe65c; font-size: 1.2rem; }
+    .materials { grid-template-columns: repeat(4, 1fr); }
+    .material { padding: 18px; border: 1px solid rgba(8,38,92,.12); border-radius: 22px; background: rgba(255,255,255,.9); color: var(--ink); text-align: center; }
+    .material .circle { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 10px; border: 1px solid rgba(8,38,92,.12); border-radius: 50%; background: linear-gradient(135deg,#fff,#dce8ff); font-size: 2rem; }
+    .steps { grid-template-columns: repeat(3, 1fr); }
+    .step-num { display: inline-grid; place-items: center; width: 52px; height: 52px; margin-bottom: 12px; border-radius: 14px; background: var(--red); color: #fff; font-size: 2rem; font-weight: 900; transform: skew(-7deg); }
+    .setting-table { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .setting { padding: 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(255,255,255,.08); }
+    .setting b { display: block; color: var(--green); font-size: 1.2rem; }
+    .step li, .tips li { margin-left: 18px; margin-top: 8px; color: var(--muted); }
+
+    .simulator { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: stretch; }
+    .sim-stage {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 8%, rgba(0, 212, 255, 0.18), transparent 32%),
+        linear-gradient(180deg, #0a152b, #030711);
+    }
+    .sim-advice {
+      position: absolute;
+      z-index: 7;
+      top: 20px;
+      right: 20px;
+      width: min(340px, calc(100% - 40px));
+      padding: 16px;
+      border: 1px solid rgba(0,255,159,.24);
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.44);
+      backdrop-filter: blur(10px);
+    }
+    .sim-advice h3 { color: var(--green); font-size: 1rem; }
+    .sim-advice p { margin-top: 6px; color: #d8e8ff; font-size: 0.95rem; }
+    .control-display {
+      position: absolute;
+      z-index: 8;
+      left: 28px;
+      top: 28px;
+      padding: 14px 18px;
+      border: 1px solid rgba(0,255,159,.28);
+      border-radius: 18px;
+      background: rgba(0,0,0,.48);
+      color: #baffdf;
+      font-family: var(--mono);
+      box-shadow: inset 0 0 28px rgba(0,255,159,.08);
+    }
+    .control-display b { margin-left: 8px; font-size: 1.1rem; }
+    .virtual-machine { height: 100%; min-height: 580px; }
+    .vm-base, .vm-bed, .vm-pad, .vm-shirt, .vm-design, .vm-tower, .vm-lid, .vm-arm-a, .vm-arm-b, .vm-handle, .vm-shadow, .vm-smoke, .vm-peel { position: absolute; }
+    .vm-base { left: 10%; right: 8%; bottom: 74px; height: 72px; border-radius: 12px; background: #171d2b; }
+    .vm-bed { left: 18%; right: 13%; bottom: 126px; height: 96px; border: 8px solid #ffefd9; border-radius: 9px; background: #f56820; box-shadow: 0 14px 24px rgba(0,0,0,.28); }
+    .vm-shirt {
+      z-index: 2;
+      left: 32%;
+      right: 32%;
+      bottom: 128px;
+      height: 164px;
+      background: #111827;
+      clip-path: polygon(20% 0,35% 10%,65% 10%,80% 0,100% 25%,84% 45%,78% 36%,78% 100%,22% 100%,22% 36%,16% 45%,0 25%);
+      transition: background .35s ease, filter .35s ease;
+    }
+    .vm-design {
+      z-index: 3;
+      left: 43%;
+      bottom: 188px;
+      width: 130px;
+      height: 82px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255,255,255,.22);
+      border-radius: 12px;
+      background: linear-gradient(135deg,#00d4ff,#ff3d8b,#ffe65c);
+      color: rgba(255,255,255,.78);
+      font-weight: 900;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      opacity: .42;
+      transform: translateX(-50%);
+      transition: opacity .35s ease, filter .35s ease, transform .35s ease, box-shadow .35s ease;
+    }
+    .vm-tower { z-index: 4; left: 13%; bottom: 178px; width: 98px; height: 194px; border-radius: 8px; background: #05070c; }
+    .vm-lid { z-index: 5; left: 30%; right: 8%; bottom: 330px; height: 48px; border-bottom: 13px solid #ffe1c7; border-radius: 9px; background: #05070c; transform: rotate(-9deg); transform-origin: 0 50%; transition: transform .65s cubic-bezier(.2,.8,.2,1), bottom .65s cubic-bezier(.2,.8,.2,1); }
+    .vm-arm-a, .vm-arm-b { z-index: 1; width: 18px; height: 195px; border-radius: 99px; background: #05070c; transform: rotate(-24deg); }
+    .vm-arm-a { left: 46%; bottom: 362px; }
+    .vm-arm-b { left: 52%; bottom: 362px; }
+    .vm-handle { z-index: 2; left: 53%; bottom: 535px; width: 120px; height: 28px; border-radius: 99px; background: #05070c; transform: rotate(-24deg); }
+    .vm-shadow { left: 24%; right: 18%; bottom: 221px; height: 80px; background: rgba(3,7,18,.48); clip-path: polygon(0 55%,50% 0,100% 55%,82% 95%,50% 55%,18% 95%); }
+    .timer-ring { position: absolute; right: 24px; bottom: 24px; width: 130px; height: 130px; border-radius: 50%; background: conic-gradient(var(--green) var(--progress), rgba(255,255,255,.08) 0); display: grid; place-items: center; }
+    .timer-ring span { display: grid; place-items: center; width: 104px; height: 104px; border-radius: 50%; background: #071125; font-family: var(--mono); font-size: 1.25rem; }
+    .virtual-machine.closed .vm-lid { bottom: 250px; transform: rotate(0deg); }
+    .virtual-machine.closed .vm-bed { box-shadow: 0 0 46px 14px rgba(255,107,0,.42); }
+    .virtual-machine.ok .vm-design { opacity: 1; filter: saturate(1.35); box-shadow: 0 0 28px rgba(0,212,255,.3); }
+    .virtual-machine.low .vm-design { opacity: .72; transform: translateX(-50%) rotate(-8deg) translateY(-18px); filter: saturate(.65); }
+    .virtual-machine.low .vm-peel { opacity: 1; transform: translateY(-18px) rotate(-10deg); }
+    .virtual-machine.burn .vm-shirt { background: #1b0b07; filter: sepia(.8) brightness(.62); }
+    .virtual-machine.burn .vm-design { opacity: .95; background: radial-gradient(circle,#2b1207,#0b0604 70%); color: #ffbe83; box-shadow: 0 0 46px rgba(255,76,0,.32); }
+    .virtual-machine.burn .vm-smoke { opacity: 1; animation: smoke 1.7s ease-in-out infinite; }
+    .vm-smoke { z-index: 6; left: 42%; bottom: 260px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(180,180,180,.35), transparent 68%); filter: blur(8px); opacity: 0; pointer-events: none; }
+    .vm-peel { z-index: 4; left: 47%; bottom: 258px; width: 92px; height: 42px; border-radius: 10px; background: rgba(255,255,255,.62); opacity: 0; transition: .35s ease; }
+    @keyframes smoke { 50% { transform: translateY(-24px) scale(1.15); opacity: .45; } }
+
+    .controller {
+      background: linear-gradient(180deg, #d6d2c5, #a9a597);
+      color: #0b1427;
+      border-color: rgba(255,255,255,.22);
+    }
+    .controller-screen {
+      padding: 18px;
+      border: 6px solid #474b4f;
+      border-radius: 18px;
+      background: linear-gradient(160deg,#31373d,#171c24);
+      box-shadow: inset 0 0 30px rgba(0,0,0,.55);
+      color: #d7f6ff;
+    }
+    .controller-brand { display: flex; align-items: center; gap: 10px; color: #ff5a2c; font-weight: 900; }
+    .digital-row { display: grid; grid-template-columns: 1fr 52px; gap: 10px; align-items: center; margin-top: 14px; }
+    .digital-label { color: #9fffd6; font-family: var(--mono); font-size: .8rem; letter-spacing: .08em; }
+    .digital-number {
+      width: 100%;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 8px;
+      background: rgba(0,0,0,.32);
+      color: #abffd9;
+      font-family: var(--mono);
+      font-size: 2.2rem;
+      font-weight: 900;
+      text-align: right;
+      outline: 1px solid rgba(0,255,159,.18);
+      appearance: textfield;
+    }
+    .digital-number::-webkit-outer-spin-button, .digital-number::-webkit-inner-spin-button { margin: 0; opacity: 1; }
+    .arrow-stack { display: grid; gap: 6px; }
+    .arrow-btn { min-height: 37px; border: 0; border-radius: 10px; background: #0a0f1d; color: #e6e2d8; cursor: pointer; font-size: 1rem; font-weight: 900; box-shadow: inset 0 -3px 0 rgba(255,255,255,.08); }
+    .controller select { width: 100%; margin-top: 14px; padding: 12px; border: 1px solid rgba(0,0,0,.18); border-radius: 14px; background: #f1eee2; color: var(--ink); font-weight: 800; }
+    .controller-actions { display: grid; gap: 10px; margin-top: 14px; }
+    .readout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .readout div { padding: 12px; border: 1px solid rgba(0,0,0,.12); border-radius: 16px; background: rgba(255,255,255,.45); }
+    .readout b { display: block; color: #0f7a4b; font-family: var(--mono); font-size: 1.05rem; }
+    .result { margin-top: 14px; padding: 14px; border: 1px solid rgba(0,255,159,.24); border-radius: 18px; background: rgba(0,255,159,.1); color: #082618; font-weight: 800; }
+    .result.bad { border-color: rgba(216,15,22,.32); background: rgba(216,15,22,.13); color: #4e0b10; }
+    .result.warn2 { border-color: rgba(255,188,66,.38); background: rgba(255,188,66,.22); color: #4a3000; }
+    .progress-line { height: 10px; margin-top: 10px; overflow: hidden; border-radius: 999px; background: rgba(0,0,0,.13); }
+    .progress-line i { display: block; width: 0; height: 100%; background: linear-gradient(90deg,var(--green),var(--cyan),var(--amber)); transition: width .2s; }
+
+    .tips { grid-template-columns: repeat(3, 1fr); }
+    .danger { background: linear-gradient(160deg,rgba(216,15,22,.96),rgba(94,10,18,.94)); }
+    .warn { background: linear-gradient(160deg,rgba(255,188,66,.96),rgba(255,107,0,.86)); color: #1c1300; }
+    .warn p { color: #2d1a00; }
+
+    .order-section { padding-bottom: 72px; }
+    .order-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 22px;
+      align-items: center;
+      border: 1px solid rgba(0,212,255,.22);
+      border-radius: 32px;
+      background: linear-gradient(135deg, rgba(8,38,92,.92), rgba(3,7,18,.9));
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+    .bonus-preview { padding: 20px; border: 1px dashed rgba(255,255,255,.28); border-radius: 24px; background: linear-gradient(135deg,#ffe65c,#ff9f1c); color: #3a1800; text-align: center; transform: rotate(-2deg); }
+    .bonus-preview strong { display: block; font-size: 2.6rem; line-height: 1; color: var(--red); }
+
+    .oc-overlay { position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(0,0,0,.72); backdrop-filter: blur(10px); }
+    .oc-modal { width: min(980px, 100%); max-height: min(92vh, 900px); overflow: auto; border: 1px solid rgba(0,212,255,.26); border-radius: 28px; background: #071125; box-shadow: 0 30px 110px rgba(0,0,0,.56); }
+    .oc-card { padding: 24px; }
+    .oc-card h2 { color: var(--red-2); font-size: clamp(1.9rem, 4vw, 3rem); line-height: 1; }
+    .oc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+    .oc-field { display: grid; gap: 6px; }
+    .oc-field label { color: var(--muted); font-family: var(--mono); font-size: .78rem; text-transform: uppercase; }
+    .oc-field input, .oc-field select { width: 100%; padding: 12px 13px; border: 1px solid rgba(0,212,255,.24); border-radius: 14px; background: rgba(255,255,255,.06); color: var(--text); outline: none; }
+    .oc-field select option { background: #071125; color: var(--text); }
+    .oc-wide { grid-column: 1 / -1; }
+    .oc-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    #oc-result-card { display: none; }
+    #oc-bono-canvas { width: 100%; max-width: 760px; border-radius: 18px; background: #111827; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
+
+    .footer { padding: 34px 0 44px; text-align: center; color: #61708a; background: #fff; }
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .55s ease, transform .55s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 980px) {
+      .hero, .simulator, .order-card { grid-template-columns: 1fr; }
+      .spec-grid, .steps, .tips { grid-template-columns: 1fr 1fr; }
+      .materials { grid-template-columns: repeat(2, 1fr); }
+      .sim-advice { position: relative; inset: auto; width: 100%; margin-bottom: 14px; }
+      .sim-stage { min-height: 700px; }
+      .virtual-machine { min-height: 600px; }
+    }
+    @media (max-width: 680px) {
+      .nav { display: none; }
+      .hero { padding-top: 48px; }
+      .spec-grid, .steps, .tips, .models, .materials, .oc-form-grid { grid-template-columns: 1fr; }
+      .press-card { min-height: 410px; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 12px; }
+      .vm-tower { left: 8%; }
+      .vm-shirt { left: 26%; right: 22%; }
+      .vm-design { left: 52%; }
+      .oc-wide { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar shell">
+    <a class="brand" href="inicio.html"><span class="brand-mark">EH</span><span>EstampaHub</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="inicio.html#servicios">Servicios</a>
+      <a href="cursos.html">Cursos</a>
+      <a class="active" href="termofijadoras.html">Manual termofijadoras</a>
+      <a href="index.html">Editor DTF</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero shell">
+      <div class="reveal">
+        <span class="eyebrow"><span class="dot"></span> Obsequio por compra de termofijadora plana</span>
+        <h1>Manual de uso <span class="redbar">Termofijadoras</span> profesionales</h1>
+        <p>Guía rápida y dinámica para aprender a estampar con calor uniforme, controlar temperatura y tiempo, practicar virtualmente y reducir errores antes de trabajar con prendas reales.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="#simulador">Practicar estampado virtual →</a>
+          <a class="btn btn-secondary" href="#pasos">Ver paso a paso</a>
+          <a class="btn btn-secondary" href="#orden-compra">Generar orden de compra</a>
+        </div>
+      </div>
+      <aside class="press-card reveal" aria-label="Maqueta visual de una termofijadora plana">
+        <div class="slogan">Calidad que transfiere <b>resultados</b></div>
+        <div class="heat-press" aria-hidden="true">
+          <div class="hp-base"></div><div class="hp-platen"></div><div class="hp-tower"></div><div class="hp-knob"></div><div class="hp-arm"></div><div class="hp-handle"></div><div class="hp-lid"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="especificaciones" class="section shell">
+      <div class="section-head light-head reveal">
+        <div><span class="kicker">Especificaciones</span><h2>Conoce tu equipo antes de operar.</h2></div>
+        <p>Estos datos resumen las características indicadas para las termofijadoras planas profesionales 38×38 cm y 40×60 cm.</p>
+      </div>
+      <div class="grid spec-grid">
+        <article class="card light spec reveal"><span class="ico">🌡️</span><div><b>Temperatura</b><span>Rango graduable de 0 a 220°C para DTF, sublimación y otros materiales planos.</span></div></article>
+        <article class="card light spec reveal"><span class="ico">⏱️</span><div><b>Tiempo</b><span>Temporizador digital de 0 a 999 segundos para controlar el ciclo de prensado.</span></div></article>
+        <article class="card light spec reveal"><span class="ico">🖥️</span><div><b>Pantalla digital</b><span>Controlador digital para ajustar tiempo y temperatura con mayor precisión.</span></div></article>
+        <article class="card light spec reveal"><span class="ico">⚡</span><div><b>Energía</b><span>Consumo aproximado de 1.5 kw y voltaje de operación 110v.</span></div></article>
+        <article class="card light spec reveal"><span class="ico">🔥</span><div><b>Calor uniforme</b><span>Distribución homogénea para transferencias constantes en toda el área de trabajo.</span></div></article>
+        <article class="card light spec reveal"><span class="ico">🛡️</span><div><b>Uso profesional</b><span>Estructura robusta, fácil de usar y pensada para producción comercial.</span></div></article>
+      </div>
+    </section>
+
+    <section class="section shell dark">
+      <div class="section-head reveal">
+        <div><span class="kicker">Modelos disponibles</span><h2>Mismas características, dos tamaños.</h2></div>
+        <p>Elige el área de trabajo según el tipo de producto, volumen y tamaño promedio de tus estampados.</p>
+      </div>
+      <div class="grid models">
+        <article class="card model-card reveal"><div class="model-badge"><div><span class="kicker">Modelo</span><div class="model-size">38×38 <small>cm</small></div></div><p>Ideal para camisetas, mousepad, placas pequeñas, portarretratos y producción compacta.</p></div></article>
+        <article class="card model-card reveal"><div class="model-badge"><div><span class="kicker">Modelo</span><div class="model-size">40×60 <small>cm</small></div></div><p>Mayor superficie para formatos grandes, rompecabezas, piedras fotográficas y tandas más amplias.</p></div></article>
+      </div>
+    </section>
+
+    <section class="section shell">
+      <div class="section-head light-head reveal">
+        <div><span class="kicker">Aplicaciones</span><h2>Plancha plana ideal para artículos planos.</h2></div>
+        <p>Practica con textiles y explora productos de valor agregado para aumentar tu catálogo.</p>
+      </div>
+      <div class="grid materials">
+        <div class="material reveal"><div class="circle">👕</div><b>Textiles</b></div>
+        <div class="material reveal"><div class="circle">▦</div><b>Azulejos</b></div>
+        <div class="material reveal"><div class="circle">🖱️</div><b>Mousepad</b></div>
+        <div class="material reveal"><div class="circle">🏅</div><b>Placas</b></div>
+        <div class="material reveal"><div class="circle">🖼️</div><b>Porta retratos</b></div>
+        <div class="material reveal"><div class="circle">🪨</div><b>Piedras fotográficas</b></div>
+        <div class="material reveal"><div class="circle">🧩</div><b>Rompecabezas</b></div>
+        <div class="material reveal"><div class="circle">✨</div><b>¡Y más!</b></div>
+      </div>
+    </section>
+
+    <section id="pasos" class="section shell dark">
+      <div class="section-head reveal">
+        <div><span class="kicker">Paso a paso</span><h2>Proceso recomendado para estampar.</h2></div>
+        <p>Sigue esta rutina de ubicación, prensado y retiro para obtener estampados marcados con buena calidad y durabilidad.</p>
+      </div>
+      <div class="grid steps">
+        <article class="card step reveal"><span class="step-num">1</span><h3>Ubicación y ajustes</h3><ul><li>Coloca la prenda sobre la plancha, lisa y centrada.</li><li>Ubica el diseño DTF o de sublimación en la posición deseada.</li><li>Ajusta temperatura y tiempo según el material.</li></ul><div class="setting-table"><div class="setting"><b>DTF</b>165°C · 15 s</div><div class="setting"><b>Sublimación</b>195°C · 30 s</div></div></article>
+        <article class="card step reveal"><span class="step-num">2</span><h3>Prensado</h3><ul><li>Baja la palanca firmemente.</li><li>La prensa aplicará calor y presión de forma uniforme.</li><li>Espera el tiempo establecido y respeta la señal de finalización.</li></ul><div class="setting-table"><div class="setting"><b>DTF</b>15 segundos</div><div class="setting"><b>Sublimación</b>30 segundos</div></div></article>
+        <article class="card step reveal"><span class="step-num">3</span><h3>Retiro del diseño</h3><ul><li>Levanta la palanca con cuidado.</li><li>Retira papel o film protector según el tipo de material, en frío o caliente.</li><li>Verifica bordes, brillo, color y adherencia antes de producir en serie.</li></ul></article>
+      </div>
+    </section>
+
+    <section id="simulador" class="section shell dark">
+      <div class="section-head reveal">
+        <div><span class="kicker">Práctica virtual</span><h2>Simulador interactivo de termofijadora.</h2></div>
+        <p>Gradúa temperatura y tiempo con flechas tipo panel real, elige material y realiza un ciclo virtual con errores visuales.</p>
+      </div>
+      <div class="simulator reveal">
+        <article class="card sim-stage" aria-live="polite">
+          <div class="sim-advice" id="sim-advice">
+            <h3>Consejo en vivo</h3>
+            <p>Empieza con el preset recomendado. Si subes demasiado la temperatura o el tiempo, la prenda se quemará; si falta calor, el DTF se despegará.</p>
+          </div>
+          <div class="control-display">TEMP <b id="display-temp">165°C</b><br>TIME <b id="display-time">15s</b></div>
+          <div class="virtual-machine" id="virtual-press">
+            <div class="vm-shadow"></div><div class="vm-base"></div><div class="vm-bed"></div><div class="vm-shirt"></div><div class="vm-design">ESTAMPA</div><div class="vm-peel"></div><div class="vm-smoke"></div><div class="vm-tower"></div><div class="vm-arm-a"></div><div class="vm-arm-b"></div><div class="vm-handle"></div><div class="vm-lid"></div>
+          </div>
+          <div class="timer-ring" id="timer-ring" style="--progress:0deg"><span id="countdown">Listo</span></div>
+        </article>
+
+        <aside class="card controller">
+          <div class="controller-screen">
+            <div class="controller-brand">⚡ Control Master</div>
+            <label class="digital-label" for="material">Material / técnica</label>
+            <select id="material">
+              <option value="dtf">DTF textil</option>
+              <option value="sublimacion">Sublimación</option>
+              <option value="vinilo">Vinilo textil</option>
+              <option value="mousepad">Mousepad sublimable</option>
+            </select>
+            <div class="digital-row">
+              <div><label class="digital-label" for="temperature">Temperatura °C</label><input class="digital-number" id="temperature" type="number" min="120" max="220" step="1" value="165" inputmode="numeric" /></div>
+              <div class="arrow-stack"><button class="arrow-btn" type="button" data-target="temperature" data-step="1">▲</button><button class="arrow-btn" type="button" data-target="temperature" data-step="-1">▼</button></div>
+            </div>
+            <div class="digital-row">
+              <div><label class="digital-label" for="time">Tiempo segundos</label><input class="digital-number" id="time" type="number" min="5" max="90" step="1" value="15" inputmode="numeric" /></div>
+              <div class="arrow-stack"><button class="arrow-btn" type="button" data-target="time" data-step="1">▲</button><button class="arrow-btn" type="button" data-target="time" data-step="-1">▼</button></div>
+            </div>
+          </div>
+          <div class="readout"><div><small>Recomendado</small><b id="recommended">165°C · 15s</b></div><div><small>Precisión</small><b id="score">100%</b></div></div>
+          <div class="controller-actions">
+            <button class="btn btn-primary" id="stamp-btn" type="button">Bajar palanca y estampar</button>
+            <button class="btn btn-dark" id="reset-btn" type="button">Reiniciar práctica</button>
+          </div>
+          <div class="progress-line"><i id="sim-progress"></i></div>
+          <div id="result" class="result">Selecciona una técnica y presiona la palanca. El simulador evaluará si tus parámetros son adecuados.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section shell dark">
+      <div class="grid tips">
+        <article class="card reveal"><h3>Consejos importantes</h3><ul><li>Realiza pruebas antes de producir en cantidad.</li><li>Asegura que diseño y prenda estén libres de humedad y polvo.</li><li>Usa teflón o papel protector cuando el material lo requiera.</li><li>No excedas temperatura o tiempo recomendado.</li></ul></article>
+        <article class="card danger reveal"><h3>Seguridad primero</h3><ul><li>La plancha alcanza altas temperaturas.</li><li>Evita tocar la superficie caliente.</li><li>Usa siempre la manija para levantar y bajar.</li><li>Mantén niños y mascotas alejados del área de trabajo.</li><li>Desconecta la máquina cuando no esté en uso.</li></ul></article>
+        <article class="card warn reveal"><h3>¡Precaución!</h3><p>Los bordes y la superficie pueden causar quemaduras. Manipula con cuidado, espera el enfriamiento cuando sea necesario y trabaja en un área despejada.</p></article>
+      </div>
+    </section>
+
+    <section id="orden-compra" class="section shell dark order-section">
+      <div class="order-card reveal">
+        <div>
+          <span class="kicker">Orden de compra</span>
+          <h2>Compra tu termofijadora y reclama bono DTF.</h2>
+          <p>Genera una orden de compra, registra tus datos en el sistema y descarga un bono visual de cashback por $20.000 para redimir en impresión DTF.</p>
+          <div class="actions"><button class="btn btn-primary" id="open-oc-btn" type="button">Generar orden de compra</button><a class="btn btn-dark" href="#simulador">Practicar antes de comprar</a></div>
+        </div>
+        <div class="bonus-preview"><span>Bono incluido</span><strong>$20.000</strong><p>para redimir en impresión DTF*</p></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="oc-overlay" id="oc-overlay" role="dialog" aria-modal="true" aria-labelledby="oc-title">
+    <div class="oc-modal">
+      <div class="oc-card" id="oc-form-card">
+        <span class="kicker">Termofijadoras profesionales</span>
+        <h2 id="oc-title">Generar orden de compra</h2>
+        <p>Completa los datos para registrar tu solicitud y activar el bono. El registro se guarda automáticamente en la hoja configurada.</p>
+        <form id="oc-form">
+          <div class="oc-form-grid">
+            <div class="oc-field"><label for="oc-name">Nombre completo</label><input id="oc-name" name="name" type="text" required placeholder="Tu nombre" /></div>
+            <div class="oc-field"><label for="oc-email">Correo</label><input id="oc-email" name="email" type="email" required placeholder="correo@ejemplo.com" /></div>
+            <div class="oc-field"><label for="oc-phone">WhatsApp</label><input id="oc-phone" name="phone" type="tel" required placeholder="300 000 0000" /></div>
+            <div class="oc-field"><label for="oc-city">Ciudad</label><input id="oc-city" name="city" type="text" required placeholder="Ciudad" /></div>
+            <div class="oc-field"><label for="oc-product">Producto</label><select id="oc-product" name="product" required><option value="Termofijadora plana 38x38 cm">Termofijadora plana 38×38 cm</option><option value="Termofijadora plana 40x60 cm">Termofijadora plana 40×60 cm</option></select></div>
+            <div class="oc-field"><label for="oc-qty">Cantidad</label><input id="oc-qty" name="qty" type="number" min="1" value="1" required /></div>
+          </div>
+          <div class="oc-actions"><button class="btn btn-primary" type="submit">Registrar y girar bono</button><button class="btn btn-dark" id="oc-cancel" type="button">Cancelar</button></div>
+        </form>
+      </div>
+      <div class="oc-card" id="oc-result-card">
+        <span class="kicker">Bono generado</span>
+        <h2>Tu orden quedó registrada.</h2>
+        <p>Descarga el bono y preséntalo para redimirlo en tu próxima compra de impresión DTF.</p>
+        <canvas id="oc-bono-canvas" width="1080" height="680" aria-label="Bono cashback DTF"></canvas>
+        <div class="oc-actions"><button class="btn btn-primary" id="oc-download" type="button">Descargar bono PNG</button><button class="btn btn-dark" id="oc-new" type="button">Crear otra orden</button><button class="btn btn-dark" type="button" onclick="document.getElementById('oc-overlay').style.display='none'">Cerrar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">Siguiendo estos pasos y consejos obtendrás estampados de alta calidad y mayor durabilidad. ¡Ponemos calor a tus ideas!</footer>
+
+  <script>
+    const presets = {
+      dtf: { label: 'DTF textil', temp: 165, time: 15, tolT: 8, tolS: 5 },
+      sublimacion: { label: 'Sublimación', temp: 195, time: 30, tolT: 8, tolS: 8 },
+      vinilo: { label: 'Vinilo textil', temp: 160, time: 12, tolT: 10, tolS: 5 },
+      mousepad: { label: 'Mousepad sublimable', temp: 190, time: 45, tolT: 10, tolS: 12 }
+    };
+    const material = document.getElementById('material');
+    const temperature = document.getElementById('temperature');
+    const time = document.getElementById('time');
+    const displayTemp = document.getElementById('display-temp');
+    const displayTime = document.getElementById('display-time');
+    const recommended = document.getElementById('recommended');
+    const score = document.getElementById('score');
+    const result = document.getElementById('result');
+    const press = document.getElementById('virtual-press');
+    const countdown = document.getElementById('countdown');
+    const ring = document.getElementById('timer-ring');
+    const progress = document.getElementById('sim-progress');
+    const advice = document.getElementById('sim-advice');
+    let running = false;
+    let timer;
+
+    function clampField(field) {
+      const min = Number(field.min);
+      const max = Number(field.max);
+      field.value = Math.min(max, Math.max(min, Number(field.value) || min));
+    }
+
+    function getStatus() {
+      const p = presets[material.value];
+      const t = Number(temperature.value);
+      const s = Number(time.value);
+      const heatLoad = (t - p.temp) + ((s - p.time) * 1.7);
+      if (heatLoad > 24 || t > p.temp + 18 || s > p.time + 18) return 'burn';
+      if (heatLoad < -18 || t < p.temp - 15 || s < p.time - 10) return 'low';
+      return 'ok';
+    }
+
+    function evaluate() {
+      clampField(temperature);
+      clampField(time);
+      const p = presets[material.value];
+      const t = Number(temperature.value);
+      const s = Number(time.value);
+      displayTemp.textContent = `${t}°C`;
+      displayTime.textContent = `${s}s`;
+      recommended.textContent = `${p.temp}°C · ${p.time}s`;
+      const tempDiff = Math.abs(t - p.temp) / p.tolT;
+      const timeDiff = Math.abs(s - p.time) / p.tolS;
+      const precision = Math.max(0, Math.round(100 - (tempDiff + timeDiff) * 25));
+      const status = getStatus();
+      score.textContent = `${precision}%`;
+      press.classList.remove('ok', 'low', 'burn');
+      result.className = 'result';
+      if (status === 'ok') {
+        result.textContent = `Parámetros óptimos para ${p.label}. El DTF se adhiere con color y buena durabilidad.`;
+        advice.querySelector('p').textContent = 'Vas dentro del rango recomendado. Mantén la prenda centrada y espera la señal antes de retirar el film.';
+      } else if (status === 'low') {
+        result.className = 'result warn2';
+        result.textContent = `Falta calor o tiempo: el DTF puede despegarse. Sube hacia ${p.temp}°C y ${p.time}s.`;
+        advice.querySelector('p').textContent = 'Alerta: con poca temperatura o poco tiempo el adhesivo no activa bien y el diseño se levanta.';
+      } else {
+        result.className = 'result bad';
+        result.textContent = `Exceso de calor o tiempo: puedes quemar la prenda. Baja hacia ${p.temp}°C y ${p.time}s.`;
+        advice.querySelector('p').textContent = 'Alerta: el exceso de calor amarilla la tela, marca bordes y puede quemar el estampado.';
+      }
+      return { precision, status };
+    }
+
+    function loadPreset() {
+      const p = presets[material.value];
+      temperature.value = p.temp;
+      time.value = p.time;
+      resetVisual(false);
+      evaluate();
+    }
+
+    function resetVisual(alsoEvaluate = true) {
+      clearInterval(timer);
+      running = false;
+      press.className = 'virtual-machine';
+      progress.style.width = '0%';
+      ring.style.setProperty('--progress', '0deg');
+      countdown.textContent = 'Listo';
+      if (alsoEvaluate) evaluate();
+    }
+
+    function runStamp() {
+      if (running) return;
+      const finalState = evaluate();
+      running = true;
+      press.className = 'virtual-machine closed';
+      const total = Math.max(1, Number(time.value));
+      const speed = total > 35 ? 160 : 240;
+      let elapsed = 0;
+      countdown.textContent = `${total}s`;
+      progress.style.width = '0%';
+      timer = setInterval(() => {
+        elapsed += 1;
+        const pct = Math.min(100, (elapsed / total) * 100);
+        progress.style.width = `${pct}%`;
+        ring.style.setProperty('--progress', `${pct * 3.6}deg`);
+        countdown.textContent = `${Math.max(0, total - elapsed)}s`;
+        if (elapsed >= total) {
+          clearInterval(timer);
+          running = false;
+          press.className = `virtual-machine ${finalState.status}`;
+          countdown.textContent = 'Fin';
+          if (finalState.status === 'ok') {
+            result.className = 'result';
+            result.textContent = '¡Estampado virtual exitoso! El diseño quedó adherido y listo para retirar el film.';
+          } else if (finalState.status === 'low') {
+            result.className = 'result warn2';
+            result.textContent = 'El DTF no se adhirió: observa el film levantado y repite con más temperatura o tiempo.';
+          } else {
+            result.className = 'result bad';
+            result.textContent = 'La prenda se quemó: observa la marca oscura y repite bajando temperatura o segundos.';
+          }
+        }
+      }, speed);
+    }
+
+    document.querySelectorAll('.arrow-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const field = document.getElementById(button.dataset.target);
+        field.value = Number(field.value) + Number(button.dataset.step);
+        resetVisual(false);
+        evaluate();
+      });
+    });
+    document.getElementById('stamp-btn').addEventListener('click', runStamp);
+    document.getElementById('reset-btn').addEventListener('click', () => resetVisual(true));
+    material.addEventListener('change', loadPreset);
+    temperature.addEventListener('input', () => { resetVisual(false); evaluate(); });
+    time.addEventListener('input', () => { resetVisual(false); evaluate(); });
+    document.querySelectorAll('.reveal').forEach(el => new IntersectionObserver((entries, obs) => entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    }), { threshold: 0.12 }).observe(el));
+    loadPreset();
+  </script>
+  <script src="termofijadoras_oc.js"></script>
+</body>
+</html>
