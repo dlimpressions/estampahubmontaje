@@ -212,6 +212,7 @@
     <nav class="nav-links" aria-label="Navegación principal">
       <a href="inicio.html#servicios">Servicios</a>
       <a class="active" href="cursos.html">Cursos</a>
+      <a href="termofijadoras.html">Manual termofijadoras</a>
       <a href="inicio.html#unete">Únete</a>
       <a href="index.html">Editor DTF</a>
     </nav>
@@ -228,6 +229,7 @@
         <div class="hero-actions">
           <a class="btn btn-primary" href="#catalogo">Ver catálogo →</a>
           <a class="btn btn-secondary" href="#aula">Continuar aprendizaje</a>
+          <a class="btn btn-secondary" href="termofijadoras.html">Manual termofijadoras</a>
         </div>
       </div>
 
@@ -349,6 +351,16 @@
   <script>
     const courses = [
       {
+        id: 'termo-plana', category: 'dtf', icon: '♨', level: 'Obsequio', title: 'Manual práctico de termofijadoras',
+        description: 'Aprende especificaciones, seguridad, parámetros DTF/sublimación y práctica virtual de estampado con prensa plana.', duration: 'Manual interactivo', lessons: 'Simulador',
+        lessonsList: [
+          ['Especificaciones y modelos', 'Conoce rangos de temperatura, tiempo y áreas 38×38 / 40×60 cm.', '10 min'],
+          ['Paso a paso para estampar', 'Ubicación, prensado y retiro seguro del diseño.', '15 min'],
+          ['Simulador de temperatura y tiempo', 'Practica ciclos virtuales antes de producir.', 'Interactivo'],
+          ['Consejos y seguridad', 'Precauciones para evitar quemaduras y mejorar durabilidad.', '8 min']
+        ], link: 'termofijadoras.html'
+      },
+      {
         id: 'dtf-cero', category: 'dtf', icon: '⬡', level: 'Inicial', title: 'Diseño DTF desde cero',
         description: 'Configura archivos limpios, prepara fondos transparentes y evita errores comunes antes de imprimir.', duration: '4 módulos', lessons: '4 lecciones',
         lessonsList: [
@@ -450,7 +462,7 @@
             <span>${course.category.toUpperCase()}</span>
           </div>
           <div class="course-actions">
-            <button class="btn btn-primary" data-action="open" data-id="${course.id}">Ver lecciones</button>
+            <button class="btn btn-primary" data-action="open" data-id="${course.id}">${course.link ? 'Abrir manual' : 'Ver lecciones'}</button>
             <button class="btn btn-secondary" data-action="save" data-id="${course.id}">${savedCourses.has(course.id) ? 'Guardado ✓' : 'Guardar'}</button>
           </div>
         `;
@@ -501,6 +513,11 @@
       if (!button) return;
       const courseId = button.dataset.id;
       if (button.dataset.action === 'open') {
+        const selectedCourse = courses.find(course => course.id === courseId);
+        if (selectedCourse && selectedCourse.link) {
+          window.location.href = selectedCourse.link;
+          return;
+        }
         selectLesson(courseId, 0);
         document.getElementById('aula').scrollIntoView({ behavior: 'smooth' });
       } else {
