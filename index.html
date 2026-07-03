@@ -858,6 +858,13 @@ footer {
       color:var(--green);font-family:var(--font-ui);font-size:0.76rem;font-weight:500;
       cursor:pointer;transition:all 0.15s;white-space:nowrap;
     ">🎓 Cursos</button>
+    <button id="open-thermo-btn" style="
+      display:flex;align-items:center;gap:5px;padding:5px 12px;
+      border:1px solid rgba(255,188,66,0.36);border-radius:6px;
+      background:linear-gradient(135deg,rgba(255,188,66,0.18),rgba(244,63,94,0.12));
+      color:var(--amber);font-family:var(--font-ui);font-size:0.76rem;font-weight:500;
+      cursor:pointer;transition:all 0.15s;white-space:nowrap;
+    ">♨️ Manual</button>
 <button id="btn-crowd" class="hbtn" style="background:linear-gradient(135deg,#00d4ff,#7b2fff);">🎨 Crowdsourcing</button>
   </div>
 </header>
@@ -3450,6 +3457,12 @@ const coursesBtn = document.getElementById('open-courses-btn');
 if (coursesBtn) {
   coursesBtn.addEventListener('click', () => {
     window.location.href = 'cursos.html';
+  });
+}
+const thermoBtn = document.getElementById('open-thermo-btn');
+if (thermoBtn) {
+  thermoBtn.addEventListener('click', () => {
+    window.location.href = 'termofijadoras.html';
   });
 }
 
