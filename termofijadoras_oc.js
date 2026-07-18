@@ -291,6 +291,11 @@ console.log('[OC Termofijadoras] cargado');
     ctx.fill();
     ctx.restore();
 
+    ctx.save();
+    ctx.fillStyle = '#ffbc42';
+    roundRect(ctx, 152, 532, w - 304, 82, 22);
+    ctx.fill();
+    ctx.fillStyle = '#3a1800';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#071125';
     ctx.font = '900 66px Exo 2, Segoe UI, sans-serif';
