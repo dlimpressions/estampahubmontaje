@@ -20,6 +20,9 @@ console.log('[OC Termofijadoras] cargado');
 
   const FIXED_CASHBACK = 20000;
   const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec';
+  
+  // === URL DEL LOGO DE TU EMPRESA (marca de agua) ===
+  const LOGO_URL = 'https://i.ibb.co/your-logo.png'; // <-- REEMPLAZA CON LA URL DE TU LOGO
 
   if (!ocOverlay || !openOCBtn || !ocForm || !ocFormCard || !ocResultCard || !ocCanvas || !ctx) {
     return;
@@ -188,6 +191,35 @@ console.log('[OC Termofijadoras] cargado');
   }
 
   // ============================================================
+  // FUNCIÓN PARA CARGAR Y DIBUJAR EL LOGO COMO MARCA DE AGUA
+  // ============================================================
+  function drawWatermarkLogo(callback) {
+    if (!LOGO_URL) {
+      if (typeof callback === 'function') callback();
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      // Dibujar el logo en el centro con opacidad y tamaño grande
+      const w = ocCanvas.width;
+      const h = ocCanvas.height;
+      const size = Math.min(w, h) * 0.35; // Tamaño grande para marca de agua
+      ctx.save();
+      ctx.globalAlpha = 0.08; // Muy transparente para que no moleste
+      ctx.translate(w / 2, h / 2);
+      ctx.drawImage(img, -size/2, -size/2, size, size);
+      ctx.restore();
+      if (typeof callback === 'function') callback();
+    };
+    img.onerror = function() {
+      console.warn('No se pudo cargar el logo para marca de agua');
+      if (typeof callback === 'function') callback();
+    };
+    img.src = LOGO_URL;
+  }
+
+  // ============================================================
   // NUEVO DISEÑO DEL BONO - MODERNO Y PROFESIONAL
   // ============================================================
   function drawBono({ name, email, city, product, qty, cashback }) {
@@ -203,6 +235,9 @@ console.log('[OC Termofijadoras] cargado');
     gradient.addColorStop(1, '#0d0d2b');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
+
+    // === MARCA DE AGUA (LOGO) ===
+    drawWatermarkLogo();
 
     // === BORDE DECORATIVO CON DEGRADADO ===
     const borderGrad = ctx.createLinearGradient(0, 0, w, h);
@@ -242,22 +277,22 @@ console.log('[OC Termofijadoras] cargado');
     ctx.lineTo(w * 0.8, 90);
     ctx.stroke();
 
-    // === MONTO DEL CASHBACK ===
+    // === MONTO DEL CASHBACK (MÁS GRANDE) ===
     ctx.shadowColor = '#ffbc42';
-    ctx.shadowBlur = 40;
+    ctx.shadowBlur = 50;
     ctx.fillStyle = '#ffbc42';
-    ctx.font = '900 86px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(currency(cashback), w / 2, 180);
+    ctx.font = '900 110px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(currency(cashback), w / 2, 200);
     ctx.shadowBlur = 0;
 
     // === SUBTÍTULO ===
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = '500 20px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('Por la compra de una termofijadora plana profesional', w / 2, 218);
+    ctx.fillText('Por la compra de una termofijadora plana profesional', w / 2, 240);
 
     // === TARJETA DE DATOS DEL CLIENTE ===
     const cardX = 60;
-    const cardY = 248;
+    const cardY = 270;
     const cardW = w - 120;
     const cardH = 160;
 
