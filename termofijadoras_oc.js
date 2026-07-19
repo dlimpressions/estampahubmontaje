@@ -188,123 +188,176 @@ console.log('[OC Termofijadoras] cargado');
   }
 
   function drawBono({ name, email, city, product, qty, cashback }) {
-    const w = ocCanvas.width;
-    const h = ocCanvas.height;
-    ctx.clearRect(0, 0, w, h);
+  const w = ocCanvas.width;
+  const h = ocCanvas.height;
+  ctx.clearRect(0, 0, w, h);
 
-    const gradient = ctx.createLinearGradient(0, 0, w, h);
-    gradient.addColorStop(0, '#061226');
-    gradient.addColorStop(0.46, '#08265c');
-    gradient.addColorStop(1, '#d80f16');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, w, h);
+  // === FONDO CON GRADIENTE MODERNO ===
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, '#0a0e27');
+  gradient.addColorStop(0.3, '#121a4a');
+  gradient.addColorStop(0.7, '#1a0a2e');
+  gradient.addColorStop(1, '#0d0d2b');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
 
-    ctx.save();
-    ctx.globalAlpha = 0.16;
-    for (let i = -160; i < w; i += 120) {
-      ctx.fillStyle = i % 240 === 0 ? '#00d4ff' : '#ffffff';
-      ctx.fillRect(i, 0, 36, h);
-    }
-    ctx.restore();
+  // === BORDE DECORATIVO CON DEGRADADO ===
+  const borderGrad = ctx.createLinearGradient(0, 0, w, h);
+  borderGrad.addColorStop(0, '#00d4ff');
+  borderGrad.addColorStop(0.5, '#7b2fff');
+  borderGrad.addColorStop(1, '#00ff9f');
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = 6;
+  roundRect(ctx, 20, 20, w - 40, h - 40, 30);
+  ctx.stroke();
 
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,.84)';
-    ctx.lineWidth = 8;
-    roundRect(ctx, 28, 28, w - 56, h - 56, 34);
+  // === BORDE INTERIOR SUTIL ===
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, 35, 35, w - 70, h - 70, 22);
+  ctx.stroke();
+
+  // === TÍTULO PRINCIPAL CON GLOW ===
+  ctx.shadowColor = '#00d4ff';
+  ctx.shadowBlur = 30;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 38px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText('🎁 BONO CASHBACK DTF', w / 2, 72);
+  ctx.shadowBlur = 0;
+
+  // === LÍNEA DECORATIVA ===
+  const gradLine = ctx.createLinearGradient(w * 0.2, 0, w * 0.8, 0);
+  gradLine.addColorStop(0, 'transparent');
+  gradLine.addColorStop(0.3, '#00d4ff');
+  gradLine.addColorStop(0.7, '#7b2fff');
+  gradLine.addColorStop(1, 'transparent');
+  ctx.strokeStyle = gradLine;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.2, 90);
+  ctx.lineTo(w * 0.8, 90);
+  ctx.stroke();
+
+  // === MONTO DEL CASHBACK ===
+  ctx.shadowColor = '#ffbc42';
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = '#ffbc42';
+  ctx.font = '900 86px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText(currency(cashback), w / 2, 180);
+  ctx.shadowBlur = 0;
+
+  // === SUBTÍTULO ===
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '500 20px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText('Por la compra de una termofijadora plana profesional', w / 2, 218);
+
+  // === TARJETA DE DATOS DEL CLIENTE ===
+  const cardX = 60;
+  const cardY = 248;
+  const cardW = w - 120;
+  const cardH = 160;
+
+  // Fondo de la tarjeta
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+  ctx.shadowBlur = 20;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 16);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Borde sutil
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 16);
+  ctx.stroke();
+
+  // === DATOS DEL CLIENTE ===
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '500 14px DM Mono, monospace';
+  ctx.fillText('CLIENTE', cardX + 20, cardY + 32);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '600 20px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText(name, cardX + 20, cardY + 64);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '500 14px DM Mono, monospace';
+  ctx.fillText('CORREO', cardX + 20, cardY + 96);
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '500 18px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText(email, cardX + 20, cardY + 124);
+
+  // === LADO DERECHO DE LA TARJETA (CIUDAD + PRODUCTO) ===
+  const rightX = cardX + cardW / 2 + 20;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '500 14px DM Mono, monospace';
+  ctx.fillText('CIUDAD', rightX, cardY + 32);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '600 20px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText(city, rightX, cardY + 64);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '500 14px DM Mono, monospace';
+  ctx.fillText('PRODUCTO', rightX, cardY + 96);
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '500 18px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText(`${product} · ${qty} unidad(es)`, rightX, cardY + 124);
+
+  // === LÍNEA DIVISORIA EN LA TARJETA ===
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 8]);
+  ctx.beginPath();
+  ctx.moveTo(cardX + cardW / 2, cardY + 18);
+  ctx.lineTo(cardX + cardW / 2, cardY + cardH - 18);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // === MENSAJE FINAL ===
+  const msgY = cardY + cardH + 48;
+  ctx.shadowColor = 'rgba(0,212,255,0.2)';
+  ctx.shadowBlur = 15;
+
+  // Fondo del mensaje
+  ctx.fillStyle = 'rgba(0,212,255,0.08)';
+  roundRect(ctx, 80, msgY - 6, w - 160, 48, 24);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '600 18px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText('🎯 Redímelo en tu próxima compra de impresión DTF', w / 2, msgY + 28);
+
+  // === FOOTER ===
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '400 13px Exo 2, Segoe UI, sans-serif';
+  ctx.fillText('*Aplican términos y condiciones · Bono personal e intransferible', w / 2, h - 28);
+
+  // === ESQUINAS DECORATIVAS ===
+  const cornerSize = 28;
+  const cornerOffset = 34;
+  const corners = [
+    [cornerOffset, cornerOffset, 1, 1],
+    [w - cornerOffset, cornerOffset, -1, 1],
+    [cornerOffset, h - cornerOffset, 1, -1],
+    [w - cornerOffset, h - cornerOffset, -1, -1]
+  ];
+
+  ctx.strokeStyle = 'rgba(0,212,255,0.25)';
+  ctx.lineWidth = 2;
+  corners.forEach(([cx, cy, dx, dy]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + dx * cornerSize, cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + dy * cornerSize);
     ctx.stroke();
-    ctx.restore();
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,.92)';
-    roundRect(ctx, 64, 82, w - 128, 420, 30);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#071125';
-    ctx.font = '900 54px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('BONO CASHBACK DTF', w / 2, 150);
-    ctx.fillStyle = '#d80f16';
-    ctx.font = '900 94px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(currency(cashback), w / 2, 254);
-    ctx.fillStyle = '#26354f';
-    ctx.font = '700 28px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('Por la compra de una termofijadora plana profesional', w / 2, 306);
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#071125';
-    ctx.font = '700 26px Exo 2, Segoe UI, sans-serif';
-    const left = 112;
-    const y = 374;
-    const line = 39;
-    ctx.fillText(`Cliente: ${name}`, left, y);
-    ctx.fillText(`Correo: ${email}`, left, y + line);
-    ctx.fillText(`Ciudad: ${city}`, left, y + line * 2);
-    ctx.fillText(`Producto: ${product} · Cantidad: ${qty}`, left, y + line * 3);
-
-    ctx.save();
-    ctx.fillStyle = '#ffbc42';
-    roundRect(ctx, 152, 532, w - 304, 82, 22);
-    ctx.fill();
-    ctx.fillStyle = '#3a1800';
-    ctx.textAlign = 'center';
-    ctx.font = '900 28px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('Redímelo en tu próxima compra de impresión DTF', w / 2, 584);
-    ctx.restore();
-
-    ctx.fillStyle = 'rgba(255,255,255,.86)';
-    ctx.font = 'italic 19px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('*Aplican términos y condiciones. Bono personal e intransferible.', w / 2, h - 30);
-  }
-
-  openOCBtn.addEventListener('click', showForm);
-  ocCancel?.addEventListener('click', hideForm);
-  ocOverlay.addEventListener('click', event => {
-    if (event.target === ocOverlay) hideForm();
   });
-
-  ocForm.addEventListener('submit', async event => {
-    event.preventDefault();
-    const order = getOrderData();
-    if (!validateOrder(order)) {
-      alert('Por favor completa todos los campos obligatorios.');
-      return;
-    }
-
-    const submitButton = ocForm.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.textContent = 'Registrando...';
-
-    try {
-      await saveOrder(order);
-      console.log('✅ Datos enviados a Google Sheets');
-      startRouletteAnimation(() => {
-        drawBono(order);
-        ocFormCard.style.display = 'none';
-        ocResultCard.style.display = 'block';
-      });
-    } catch (err) {
-      console.error('❌ Error al enviar datos', err);
-      alert('❌ Error al registrar tu orden. Intenta nuevamente.');
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = 'Registrar y girar bono';
-    }
-  });
-
-  ocDownload?.addEventListener('click', () => {
-    ocCanvas.toBlob(blob => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'bono_cashback_dtf.png';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 500);
-    }, 'image/png');
-  });
-
-  ocNew?.addEventListener('click', () => {
-    ocResultCard.style.display = 'none';
-    ocFormCard.style.display = 'block';
-    ocForm.reset();
-  });
-})();
+}
