@@ -20,9 +20,9 @@ console.log('[OC Termofijadoras] cargado');
 
   const FIXED_CASHBACK = 20000;
   const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyg5T9tQG4NeQYydRAYSPHFgDiUHDtR8HnT9P84yNHW1G4eGLa3Z_niQxDlKVo_Keitdg/exec';
-  
-  // === URL DEL LOGO DE TU EMPRESA (marca de agua) ===
-  const LOGO_URL = 'https://i.ibb.co/your-logo.png'; // <-- REEMPLAZA CON LA URL DE TU LOGO
+
+  // ⚠️ REEMPLAZA ESTA URL CON LA DE TU LOGO (o déjala vacía si no quieres logo)
+  const LOGO_URL = '';
 
   if (!ocOverlay || !openOCBtn || !ocForm || !ocFormCard || !ocResultCard || !ocCanvas || !ctx) {
     return;
@@ -201,12 +201,11 @@ console.log('[OC Termofijadoras] cargado');
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = function() {
-      // Dibujar el logo en el centro con opacidad y tamaño grande
       const w = ocCanvas.width;
       const h = ocCanvas.height;
-      const size = Math.min(w, h) * 0.35; // Tamaño grande para marca de agua
+      const size = Math.min(w, h) * 0.35;
       ctx.save();
-      ctx.globalAlpha = 0.08; // Muy transparente para que no moleste
+      ctx.globalAlpha = 0.08;
       ctx.translate(w / 2, h / 2);
       ctx.drawImage(img, -size/2, -size/2, size, size);
       ctx.restore();
@@ -220,9 +219,9 @@ console.log('[OC Termofijadoras] cargado');
   }
 
   // ============================================================
-  // NUEVO DISEÑO DEL BONO - MODERNO Y PROFESIONAL
+  // NUEVO DISEÑO DEL BONO - CON LETRAS MÁS GRANDES Y TELÉFONO
   // ============================================================
-  function drawBono({ name, email, city, product, qty, cashback }) {
+  function drawBono({ name, email, phone, city, product, qty, cashback }) {
     const w = ocCanvas.width;
     const h = ocCanvas.height;
     ctx.clearRect(0, 0, w, h);
@@ -255,13 +254,13 @@ console.log('[OC Termofijadoras] cargado');
     roundRect(ctx, 35, 35, w - 70, h - 70, 22);
     ctx.stroke();
 
-    // === TÍTULO PRINCIPAL CON GLOW ===
+    // === TÍTULO PRINCIPAL CON GLOW (MÁS GRANDE) ===
     ctx.shadowColor = '#00d4ff';
     ctx.shadowBlur = 30;
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 38px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('🎁 BONO CASHBACK DTF', w / 2, 72);
+    ctx.font = '700 46px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText('🎁 BONO CASHBACK DTF', w / 2, 78);
     ctx.shadowBlur = 0;
 
     // === LÍNEA DECORATIVA ===
@@ -273,28 +272,28 @@ console.log('[OC Termofijadoras] cargado');
     ctx.strokeStyle = gradLine;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.2, 90);
-    ctx.lineTo(w * 0.8, 90);
+    ctx.moveTo(w * 0.2, 100);
+    ctx.lineTo(w * 0.8, 100);
     ctx.stroke();
 
-    // === MONTO DEL CASHBACK (MÁS GRANDE) ===
+    // === MONTO DEL CASHBACK (MUCHO MÁS GRANDE: 130px) ===
     ctx.shadowColor = '#ffbc42';
-    ctx.shadowBlur = 50;
+    ctx.shadowBlur = 60;
     ctx.fillStyle = '#ffbc42';
-    ctx.font = '900 110px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(currency(cashback), w / 2, 200);
+    ctx.font = '900 130px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(currency(cashback), w / 2, 215);
     ctx.shadowBlur = 0;
 
-    // === SUBTÍTULO ===
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '500 20px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('Por la compra de una termofijadora plana profesional', w / 2, 240);
+    // === SUBTÍTULO (MÁS GRANDE) ===
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '600 24px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText('Por la compra de una termofijadora plana profesional', w / 2, 268);
 
-    // === TARJETA DE DATOS DEL CLIENTE ===
-    const cardX = 60;
-    const cardY = 270;
-    const cardW = w - 120;
-    const cardH = 160;
+    // === TARJETA DE DATOS DEL CLIENTE (MÁS GRANDE) ===
+    const cardX = 50;
+    const cardY = 300;
+    const cardW = w - 100;
+    const cardH = 185;
 
     // Fondo de la tarjeta
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
@@ -310,42 +309,42 @@ console.log('[OC Termofijadoras] cargado');
     roundRect(ctx, cardX, cardY, cardW, cardH, 16);
     ctx.stroke();
 
-    // === DATOS DEL CLIENTE (LADO IZQUIERDO) ===
+    // === DATOS DEL CLIENTE (LADO IZQUIERDO) - MÁS GRANDES ===
     ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '500 14px DM Mono, monospace';
-    ctx.fillText('CLIENTE', cardX + 20, cardY + 32);
+    ctx.font = '500 16px DM Mono, monospace';
+    ctx.fillText('CLIENTE', cardX + 20, cardY + 38);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '600 20px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(name, cardX + 20, cardY + 64);
+    ctx.font = '600 24px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(name, cardX + 20, cardY + 74);
 
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '500 14px DM Mono, monospace';
-    ctx.fillText('CORREO', cardX + 20, cardY + 96);
+    ctx.font = '500 16px DM Mono, monospace';
+    ctx.fillText('CORREO', cardX + 20, cardY + 110);
 
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = '500 18px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(email, cardX + 20, cardY + 124);
+    ctx.font = '500 22px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(email, cardX + 20, cardY + 146);
 
-    // === LADO DERECHO DE LA TARJETA (CIUDAD + PRODUCTO) ===
+    // === LADO DERECHO DE LA TARJETA (TELÉFONO + CIUDAD + PRODUCTO) ===
     const rightX = cardX + cardW / 2 + 20;
 
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '500 14px DM Mono, monospace';
-    ctx.fillText('CIUDAD', rightX, cardY + 32);
+    ctx.font = '500 16px DM Mono, monospace';
+    ctx.fillText('TELÉFONO', rightX, cardY + 38);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '600 20px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(city, rightX, cardY + 64);
+    ctx.font = '600 24px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(phone, rightX, cardY + 74);
 
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '500 14px DM Mono, monospace';
-    ctx.fillText('PRODUCTO', rightX, cardY + 96);
+    ctx.font = '500 16px DM Mono, monospace';
+    ctx.fillText('CIUDAD', rightX, cardY + 110);
 
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = '500 18px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText(`${product} · ${qty} unidad(es)`, rightX, cardY + 124);
+    ctx.font = '500 22px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(city, rightX, cardY + 146);
 
     // === LÍNEA DIVISORIA EN LA TARJETA ===
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
@@ -357,30 +356,39 @@ console.log('[OC Termofijadoras] cargado');
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // === MENSAJE FINAL ===
-    const msgY = cardY + cardH + 48;
+    // === PRODUCTO EN LA PARTE INFERIOR DE LA TARJETA ===
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '500 14px DM Mono, monospace';
+    ctx.fillText('PRODUCTO', w / 2, cardY + cardH + 28);
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '600 20px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText(`${product} · ${qty} unidad(es)`, w / 2, cardY + cardH + 58);
+
+    // === MENSAJE FINAL (MÁS GRANDE) ===
+    const msgY = cardY + cardH + 100;
     ctx.shadowColor = 'rgba(0,212,255,0.2)';
     ctx.shadowBlur = 15;
 
-    // Fondo del mensaje
     ctx.fillStyle = 'rgba(0,212,255,0.08)';
-    roundRect(ctx, 80, msgY - 6, w - 160, 48, 24);
+    roundRect(ctx, 70, msgY - 8, w - 140, 52, 26);
     ctx.fill();
     ctx.shadowBlur = 0;
 
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = '600 18px Exo 2, Segoe UI, sans-serif';
-    ctx.fillText('🎯 Redímelo en tu próxima compra de impresión DTF', w / 2, msgY + 28);
+    ctx.font = '600 20px Exo 2, Segoe UI, sans-serif';
+    ctx.fillText('🎯 Redímelo en tu próxima compra de impresión DTF', w / 2, msgY + 32);
 
     // === FOOTER ===
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.font = '400 13px Exo 2, Segoe UI, sans-serif';
+    ctx.font = '400 15px Exo 2, Segoe UI, sans-serif';
     ctx.fillText('*Aplican términos y condiciones · Bono personal e intransferible', w / 2, h - 28);
 
     // === ESQUINAS DECORATIVAS ===
-    const cornerSize = 28;
+    const cornerSize = 32;
     const cornerOffset = 34;
     const corners = [
       [cornerOffset, cornerOffset, 1, 1],
